@@ -1,12 +1,12 @@
 // src/utils/db.js (ganz oben)
 import { db } from '../firebase';
+import { generatePet, generateQuests } from './gameMechanics'; 
 import { 
   doc, getDoc, setDoc, updateDoc, collection, addDoc, 
-  onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs, 
-  runTransaction
+  onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs, // getDocs ist kritisch
+  runTransaction 
 } from 'firebase/firestore';
-// Importiere generateQuests UND generatePet (für Ei-Belohnungen)
-import { generatePet, generateQuests } from './gameMechanics';
+
 
 // --- USER MANAGEMENT ---
 
@@ -103,8 +103,12 @@ export const deleteMarketListing = async (listingId) => {
 // --- LEADERBOARD & SOCIAL ---
 
 export const getLeaderboard = async () => {
-  // Holt die Top 20 Spieler sortiert nach Rating
-  const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(20));
+  // Holt die Top 101 Spieler sortiert nach Rating
+  const q = query(
+    collection(db, "users"), 
+    orderBy("rating", "desc"), 
+    limit(101) // <--- NEUE GRENZE
+  );
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => doc.data());
 };

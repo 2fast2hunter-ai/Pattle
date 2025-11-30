@@ -22,7 +22,10 @@ export default function ShopScreen({ onBack, onBuyBox }) {
                     </div>
                 </div>
             </div>
-            <div className="mt-8 p-4 bg-black/20 rounded-xl text-[10px] text-slate-500 text-center"><p>Drop Rates:</p><p>Common 40% • Rare 15% • Mythic 3% • Transcendent 0.01%</p></div>
+            <div className="mt-8 p-4 bg-black/20 rounded-xl text-[10px] text-slate-500 text-center">
+                <p>Drop Rates:</p>
+                <p>Gewöhnlich 80.0% • Ungewöhnlich 15.0% • Selten 4.0% • Legendär 0.15%</p>
+            </div>
         </div>
     );
 }

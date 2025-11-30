@@ -10,7 +10,7 @@ import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy
 import { 
   initializeUser, listenToUser, listenToPets, listenToMarket, updateUser, 
   addPetToDB, updatePetInDB, createMarketListing, deleteMarketListing, 
-  removePetFromDB, findUserPublic, trackQuestProgress 
+  removePetFromDB, findUserPublic, trackQuestProgress
 } from './utils/db';
 
 // Components
@@ -490,7 +490,7 @@ export default function GameApp() {
               {currentView === 'battle' && activeBattle && (<BattleScreen battleState={activeBattle} setBattleState={setActiveBattle} onWin={handleWin} onLose={handleLose}/>)}
               {currentView === 'profile' && <ProfileScreen user={user} petCount={myPets.length} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={(id) => { handleAddFriend(id); }} />}
               {currentView === 'friend-profile' && selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('profile')} />}
-              {currentView === 'settings' && (<SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout} />)}
+              {currentView === 'settings' && (<SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout}  />)}
             </div>
           </main>
           <BottomNav currentView={currentView} setCurrentView={setCurrentView} />

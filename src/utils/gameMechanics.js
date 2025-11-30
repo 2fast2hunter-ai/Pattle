@@ -145,7 +145,21 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
     price: 0 
   };
 };
-export const getUnlockedTeamSlots = (level) => Math.min(10, 1 + Math.floor(level / 10));
+export const getUnlockedTeamSlots = (level) => {
+    const maxSlots = 10;
+    let slots = 1;
+
+    if (level >= 3) {
+        // Spieler starten mit 2 Slots ab Level 3
+        slots = 2; 
+        
+        // Fügt einen weiteren Slot für jeweils 5 Level nach Level 3 hinzu.
+        // (L8, L13, L18, etc.)
+        slots += Math.floor((level - 3) / 5);
+    }
+
+    return Math.min(maxSlots, slots);
+};
 
 export const getUnlockedHatcherySlots = (level) => {
   if (level < 15) return 1;
@@ -215,3 +229,8 @@ export const generateQuests = (category) => {
   };
 };
 export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5;
+
+// src/utils/gameMechanics.js (Füge diese Funktionen hinzu)
+
+// Helper to get a random high rarity key
+
