@@ -1,0 +1,111 @@
+import React from 'react';
+import { 
+  Flame, Droplets, Leaf, Wind, Mountain, Snowflake, Zap, Sun, Moon, Ghost, 
+  Sparkles, Eye, Swords, Hexagon, Box, TestTube, Trophy, Heart, Cpu, Music, 
+  Clock, Orbit, Aperture, AlertTriangle, Gavel
+} from 'lucide-react';
+
+export const DUMMY_USERS = [
+    { id: 'ash_ketchum', username: 'AshKetchum', rating: 2800, level: 25, avatar: '🧢', stats: { pvpWins: 150, pvpTotal: 200, hatched: 50, bred: 10, marketSpent: 5000, marketEarned: 2000 } },
+    { id: 'gary_oak', username: 'GaryOak', rating: 2750, level: 24, avatar: '😼', stats: { pvpWins: 140, pvpTotal: 190, hatched: 45, bred: 8, marketSpent: 4000, marketEarned: 5000 } },
+    { id: 'misty_water', username: 'Misty', rating: 1400, level: 15, avatar: '🌊', stats: { pvpWins: 40, pvpTotal: 80, hatched: 20, bred: 5, marketSpent: 500, marketEarned: 1200 } },
+    { id: 'brock_rock', username: 'Brock', rating: 1350, level: 18, avatar: '🪨', stats: { pvpWins: 35, pvpTotal: 70, hatched: 15, bred: 2, marketSpent: 200, marketEarned: 500 } },
+];
+
+export const RARITIES = {
+  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, hatchDuration: 10, dropChance: 40.0 },
+  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, hatchDuration: 30, dropChance: 25.0 },
+  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, hatchDuration: 60, dropChance: 15.0 },
+  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, hatchDuration: 120, dropChance: 10.0 },
+  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, hatchDuration: 300, dropChance: 6.0 },
+  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, hatchDuration: 600, dropChance: 3.0 },
+  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, hatchDuration: 1200, dropChance: 0.7 },
+  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, hatchDuration: 3600, dropChance: 0.24 },
+  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, hatchDuration: 7200, dropChance: 0.05 },
+  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, hatchDuration: 14400, dropChance: 0.01 },
+};
+
+export const TYPES = {
+  FIRE:      { label: 'Feuer',      color: 'text-orange-500', bg: 'bg-orange-500', bgLight: 'bg-orange-500/20', icon: <Flame /> },
+  WATER:     { label: 'Wasser',     color: 'text-blue-500',   bg: 'bg-blue-500',   bgLight: 'bg-blue-500/20',   icon: <Droplets /> },
+  NATURE:    { label: 'Natur',      color: 'text-green-500',  bg: 'bg-green-500',  bgLight: 'bg-green-500/20',  icon: <Leaf /> },
+  WIND:      { label: 'Wind',       color: 'text-sky-300',    bg: 'bg-sky-400',    bgLight: 'bg-sky-400/20',    icon: <Wind /> },
+  EARTH:     { label: 'Erde',       color: 'text-amber-700',  bg: 'bg-amber-700',  bgLight: 'bg-amber-700/20',  icon: <Mountain /> },
+  ICE:       { label: 'Eis',        color: 'text-cyan-200',   bg: 'bg-cyan-400',   bgLight: 'bg-cyan-400/20',   icon: <Snowflake /> },
+  ELECTRIC:  { label: 'Elektro',    color: 'text-yellow-400', bg: 'bg-yellow-500', bgLight: 'bg-yellow-500/20', icon: <Zap /> },
+  LIGHT:     { label: 'Licht',      color: 'text-yellow-100', bg: 'bg-yellow-200', bgLight: 'bg-yellow-200/20', icon: <Sun /> },
+  DARK:      { label: 'Dunkel',     color: 'text-gray-800',   bg: 'bg-gray-800',   bgLight: 'bg-gray-800/20',   icon: <Moon /> },
+  GHOST:     { label: 'Geist',      color: 'text-purple-300', bg: 'bg-purple-800', bgLight: 'bg-purple-800/20', icon: <Ghost /> },
+  MAGIC:     { label: 'Magie',      color: 'text-pink-500',   bg: 'bg-pink-600',   bgLight: 'bg-pink-600/20',   icon: <Sparkles /> },
+  PSYCHIC:   { label: 'Psycho',     color: 'text-fuchsia-400',bg: 'bg-fuchsia-500',bgLight: 'bg-fuchsia-500/20',icon: <Eye /> },
+  FIGHTING:  { label: 'Kampf',      color: 'text-red-600',    bg: 'bg-red-600',    bgLight: 'bg-red-600/20',    icon: <Swords /> },
+  METAL:     { label: 'Metall',     color: 'text-slate-400',  bg: 'bg-slate-500',  bgLight: 'bg-slate-500/20',  icon: <Hexagon /> },
+  ROCK:      { label: 'Gestein',    color: 'text-stone-600',  bg: 'bg-stone-600',  bgLight: 'bg-stone-600/20',  icon: <Box /> },
+  POISON:    { label: 'Gift',       color: 'text-lime-500',   bg: 'bg-lime-600',   bgLight: 'bg-lime-600/20',   icon: <TestTube /> },
+  DRAGON:    { label: 'Drache',     color: 'text-indigo-500', bg: 'bg-indigo-600', bgLight: 'bg-indigo-600/20', icon: <Trophy /> },
+  FAIRY:     { label: 'Fee',        color: 'text-pink-300',   bg: 'bg-pink-400',   bgLight: 'bg-pink-400/20',   icon: <Heart /> },
+  TECH:      { label: 'Cyber',      color: 'text-blue-300',   bg: 'bg-blue-800',   bgLight: 'bg-blue-800/20',   icon: <Cpu /> },
+  SOUND:     { label: 'Schall',     color: 'text-teal-400',   bg: 'bg-teal-500',   bgLight: 'bg-teal-500/20',   icon: <Music /> },
+  TIME:      { label: 'Zeit',       color: 'text-amber-200',  bg: 'bg-amber-800',  bgLight: 'bg-amber-800/20',  icon: <Clock /> },
+  SPACE:     { label: 'Raum',       color: 'text-violet-400', bg: 'bg-violet-900', bgLight: 'bg-violet-900/20', icon: <Orbit /> },
+  VOID:      { label: 'Leere',      color: 'text-black',      bg: 'bg-black',      bgLight: 'bg-gray-900',      icon: <Aperture /> },
+  CHAOS:     { label: 'Chaos',      color: 'text-red-400',    bg: 'bg-red-900',    bgLight: 'bg-red-900/20',    icon: <AlertTriangle /> },
+  ORDER:     { label: 'Ordnung',    color: 'text-white',      bg: 'bg-slate-400',  bgLight: 'bg-slate-400/20',  icon: <Gavel /> },
+};
+
+export const ZODIAC_ANIMALS = {
+  RAT:     { id: 'rat',     label: 'Ratte',    icon: '🐀' },
+  OX:      { id: 'ox',      label: 'Büffel',   icon: '🐂' },
+  TIGER:   { id: 'tiger',   label: 'Tiger',    icon: '🐅' },
+  RABBIT:  { id: 'rabbit',  label: 'Hase',     icon: '🐇' },
+  DRAGON:  { id: 'dragon',  label: 'Drache',   icon: '🐉' },
+  SNAKE:   { id: 'snake',   label: 'Schlange', icon: '🐍' },
+  HORSE:   { id: 'horse',   label: 'Pferd',    icon: '🐎' },
+  GOAT:    { id: 'goat',    label: 'Ziege',    icon: '🐐' },
+  MONKEY:  { id: 'monkey',  label: 'Affe',     icon: '🐒' },
+  ROOSTER: { id: 'rooster', label: 'Hahn',     icon: '🐓' },
+  DOG:     { id: 'dog',     label: 'Hund',     icon: '🐕' },
+  PIG:     { id: 'pig',     label: 'Schwein',  icon: '🐖' },
+};
+
+export const TYPE_ADVANTAGES = {
+  FIRE:      { strong: ['NATURE', 'ICE', 'METAL', 'BUG'], super: ['WOOD'] },
+  WATER:     { strong: ['FIRE', 'ROCK', 'EARTH'], super: ['MAGMA'] },
+  NATURE:    { strong: ['WATER', 'EARTH', 'ROCK'], super: ['LIGHT'] },
+  ELECTRIC:  { strong: ['WATER', 'WIND', 'TECH'], super: ['METAL'] },
+  ICE:       { strong: ['NATURE', 'DRAGON', 'WIND'], super: ['EARTH'] },
+  WIND:      { strong: ['NATURE', 'FIGHTING'], super: ['EARTH'] },
+  EARTH:     { strong: ['FIRE', 'ELECTRIC', 'POISON'], super: ['TECH'] },
+  LIGHT:     { strong: ['DARK', 'GHOST', 'VOID'], super: ['CHAOS'] },
+  DARK:      { strong: ['PSYCHIC', 'GHOST'], super: ['ORDER'] },
+  GHOST:     { strong: ['PSYCHIC', 'GHOST'], super: [] },
+  MAGIC:     { strong: ['FIGHTING', 'POISON'], super: ['PHYSICAL'] },
+  PSYCHIC:   { strong: ['FIGHTING', 'POISON'], super: [] },
+  FIGHTING:  { strong: ['METAL', 'ROCK', 'ICE', 'DARK'], super: [] },
+  METAL:     { strong: ['FAIRY', 'ICE', 'ROCK'], super: ['POISON'] },
+  ROCK:      { strong: ['FIRE', 'ICE', 'WIND', 'BUG'], super: ['ELECTRIC'] },
+  POISON:    { strong: ['NATURE', 'FAIRY'], super: [] },
+  DRAGON:    { strong: ['DRAGON'], super: [] },
+  FAIRY:     { strong: ['FIGHTING', 'DARK', 'DRAGON'], super: ['VOID'] },
+  TECH:      { strong: ['FAIRY', 'MAGIC', 'NATURE'], super: ['WATER'] },
+  SOUND:     { strong: ['METAL', 'ICE', 'GLASS'], super: [] },
+  TIME:      { strong: ['SPACE', 'ORDER'], super: ['ROCK'] },
+  SPACE:     { strong: ['TIME', 'VOID'], super: [] },
+  VOID:      { strong: ['LIGHT', 'MAGIC', 'SPACE', 'TIME'], super: ['REALITY'] },
+  CHAOS:     { strong: ['ORDER', 'TECH', 'TIME'], super: [] },
+  ORDER:     { strong: ['CHAOS', 'MAGIC'], super: [] },
+};
+
+export const ABILITIES = {
+  fireball:  { name: 'Feuerball',      element: 'FIRE',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Schießt einen mächtigen Feuerball (150% AP)' },
+  heal:      { name: 'Erholung',       element: 'NATURE',   dmgScale: 0,   type: 'HEAL',     cd: 4, desc: 'Heilt sich selbst um 120% AP' },
+  smash:     { name: 'Erdschlag',      element: 'EARTH',    dmgScale: 1.2, type: 'PHYSICAL', cd: 2, desc: 'Ein schwerer Schlag (120% AD)' },
+  aqua:      { name: 'Wasserstrahl',   element: 'WATER',    dmgScale: 1.3, type: 'MAGIC',    cd: 3, desc: 'Magischer Wasserstrahl (130% AP)' },
+  bite:      { name: 'Knirscher',      element: 'DARK',     dmgScale: 1.4, type: 'PHYSICAL', cd: 3, desc: 'Starker Biss (140% AD)' },
+  voidblast: { name: 'Leereblick',     element: 'VOID',     dmgScale: 2.0, type: 'MAGIC',    cd: 5, desc: 'Schaden aus der Leere (200% AP)' },
+  timewarp:  { name: 'Zeitsprung',     element: 'TIME',     dmgScale: 1.6, type: 'MAGIC',    cd: 4, desc: 'Verwirrt durch Zeit (160% AP)' },
+  laser:     { name: 'Laserstrahl',    element: 'TECH',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Cybernetischer Laser (150% AP)' },
+  thundershock:{ name: 'Donnerschock', element: 'ELECTRIC', dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Elektrischer Schlag (140% AP)' },
+  gust:      { name: 'Windstoß',       element: 'WIND',     dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Schneller Windangriff (130% AP)' },
+  punch:     { name: 'Karatehieb',     element: 'FIGHTING', dmgScale: 1.5, type: 'PHYSICAL', cd: 2, desc: 'Gezielter Schlag (150% AD)' },
+};
