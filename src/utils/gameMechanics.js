@@ -1,4 +1,7 @@
-import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES, QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS } from '../data/gameData';
+import { 
+  RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES,
+  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS
+} from '../data/gameData'; 
 
 export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5; 
 
@@ -7,16 +10,13 @@ const calculateNextResetTime = (category) => {
     let nextTarget = new Date();
     
     if (category === 'DAILY') {
-        // Nächste Mitternacht (00:00)
         nextTarget.setDate(nextTarget.getDate() + 1);
         nextTarget.setHours(0, 0, 0, 0);
         
     } else if (category === 'WEEKLY') {
-        // Nächsten Montag (Tag 1) um 00:00 Uhr
-        const day = nextTarget.getDay(); // 0 = So, 1 = Mo, ...
+        const day = nextTarget.getDay(); 
         let daysUntilMonday = (1 + 7 - day) % 7;
         
-        // Wenn heute Montag ist und die Zeit schon vorbei ist, reset nächste Woche (7 Tage)
         if (daysUntilMonday === 0) {
             daysUntilMonday = 7;
         }
@@ -25,13 +25,64 @@ const calculateNextResetTime = (category) => {
         nextTarget.setHours(0, 0, 0, 0);
         
     } else if (category === 'MONTHLY') {
-        // Nächsten 1. des Monats um 00:00 Uhr
         nextTarget.setFullYear(nextTarget.getFullYear(), nextTarget.getMonth() + 1, 1);
         nextTarget.setHours(0, 0, 0, 0);
     }
 
-    // Wir geben den UTC-Timestamp zurück
     return nextTarget.getTime(); 
+};
+
+// NEU: Die Rarity-Berechnungslogik (Exportiert!)
+export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
+    const rarityKeys = Object.keys(RARITIES);
+    const id1 = RARITIES[rarity1Key].id;
+    const id2 = RARITIES[rarity2Key].id;
+    const minId = Math.min(id1, id2);
+    const maxId = Math.max(id1, id2);
+    
+    const roll = Math.random() * 100;
+
+    let targetId = minId; 
+    
+    // --- 1. Gleichwertige Seltenheit (z.B. Selten + Selten) ---
+    if (minId === maxId) {
+        // 5% Chance auf 1 Stufe Upgrade
+        const chanceToGetNextLevel = 5;
+
+        if (roll <= chanceToGetNextLevel) {
+            targetId = Math.min(maxId + 1, rarityKeys.length);
+        } else {
+            // 95% Chance, dass es bei der aktuellen Seltenheit bleibt
+            targetId = maxId; 
+        }
+        
+    } 
+    // --- 2. Ungleichwertige Seltenheit (z.B. Selten + Gewöhnlich) ---
+    else {
+        // Chance, den höheren Wert zu treffen: 9%
+        const chanceToGetHigherParent = 9; 
+        
+        // Chance auf Upgrade auf den höheren Wert (maxId): 9%
+        if (roll <= chanceToGetHigherParent) {
+            targetId = maxId;
+        } 
+        // 91% Chance, dass es den niedrigeren Wert behält (minId)
+        else {
+             targetId = minId;
+        }
+        
+        // NEUE REGEL: 1% Chance auf SUPER-Upgrade, wenn der höhere Wert getroffen wurde
+        const baseChanceForUpgrade = 1;
+        if (targetId === maxId && Math.random() * 100 <= baseChanceForUpgrade) {
+             targetId = Math.min(maxId + 1, rarityKeys.length);
+        }
+    }
+
+    // Sicherstellen, dass das Pet NICHT schlechter wird als die niedrigste Seltenheit
+    const finalId = Math.max(minId, targetId);
+
+    // Konvertiere ID zurück zum Key
+    return rarityKeys[finalId - 1]; 
 };
 
 
@@ -90,7 +141,6 @@ export const generateQuests = (category) => {
       multiplier = 20; 
   }
 
-  // 5 zufällige Aufgaben auswählen
   for (let i = 0; i < count; i++) {
       const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
       
@@ -120,7 +170,6 @@ export const generateQuests = (category) => {
 
   return {
       quests: newQuests,
-      // HIER DIE ÄNDERUNG: Fester Kalender-Reset
       expiresAt: calculateNextResetTime(category),
       completedCount: 0,
       claimedComposite: false,

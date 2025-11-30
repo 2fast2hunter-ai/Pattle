@@ -2,21 +2,23 @@ import { db } from '../firebase';
 import { 
   doc, getDoc, setDoc, updateDoc, collection, addDoc, 
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
-  runTransaction 
+  runTransaction
 } from 'firebase/firestore';
 // KORREKTUR: initializeUserPets wurde entfernt.
 import { generatePet, generateQuests } from './gameMechanics'; 
 
 // --- USER MANAGEMENT ---
 
+// src/utils/db.js
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
+    // Wenn User existiert, nur die Daten zurückgeben
     return userSnap.data(); 
   } else {
-    // Neuer User: Wir geben ihm eine STARTER BOX ins Inventar (keine Pets)
+    // Neuer User
     const newUserData = {
       id: firebaseUser.uid,
       username: username,
@@ -37,7 +39,8 @@ export const initializeUser = async (firebaseUser, username) => {
           daily: generateQuests('DAILY'),
           weekly: generateQuests('WEEKLY'),
           monthly: generateQuests('MONTHLY')
-      }
+      },
+      redeemedTickets: 0, // NEU: Der Zähler für eingelöste Tickets
     };
 
     await setDoc(userRef, newUserData);
@@ -74,6 +77,7 @@ export const updateUser = async (userId, data) => {
   const userRef = doc(db, "users", userId);
   await updateDoc(userRef, data);
 };
+
 
 export const addPetToDB = async (pet, ownerId) => {
   await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId });

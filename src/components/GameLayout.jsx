@@ -1,26 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Coins, Gem, User, LayoutGrid, Settings } from 'lucide-react';
+import { Zap, Coins, Gem, User, LayoutGrid, Settings, Ticket } from 'lucide-react'; // Ticket NEU
 import { getMaxEnergy, ENERGY_REGEN_TIME_MS } from '../utils/gameMechanics';
 
 export function HeaderHUD({ user }) {
   const xpPercent = Math.min(100, (user.xp / user.xpToNextLevel) * 100);
   const maxEnergy = getMaxEnergy(user.level);
   
-  // Hier nutzen wir die neue Konstante (5 Minuten)
   const msPerEnergy = ENERGY_REGEN_TIME_MS; 
   
   const timeSinceUpdate = Date.now() - user.lastEnergyUpdate;
   const nextEnergyIn = Math.max(0, msPerEnergy - timeSinceUpdate);
   
-  // WICHTIG: Diese Zeile hat wahrscheinlich gefehlt!
   const minutesLeft = Math.ceil(nextEnergyIn / 1000 / 60);
 
   const [, setTick] = useState(0);
   useEffect(() => {
-    // Aktualisiert die Anzeige jede Minute (oder öfter für den Timer)
     const interval = setInterval(() => setTick(t => t + 1), 10000); 
     return () => clearInterval(interval);
   }, []);
+  
+  // Lese den Zähler für eingelöste Tickets
+  const redeemedTickets = user?.redeemedTickets || 0;
 
   return (
     <header className="bg-slate-800/90 backdrop-blur-md p-3 border-b border-white/5 z-20">
@@ -49,6 +49,12 @@ export function HeaderHUD({ user }) {
                     </span>
                 )}
             </div>
+            {/* NEU: ANGEZEIGTE ZUCHT-TICKETS */}
+            <div className="flex items-center gap-1 bg-slate-900/80 px-2.5 py-1.5 rounded-full border border-white/10">
+                <Ticket className="w-3.5 h-3.5 text-pink-400 fill-current" />
+                <span className="font-bold text-xs">{redeemedTickets}</span>
+            </div>
+            {/* BESTEHENDE MÜNZEN UND EDELSTEINE */}
             <div className="flex items-center gap-1 bg-slate-900/80 px-2.5 py-1.5 rounded-full border border-white/10">
                 <Coins className="w-3.5 h-3.5 text-yellow-400 fill-current" />
                 <span className="font-bold text-xs">{user.coins}</span>
