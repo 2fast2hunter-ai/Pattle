@@ -1,11 +1,39 @@
-import { 
-  RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES,
-  // NEU: Diese beiden Konstanten müssen importiert werden, da sie in generateQuests verwendet werden
-  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS
-} from '../data/gameData'; 
+import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES, QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS } from '../data/gameData';
 
-// Zeit in Millisekunden pro Energie-Punkt (5 Minuten)
 export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5; 
+
+// NEU: Funktion zur Berechnung des nächsten festen Reset-Zeitpunkts (00:00 Uhr lokale Zeit)
+const calculateNextResetTime = (category) => {
+    let nextTarget = new Date();
+    
+    if (category === 'DAILY') {
+        // Nächste Mitternacht (00:00)
+        nextTarget.setDate(nextTarget.getDate() + 1);
+        nextTarget.setHours(0, 0, 0, 0);
+        
+    } else if (category === 'WEEKLY') {
+        // Nächsten Montag (Tag 1) um 00:00 Uhr
+        const day = nextTarget.getDay(); // 0 = So, 1 = Mo, ...
+        let daysUntilMonday = (1 + 7 - day) % 7;
+        
+        // Wenn heute Montag ist und die Zeit schon vorbei ist, reset nächste Woche (7 Tage)
+        if (daysUntilMonday === 0) {
+            daysUntilMonday = 7;
+        }
+
+        nextTarget.setDate(nextTarget.getDate() + daysUntilMonday);
+        nextTarget.setHours(0, 0, 0, 0);
+        
+    } else if (category === 'MONTHLY') {
+        // Nächsten 1. des Monats um 00:00 Uhr
+        nextTarget.setFullYear(nextTarget.getFullYear(), nextTarget.getMonth() + 1, 1);
+        nextTarget.setHours(0, 0, 0, 0);
+    }
+
+    // Wir geben den UTC-Timestamp zurück
+    return nextTarget.getTime(); 
+};
+
 
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
     const K = 32;
@@ -21,7 +49,7 @@ export const getDamageMultiplier = (atkType, defType) => {
   if (advantages.strong?.includes(defType)) return 2.0;
   const defAdvantages = TYPE_ADVANTAGES[defType] || { strong: [], super: [] };
   if (defAdvantages.super?.includes(atkType)) return 0.25;
-  if (defAdvantages.strong?.includes(atkType) && !['FIRE', 'WATER', 'NATURE', 'WIND', 'ICE', 'ELECTRIC', 'LIGHT', 'DARK', 'GHOST', 'MAGIC', 'PSYCHIC', 'FIGHTING', 'METAL', 'ROCK', 'POISON', 'DRAGON', 'FAIRY', 'TECH', 'SOUND', 'TIME', 'SPACE', 'VOID', 'CHAOS', 'ORDER'].includes(atkType)) return 0.5;
+  if (defAdvantages.strong?.includes(atkType)) return 0.5;
   return 1.0;
 };
 
@@ -53,17 +81,13 @@ export const generateQuests = (category) => {
   const newQuests = [];
   
   let multiplier = 1;
-  let duration = 0; 
 
   if (category === 'DAILY') {
       multiplier = 1;
-      duration = 24 * 60 * 60 * 1000;
   } else if (category === 'WEEKLY') {
       multiplier = 5; 
-      duration = 7 * 24 * 60 * 60 * 1000;
   } else if (category === 'MONTHLY') {
       multiplier = 20; 
-      duration = 30 * 24 * 60 * 60 * 1000;
   }
 
   // 5 zufällige Aufgaben auswählen
@@ -96,8 +120,8 @@ export const generateQuests = (category) => {
 
   return {
       quests: newQuests,
-      expiresAt: Date.now() + duration,
-      // NEU: Composite Quest Tracking
+      // HIER DIE ÄNDERUNG: Fester Kalender-Reset
+      expiresAt: calculateNextResetTime(category),
       completedCount: 0,
       claimedComposite: false,
       totalQuests: count,

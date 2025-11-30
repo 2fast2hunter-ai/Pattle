@@ -7,6 +7,7 @@ export default function QuestsScreen({ user, onBack }) {
     const [claimingComposite, setClaimingComposite] = useState(null); 
 
     useEffect(() => {
+        // Dies stellt sicher, dass Quests generiert werden, wenn der Timer abgelaufen ist oder das Feld fehlt
         checkAndResetQuests(user);
     }, [user]);
 
@@ -37,6 +38,10 @@ export default function QuestsScreen({ user, onBack }) {
     const [activeTab, setActiveTab] = useState('daily');
 
     const currentQuestData = categories[activeTab].data;
+    
+    // --- WICHTIGE SICHERHEITSCHECKS ---
+    const isQuestDataReady = currentQuestData && Array.isArray(currentQuestData.quests);
+    
     const timeLeft = currentQuestData ? Math.max(0, currentQuestData.expiresAt - Date.now()) : 0;
     const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
     const daysLeft = Math.floor(hoursLeft / 24);
@@ -75,7 +80,7 @@ export default function QuestsScreen({ user, onBack }) {
                 Resettet in: <span className="text-white font-bold">{daysLeft > 0 ? `${daysLeft} Tagen` : `${hoursLeft} Stunden`}</span>
             </div>
 
-            {/* NEU: COMPOSITE PROGRESS BAR */}
+            {/* COMPOSITE PROGRESS BAR */}
             {compositeReward && (
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-white/5 shadow-inner">
                     <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
@@ -102,7 +107,6 @@ export default function QuestsScreen({ user, onBack }) {
                             </button>
                         ) : (
                             <span className="text-xs text-white font-bold">
-                                {/* Formatierung des Rewards */}
                                 {compositeReward.rewardAmount} {compositeReward.rewardType.includes('EGG') ? compositeReward.rewardType.split('_')[1] + ' Ei' : compositeReward.rewardType}
                             </span>
                         )}
@@ -112,7 +116,8 @@ export default function QuestsScreen({ user, onBack }) {
 
             {/* Quest Liste */}
             <div className="flex-1 overflow-y-auto pb-20 space-y-3">
-                {!currentQuestData ? (
+                {/* HIER IST DER FIX: Prüft, ob die Daten bereit und ein Array sind */}
+                {!isQuestDataReady ? (
                     <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>
                 ) : (
                     currentQuestData.quests.map(quest => {
