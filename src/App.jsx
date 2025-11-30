@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { onAuthStateChanged } from 'firebase/auth'; // NEU: Für Auto-Login
+import { auth } from './firebase'; // NEU: Unsere Auth-Instanz
 
 // Daten & Logik
 import { RARITIES, QUEST_TYPES } from './data/gameData';
-import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity, ENERGY_REGEN_TIME_MS } from './utils/gameMechanics';
+import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity } from './utils/gameMechanics';
 // Datenbank Funktionen
 import { 
   initializeUser, listenToUser, listenToPets, listenToMarket, updateUser, 
@@ -63,6 +65,7 @@ export default function GameApp() {
   const [user, setUser] = useState(null); 
   const [userId, setUserId] = useState(null); 
   const [currentView, setCurrentView] = useState('auth'); 
+  const [authLoading, setAuthLoading] = useState(true); // NEU: Ladezustand beim Start
   
   const [myPets, setMyPets] = useState([]);
   const [marketListings, setMarketListings] = useState([]);
@@ -76,23 +79,38 @@ export default function GameApp() {
   const [lootResult, setLootResult] = useState(null); 
   const [selectedFriend, setSelectedFriend] = useState(null);
 
+  // --- AUTO LOGIN CHECK ---
+  useEffect(() => {
+    // Prüft beim Start, ob der User noch eingeloggt ist
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+        if (currentUser) {
+            // User gefunden! Wir loggen ihn direkt ein.
+            // displayName kann null sein beim Reload, das ist okay, initializeUser holt den Namen aus der DB.
+            await handleLogin(currentUser, currentUser.displayName);
+        } else {
+            // Kein User gefunden -> Login Screen
+            setAuthLoading(false);
+        }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   // --- INITIAL DATA & LISTENERS ---
   useEffect(() => {
-      // Dummy Markt Einträge (falls leer)
       if (marketListings.length === 0) {
-          const dummy1 = generatePet(10, 'FIRE', 'RARE');
-          dummy1.id = 'market_dummy_1';
-          const dummy2 = generatePet(5, 'WATER', 'UNCOMMON');
-          dummy2.id = 'market_dummy_2';
-          // Wir setzen hier nicht direkt den State, da der Listener das übernimmt, 
-          // aber für die Initialisierung könnte man hier Logik einbauen.
+          // Initiale Dummy-Werte für den Markt (nur UI Test)
+          // setMarketListings([...]); 
       }
   }, []);
 
   useEffect(() => {
     if (!userId) return;
 
-    const unsubscribeUser = listenToUser(userId, (userData) => setUser(userData));
+    const unsubscribeUser = listenToUser(userId, (userData) => {
+        setUser(userData);
+        setAuthLoading(false); // Ladebildschirm beenden sobald User-Daten da sind
+    });
     const unsubscribePets = listenToPets(userId, (petsData) => setMyPets(petsData));
     const unsubscribeMarket = listenToMarket((listingsData) => setMarketListings(listingsData));
 
@@ -113,13 +131,16 @@ export default function GameApp() {
         await initializeUser(firebaseUser, displayName);
         setUserId(firebaseUser.uid); 
         setCurrentView('menu');
+        // Hinweis: setAuthLoading(false) passiert oben im useEffect, sobald die Daten geladen sind
     } catch (error) {
         console.error("Login Fehler:", error);
         showNotification("Fehler beim Laden der Daten", "error");
+        setAuthLoading(false);
     }
   };
 
   const handleLogout = () => { 
+      auth.signOut(); // WICHTIG: Auch bei Firebase ausloggen!
       setUser(null); 
       setUserId(null); 
       setMyPets([]); 
@@ -131,9 +152,9 @@ export default function GameApp() {
     if (!user) return;
     const interval = setInterval(() => {
         const now = Date.now();
-        const msPerEnergy = ENERGY_REGEN_TIME_MS; 
+        const msPerEnergy = 1000 * 60 * 5; // 5 Minuten
         const timeDiff = now - user.lastEnergyUpdate;
-      
+        
         if (timeDiff >= msPerEnergy) {
             const energyToGain = Math.floor(timeDiff / msPerEnergy);
             const maxEn = getMaxEnergy(user.level);
@@ -260,7 +281,7 @@ export default function GameApp() {
         const pet = myPets.find(p => p.id === id);
         const duration = RARITIES[pet.rarity].hatchDuration * 1000;
         updatePetInDB(id, { hatchAt: Date.now() + duration });
-        trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1); // Track incubation start or end? Usually end, but here we track usage.
+        trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1);
         
         showNotification("Inkubation gestartet!", 'success');
         setCurrentView('hatchery');
@@ -426,6 +447,15 @@ export default function GameApp() {
   };
 
   const GameContent = () => {
+      if (authLoading) {
+          return (
+              <div className="flex flex-col h-screen bg-slate-900 text-white justify-center items-center">
+                  <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
+                  <p className="text-slate-400 font-bold animate-pulse">Lade Spieldaten...</p>
+              </div>
+          );
+      }
+
       if (!user) return <AuthScreen onLogin={handleLogin} />;
       return (
         <div className="flex flex-col h-screen bg-slate-900 font-sans text-white max-w-md mx-auto shadow-2xl overflow-hidden border-x border-slate-800 relative">
