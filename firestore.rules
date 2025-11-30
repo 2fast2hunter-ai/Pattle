@@ -1,18 +1,48 @@
-rules_version='2'
-
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // This rule allows anyone with your database reference to view, edit,
-      // and delete all data in your database. It is useful for getting
-      // started, but it is configured to expire after 30 days because it
-      // leaves your app open to attackers. At that time, all client
-      // requests to your database will be denied.
-      //
-      // Make sure to write security rules for your app before that time, or
-      // else all client requests to your database will be denied until you
-      // update your rules.
-      allow read, write: if request.time < timestamp.date(2025, 12, 30);
+
+    // Hilfsfunktion: Prüft, ob der Nutzer eingeloggt ist
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Hilfsfunktion: Prüft, ob dem Nutzer das Dokument gehört
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // --- REGELN ---
+
+    // USERS: Jeder darf lesen (für Bestenliste/Freunde), aber nur der Besitzer darf schreiben
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update, delete: if isSignedIn() && isOwner(userId);
+    }
+
+    // PETS: Jeder darf lesen (um z.B. Pets anderer zu sehen), aber nur Besitzer darf ändern/löschen
+    match /pets/{petId} {
+      allow read: if isSignedIn();
+      
+      // Erstellen nur erlaubt, wenn man sich selbst als Besitzer einträgt
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      
+      // Update/Löschen nur erlaubt, wenn man der Besitzer IST
+      allow update, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+    }
+
+    // MARKET: Jeder darf lesen. Erstellen darf nur der Verkäufer.
+    match /market/{listingId} {
+      allow read: if isSignedIn();
+      
+      // Nur erstellen, wenn man seine eigene ID als 'sellerId' angibt
+      allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
+      
+      // WICHTIG: Löschen erlauben wir allen eingeloggten Nutzern.
+      // Grund: Wenn jemand ein Pet kauft, muss er das Listing löschen können (Client-Side Logic).
+      // Für maximale Sicherheit bräuchte man hier später Cloud Functions.
+      allow delete: if isSignedIn();
     }
   }
 }

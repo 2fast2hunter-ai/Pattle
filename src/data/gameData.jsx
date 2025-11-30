@@ -90,17 +90,80 @@ export const TYPE_ADVANTAGES = {
 };
 
 export const ABILITIES = {
-  fireball:  { name: 'Feuerball',      element: 'FIRE',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Schießt einen mächtigen Feuerball (150% AP)' },
-  heal:      { name: 'Erholung',       element: 'NATURE',   dmgScale: 0,   type: 'HEAL',     cd: 4, desc: 'Heilt sich selbst um 120% AP' },
-  smash:     { name: 'Erdschlag',      element: 'EARTH',    dmgScale: 1.2, type: 'PHYSICAL', cd: 2, desc: 'Ein schwerer Schlag (120% AD)' },
-  aqua:      { name: 'Wasserstrahl',   element: 'WATER',    dmgScale: 1.3, type: 'MAGIC',    cd: 3, desc: 'Magischer Wasserstrahl (130% AP)' },
-  bite:      { name: 'Knirscher',      element: 'DARK',     dmgScale: 1.4, type: 'PHYSICAL', cd: 3, desc: 'Starker Biss (140% AD)' },
-  voidblast: { name: 'Leereblick',     element: 'VOID',     dmgScale: 2.0, type: 'MAGIC',    cd: 5, desc: 'Schaden aus der Leere (200% AP)' },
-  timewarp:  { name: 'Zeitsprung',     element: 'TIME',     dmgScale: 1.6, type: 'MAGIC',    cd: 4, desc: 'Verwirrt durch Zeit (160% AP)' },
-  laser:     { name: 'Laserstrahl',    element: 'TECH',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Cybernetischer Laser (150% AP)' },
-  thundershock:{ name: 'Donnerschock', element: 'ELECTRIC', dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Elektrischer Schlag (140% AP)' },
-  gust:      { name: 'Windstoß',       element: 'WIND',     dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Schneller Windangriff (130% AP)' },
-  punch:     { name: 'Karatehieb',     element: 'FIGHTING', dmgScale: 1.5, type: 'PHYSICAL', cd: 2, desc: 'Gezielter Schlag (150% AD)' },
+  // ELEMENT: FIRE
+  fireball:     { name: 'Feuerball',      element: 'FIRE',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Schießt einen mächtigen Feuerball (150% AP)' },
+  
+  // ELEMENT: WATER
+  aqua:         { name: 'Wasserstrahl',   element: 'WATER',    dmgScale: 1.3, type: 'MAGIC',    cd: 3, desc: 'Magischer Wasserstrahl (130% AP)' },
+  
+  // ELEMENT: NATURE (Ersetzt Heal durch Schaden, damit der Kampf immer funktioniert)
+  thorns:       { name: 'Dornenranke',    element: 'NATURE',   dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Schlingpflanzen greifen an (140% AP)' },
+  
+  // ELEMENT: WIND
+  gust:         { name: 'Windstoß',       element: 'WIND',     dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Schneller Windangriff (130% AP)' },
+  
+  // ELEMENT: EARTH
+  smash:        { name: 'Erdschlag',      element: 'EARTH',    dmgScale: 1.2, type: 'PHYSICAL', cd: 2, desc: 'Ein schwerer Schlag (120% AD)' },
+  
+  // ELEMENT: ICE
+  icicle:       { name: 'Eissplitter',    element: 'ICE',      dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Scharfe Eiskristalle (140% AP)' },
+  
+  // ELEMENT: ELECTRIC
+  thundershock: { name: 'Donnerschock',   element: 'ELECTRIC', dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Elektrischer Schlag (140% AP)' },
+  
+  // ELEMENT: LIGHT
+  solarbeam:    { name: 'Solarstrahl',    element: 'LIGHT',    dmgScale: 1.8, type: 'MAGIC',    cd: 4, desc: 'Gebündeltes Licht (180% AP)' },
+  
+  // ELEMENT: DARK
+  bite:         { name: 'Knirscher',      element: 'DARK',     dmgScale: 1.4, type: 'PHYSICAL', cd: 3, desc: 'Starker Biss aus dem Schatten (140% AD)' },
+  
+  // ELEMENT: GHOST
+  shadowball:   { name: 'Spukball',       element: 'GHOST',    dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Geisterhafte Energie (150% AP)' },
+  
+  // ELEMENT: MAGIC
+  arcanepulse:  { name: 'Arkaner Puls',   element: 'MAGIC',    dmgScale: 1.6, type: 'MAGIC',    cd: 4, desc: 'Reine Magie-Energie (160% AP)' },
+  
+  // ELEMENT: PSYCHIC
+  psybeam:      { name: 'Psi-Welle',      element: 'PSYCHIC',  dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Mentale Attacke (150% AP)' },
+  
+  // ELEMENT: FIGHTING
+  punch:        { name: 'Karatehieb',     element: 'FIGHTING', dmgScale: 1.5, type: 'PHYSICAL', cd: 2, desc: 'Gezielter Kampfsport-Hieb (150% AD)' },
+  
+  // ELEMENT: METAL
+  ironhead:     { name: 'Eisenschädel',   element: 'METAL',    dmgScale: 1.3, type: 'PHYSICAL', cd: 3, desc: 'Harter Kopfstoß (130% AD)' },
+  
+  // ELEMENT: ROCK
+  rockslide:    { name: 'Steinhagel',     element: 'ROCK',     dmgScale: 1.4, type: 'PHYSICAL', cd: 3, desc: 'Felsbrocken fallen herab (140% AD)' },
+  
+  // ELEMENT: POISON
+  sludge:       { name: 'Matschbombe',    element: 'POISON',   dmgScale: 1.3, type: 'MAGIC',    cd: 3, desc: 'Giftiger Schlamm (130% AP)' },
+  
+  // ELEMENT: DRAGON
+  dragonbreath: { name: 'Drachenodem',    element: 'DRAGON',   dmgScale: 1.7, type: 'MAGIC',    cd: 4, desc: 'Mystisches Drachenfeuer (170% AP)' },
+  
+  // ELEMENT: FAIRY
+  moonblast:    { name: 'Mondgewalt',     element: 'FAIRY',    dmgScale: 1.6, type: 'MAGIC',    cd: 3, desc: 'Kraft des Mondes (160% AP)' },
+  
+  // ELEMENT: TECH
+  laser:        { name: 'Laserstrahl',    element: 'TECH',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Cybernetischer Laser (150% AP)' },
+  
+  // ELEMENT: SOUND
+  sonicboom:    { name: 'Schallmauer',    element: 'SOUND',    dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Durchbricht die Schallmauer (130% AP)' },
+  
+  // ELEMENT: TIME
+  timewarp:     { name: 'Zeitsprung',     element: 'TIME',     dmgScale: 1.6, type: 'MAGIC',    cd: 4, desc: 'Verwirrt durch Zeitrisse (160% AP)' },
+  
+  // ELEMENT: SPACE
+  meteorshower: { name: 'Meteorfall',     element: 'SPACE',    dmgScale: 1.8, type: 'MAGIC',    cd: 5, desc: 'Objekte aus dem All (180% AP)' },
+  
+  // ELEMENT: VOID
+  voidblast:    { name: 'Leereblick',     element: 'VOID',     dmgScale: 2.0, type: 'MAGIC',    cd: 5, desc: 'Schaden aus der Leere (200% AP)' },
+  
+  // ELEMENT: CHAOS
+  chaosstrike:  { name: 'Chaosklinge',    element: 'CHAOS',    dmgScale: 1.7, type: 'PHYSICAL', cd: 4, desc: 'Unberechenbarer Angriff (170% AD)' },
+  
+  // ELEMENT: ORDER
+  judgement:    { name: 'Urteilsspruch',  element: 'ORDER',    dmgScale: 1.7, type: 'MAGIC',    cd: 4, desc: 'Göttliche Ordnung (170% AP)' },
 };
 
 // src/data/gameData.jsx (Füge das am Ende hinzu)

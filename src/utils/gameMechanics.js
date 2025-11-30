@@ -58,8 +58,30 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       return Math.max(1, Math.floor(raw + (Math.random() * raw * 0.2))); 
   };
 
-  const abilityKeys = Object.keys(ABILITIES);
-  const abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
+  // --- NEUE LOGIK FÜR FÄHIGKEITEN ---
+  let abilityKey;
+
+  if (source === 'BREEDING') {
+      // Zucht: Zufällige Fähigkeit (oder vererbt, wie vorher implementiert)
+      const abilityKeys = Object.keys(ABILITIES);
+      abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
+  } else {
+      // Shop/Starter/Box: Fähigkeit muss zum Typ passen
+      const matchingAbilities = Object.keys(ABILITIES).filter(
+          key => ABILITIES[key].element === type
+      );
+
+      if (matchingAbilities.length > 0) {
+          // Wähle eine der passenden Fähigkeiten
+          abilityKey = matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)];
+      } else {
+          // FALLBACK: Wenn es für diesen Typ (z.B. Eis) noch keine Fähigkeit gibt,
+          // nehmen wir eine zufällige, damit das Spiel nicht abstürzt.
+          const abilityKeys = Object.keys(ABILITIES);
+          abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
+      }
+  }
+  // ----------------------------------
 
   const prefixes = { 
     FIRE: 'Pyro', WATER: 'Aqua', NATURE: 'Terra', WIND: 'Aero', EARTH: 'Geo',
@@ -123,7 +145,6 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
     price: 0 
   };
 };
-
 export const getUnlockedTeamSlots = (level) => Math.min(10, 1 + Math.floor(level / 10));
 
 export const getUnlockedHatcherySlots = (level) => {
