@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Daten & Logik
-import { RARITIES } from './data/gameData';
+import { RARITIES, QUEST_TYPES } from './data/gameData';
 import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity } from './utils/gameMechanics';
-// NEU: Datenbank Funktionen importieren
-import { initializeUser, listenToUser, listenToPets, listenToMarket, updateUser, addPetToDB, updatePetInDB, createMarketListing, deleteMarketListing, removePetFromDB, findUserPublic } from './utils/db';
+// Datenbank Funktionen
+import { 
+  initializeUser, listenToUser, listenToPets, listenToMarket, updateUser, 
+  addPetToDB, updatePetInDB, createMarketListing, deleteMarketListing, 
+  removePetFromDB, findUserPublic, trackQuestProgress 
+} from './utils/db';
 
 // Components
 import { HeaderHUD, BottomNav } from './components/GameLayout';
@@ -29,12 +33,9 @@ import BattleScreen from './screens/BattleScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
+import QuestsScreen from './screens/QuestsScreen';
 
-import QuestsScreen from './screens/QuestsScreen'; // NEU
-import { trackQuestProgress } from './utils/db'; // NEU
-import { QUEST_TYPES } from './data/gameData'; // NEU
-
-// Error Boundary
+// Error Boundary für Absturzsicherheit
 class ErrorBoundary extends React.Component {
     constructor(props) {
       super(props);
@@ -60,10 +61,9 @@ class ErrorBoundary extends React.Component {
 // MAIN APP
 export default function GameApp() {
   const [user, setUser] = useState(null); 
-  const [userId, setUserId] = useState(null); // Wir merken uns nur die ID, Daten kommen live aus DB
+  const [userId, setUserId] = useState(null); 
   const [currentView, setCurrentView] = useState('auth'); 
   
-  // Diese States werden jetzt AUTOMATISCH durch die Datenbank gefüllt
   const [myPets, setMyPets] = useState([]);
   const [marketListings, setMarketListings] = useState([]);
   
@@ -76,27 +76,27 @@ export default function GameApp() {
   const [lootResult, setLootResult] = useState(null); 
   const [selectedFriend, setSelectedFriend] = useState(null);
 
-  // --- DATENBANK VERBINDUNGEN (LISTENERS) ---
+  // --- INITIAL DATA & LISTENERS ---
+  useEffect(() => {
+      // Dummy Markt Einträge (falls leer)
+      if (marketListings.length === 0) {
+          const dummy1 = generatePet(10, 'FIRE', 'RARE');
+          dummy1.id = 'market_dummy_1';
+          const dummy2 = generatePet(5, 'WATER', 'UNCOMMON');
+          dummy2.id = 'market_dummy_2';
+          // Wir setzen hier nicht direkt den State, da der Listener das übernimmt, 
+          // aber für die Initialisierung könnte man hier Logik einbauen.
+      }
+  }, []);
+
   useEffect(() => {
     if (!userId) return;
 
-    // 1. User Daten live hören
-    const unsubscribeUser = listenToUser(userId, (userData) => {
-        setUser(userData);
-    });
-
-    // 2. Pets live hören
-    const unsubscribePets = listenToPets(userId, (petsData) => {
-        setMyPets(petsData);
-    });
-
-    // 3. Markt live hören
-    const unsubscribeMarket = listenToMarket((listingsData) => {
-        setMarketListings(listingsData);
-    });
+    const unsubscribeUser = listenToUser(userId, (userData) => setUser(userData));
+    const unsubscribePets = listenToPets(userId, (petsData) => setMyPets(petsData));
+    const unsubscribeMarket = listenToMarket((listingsData) => setMarketListings(listingsData));
 
     return () => {
-        // Aufräumen wenn ausgeloggt wird
         unsubscribeUser();
         unsubscribePets();
         unsubscribeMarket();
@@ -110,9 +110,8 @@ export default function GameApp() {
 
   const handleLogin = async (firebaseUser, displayName) => {
     try {
-        // Initialisiert den User in der Datenbank (oder lädt ihn)
         await initializeUser(firebaseUser, displayName);
-        setUserId(firebaseUser.uid); // Startet die Listener oben
+        setUserId(firebaseUser.uid); 
         setCurrentView('menu');
     } catch (error) {
         console.error("Login Fehler:", error);
@@ -127,12 +126,12 @@ export default function GameApp() {
       setCurrentView('auth'); 
   };
 
-  // ENERGY REGENERATION (Speichert jetzt in DB)
+  // ENERGY REGENERATION
   useEffect(() => {
     if (!user) return;
     const interval = setInterval(() => {
         const now = Date.now();
-        const msPerEnergy = 1000 * 60 * 60; // 1 Hour
+        const msPerEnergy = 1000 * 60 * 60; 
         const timeDiff = now - user.lastEnergyUpdate;
         
         if (timeDiff >= msPerEnergy) {
@@ -142,7 +141,6 @@ export default function GameApp() {
             if (user.energy < maxEn) {
                  const newEnergy = Math.min(maxEn, user.energy + energyToGain);
                  const newLastUpdate = user.lastEnergyUpdate + (energyToGain * msPerEnergy);
-                 // UPDATE DB
                  updateUser(user.id, { energy: newEnergy, lastEnergyUpdate: newLastUpdate });
             } else { 
                  updateUser(user.id, { lastEnergyUpdate: now });
@@ -152,31 +150,20 @@ export default function GameApp() {
     return () => clearInterval(interval);
   }, [user]);
 
-  // --- ACTIONS (Jetzt mit Datenbank Updates) ---
+  // --- ACTIONS ---
 
- const handleAddFriend = async (friendId) => {
+  const handleAddFriend = async (friendId) => {
       if (!friendId) return;
       if (friendId === user.id) { showNotification("Nicht selbst hinzufügen.", 'error'); return; }
       if (user.friends && user.friends.find(f => f.id === friendId)) { showNotification("Bereits befreundet.", 'error'); return; }
       
-      // Echte DB Suche
-      const foundUser = await findUserPublic(friendId); 
-      
+      const foundUser = await findUserPublic(friendId);
       if (foundUser) {
-          // Wir speichern nur die nötigsten Daten des Freundes
-          const friendDataLite = {
-              id: foundUser.id,
-              username: foundUser.username,
-              avatar: foundUser.avatar,
-              level: foundUser.level,
-              rating: foundUser.rating
-          };
-          
-          const newFriends = [...(user.friends || []), friendDataLite];
+          const newFriends = [...(user.friends || []), { id: foundUser.id, username: foundUser.username, avatar: foundUser.avatar, level: foundUser.level, rating: foundUser.rating }];
           updateUser(user.id, { friends: newFriends });
           showNotification(`${foundUser.username} hinzugefügt!`, 'success');
       } else { 
-          showNotification("Spieler-ID nicht gefunden.", 'error'); 
+          showNotification("Spieler nicht gefunden.", 'error'); 
       }
   };
 
@@ -185,21 +172,15 @@ export default function GameApp() {
       if (!listing) return;
       if (user.coins < listing.price) { showNotification("Nicht genug Münzen!", 'error'); return; }
 
-      // 1. Geld abziehen
       await updateUser(user.id, { 
           coins: user.coins - listing.price, 
           stats: { ...user.stats, marketSpent: user.stats.marketSpent + listing.price } 
       });
+      trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, listing.price);
 
-      // 2. Pet dem Käufer geben (Owner ID ändern & neue ID geben um Konflikte zu vermeiden oder einfach ID behalten)
-      // Wir behalten das Pet Objekt, ändern aber ownerId und generieren neue ID für Sicherheit
       const newPet = { ...listing.pet, id: Date.now().toString(), ownerId: user.id };
       await addPetToDB(newPet, user.id);
-
-      // 3. Listing löschen
       await deleteMarketListing(listingId);
-
-      trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, listing.price)
 
       showNotification(`Erfolgreich gekauft: ${newPet.name}`, 'success');
   };
@@ -207,14 +188,9 @@ export default function GameApp() {
   const handleSellMarket = async (petId, price) => {
       const pet = myPets.find(p => p.id === petId);
       if (!pet) return;
-
-      // 1. Listing erstellen
       const newListing = { sellerName: user.username, sellerId: user.id, price: price, pet: pet, createdAt: Date.now() };
       await createMarketListing(newListing);
-
-      // 2. Pet aus Inventar entfernen (löschen aus DB)
       await removePetFromDB(petId);
-      
       showNotification("Angebot erstellt!", 'success');
   };
 
@@ -224,16 +200,13 @@ export default function GameApp() {
     if (pet && pet.isEgg) { showNotification("Eier können nicht kämpfen!", 'error'); return; }
     
     const newTeam = [...(user.team || [])];
-    // Array auffüllen falls zu kurz
     while(newTeam.length <= selectedSlotForTeam) { newTeam.push(null); }
     
-    // Altes Pet entfernen falls vorhanden
     const existingIndex = newTeam.indexOf(petId);
     if (existingIndex !== -1) { newTeam[existingIndex] = null; }
     
     newTeam[selectedSlotForTeam] = petId;
-    
-    updateUser(user.id, { team: newTeam }); // DB Update
+    updateUser(user.id, { team: newTeam });
     setCurrentView('team-edit');
     setSelectedSlotForTeam(null);
   };
@@ -241,7 +214,7 @@ export default function GameApp() {
   const removeFromTeam = (index) => {
     const newTeam = [...user.team];
     newTeam[index] = null;
-    updateUser(user.id, { team: newTeam }); // DB Update
+    updateUser(user.id, { team: newTeam });
   };
 
   const hatchEgg = (petId, customName) => {
@@ -251,7 +224,6 @@ export default function GameApp() {
     
     updatePetInDB(petId, { isEgg: false, name: customName || pet.name });
     updateUser(user.id, { stats: { ...user.stats, hatched: user.stats.hatched + 1 } });
-    
     trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1);
     
     showNotification(`Geschlüpft: ${customName || pet.name}!`, 'success');
@@ -262,18 +234,24 @@ export default function GameApp() {
         const box = user.inventory.find(i => i.id === id);
         if (!box) return;
         
-        // Box entfernen
         const newInv = user.inventory.filter(i => i.id !== id);
-        updateUser(user.id, { inventory: newInv });
-
-        // Pet generieren & speichern
         const rarityKey = determineRarity(box.variant);
-        const newEgg = generatePet(1, null, rarityKey, null, 'SHOP');
-        newEgg.isEgg = true;
-        newEgg.hatchAt = 0; 
-        addPetToDB(newEgg, user.id);
+        const isStarter = box.variant === 'STARTER';
+
+        const newPet = generatePet(1, null, rarityKey, null, isStarter ? 'STARTER' : 'SHOP');
+        newPet.isEgg = !isStarter; 
+        newPet.hatchAt = 0; 
         
-        setLootResult(newEgg);
+        addPetToDB(newPet, user.id);
+
+        if (isStarter) {
+            updateUser(user.id, { inventory: newInv, team: [newPet.id] });
+            showNotification("Dein erstes Pet ist bereit!", "success");
+        } else {
+            updateUser(user.id, { inventory: newInv });
+        }
+        
+        setLootResult(newPet);
     } else {
         const incubatingEggs = myPets.filter(p => p.isEgg && p.hatchAt > 0).length;
         const maxSlots = getUnlockedHatcherySlots(user.level);
@@ -282,6 +260,7 @@ export default function GameApp() {
         const pet = myPets.find(p => p.id === id);
         const duration = RARITIES[pet.rarity].hatchDuration * 1000;
         updatePetInDB(id, { hatchAt: Date.now() + duration });
+        trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1); // Track incubation start or end? Usually end, but here we track usage.
         
         showNotification("Inkubation gestartet!", 'success');
         setCurrentView('hatchery');
@@ -291,12 +270,9 @@ export default function GameApp() {
   const breedPets = async (parent1Id, parent2Id) => {
     if (user.coins < 200) { showNotification("Nicht genug Münzen!", 'error'); return; }
     
-    // ... (Zucht Logik bleibt größtenteils gleich, nur am Ende DB Calls) ...
-    // Ich kürze die Logik hier etwas ab, da sie identisch zu gameMechanics ist, nur das Speichern ändert sich
     const p1 = myPets.find(p => p.id === parent1Id);
     const p2 = myPets.find(p => p.id === parent2Id);
     
-    // --- Breeding Logic Copy ---
     const parentTypes = [p1.type];
     if (p1.secondaryType) parentTypes.push(p1.secondaryType);
     if (!parentTypes.includes(p2.type)) parentTypes.push(p2.type);
@@ -329,16 +305,14 @@ export default function GameApp() {
     finalPet.name = "Zucht " + finalPet.name; 
     finalPet.isEgg = true; 
     finalPet.hatchAt = 0; 
-    // --- End Logic ---
 
     await addPetToDB(finalPet, user.id);
     await updateUser(user.id, { 
         coins: user.coins - 200, 
         stats: { ...user.stats, bred: user.stats.bred + 1 }
     });
-    
     trackQuestProgress(user, QUEST_TYPES.BREED_PET, 1);
-    trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 200); // Zucht kostet 200
+    trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 200);
     
     showNotification(`Zucht erfolgreich!`, 'success');
     setCurrentView('item-inventory'); 
@@ -349,13 +323,12 @@ export default function GameApp() {
           if (user.coins < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
           const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
           updateUser(user.id, { coins: user.coins - cost, inventory: newInv });
+          trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost);
       } else {
           if (user.gems < cost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
           const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
           updateUser(user.id, { gems: user.gems - cost, inventory: newInv });
       }
-      if (currency === 'COINS') trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost);
-
       showNotification(`${boxType} Box gekauft!`, 'success');
   };
 
@@ -367,7 +340,6 @@ export default function GameApp() {
     updateUser(user.id, { energy: user.energy - 1 });
     
     const myBattleTeam = validTeamIds.map(id => { const p = myPets.find(pet => pet.id === id); return { ...p, currentCd: 0, hp: p.maxHp }; });
-    // Dummy Enemy Generation (wie vorher)
     const enemyBattleTeam = [];
     const avgLevel = Math.floor(myBattleTeam.reduce((acc, p) => acc + p.level, 0) / myBattleTeam.length);
     for (let i = 0; i < myBattleTeam.length; i++) { const enemyLevel = Math.max(1, avgLevel + Math.floor(Math.random() * 3) - 1); const enemyPet = generatePet(enemyLevel); enemyPet.id = `enemy_${i}`; enemyPet.name = 'Feindl. ' + enemyPet.name; enemyBattleTeam.push({ ...enemyPet, currentCd: 0 }); }
@@ -378,7 +350,6 @@ export default function GameApp() {
   };
 
   const handleWin = async (reward, winningTeamIds, enemyRating = 1200) => {
-    // Lokale Berechnung für UI (Datenbank Update folgt)
     const eloChange = calculateEloChange(user.rating, enemyRating, true);
     
     let newLevel = user.level;
@@ -408,15 +379,10 @@ export default function GameApp() {
         energy: newEnergy,
         stats: { ...user.stats, pvpWins: user.stats.pvpWins + 1, pvpTotal: user.stats.pvpTotal + 1 }
     });
-    
+
     trackQuestProgress(user, QUEST_TYPES.WIN_PVP, 1);
     trackQuestProgress(user, QUEST_TYPES.EARN_XP, reward.xp);
-    trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 0); // Nur placeholder, hier verdienen wir ja
-    
-    // XP für Pets
-    // (Hier müsste man eigentlich jedes Pet einzeln updaten, das ist komplexer in Firestore. 
-    // Wir machen es einfach: Wir updaten nur, wenn sie leveln, oder speichern Pet-XP in DB.
-    // Für dieses Beispiel speichern wir Pet-XP direkt.)
+
     const idsToLevel = winningTeamIds || (activeBattle ? activeBattle.myTeam.map(p => p.id) : []);
     
     idsToLevel.forEach(petId => {
@@ -431,8 +397,6 @@ export default function GameApp() {
                 pLevel++;
                 pXp -= pMaxXp;
                 pMaxXp = Math.floor(pMaxXp * 1.2);
-                
-                // Stats erhöhen
                 const r = RARITIES[pet.rarity].multi;
                 const gf = 1 + (0.05 * r);
                 changes = {
@@ -471,6 +435,7 @@ export default function GameApp() {
               <span className="font-bold text-sm shadow-black drop-shadow-md">{notification.message}</span>
             </div>
           )}
+          
           {lootResult && <LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
           {showLevelUpModal && (<LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />)}
           
@@ -478,10 +443,11 @@ export default function GameApp() {
           <main className="flex-1 relative overflow-hidden bg-slate-900">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
             <div className="h-full overflow-y-auto p-4 scrollbar-hide">
-              {currentView === 'menu' && (<MainMenu user={user} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onQuests={() => setCurrentView('quests')} />)}
+              {currentView === 'menu' && (<MainMenu user={user} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} />)}
               {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} />}
               {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} myPets={myPets} />}
               {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
+              {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
               {currentView === 'arena-hub' && (<ArenaHub onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')}/>)}
               {currentView === 'pet-hub' && (<PetHub onBack={() => setCurrentView('menu')} onInventory={() => setCurrentView('inventory')} onItemInventory={() => setCurrentView('item-inventory')} onBreed={() => setCurrentView('breeding')} onHatchery={() => setCurrentView('hatchery')}/>)}
               {currentView === 'hatchery' && (<HatcheryScreen pets={myPets} user={user} onBack={() => setCurrentView('pet-hub')} onHatchEgg={hatchEgg}/>)}
@@ -495,7 +461,6 @@ export default function GameApp() {
               {currentView === 'profile' && <ProfileScreen user={user} petCount={myPets.length} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={(id) => { handleAddFriend(id); }} />}
               {currentView === 'friend-profile' && selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('profile')} />}
               {currentView === 'settings' && (<SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout} />)}
-              {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
             </div>
           </main>
           <BottomNav currentView={currentView} setCurrentView={setCurrentView} />

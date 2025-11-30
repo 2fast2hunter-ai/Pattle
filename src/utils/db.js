@@ -11,22 +11,16 @@ import { generatePet, generateQuests } from './gameMechanics';
 // --- USER MANAGEMENT ---
 
 // Prüft, ob User existiert. Wenn nicht, wird er mit Starter-Pets erstellt.
+// Prüft, ob User existiert. Wenn nicht, wird er erstellt (mit Starter Box).
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
-    return userSnap.data(); // User existiert bereits
+    return userSnap.data(); 
   } else {
-    // Neuer User: Wir erstellen ihn + Starter Pets
-    const starter1 = generatePet(1, null, 'COMMON');
-    const starter2 = generatePet(1, null, 'UNCOMMON');
+    // Neuer User: Wir geben ihm eine STARTER BOX ins Inventar (keine Pets)
     
-    // Pets in die 'pets' Collection speichern
-    await setDoc(doc(db, "pets", starter1.id), { ...starter1, ownerId: firebaseUser.uid });
-    await setDoc(doc(db, "pets", starter2.id), { ...starter2, ownerId: firebaseUser.uid });
-
-    // User Dokument erstellen
     const newUserData = {
       id: firebaseUser.uid,
       username: username,
@@ -39,8 +33,8 @@ export const initializeUser = async (firebaseUser, username) => {
       rating: 1000,
       energy: 10,
       lastEnergyUpdate: Date.now(),
-      team: [starter1.id], // Wir speichern nur die IDs im Team
-      inventory: [],
+      team: [], // Noch kein Team!
+      inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], // <--- Die Starter Box
       friends: [],
       stats: { pvpWins: 0, pvpTotal: 0, hatched: 0, bred: 0, marketSpent: 0, marketEarned: 0 }
     };
