@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, CheckCircle2, Gift, Play } from 'lucide-react';
-import { claimQuestReward, checkAndResetQuests } from '../utils/db';
+import { ArrowLeft, Clock, CheckCircle2, Gift, Play, Loader2 } from 'lucide-react';
+import { claimQuestReward, checkAndResetQuests, claimCompositeReward } from '../utils/db';
 
 export default function QuestsScreen({ user, onBack }) {
-    const [activeTab, setActiveTab] = useState('daily');
-    const [claiming, setClaiming] = useState(null);
+    const [claiming, setClaiming] = useState(null); 
+    const [claimingComposite, setClaimingComposite] = useState(null); 
 
-    // Beim Laden prüfen, ob neue Quests generiert werden müssen
     useEffect(() => {
         checkAndResetQuests(user);
     }, [user]);
@@ -15,10 +14,19 @@ export default function QuestsScreen({ user, onBack }) {
         setClaiming(questId);
         const msg = await claimQuestReward(user, activeTab, questId);
         if (msg) {
-            alert("Belohnung: " + msg); // Einfaches Feedback, besser wäre showNotification
+            alert("Belohnung: " + msg); 
         }
         setClaiming(null);
     };
+
+    const handleClaimComposite = async (catKey) => {
+        setClaimingComposite(catKey);
+        const msg = await claimCompositeReward(user, catKey);
+        if (msg) {
+            alert(msg); 
+        }
+        setClaimingComposite(null);
+    }
 
     const categories = {
         daily: { label: 'Täglich', data: user?.quests?.daily },
@@ -26,10 +34,20 @@ export default function QuestsScreen({ user, onBack }) {
         monthly: { label: 'Monatlich', data: user?.quests?.monthly },
     };
 
+    const [activeTab, setActiveTab] = useState('daily');
+
     const currentQuestData = categories[activeTab].data;
     const timeLeft = currentQuestData ? Math.max(0, currentQuestData.expiresAt - Date.now()) : 0;
     const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
     const daysLeft = Math.floor(hoursLeft / 24);
+    
+    // Composite Reward Calculation
+    const totalQuests = currentQuestData?.totalQuests || 5; 
+    const completedCount = currentQuestData?.completedCount || 0;
+    const claimedComposite = currentQuestData?.claimedComposite || false;
+    const progressPercent = (completedCount / totalQuests) * 100;
+    const isCompositeReady = completedCount === totalQuests && !claimedComposite;
+    const compositeReward = currentQuestData?.reward;
 
     return (
         <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-right duration-300 h-full flex flex-col">
@@ -57,10 +75,45 @@ export default function QuestsScreen({ user, onBack }) {
                 Resettet in: <span className="text-white font-bold">{daysLeft > 0 ? `${daysLeft} Tagen` : `${hoursLeft} Stunden`}</span>
             </div>
 
+            {/* NEU: COMPOSITE PROGRESS BAR */}
+            {compositeReward && (
+                <div className="bg-slate-700/50 p-4 rounded-xl border border-white/5 shadow-inner">
+                    <h3 className="text-sm font-bold text-white mb-2 flex items-center gap-2">
+                        {compositeReward.label} 
+                        <Gift className="w-4 h-4 text-pink-400" />
+                    </h3>
+                    <div className="w-full bg-slate-900 h-3 rounded-full overflow-hidden mb-3">
+                        <div className={`h-full transition-all duration-500 ${isCompositeReady ? 'bg-yellow-500' : 'bg-indigo-500'}`} style={{width: `${progressPercent}%`}}></div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs text-slate-400">{completedCount} / {totalQuests} Aufgaben erledigt</span>
+                        
+                        {claimedComposite ? (
+                            <span className="text-xs text-green-400 font-bold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" /> Abgeholt
+                            </span>
+                        ) : isCompositeReady ? (
+                            <button
+                                onClick={() => handleClaimComposite(activeTab)}
+                                disabled={claimingComposite === activeTab}
+                                className="bg-yellow-500 text-black text-xs font-black px-3 py-1 rounded-full active:scale-95 transition-transform"
+                            >
+                                {claimingComposite === activeTab ? <Loader2 className="w-4 h-4 animate-spin text-black" /> : "Bonus abholen"}
+                            </button>
+                        ) : (
+                            <span className="text-xs text-white font-bold">
+                                {/* Formatierung des Rewards */}
+                                {compositeReward.rewardAmount} {compositeReward.rewardType.includes('EGG') ? compositeReward.rewardType.split('_')[1] + ' Ei' : compositeReward.rewardType}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            )}
+
             {/* Quest Liste */}
             <div className="flex-1 overflow-y-auto pb-20 space-y-3">
                 {!currentQuestData ? (
-                    <div className="text-center text-slate-500 mt-10">Lade Aufgaben...</div>
+                    <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>
                 ) : (
                     currentQuestData.quests.map(quest => {
                         const isComplete = quest.progress >= quest.target;
@@ -103,7 +156,7 @@ export default function QuestsScreen({ user, onBack }) {
                                         disabled={claiming === quest.id}
                                         className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2 animate-bounce shadow-lg shadow-green-900/20"
                                     >
-                                        <Gift className="w-4 h-4" /> Belohnung abholen
+                                        {claiming === quest.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <> <Gift className="w-4 h-4" /> Belohnung abholen </>}
                                     </button>
                                 ) : (
                                     <div className="w-full bg-slate-700/30 text-slate-500 font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-2 cursor-default">

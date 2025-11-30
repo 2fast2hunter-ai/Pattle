@@ -168,6 +168,10 @@ export const ABILITIES = {
 
 // src/data/gameData.jsx (Füge das am Ende hinzu)
 
+// src/data/gameData.jsx (Am Ende der Datei einfügen)
+
+// --- Quest Konstanten (Füge dies am Ende der Datei hinzu oder ersetze die alten Blöcke) ---
+
 export const QUEST_TYPES = {
   WIN_PVP: 'WIN_PVP',
   HATCH_EGG: 'HATCH_EGG',
@@ -176,12 +180,21 @@ export const QUEST_TYPES = {
   EARN_XP: 'EARN_XP'
 };
 
-// Vorlagen für Aufgaben. "difficulty" bestimmt die Skalierung.
-// range: [min, max] für die Menge
+// Vorlagen für Aufgaben (Einzelbelohnungen bringen jetzt NUR XP)
 export const QUEST_TEMPLATES = [
-  { type: QUEST_TYPES.WIN_PVP,     label: "Gewinne Kämpfe",           baseAmount: 1,  rewardType: 'COINS', rewardBase: 100 },
-  { type: QUEST_TYPES.HATCH_EGG,   label: "Brüte Eier aus",           baseAmount: 1,  rewardType: 'GEMS',  rewardBase: 5 },
-  { type: QUEST_TYPES.BREED_PET,   label: "Züchte neue Pets",         baseAmount: 1,  rewardType: 'COINS', rewardBase: 500 },
-  { type: QUEST_TYPES.SPEND_COINS, label: "Gib Münzen aus",           baseAmount: 500,rewardType: 'XP',    rewardBase: 50 },
-  { type: QUEST_TYPES.EARN_XP,     label: "Sammle Erfahrungspunkte",  baseAmount: 100,rewardType: 'COINS', rewardBase: 50 },
+  // HOHER WERT (Kernaktivitäten)
+  { type: QUEST_TYPES.WIN_PVP,     label: "Gewinne Kämpfe",           baseAmount: 1,  rewardType: 'XP', rewardBase: 100 },    
+  { type: QUEST_TYPES.HATCH_EGG,   label: "Brüte Eier aus",           baseAmount: 1,  rewardType: 'XP',  rewardBase: 150 },   
+  { type: QUEST_TYPES.BREED_PET,   label: "Züchte neue Pets",         baseAmount: 1,  rewardType: 'XP', rewardBase: 200 },    
+  
+  // NIEDRIGER WERT (Einfache Aktivitäten)
+  { type: QUEST_TYPES.SPEND_COINS, label: "Gib Münzen aus",           baseAmount: 500,rewardType: 'XP',    rewardBase: 50 },    
+  { type: QUEST_TYPES.EARN_XP,     label: "Sammle Erfahrungspunkte",  baseAmount: 100,rewardType: 'XP', rewardBase: 75 },    
 ];
+
+// Belohnungen für das Abschließen des Gesamtbalkens (Bleiben unverändert)
+export const COMPOSITE_QUEST_REWARDS = {
+    DAILY: { rewardType: 'GEMS', rewardAmount: 5, label: "Tages-Bonus" },
+    WEEKLY: { rewardType: 'EGG_EPIC', rewardAmount: 1, label: "Wochen-Truhe" },
+    MONTHLY: { rewardType: 'COINS', rewardAmount: 10000, label: "Monats-Schatz" }
+};

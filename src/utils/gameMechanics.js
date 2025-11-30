@@ -1,5 +1,11 @@
-import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES } from '../data/gameData';
-import { QUEST_TEMPLATES } from '../data/gameData';
+import { 
+  RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES,
+  // NEU: Diese beiden Konstanten müssen importiert werden, da sie in generateQuests verwendet werden
+  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS
+} from '../data/gameData'; 
+
+// Zeit in Millisekunden pro Energie-Punkt (5 Minuten)
+export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5; 
 
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
     const K = 32;
@@ -15,12 +21,13 @@ export const getDamageMultiplier = (atkType, defType) => {
   if (advantages.strong?.includes(defType)) return 2.0;
   const defAdvantages = TYPE_ADVANTAGES[defType] || { strong: [], super: [] };
   if (defAdvantages.super?.includes(atkType)) return 0.25;
-  if (defAdvantages.strong?.includes(atkType)) return 0.5;
+  if (defAdvantages.strong?.includes(atkType) && !['FIRE', 'WATER', 'NATURE', 'WIND', 'ICE', 'ELECTRIC', 'LIGHT', 'DARK', 'GHOST', 'MAGIC', 'PSYCHIC', 'FIGHTING', 'METAL', 'ROCK', 'POISON', 'DRAGON', 'FAIRY', 'TECH', 'SOUND', 'TIME', 'SPACE', 'VOID', 'CHAOS', 'ORDER'].includes(atkType)) return 0.5;
   return 1.0;
 };
 
 export const determineRarity = (boxType = 'STANDARD') => {
-   if (boxType === 'STARTER') return 'COMMON';
+    if (boxType === 'STARTER') return 'COMMON'; 
+
     const roll = Math.random() * 100;
     let cumulative = 0;
     const sortedRarities = Object.values(RARITIES).sort((a, b) => a.dropChance - b.dropChance);
@@ -41,6 +48,64 @@ export const calculateStatValue = (base, level) => {
     return Math.max(1, val); 
 };
 
+export const generateQuests = (category) => {
+  const count = 5; 
+  const newQuests = [];
+  
+  let multiplier = 1;
+  let duration = 0; 
+
+  if (category === 'DAILY') {
+      multiplier = 1;
+      duration = 24 * 60 * 60 * 1000;
+  } else if (category === 'WEEKLY') {
+      multiplier = 5; 
+      duration = 7 * 24 * 60 * 60 * 1000;
+  } else if (category === 'MONTHLY') {
+      multiplier = 20; 
+      duration = 30 * 24 * 60 * 60 * 1000;
+  }
+
+  // 5 zufällige Aufgaben auswählen
+  for (let i = 0; i < count; i++) {
+      const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
+      
+      const variance = 0.8 + Math.random() * 0.4;
+      const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
+      
+      let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
+      let rewardType = template.rewardType;
+
+      if (category === 'MONTHLY' && Math.random() > 0.5) {
+          rewardType = 'EGG_RARE';
+          rewardAmount = 1;
+      }
+
+      newQuests.push({
+          id: Date.now() + Math.random().toString(),
+          type: template.type,
+          label: template.label,
+          target: targetAmount,
+          progress: 0,
+          rewardType: rewardType,
+          rewardAmount: rewardAmount,
+          claimed: false,
+          category: category
+      });
+  }
+
+  return {
+      quests: newQuests,
+      expiresAt: Date.now() + duration,
+      // NEU: Composite Quest Tracking
+      completedCount: 0,
+      claimedComposite: false,
+      totalQuests: count,
+      reward: COMPOSITE_QUEST_REWARDS[category]
+  };
+};
+
+
 export const generatePet = (level = 1, fixedType = null, rarityKey = null, inheritedStats = null, source = 'SHOP') => {
   const typeKeys = Object.keys(TYPES);
   const type = fixedType || typeKeys[Math.floor(Math.random() * typeKeys.length)];
@@ -58,30 +123,23 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       return Math.max(1, Math.floor(raw + (Math.random() * raw * 0.2))); 
   };
 
-  // --- NEUE LOGIK FÜR FÄHIGKEITEN ---
   let abilityKey;
 
   if (source === 'BREEDING') {
-      // Zucht: Zufällige Fähigkeit (oder vererbt, wie vorher implementiert)
       const abilityKeys = Object.keys(ABILITIES);
       abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
   } else {
-      // Shop/Starter/Box: Fähigkeit muss zum Typ passen
       const matchingAbilities = Object.keys(ABILITIES).filter(
           key => ABILITIES[key].element === type
       );
 
       if (matchingAbilities.length > 0) {
-          // Wähle eine der passenden Fähigkeiten
           abilityKey = matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)];
       } else {
-          // FALLBACK: Wenn es für diesen Typ (z.B. Eis) noch keine Fähigkeit gibt,
-          // nehmen wir eine zufällige, damit das Spiel nicht abstürzt.
           const abilityKeys = Object.keys(ABILITIES);
           abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
       }
   }
-  // ----------------------------------
 
   const prefixes = { 
     FIRE: 'Pyro', WATER: 'Aqua', NATURE: 'Terra', WIND: 'Aero', EARTH: 'Geo',
@@ -145,16 +203,13 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
     price: 0 
   };
 };
+
 export const getUnlockedTeamSlots = (level) => {
     const maxSlots = 10;
     let slots = 1;
 
     if (level >= 3) {
-        // Spieler starten mit 2 Slots ab Level 3
         slots = 2; 
-        
-        // Fügt einen weiteren Slot für jeweils 5 Level nach Level 3 hinzu.
-        // (L8, L13, L18, etc.)
         slots += Math.floor((level - 3) / 5);
     }
 
@@ -169,68 +224,3 @@ export const getUnlockedHatcherySlots = (level) => {
 export const getMaxEnergy = (level) => {
   return 10 + ((level - 1) * 2);
 };
-
-// src/utils/gameMechanics.js (Füge das am Ende hinzu)
-
-
-export const generateQuests = (category) => {
-  const count = 5; // Immer 5 Aufgaben
-  const newQuests = [];
-  
-  // Multiplikatoren für Schwierigkeit und Belohnung
-  let multiplier = 1;
-  let duration = 0; // in Millisekunden
-
-  if (category === 'DAILY') {
-      multiplier = 1;
-      duration = 24 * 60 * 60 * 1000; // 1 Tag
-  } else if (category === 'WEEKLY') {
-      multiplier = 5; // 5x schwerer, 5x mehr Belohnung
-      duration = 7 * 24 * 60 * 60 * 1000; // 7 Tage
-  } else if (category === 'MONTHLY') {
-      multiplier = 20; // 20x schwerer
-      duration = 30 * 24 * 60 * 60 * 1000; // 30 Tage
-  }
-
-  // 5 zufällige Aufgaben auswählen
-  for (let i = 0; i < count; i++) {
-      const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
-      
-      // Zufällige Variation in der Menge (+/- 20%)
-      const variance = 0.8 + Math.random() * 0.4;
-      const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
-      
-      // Belohnung berechnen
-      let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
-      let rewardType = template.rewardType;
-
-      // Special: Monatliche Aufgaben geben oft Eier oder Edelsteine
-      if (category === 'MONTHLY' && Math.random() > 0.5) {
-          rewardType = 'EGG_RARE'; // Beispiel für Ei-Belohnung
-          rewardAmount = 1;
-      }
-
-      newQuests.push({
-          id: Date.now() + Math.random().toString(),
-          type: template.type,
-          label: template.label,
-          target: targetAmount,
-          progress: 0,
-          rewardType: rewardType,
-          rewardAmount: rewardAmount,
-          claimed: false,
-          category: category
-      });
-  }
-
-  return {
-      quests: newQuests,
-      expiresAt: Date.now() + duration
-  };
-};
-export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5;
-
-// src/utils/gameMechanics.js (Füge diese Funktionen hinzu)
-
-// Helper to get a random high rarity key
-
