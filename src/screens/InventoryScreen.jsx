@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowLeft, Info, Swords, Heart, Egg } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
+import PetAvatar from '../components/PetAvatar';
 
 export default function InventoryScreen({ pets, onSelectPet, onBack, title, highlightMode, filterEggs }) {
   const displayPets = filterEggs ? pets.filter(p => !p.isEgg) : pets;
@@ -16,7 +17,7 @@ export default function InventoryScreen({ pets, onSelectPet, onBack, title, high
             const type = TYPES[pet.type];
             return (
               <div key={pet.id} onClick={() => onSelectPet(pet.id)} className={`bg-slate-800 p-3 rounded-2xl border-l-4 ${rarity.border} flex items-center gap-4 cursor-pointer transition-all active:scale-95 group relative overflow-hidden hover:bg-slate-750`}>
-                <div className={`w-14 h-14 ${type.bgLight} rounded-xl flex items-center justify-center text-2xl shadow-inner relative z-10 border border-white/5`}>{type.icon}</div>
+                <PetAvatar pet={pet} className="w-16 h-16 bg-slate-900/50 rounded-xl" />
                 <div className="flex-1 relative z-10">
                   <div className="flex justify-between items-center mb-1"><h3 className="font-bold text-sm">{pet.name}</h3><span className={`text-[10px] font-bold ${rarity.color}`}>{rarity.label}</span></div>
                   <div className="grid grid-cols-2 gap-x-2 text-[10px] text-slate-400"><div className="flex items-center gap-1"><Swords className="w-3 h-3"/> {pet.atk}</div><div className="flex items-center gap-1"><Heart className="w-3 h-3"/> {pet.hp}</div></div>

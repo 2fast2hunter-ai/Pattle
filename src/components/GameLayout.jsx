@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Zap, Coins, Gem, User, LayoutGrid, Settings } from 'lucide-react';
-import { getMaxEnergy } from '../utils/gameMechanics';
+import { getMaxEnergy, ENERGY_REGEN_TIME_MS } from '../utils/gameMechanics';
 
 export function HeaderHUD({ user }) {
   const xpPercent = Math.min(100, (user.xp / user.xpToNextLevel) * 100);
   const maxEnergy = getMaxEnergy(user.level);
   
-  const msPerEnergy = 1000 * 60 * 60; 
+  // Hier nutzen wir die neue Konstante (5 Minuten)
+  const msPerEnergy = ENERGY_REGEN_TIME_MS; 
+  
   const timeSinceUpdate = Date.now() - user.lastEnergyUpdate;
   const nextEnergyIn = Math.max(0, msPerEnergy - timeSinceUpdate);
+  
+  // WICHTIG: Diese Zeile hat wahrscheinlich gefehlt!
   const minutesLeft = Math.ceil(nextEnergyIn / 1000 / 60);
 
   const [, setTick] = useState(0);
   useEffect(() => {
-    const interval = setInterval(() => setTick(t => t + 1), 60000); 
+    // Aktualisiert die Anzeige jede Minute (oder öfter für den Timer)
+    const interval = setInterval(() => setTick(t => t + 1), 10000); 
     return () => clearInterval(interval);
   }, []);
 

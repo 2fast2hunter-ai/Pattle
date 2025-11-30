@@ -214,3 +214,4 @@ export const generateQuests = (category) => {
       expiresAt: Date.now() + duration
   };
 };
+export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5;

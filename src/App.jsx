@@ -3,7 +3,7 @@ import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-reac
 
 // Daten & Logik
 import { RARITIES, QUEST_TYPES } from './data/gameData';
-import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity } from './utils/gameMechanics';
+import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity, ENERGY_REGEN_TIME_MS } from './utils/gameMechanics';
 // Datenbank Funktionen
 import { 
   initializeUser, listenToUser, listenToPets, listenToMarket, updateUser, 
@@ -131,9 +131,9 @@ export default function GameApp() {
     if (!user) return;
     const interval = setInterval(() => {
         const now = Date.now();
-        const msPerEnergy = 1000 * 60 * 60; 
+        const msPerEnergy = ENERGY_REGEN_TIME_MS; 
         const timeDiff = now - user.lastEnergyUpdate;
-        
+      
         if (timeDiff >= msPerEnergy) {
             const energyToGain = Math.floor(timeDiff / msPerEnergy);
             const maxEn = getMaxEnergy(user.level);

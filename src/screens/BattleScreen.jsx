@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Zap, Skull, Trophy } from 'lucide-react';
 import { ABILITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import { getDamageMultiplier } from '../utils/gameMechanics';
+import PetAvatar from '../components/PetAvatar';
 
 // Sub-Komponenten für den Battle Screen
 const TeamDots = ({ team, currentIndex, isEnemy }) => (
@@ -17,19 +18,26 @@ function BattleUnit({ pet, isEnemy, isActive, animating }) {
   const secTypeInfo = pet.secondaryType ? TYPES[pet.secondaryType] : null;
   const hpPercent = (pet.hp / pet.maxHp) * 100;
   return (
-    <div className={`flex flex-col ${isEnemy ? 'items-end' : 'items-start'}`}>
-      <div className={`w-24 h-24 ${typeInfo.bg} rounded-2xl flex items-center justify-center text-4xl shadow-2xl relative z-10 border-4 ${isActive ? 'border-white scale-110' : 'border-transparent'} transition-all duration-300 ${animating && isActive ? (isEnemy ? '-translate-x-8' : 'translate-x-8') : ''}`}>
-        {ZODIAC_ANIMALS[pet.species].icon}
-        {secTypeInfo && (<div className={`absolute top-0 right-0 w-8 h-8 ${secTypeInfo.bg} rounded-full border-2 border-slate-900 flex items-center justify-center text-xs shadow-md -mr-2 -mt-2`}>{secTypeInfo.icon}</div>)}
-        <div className="absolute -bottom-2 -right-2 bg-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded border border-white/20 flex items-center gap-1"><Zap className={`w-3 h-3 ${pet.currentCd > 0 ? 'text-slate-500' : 'text-yellow-400'}`} />{pet.currentCd > 0 ? pet.currentCd : 'RDY'}</div>
+   <div className={`flex flex-col ${isEnemy ? 'items-end' : 'items-start'}`}>
+      <div className={`relative z-10 transition-all duration-300 ${isActive ? 'scale-110' : ''} ${animating && isActive ? (isEnemy ? '-translate-x-8' : 'translate-x-8') : ''}`}>
+        
+        {/* DER NEUE AVATAR */}
+        <PetAvatar pet={pet} className="w-28 h-28" />
+        
+        {/* Cooldown Anzeige */}
+        <div className="absolute -bottom-2 -right-2 bg-slate-900 text-[10px] font-bold px-1.5 py-0.5 rounded border border-white/20 flex items-center gap-1 z-20">
+            <Zap className={`w-3 h-3 ${pet.currentCd > 0 ? 'text-slate-500' : 'text-yellow-400'}`} />
+            {pet.currentCd > 0 ? pet.currentCd : 'RDY'}
+        </div>
       </div>
+
+      {/* Info Box (unverändert) */}
       <div className={`bg-slate-800 p-2 rounded-lg border border-white/10 w-48 mt-2 shadow-lg transition-all ${isActive ? 'scale-105' : 'opacity-80'}`}>
           <div className="flex justify-between items-center mb-1">
               <span className={`font-bold text-xs ${isEnemy ? 'text-red-300' : 'text-indigo-300'}`}>{pet.name}</span>
               <div className="flex gap-1">
-                  <span className="text-[8px] font-bold text-slate-400 mr-1">{ZODIAC_ANIMALS[pet.species].label}</span>
+                  <span className="text-[8px] font-bold text-slate-400 mr-1">{pet.species}</span>
                   <div className={`text-[8px] font-bold ${TYPES[pet.type].color}`}>{TYPES[pet.type].label}</div>
-                  {pet.secondaryType && <div className={`text-[8px] font-bold ${TYPES[pet.secondaryType].color}`}>/{TYPES[pet.secondaryType].label}</div>}
               </div>
           </div>
           <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden mb-1"><div className={`h-full transition-all duration-300 ${hpPercent < 30 ? 'bg-red-500' : 'bg-green-500'}`} style={{ width: `${hpPercent}%` }}></div></div>
