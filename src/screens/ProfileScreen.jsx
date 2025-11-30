@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Copy, UserPlus, Users, UserCheck, Trophy, LayoutGrid, Dna, ThermometerSun, Percent, Swords, ShoppingBag } from 'lucide-react';
-import { DUMMY_USERS } from '../data/gameData';
+
 
 export default function ProfileScreen({ user, petCount, onViewFriend, onAddFriend }) {
     const [activeTab, setActiveTab] = useState('stats');

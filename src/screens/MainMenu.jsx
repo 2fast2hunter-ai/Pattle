@@ -1,22 +1,17 @@
 import React from 'react';
-import { Swords, Egg, Store, ShoppingBag, Star, Trophy } from 'lucide-react';
-import { MenuCard } from '../components/ui/Shared'; // Das erstellen wir gleich
+import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList } from 'lucide-react';
+import { MenuCard } from '../components/ui/Shared';
 
-export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard }) {
-  // ... Kopiere den Inhalt der MainMenu Funktion aus App.jsx HIER hinein ...
-  // WICHTIG: Wenn du MenuCard im original Code benutzt hast, musst du es entweder hier definieren oder importieren.
-  // Wir definieren es hier kurz, damit es funktioniert:
-
-  // Ab hier dein Original JSX von MainMenu return...
+export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests }) {
   return (
     <div className="space-y-8 pt-8 text-center h-full flex flex-col">
-      {/* ... Dein Code ... */}
-      {/* Kopiere alles zwischen return ( und ); aus deiner alten MainMenu Funktion */}
+      {/* Header */}
       <div>
           <h2 className="text-3xl font-black">Willkommen,</h2>
           <h3 className="text-2xl font-black text-indigo-400">{user.username}</h3>
       </div>
-      {/* ... und so weiter ... */}
+
+      {/* Haupt-Navigation */}
       <div className="flex-1 flex flex-col justify-center gap-4 px-4">
           <button onClick={onArena} className="group relative bg-gradient-to-r from-red-600 to-orange-600 p-6 rounded-3xl shadow-xl shadow-red-900/30 overflow-hidden transform transition hover:scale-[1.02] active:scale-95 text-left border-2 border-red-400/50">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
@@ -35,7 +30,17 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
               <div className="flex items-center justify-between relative z-10"><div><h3 className="text-2xl font-black italic text-white mb-1">SHOP</h3><p className="text-amber-100 text-xs font-bold">Lootboxen & Mehr</p></div><ShoppingBag className="w-12 h-12 text-white fill-white/20" /></div>
           </button>
       </div>
-      <div className="grid grid-cols-2 gap-4 px-4 pb-4"><MenuCard icon={Star} title="Daily Reward" color="bg-amber-500" /><MenuCard icon={Trophy} title="Bestenliste" color="bg-indigo-500" onClick={onLeaderboard} /></div>
+
+      {/* Footer Buttons */}
+      <div className="grid grid-cols-2 gap-4 px-4 pb-4">
+          <MenuCard 
+              icon={ClipboardList} 
+              title="Aufgaben" 
+              color="bg-amber-500" 
+              onClick={onQuests} 
+          />
+          <MenuCard icon={Trophy} title="Bestenliste" color="bg-indigo-500" onClick={onLeaderboard} />
+      </div>
     </div>
   );
 }

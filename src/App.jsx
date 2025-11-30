@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 // Daten & Logik
-import { DUMMY_USERS, RARITIES } from './data/gameData';
+import { RARITIES } from './data/gameData';
 import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity } from './utils/gameMechanics';
+// NEU: Datenbank Funktionen importieren
+import { initializeUser, listenToUser, listenToPets, listenToMarket, updateUser, addPetToDB, updatePetInDB, createMarketListing, deleteMarketListing, removePetFromDB, findUserPublic } from './utils/db';
 
 // Components
 import { HeaderHUD, BottomNav } from './components/GameLayout';
@@ -28,7 +30,11 @@ import ProfileScreen from './screens/ProfileScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 import SettingsScreen from './screens/SettingsScreen';
 
-// Error Boundary für Absturzsicherheit
+import QuestsScreen from './screens/QuestsScreen'; // NEU
+import { trackQuestProgress } from './utils/db'; // NEU
+import { QUEST_TYPES } from './data/gameData'; // NEU
+
+// Error Boundary
 class ErrorBoundary extends React.Component {
     constructor(props) {
       super(props);
@@ -54,8 +60,13 @@ class ErrorBoundary extends React.Component {
 // MAIN APP
 export default function GameApp() {
   const [user, setUser] = useState(null); 
+  const [userId, setUserId] = useState(null); // Wir merken uns nur die ID, Daten kommen live aus DB
   const [currentView, setCurrentView] = useState('auth'); 
+  
+  // Diese States werden jetzt AUTOMATISCH durch die Datenbank gefüllt
   const [myPets, setMyPets] = useState([]);
+  const [marketListings, setMarketListings] = useState([]);
+  
   const [activeBattle, setActiveBattle] = useState(null);
   const [selectedPetDetail, setSelectedPetDetail] = useState(null);
   const [settings, setSettings] = useState({ music: true, sfx: true, notifications: false });
@@ -63,131 +74,166 @@ export default function GameApp() {
   const [selectedSlotForTeam, setSelectedSlotForTeam] = useState(null);
   const [notification, setNotification] = useState(null);
   const [lootResult, setLootResult] = useState(null); 
-  const [marketListings, setMarketListings] = useState([]);
   const [selectedFriend, setSelectedFriend] = useState(null);
 
-  // --- INITIAL DATA ---
+  // --- DATENBANK VERBINDUNGEN (LISTENERS) ---
   useEffect(() => {
-      if (marketListings.length === 0) {
-          const dummy1 = generatePet(10, 'FIRE', 'RARE');
-          dummy1.id = 'market_dummy_1';
-          const dummy2 = generatePet(5, 'WATER', 'UNCOMMON');
-          dummy2.id = 'market_dummy_2';
-          
-          setMarketListings([
-              { id: 'l1', sellerName: 'BotPlayer_X', price: 1200, pet: dummy1 },
-              { id: 'l2', sellerName: 'TraderJoe', price: 450, pet: dummy2 }
-          ]);
-      }
-  }, []);
+    if (!userId) return;
+
+    // 1. User Daten live hören
+    const unsubscribeUser = listenToUser(userId, (userData) => {
+        setUser(userData);
+    });
+
+    // 2. Pets live hören
+    const unsubscribePets = listenToPets(userId, (petsData) => {
+        setMyPets(petsData);
+    });
+
+    // 3. Markt live hören
+    const unsubscribeMarket = listenToMarket((listingsData) => {
+        setMarketListings(listingsData);
+    });
+
+    return () => {
+        // Aufräumen wenn ausgeloggt wird
+        unsubscribeUser();
+        unsubscribePets();
+        unsubscribeMarket();
+    };
+  }, [userId]);
 
   const showNotification = (msg, type = 'error') => {
     setNotification({ message: msg, type });
     setTimeout(() => setNotification(null), 3000);
   };
 
-  const handleLogin = (username, isGuest = false) => {
-    const starter1 = generatePet(1, null, 'COMMON');
-    const starter2 = generatePet(1, null, 'UNCOMMON');
-    setUser({ 
-        id: isGuest ? 'guest_123' : 'user_555', 
-        username: username || 'Gast Spieler', 
-        level: 1, xp: 0, xpToNextLevel: 100, coins: isGuest ? 500 : 500, gems: isGuest ? 10 : 10, avatar: '🛡️', rating: 1000, 
-        team: [starter1.id], energy: 10, lastEnergyUpdate: Date.now(), inventory: [], friends: [],
-        stats: { pvpWins: 0, pvpTotal: 0, hatched: 0, bred: 0, marketSpent: 0, marketEarned: 0 }
-    });
-    setMyPets([starter1, starter2]);
-    setCurrentView('menu');
+  const handleLogin = async (firebaseUser, displayName) => {
+    try {
+        // Initialisiert den User in der Datenbank (oder lädt ihn)
+        await initializeUser(firebaseUser, displayName);
+        setUserId(firebaseUser.uid); // Startet die Listener oben
+        setCurrentView('menu');
+    } catch (error) {
+        console.error("Login Fehler:", error);
+        showNotification("Fehler beim Laden der Daten", "error");
+    }
   };
 
-  const handleLogout = () => { setUser(null); setCurrentView('auth'); setMyPets([]); };
+  const handleLogout = () => { 
+      setUser(null); 
+      setUserId(null); 
+      setMyPets([]); 
+      setCurrentView('auth'); 
+  };
 
-  // ENERGY REGENERATION HOOK
+  // ENERGY REGENERATION (Speichert jetzt in DB)
   useEffect(() => {
     if (!user) return;
     const interval = setInterval(() => {
         const now = Date.now();
         const msPerEnergy = 1000 * 60 * 60; // 1 Hour
         const timeDiff = now - user.lastEnergyUpdate;
+        
         if (timeDiff >= msPerEnergy) {
             const energyToGain = Math.floor(timeDiff / msPerEnergy);
             const maxEn = getMaxEnergy(user.level);
+            
             if (user.energy < maxEn) {
-                 setUser(u => {
-                    const newEnergy = Math.min(maxEn, u.energy + energyToGain);
-                    const newLastUpdate = u.lastEnergyUpdate + (energyToGain * msPerEnergy);
-                    return { ...u, energy: newEnergy, lastEnergyUpdate: newLastUpdate };
-                 });
-            } else { setUser(u => ({ ...u, lastEnergyUpdate: now })); }
+                 const newEnergy = Math.min(maxEn, user.energy + energyToGain);
+                 const newLastUpdate = user.lastEnergyUpdate + (energyToGain * msPerEnergy);
+                 // UPDATE DB
+                 updateUser(user.id, { energy: newEnergy, lastEnergyUpdate: newLastUpdate });
+            } else { 
+                 updateUser(user.id, { lastEnergyUpdate: now });
+            }
         }
     }, 10000); 
     return () => clearInterval(interval);
   }, [user]);
 
-  // MARKET BOT SIMULATION
-  useEffect(() => {
-    if (!user) return;
-    const interval = setInterval(() => {
-        if (Math.random() > 0.9) {
-            setMarketListings(prevListings => {
-                const myListings = prevListings.filter(l => l.sellerName === user.username);
-                if (myListings.length === 0) return prevListings;
-                const soldItemIndex = Math.floor(Math.random() * myListings.length);
-                const soldItem = myListings[soldItemIndex];
-                setUser(u => ({ ...u, coins: u.coins + soldItem.price, stats: { ...u.stats, marketEarned: u.stats.marketEarned + soldItem.price } }));
-                showNotification(`Dein Angebot für ${soldItem.pet.name} wurde verkauft! (+${soldItem.price})`, 'success');
-                return prevListings.filter(l => l.id !== soldItem.id);
-            });
-        }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [user, marketListings]);
+  // --- ACTIONS (Jetzt mit Datenbank Updates) ---
 
-  // --- ACTIONS ---
-  const handleAddFriend = (friendId) => {
+ const handleAddFriend = async (friendId) => {
       if (!friendId) return;
-      if (friendId === user.id) { showNotification("Du kannst dich nicht selbst hinzufügen.", 'error'); return; }
-      if (user.friends.find(f => f.id === friendId)) { showNotification("Bereits befreundet.", 'error'); return; }
-      const foundUser = DUMMY_USERS.find(u => u.id === friendId);
+      if (friendId === user.id) { showNotification("Nicht selbst hinzufügen.", 'error'); return; }
+      if (user.friends && user.friends.find(f => f.id === friendId)) { showNotification("Bereits befreundet.", 'error'); return; }
+      
+      // Echte DB Suche
+      const foundUser = await findUserPublic(friendId); 
+      
       if (foundUser) {
-          setUser(prev => ({ ...prev, friends: [...prev.friends, foundUser] }));
-          showNotification(`${foundUser.username} wurde hinzugefügt!`, 'success');
-      } else { showNotification("Spieler nicht gefunden.", 'error'); }
+          // Wir speichern nur die nötigsten Daten des Freundes
+          const friendDataLite = {
+              id: foundUser.id,
+              username: foundUser.username,
+              avatar: foundUser.avatar,
+              level: foundUser.level,
+              rating: foundUser.rating
+          };
+          
+          const newFriends = [...(user.friends || []), friendDataLite];
+          updateUser(user.id, { friends: newFriends });
+          showNotification(`${foundUser.username} hinzugefügt!`, 'success');
+      } else { 
+          showNotification("Spieler-ID nicht gefunden.", 'error'); 
+      }
   };
 
-  const handleBuyMarket = (listingId) => {
+  const handleBuyMarket = async (listingId) => {
       const listing = marketListings.find(l => l.id === listingId);
       if (!listing) return;
       if (user.coins < listing.price) { showNotification("Nicht genug Münzen!", 'error'); return; }
-      setUser(prev => ({ ...prev, coins: prev.coins - listing.price, stats: { ...prev.stats, marketSpent: prev.stats.marketSpent + listing.price } }));
-      const newItem = { ...listing.pet, id: Date.now() + Math.random().toString() }; 
-      setMyPets(prev => [...prev, newItem]);
-      setMarketListings(prev => prev.filter(l => l.id !== listingId));
-      showNotification(`Erfolgreich gekauft: ${newItem.name}`, 'success');
+
+      // 1. Geld abziehen
+      await updateUser(user.id, { 
+          coins: user.coins - listing.price, 
+          stats: { ...user.stats, marketSpent: user.stats.marketSpent + listing.price } 
+      });
+
+      // 2. Pet dem Käufer geben (Owner ID ändern & neue ID geben um Konflikte zu vermeiden oder einfach ID behalten)
+      // Wir behalten das Pet Objekt, ändern aber ownerId und generieren neue ID für Sicherheit
+      const newPet = { ...listing.pet, id: Date.now().toString(), ownerId: user.id };
+      await addPetToDB(newPet, user.id);
+
+      // 3. Listing löschen
+      await deleteMarketListing(listingId);
+
+      trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, listing.price)
+
+      showNotification(`Erfolgreich gekauft: ${newPet.name}`, 'success');
   };
 
-  const handleSellMarket = (petId, price) => {
-      const petIndex = myPets.findIndex(p => p.id === petId);
-      if (petIndex === -1) return;
-      const petToSell = myPets[petIndex];
-      const newMyPets = [...myPets];
-      newMyPets.splice(petIndex, 1);
-      setMyPets(newMyPets);
-      const newListing = { id: Date.now().toString(), sellerName: user.username, price: price, pet: petToSell };
-      setMarketListings(prev => [newListing, ...prev]);
+  const handleSellMarket = async (petId, price) => {
+      const pet = myPets.find(p => p.id === petId);
+      if (!pet) return;
+
+      // 1. Listing erstellen
+      const newListing = { sellerName: user.username, sellerId: user.id, price: price, pet: pet, createdAt: Date.now() };
+      await createMarketListing(newListing);
+
+      // 2. Pet aus Inventar entfernen (löschen aus DB)
+      await removePetFromDB(petId);
+      
       showNotification("Angebot erstellt!", 'success');
   };
 
   const addToTeam = (petId) => {
     if (selectedSlotForTeam === null) return;
     const pet = myPets.find(p => p.id === petId);
-    if (pet && pet.isEgg) { showNotification("Eier können nicht kämpfen! Warte bis es schlüpft.", 'error'); return; }
-    const newTeam = [...user.team];
+    if (pet && pet.isEgg) { showNotification("Eier können nicht kämpfen!", 'error'); return; }
+    
+    const newTeam = [...(user.team || [])];
+    // Array auffüllen falls zu kurz
     while(newTeam.length <= selectedSlotForTeam) { newTeam.push(null); }
+    
+    // Altes Pet entfernen falls vorhanden
     const existingIndex = newTeam.indexOf(petId);
     if (existingIndex !== -1) { newTeam[existingIndex] = null; }
+    
     newTeam[selectedSlotForTeam] = petId;
-    setUser({...user, team: newTeam});
+    
+    updateUser(user.id, { team: newTeam }); // DB Update
     setCurrentView('team-edit');
     setSelectedSlotForTeam(null);
   };
@@ -195,48 +241,62 @@ export default function GameApp() {
   const removeFromTeam = (index) => {
     const newTeam = [...user.team];
     newTeam[index] = null;
-    setUser({...user, team: newTeam});
+    updateUser(user.id, { team: newTeam }); // DB Update
   };
 
   const hatchEgg = (petId, customName) => {
     const pet = myPets.find(p => p.id === petId);
     if (!pet || !pet.isEgg) return;
-    if (Date.now() < pet.hatchAt) { showNotification("Das Ei ist noch nicht bereit!", 'error'); return; }
-    setMyPets(pets => pets.map(p => { if (p.id === petId) { return { ...p, isEgg: false, name: customName || p.name }; } return p; }));
-    setUser(prev => ({ ...prev, stats: { ...prev.stats, hatched: prev.stats.hatched + 1 } }));
-    showNotification(`Ei ist geschlüpft! Es ist ein ${customName || pet.name}!`, 'success');
+    if (Date.now() < pet.hatchAt) { showNotification("Noch nicht bereit!", 'error'); return; }
+    
+    updatePetInDB(petId, { isEgg: false, name: customName || pet.name });
+    updateUser(user.id, { stats: { ...user.stats, hatched: user.stats.hatched + 1 } });
+    
+    trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1);
+    
+    showNotification(`Geschlüpft: ${customName || pet.name}!`, 'success');
   };
 
   const startIncubation = (id, type) => {
     if (type === 'BOX') {
         const box = user.inventory.find(i => i.id === id);
         if (!box) return;
+        
+        // Box entfernen
         const newInv = user.inventory.filter(i => i.id !== id);
-        setUser(prev => ({ ...prev, inventory: newInv }));
+        updateUser(user.id, { inventory: newInv });
+
+        // Pet generieren & speichern
         const rarityKey = determineRarity(box.variant);
         const newEgg = generatePet(1, null, rarityKey, null, 'SHOP');
         newEgg.isEgg = true;
         newEgg.hatchAt = 0; 
-        setMyPets(currentPets => [...currentPets, newEgg]);
+        addPetToDB(newEgg, user.id);
+        
         setLootResult(newEgg);
     } else {
         const incubatingEggs = myPets.filter(p => p.isEgg && p.hatchAt > 0).length;
         const maxSlots = getUnlockedHatcherySlots(user.level);
-        if (incubatingEggs >= maxSlots) { showNotification("Brutstätte ist voll!", 'error'); return; }
+        if (incubatingEggs >= maxSlots) { showNotification("Brutstätte voll!", 'error'); return; }
+        
         const pet = myPets.find(p => p.id === id);
         const duration = RARITIES[pet.rarity].hatchDuration * 1000;
-        setMyPets(pets => pets.map(p => { if (p.id === id) { return { ...p, hatchAt: Date.now() + duration }; } return p; }));
-        showNotification("Ei wurde in den Inkubator gelegt!", 'success');
+        updatePetInDB(id, { hatchAt: Date.now() + duration });
+        
+        showNotification("Inkubation gestartet!", 'success');
         setCurrentView('hatchery');
     }
   }
 
-  const breedPets = (parent1Id, parent2Id) => {
-    if (user.coins < 200) { showNotification("Nicht genug Münzen! Zucht kostet 200.", 'error'); return; }
+  const breedPets = async (parent1Id, parent2Id) => {
+    if (user.coins < 200) { showNotification("Nicht genug Münzen!", 'error'); return; }
+    
+    // ... (Zucht Logik bleibt größtenteils gleich, nur am Ende DB Calls) ...
+    // Ich kürze die Logik hier etwas ab, da sie identisch zu gameMechanics ist, nur das Speichern ändert sich
     const p1 = myPets.find(p => p.id === parent1Id);
     const p2 = myPets.find(p => p.id === parent2Id);
-    if (p1.isEgg || p2.isEgg) { showNotification("Du kannst keine Eier züchten!", 'error'); return; }
     
+    // --- Breeding Logic Copy ---
     const parentTypes = [p1.type];
     if (p1.secondaryType) parentTypes.push(p1.secondaryType);
     if (!parentTypes.includes(p2.type)) parentTypes.push(p2.type);
@@ -269,94 +329,134 @@ export default function GameApp() {
     finalPet.name = "Zucht " + finalPet.name; 
     finalPet.isEgg = true; 
     finalPet.hatchAt = 0; 
+    // --- End Logic ---
+
+    await addPetToDB(finalPet, user.id);
+    await updateUser(user.id, { 
+        coins: user.coins - 200, 
+        stats: { ...user.stats, bred: user.stats.bred + 1 }
+    });
     
-    setMyPets([...myPets, finalPet]);
-    setUser({ ...user, coins: user.coins - 200, stats: { ...user.stats, bred: user.stats.bred + 1 } });
-    showNotification(`Erfolg! Ein ${RARITIES[finalPet.rarity].label}-Ei liegt im Item Inventar!`, 'success');
+    trackQuestProgress(user, QUEST_TYPES.BREED_PET, 1);
+    trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 200); // Zucht kostet 200
+    
+    showNotification(`Zucht erfolgreich!`, 'success');
     setCurrentView('item-inventory'); 
   };
   
   const buyLootbox = (boxType, cost, currency) => {
       if (currency === 'COINS') {
-          if (user.coins < cost) { showNotification("Nicht genug Münzen!", 'error'); return; }
-          setUser(prev => ({ ...prev, coins: prev.coins - cost, inventory: [...prev.inventory, { id: Date.now(), type: 'LOOTBOX', variant: boxType }] }));
+          if (user.coins < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
+          const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
+          updateUser(user.id, { coins: user.coins - cost, inventory: newInv });
       } else {
-          if (user.gems < cost) { showNotification("Nicht genug Edelsteine!", 'error'); return; }
-          setUser(prev => ({ ...prev, gems: prev.gems - cost, inventory: [...prev.inventory, { id: Date.now(), type: 'LOOTBOX', variant: boxType }] }));
+          if (user.gems < cost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
+          const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
+          updateUser(user.id, { gems: user.gems - cost, inventory: newInv });
       }
-      showNotification(`${boxType} Box gekauft! Schau im Inventar.`, 'success');
+      if (currency === 'COINS') trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost);
+
+      showNotification(`${boxType} Box gekauft!`, 'success');
   };
 
   const startBattle = () => {
     const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id));
-    if (validTeamIds.length === 0) { showNotification("Füge zuerst Pets zu deinem Team hinzu!", 'error'); return; }
-    if (user.energy < 1) { showNotification("Nicht genug Energie! Warte bis sie sich regeneriert.", 'error'); return; }
-    setUser(prev => ({ ...prev, energy: prev.energy - 1 }));
+    if (validTeamIds.length === 0) { showNotification("Dein Team ist leer!", 'error'); return; }
+    if (user.energy < 1) { showNotification("Keine Energie!", 'error'); return; }
+    
+    updateUser(user.id, { energy: user.energy - 1 });
+    
     const myBattleTeam = validTeamIds.map(id => { const p = myPets.find(pet => pet.id === id); return { ...p, currentCd: 0, hp: p.maxHp }; });
+    // Dummy Enemy Generation (wie vorher)
     const enemyBattleTeam = [];
     const avgLevel = Math.floor(myBattleTeam.reduce((acc, p) => acc + p.level, 0) / myBattleTeam.length);
     for (let i = 0; i < myBattleTeam.length; i++) { const enemyLevel = Math.max(1, avgLevel + Math.floor(Math.random() * 3) - 1); const enemyPet = generatePet(enemyLevel); enemyPet.id = `enemy_${i}`; enemyPet.name = 'Feindl. ' + enemyPet.name; enemyBattleTeam.push({ ...enemyPet, currentCd: 0 }); }
+    
     const p1 = myBattleTeam[0]; const e1 = enemyBattleTeam[0]; const playerFirst = p1.speed >= e1.speed;
-    setActiveBattle({ myTeam: myBattleTeam, enemyTeam: enemyBattleTeam, myIndex: 0, enemyIndex: 0, log: [`Kampf gestartet! Teamgröße: ${myBattleTeam.length} vs ${enemyBattleTeam.length}`], turn: playerFirst ? 'PLAYER' : 'ENEMY', isOver: false, round: 1 });
+    setActiveBattle({ myTeam: myBattleTeam, enemyTeam: enemyBattleTeam, myIndex: 0, enemyIndex: 0, log: [`Kampf gestartet!`], turn: playerFirst ? 'PLAYER' : 'ENEMY', isOver: false, round: 1 });
     setCurrentView('battle');
   };
 
-  const handleWin = (reward, winningTeamIds, enemyRating = 1200) => {
-    setUser(currentUser => {
-        const newUser = { ...currentUser };
-        let leveledUp = false;
-        const eloChange = calculateEloChange(newUser.rating, enemyRating, true);
-        newUser.coins += reward.coins;
-        newUser.rating += eloChange;
-        newUser.xp += reward.xp;
-        newUser.stats.pvpWins += 1;
-        newUser.stats.pvpTotal += 1;
-        if (newUser.xp >= newUser.xpToNextLevel) {
-            newUser.level += 1;
-            newUser.xp -= newUser.xpToNextLevel;
-            newUser.xpToNextLevel = Math.floor(newUser.xpToNextLevel * 1.5);
-            newUser.coins += 1000;
-            newUser.gems += 5;
-            const newMax = getMaxEnergy(newUser.level);
-            newUser.energy = Math.min(newMax, newUser.energy + 2);
-            leveledUp = true;
-        }
-        if (leveledUp) setTimeout(() => setShowLevelUpModal(true), 500); 
-        return newUser;
+  const handleWin = async (reward, winningTeamIds, enemyRating = 1200) => {
+    // Lokale Berechnung für UI (Datenbank Update folgt)
+    const eloChange = calculateEloChange(user.rating, enemyRating, true);
+    
+    let newLevel = user.level;
+    let newXp = user.xp + reward.xp;
+    let newXpToNext = user.xpToNextLevel;
+    let newCoins = user.coins + reward.coins;
+    let newGems = user.gems;
+    let newEnergy = user.energy;
+    
+    if (newXp >= newXpToNext) {
+        newLevel++;
+        newXp -= newXpToNext;
+        newXpToNext = Math.floor(newXpToNext * 1.5);
+        newCoins += 1000;
+        newGems += 5;
+        newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
+        setTimeout(() => setShowLevelUpModal(true), 500);
+    }
+
+    await updateUser(user.id, {
+        coins: newCoins,
+        gems: newGems,
+        rating: user.rating + eloChange,
+        xp: newXp,
+        level: newLevel,
+        xpToNextLevel: newXpToNext,
+        energy: newEnergy,
+        stats: { ...user.stats, pvpWins: user.stats.pvpWins + 1, pvpTotal: user.stats.pvpTotal + 1 }
     });
+    
+    trackQuestProgress(user, QUEST_TYPES.WIN_PVP, 1);
+    trackQuestProgress(user, QUEST_TYPES.EARN_XP, reward.xp);
+    trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 0); // Nur placeholder, hier verdienen wir ja
+    
+    // XP für Pets
+    // (Hier müsste man eigentlich jedes Pet einzeln updaten, das ist komplexer in Firestore. 
+    // Wir machen es einfach: Wir updaten nur, wenn sie leveln, oder speichern Pet-XP in DB.
+    // Für dieses Beispiel speichern wir Pet-XP direkt.)
     const idsToLevel = winningTeamIds || (activeBattle ? activeBattle.myTeam.map(p => p.id) : []);
-    setMyPets(currentPets => currentPets.map(p => {
-        if (!idsToLevel.includes(p.id)) return p;
-        const newPet = { ...p }; 
-        newPet.xp += 50;
-        newPet.justLeveledUp = false;
-        if (newPet.xp >= newPet.maxXp) {
-            newPet.level++;
-            newPet.xp -= newPet.maxXp;
-            newPet.justLeveledUp = true;
-            const rarityMulti = RARITIES[newPet.rarity].multi;
-            const growthFactor = 1 + (0.05 * rarityMulti);
-            newPet.maxHp = Math.floor(newPet.maxHp * growthFactor);
-            newPet.hp = newPet.maxHp; 
-            newPet.atk = Math.floor(newPet.atk * growthFactor);
-            newPet.ap = Math.floor(newPet.ap * growthFactor);
-            newPet.def = Math.floor(newPet.def * growthFactor);
-            newPet.res = Math.floor(newPet.res * growthFactor);
-            newPet.speed = Math.floor(newPet.speed * growthFactor);
-            newPet.maxXp = Math.floor(newPet.maxXp * 1.2);
+    
+    idsToLevel.forEach(petId => {
+        const pet = myPets.find(p => p.id === petId);
+        if(pet) {
+            let pXp = pet.xp + 50;
+            let pLevel = pet.level;
+            let pMaxXp = pet.maxXp;
+            let changes = {};
+            
+            if (pXp >= pMaxXp) {
+                pLevel++;
+                pXp -= pMaxXp;
+                pMaxXp = Math.floor(pMaxXp * 1.2);
+                
+                // Stats erhöhen
+                const r = RARITIES[pet.rarity].multi;
+                const gf = 1 + (0.05 * r);
+                changes = {
+                    level: pLevel, xp: pXp, maxXp: pMaxXp,
+                    maxHp: Math.floor(pet.maxHp * gf), hp: Math.floor(pet.maxHp * gf),
+                    atk: Math.floor(pet.atk * gf), ap: Math.floor(pet.ap * gf),
+                    def: Math.floor(pet.def * gf), res: Math.floor(pet.res * gf),
+                    speed: Math.floor(pet.speed * gf)
+                };
+            } else {
+                changes = { xp: pXp };
+            }
+            updatePetInDB(petId, changes);
         }
-        return newPet;
-    }));
+    });
+
     setCurrentView('arena-hub');
   };
 
   const handleLose = (enemyRating = 1200) => {
-      setUser(currentUser => {
-          const newUser = { ...currentUser };
-          const eloChange = calculateEloChange(newUser.rating, enemyRating, false);
-          newUser.rating = Math.max(0, newUser.rating + eloChange); 
-          newUser.stats.pvpTotal += 1;
-          return newUser;
+      const eloChange = calculateEloChange(user.rating, enemyRating, false);
+      updateUser(user.id, {
+          rating: Math.max(0, user.rating + eloChange),
+          stats: { ...user.stats, pvpTotal: user.stats.pvpTotal + 1 }
       });
       setCurrentView('arena-hub');
   };
@@ -371,7 +471,6 @@ export default function GameApp() {
               <span className="font-bold text-sm shadow-black drop-shadow-md">{notification.message}</span>
             </div>
           )}
-          
           {lootResult && <LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
           {showLevelUpModal && (<LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />)}
           
@@ -379,7 +478,7 @@ export default function GameApp() {
           <main className="flex-1 relative overflow-hidden bg-slate-900">
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
             <div className="h-full overflow-y-auto p-4 scrollbar-hide">
-              {currentView === 'menu' && (<MainMenu user={user} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} />)}
+              {currentView === 'menu' && (<MainMenu user={user} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onQuests={() => setCurrentView('quests')} />)}
               {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} />}
               {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} myPets={myPets} />}
               {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
@@ -393,9 +492,10 @@ export default function GameApp() {
               {currentView === 'pet-detail' && selectedPetDetail && (<PetDetailScreen pet={selectedPetDetail} onBack={() => setCurrentView('inventory')}/>)}
               {currentView === 'breeding' && (<BreedingScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onBreed={breedPets} coins={user.coins}/>)}
               {currentView === 'battle' && activeBattle && (<BattleScreen battleState={activeBattle} setBattleState={setActiveBattle} onWin={handleWin} onLose={handleLose}/>)}
-              {currentView === 'profile' && <ProfileScreen user={user} petCount={myPets.length} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={(id) => { if(id === user.id) { showNotification("Du kannst dich nicht selbst hinzufügen", 'error'); return;} const f = DUMMY_USERS.find(u => u.id === id); if(f) { setUser(prev => ({...prev, friends: [...prev.friends, f]})); showNotification("Freund hinzugefügt", 'success'); } else { showNotification("Spieler nicht gefunden", 'error'); } }} />}
+              {currentView === 'profile' && <ProfileScreen user={user} petCount={myPets.length} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={(id) => { handleAddFriend(id); }} />}
               {currentView === 'friend-profile' && selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('profile')} />}
               {currentView === 'settings' && (<SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout} />)}
+              {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
             </div>
           </main>
           <BottomNav currentView={currentView} setCurrentView={setCurrentView} />

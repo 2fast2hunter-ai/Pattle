@@ -1,4 +1,5 @@
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES } from '../data/gameData';
+import { QUEST_TEMPLATES } from '../data/gameData';
 
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
     const K = 32;
@@ -131,4 +132,63 @@ export const getUnlockedHatcherySlots = (level) => {
 
 export const getMaxEnergy = (level) => {
   return 10 + ((level - 1) * 2);
+};
+
+// src/utils/gameMechanics.js (Füge das am Ende hinzu)
+
+
+export const generateQuests = (category) => {
+  const count = 5; // Immer 5 Aufgaben
+  const newQuests = [];
+  
+  // Multiplikatoren für Schwierigkeit und Belohnung
+  let multiplier = 1;
+  let duration = 0; // in Millisekunden
+
+  if (category === 'DAILY') {
+      multiplier = 1;
+      duration = 24 * 60 * 60 * 1000; // 1 Tag
+  } else if (category === 'WEEKLY') {
+      multiplier = 5; // 5x schwerer, 5x mehr Belohnung
+      duration = 7 * 24 * 60 * 60 * 1000; // 7 Tage
+  } else if (category === 'MONTHLY') {
+      multiplier = 20; // 20x schwerer
+      duration = 30 * 24 * 60 * 60 * 1000; // 30 Tage
+  }
+
+  // 5 zufällige Aufgaben auswählen
+  for (let i = 0; i < count; i++) {
+      const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
+      
+      // Zufällige Variation in der Menge (+/- 20%)
+      const variance = 0.8 + Math.random() * 0.4;
+      const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
+      
+      // Belohnung berechnen
+      let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
+      let rewardType = template.rewardType;
+
+      // Special: Monatliche Aufgaben geben oft Eier oder Edelsteine
+      if (category === 'MONTHLY' && Math.random() > 0.5) {
+          rewardType = 'EGG_RARE'; // Beispiel für Ei-Belohnung
+          rewardAmount = 1;
+      }
+
+      newQuests.push({
+          id: Date.now() + Math.random().toString(),
+          type: template.type,
+          label: template.label,
+          target: targetAmount,
+          progress: 0,
+          rewardType: rewardType,
+          rewardAmount: rewardAmount,
+          claimed: false,
+          category: category
+      });
+  }
+
+  return {
+      quests: newQuests,
+      expiresAt: Date.now() + duration
+  };
 };

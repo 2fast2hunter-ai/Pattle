@@ -5,13 +5,6 @@ import {
   Clock, Orbit, Aperture, AlertTriangle, Gavel
 } from 'lucide-react';
 
-export const DUMMY_USERS = [
-    { id: 'ash_ketchum', username: 'AshKetchum', rating: 2800, level: 25, avatar: '🧢', stats: { pvpWins: 150, pvpTotal: 200, hatched: 50, bred: 10, marketSpent: 5000, marketEarned: 2000 } },
-    { id: 'gary_oak', username: 'GaryOak', rating: 2750, level: 24, avatar: '😼', stats: { pvpWins: 140, pvpTotal: 190, hatched: 45, bred: 8, marketSpent: 4000, marketEarned: 5000 } },
-    { id: 'misty_water', username: 'Misty', rating: 1400, level: 15, avatar: '🌊', stats: { pvpWins: 40, pvpTotal: 80, hatched: 20, bred: 5, marketSpent: 500, marketEarned: 1200 } },
-    { id: 'brock_rock', username: 'Brock', rating: 1350, level: 18, avatar: '🪨', stats: { pvpWins: 35, pvpTotal: 70, hatched: 15, bred: 2, marketSpent: 200, marketEarned: 500 } },
-];
-
 export const RARITIES = {
   COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, hatchDuration: 10, dropChance: 40.0 },
   UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, hatchDuration: 30, dropChance: 25.0 },
@@ -109,3 +102,23 @@ export const ABILITIES = {
   gust:      { name: 'Windstoß',       element: 'WIND',     dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Schneller Windangriff (130% AP)' },
   punch:     { name: 'Karatehieb',     element: 'FIGHTING', dmgScale: 1.5, type: 'PHYSICAL', cd: 2, desc: 'Gezielter Schlag (150% AD)' },
 };
+
+// src/data/gameData.jsx (Füge das am Ende hinzu)
+
+export const QUEST_TYPES = {
+  WIN_PVP: 'WIN_PVP',
+  HATCH_EGG: 'HATCH_EGG',
+  BREED_PET: 'BREED_PET',
+  SPEND_COINS: 'SPEND_COINS',
+  EARN_XP: 'EARN_XP'
+};
+
+// Vorlagen für Aufgaben. "difficulty" bestimmt die Skalierung.
+// range: [min, max] für die Menge
+export const QUEST_TEMPLATES = [
+  { type: QUEST_TYPES.WIN_PVP,     label: "Gewinne Kämpfe",           baseAmount: 1,  rewardType: 'COINS', rewardBase: 100 },
+  { type: QUEST_TYPES.HATCH_EGG,   label: "Brüte Eier aus",           baseAmount: 1,  rewardType: 'GEMS',  rewardBase: 5 },
+  { type: QUEST_TYPES.BREED_PET,   label: "Züchte neue Pets",         baseAmount: 1,  rewardType: 'COINS', rewardBase: 500 },
+  { type: QUEST_TYPES.SPEND_COINS, label: "Gib Münzen aus",           baseAmount: 500,rewardType: 'XP',    rewardBase: 50 },
+  { type: QUEST_TYPES.EARN_XP,     label: "Sammle Erfahrungspunkte",  baseAmount: 100,rewardType: 'COINS', rewardBase: 50 },
+];
