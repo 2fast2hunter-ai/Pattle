@@ -8,18 +8,15 @@ import { generatePet, generateQuests, getMaxEnergy } from './gameMechanics';
 
 // --- USER MANAGEMENT ---
 
-// src/utils/db.js
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
-    // Wenn User existiert, nur die Daten zurückgeben
-    return userSnap.data(); 
+    return { id: userSnap.id, ...userSnap.data() }; 
   } else {
-    // Neuer User
     const newUserData = {
-      id: firebaseUser.uid,
+      id: firebaseUser.uid, // WICHTIG: ID auch im Dokument speichern
       username: username,
       level: 1,
       xp: 0,
@@ -47,9 +44,12 @@ export const initializeUser = async (firebaseUser, username) => {
   }
 };
 
+// FIX: ID wird jetzt garantiert mitgegeben
 export const listenToUser = (userId, callback) => {
   return onSnapshot(doc(db, "users", userId), (doc) => {
-    if (doc.exists()) callback(doc.data());
+    if (doc.exists()) {
+        callback({ id: doc.id, ...doc.data() });
+    }
   });
 };
 
@@ -57,7 +57,7 @@ export const listenToPets = (userId, callback) => {
   const q = query(collection(db, "pets"), where("ownerId", "==", userId));
   return onSnapshot(q, (snapshot) => {
     const pets = [];
-    snapshot.forEach((doc) => pets.push(doc.data()));
+    snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() }));
     callback(pets);
   });
 };
@@ -73,10 +73,10 @@ export const listenToMarket = (callback) => {
 // --- GENERAL ACTIONS ---
 
 export const updateUser = async (userId, data) => {
+  if (!userId) return;
   const userRef = doc(db, "users", userId);
   await updateDoc(userRef, data);
 };
-
 
 export const addPetToDB = async (pet, ownerId) => {
   await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId });
@@ -98,25 +98,24 @@ export const createMarketListing = async (listing) => {
 export const deleteMarketListing = async (listingId) => {
   await deleteDoc(doc(db, "market", listingId));
 };
+
 // --- LEADERBOARD & SOCIAL ---
 
 export const getLeaderboard = async () => {
-  // Holt die Top 101 Spieler sortiert nach Rating
   const q = query(
     collection(db, "users"), 
     orderBy("rating", "desc"), 
     limit(101) 
   );
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map(doc => doc.data());
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
 
 export const findUserPublic = async (targetId) => {
-    // Sucht einen User anhand der ID (für Freundesliste)
     try {
         const docRef = doc(db, "users", targetId);
         const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) return docSnap.data();
+        if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
         return null;
     } catch (e) {
         console.error("User Search Error:", e);
@@ -127,7 +126,7 @@ export const findUserPublic = async (targetId) => {
 // --- QUEST SYSTEM ---
 
 export const checkAndResetQuests = async (user) => {
-    if (!user) return;
+    if (!user || !user.id) return;
     
     const now = Date.now();
     let updates = {};
@@ -135,7 +134,9 @@ export const checkAndResetQuests = async (user) => {
 
     const checkCategory = (catKey, catName) => {
         const current = user.quests?.[catKey];
-        if (!current || now > current.expiresAt) { 
+        // Reset, wenn keine Quests da sind ODER Zeit abgelaufen ist
+        if (!current || !current.expiresAt || now > current.expiresAt) { 
+            console.log(`Resette Quests für: ${catName}`);
             const newData = generateQuests(catName);
             updates[`quests.${catKey}`] = newData;
             hasUpdates = true;
@@ -152,7 +153,11 @@ export const checkAndResetQuests = async (user) => {
 };
 
 export const trackQuestProgress = async (user, actionType, amount = 1) => {
-    if (!user || !user.id || amount === 0) return;
+    // FIX: Robuster Check auf User ID
+    if (!user || !user.id || amount === 0) {
+        console.warn("Quest Tracking abgebrochen: User oder ID fehlt", user);
+        return;
+    }
 
     const userRef = doc(db, "users", user.id);
 
@@ -169,15 +174,17 @@ export const trackQuestProgress = async (user, actionType, amount = 1) => {
 
             ['daily', 'weekly', 'monthly'].forEach(catKey => {
                 const categoryData = userData.quests[catKey];
-                if (!categoryData) return;
+                if (!categoryData || !categoryData.quests) return;
 
                 let categoryChanged = false;
                 
                 const updatedList = categoryData.quests.map(quest => {
+                    // Prüfen: Richtiger Typ? Nicht abgeholt? Noch nicht fertig?
                     if (quest.type === actionType && !quest.claimed && quest.progress < quest.target) {
                         const newProgress = Math.min(quest.target, quest.progress + amount);
                         if (newProgress !== quest.progress) {
                             categoryChanged = true;
+                            console.log(`Quest Fortschritt (${catKey}): ${quest.label} -> ${newProgress}/${quest.target}`);
                             return { ...quest, progress: newProgress };
                         }
                     }
@@ -219,7 +226,7 @@ export const claimQuestReward = async (user, catKey, questId) => {
       const updatedList = [...categoryData.quests];
       updatedList[questIndex] = { ...quest, claimed: true };
       
-      // 2. Den Zähler für den Gesamtfortschritt erhöhen
+      // 2. Zähler erhöhen
       const newCompletedCount = (categoryData.completedCount || 0) + 1;
 
       let updates = {
@@ -231,7 +238,7 @@ export const claimQuestReward = async (user, catKey, questId) => {
       let newCoins = userData.coins;
       let newGems = userData.gems;
 
-      // 3. Belohnung vorbereiten
+      // 3. Belohnung
       if (quest.rewardType === 'COINS') {
         newCoins += quest.rewardAmount;
         rewardMessage = `+${quest.rewardAmount} Münzen`;
@@ -250,7 +257,7 @@ export const claimQuestReward = async (user, catKey, questId) => {
         rewardMessage = `Ei (${rarity}) erhalten!`;
       }
       
-      // 4. LEVEL-UP LOGIK
+      // 4. Level Up Logik
       let newLevel = userData.level;
       let newXp = (userData.xp || 0) + xpGain;
       let newXpToNext = userData.xpToNextLevel;
@@ -265,7 +272,6 @@ export const claimQuestReward = async (user, catKey, questId) => {
         newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
       }
 
-      // 5. User-Statistiken aktualisieren und Transaction abschließen
       updates['level'] = newLevel;
       updates['xp'] = newXp;
       updates['xpToNextLevel'] = newXpToNext;
@@ -300,7 +306,6 @@ export const claimCompositeReward = async (user, catKey) => {
 
       const reward = categoryData.reward;
 
-      // Markiere als claimed
       let updates = {
         [`quests.${catKey}.claimedComposite`]: true 
       };
@@ -309,9 +314,8 @@ export const claimCompositeReward = async (user, catKey) => {
       let newCoins = userData.coins;
       let newGems = userData.gems;
 
-      rewardMessage = `Gesamt-Belohnung: ${reward.label}. `;
+      rewardMessage = `Bonus: ${reward.label}. `;
 
-      // Belohnung verteilen
       if (reward.rewardType === 'COINS') {
         newCoins += reward.rewardAmount;
         rewardMessage += `+${reward.rewardAmount} Münzen`;
@@ -330,7 +334,6 @@ export const claimCompositeReward = async (user, catKey) => {
         rewardMessage += `+${reward.rewardAmount} XP`;
       }
 
-      // LEVEL-UP LOGIK
       let newLevel = userData.level;
       let newXp = (userData.xp || 0) + xpGain;
       let newXpToNext = userData.xpToNextLevel;
@@ -345,7 +348,6 @@ export const claimCompositeReward = async (user, catKey) => {
         newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
       }
 
-      // User-Statistiken aktualisieren und Transaction abschließen
       updates['level'] = newLevel;
       updates['xp'] = newXp;
       updates['xpToNextLevel'] = newXpToNext;

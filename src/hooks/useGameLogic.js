@@ -1,58 +1,67 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth'; 
 import { auth } from '../firebase'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
 import { getMaxEnergy } from '../utils/gameMechanics';
-import { updateUser } from '../utils/db';
+import { updateUser, checkAndResetQuests } from '../utils/db';
 
 
 export function useGameLogic() {
+    // 1. STATES FÜR ABHÄNGIGKEITS-KETTE
     const [userId, setUserId] = useState(null); 
     
+    // 2. Initialisiere Hooks
     const gameLogicState = useGameLogicState(userId); 
-    
-    // Wir übergeben eine Wrapper-Funktion für setUserId, um den State lokal und im Hook zu setzen
     const actions = useGameActions(gameLogicState, setUserId); 
+    
+    // Ref, um Endlosschleifen bei useEffect zu vermeiden
+    const actionsRef = useRef(actions);
+    const stateRef = useRef(gameLogicState);
+    
+    // Aktualisiere Refs bei jedem Render (für Zugriff in useEffects ohne Re-Trigger)
+    useEffect(() => {
+        actionsRef.current = actions;
+        stateRef.current = gameLogicState;
+    });
 
     // --- CORE HOOKS ---
 
-    // A. AUTO LOGIN CHECK (Verbesserte Logik)
+    // A. AUTO LOGIN CHECK (FIX: Läuft nur EINMAL beim Mounten)
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                // 1. Setze UserId, damit der State-Hook (useGameLogicState) anfängt zu laden
-                setUserId(currentUser.uid);
+                // Wenn User eingeloggt: Starte den Login-Prozess
+                // Wir nutzen die Refs, damit wir sie nicht in die Dependency-Array packen müssen
+                await actionsRef.current.handleLogin(currentUser, currentUser.displayName);
                 
-                // 2. Führe Login-Logik aus (DB-Check etc.)
-                await actions.handleLogin(currentUser, currentUser.displayName);
-                
-                // HINWEIS: Wir setzen hier NICHT sofort authLoading auf false!
-                // Das machen wir erst, wenn der User-State im nächsten Effekt da ist.
+                stateRef.current.setCurrentView('menu'); 
+                stateRef.current.setAuthLoading(false); 
             } else {
-                // Kein User eingeloggt -> Ladezustand beenden, damit AuthScreen gezeigt wird
-                setUserId(null);
-                gameLogicState.setAuthLoading(false);
+                // Wenn KEIN User gefunden wird: Beende den Ladezustand
+                stateRef.current.setAuthLoading(false);
             }
         });
 
         return () => unsubscribe();
-    }, []); // Leeres Array, damit dies nur EINMAL beim Start läuft
+    }, []); // WICHTIG: Leeres Array = Nur beim Start ausführen!
 
-    // B. LADEZUSTAND MANAGEN (Wartet auf User-Daten)
+
+    // B. LADEZUSTAND & QUEST-INIT
     useEffect(() => {
-        // Wenn wir eine UserId haben UND die User-Daten aus der DB geladen wurden (gameLogicState.user ist nicht null)
+        // Sobald der User geladen ist (gameLogicState.user existiert)
         if (userId && gameLogicState.user) {
-            gameLogicState.setAuthLoading(false);
-            // Nur navigieren, wenn wir noch auf 'auth' stehen (verhindert Zurücksetzen beim Neuladen)
-            if (gameLogicState.currentView === 'auth') {
-                gameLogicState.setCurrentView('menu');
+            if (gameLogicState.authLoading) {
+                gameLogicState.setAuthLoading(false);
             }
+            
+            // Fix: Quests initialisieren
+            checkAndResetQuests(gameLogicState.user).catch(console.error);
         }
-    }, [userId, gameLogicState.user]); // Reagiert, sobald User-Daten da sind
+    }, [userId, gameLogicState.user]); // Reagiert nur, wenn User-Daten da sind
 
 
-    // C. PASSIVE EFFEKTE (Level Up und Energy Regen)
+    // C. PASSIVE EFFEKTE (Level Up)
     useEffect(() => {
         const { user, previousLevel, setShowLevelUpModal, setPreviousLevel } = gameLogicState;
         if (!user || previousLevel === null) return;
@@ -67,33 +76,41 @@ export function useGameLogic() {
         }
 
         setPreviousLevel({ level: user.level, id: user.id });
-    }, [gameLogicState.user?.level, gameLogicState.user?.id]); // Abhängigkeiten optimiert
+    }, [gameLogicState.user?.level, gameLogicState.user?.id]);
 
-    // ENERGY REGENERATION
     useEffect(() => {
         const { user } = gameLogicState;
         if (!user) return;
+        
         const interval = setInterval(() => {
             const now = Date.now();
             const msPerEnergy = 1000 * 60 * 5; 
             const timeDiff = now - user.lastEnergyUpdate;
             
+            // Nur berechnen, wenn genug Zeit vergangen ist
             if (timeDiff >= msPerEnergy) {
-                const energyToGain = Math.floor(timeDiff / msPerEnergy);
                 const maxEn = getMaxEnergy(user.level);
                 
+                // NUR schreiben, wenn Energie NICHT voll ist
                 if (user.energy < maxEn) {
+                     const energyToGain = Math.floor(timeDiff / msPerEnergy);
+                     // Nicht mehr Energie geben als Max
                      const newEnergy = Math.min(maxEn, user.energy + energyToGain);
+                     
+                     // Zeit nur so weit vorspulen, wie Energie regeneriert wurde
+                     // (Verhindert Zeit-Verlust bei Pausen)
                      const newLastUpdate = user.lastEnergyUpdate + (energyToGain * msPerEnergy);
+                     
                      updateUser(userId, { energy: newEnergy, lastEnergyUpdate: newLastUpdate });
-                } else { 
-                     updateUser(userId, { lastEnergyUpdate: now });
-                }
+                } 
+                // WICHTIG: Der 'else'-Block wurde entfernt! 
+                // Wir schreiben NICHT in die DB, wenn die Energie voll ist.
             }
         }, 10000); 
         return () => clearInterval(interval);
-    }, [gameLogicState.user, userId]); 
+    }, [gameLogicState.user, userId]);
 
 
+    // 4. Rückgabe: Alle States und alle Actions
     return { ...gameLogicState, ...actions };
 }

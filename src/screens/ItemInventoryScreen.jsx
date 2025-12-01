@@ -9,7 +9,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   
   const [animationStage, setAnimationStage] = useState('idle'); 
   const [processingBoxId, setProcessingBoxId] = useState(null);
-  const [resultPet, setResultPet] = useState(null);
+  const [resultPet, setResultPet] = useState(null); 
 
   // --- STAPEL LOGIK ---
   const stacks = {};
@@ -41,18 +41,40 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const boxItems = Object.values(boxStacks);
   const ticketItems = Object.values(ticketStacks); 
 
-  // --- ANIMATION SEQUENCE ---
+  // --- NEUE SYNCHRONISIERTE ANIMATION ---
   const startLootboxSequence = async (boxId, boxType) => {
+      // 1. Startzustand
       setSelectedBox(null);
       setProcessingBoxId(boxId);
       setAnimationStage('shaking');
       setResultPet(null);
 
-      const newPet = await onStartIncubation(boxId, boxType);
-      if (newPet) setResultPet(newPet);
+      try {
+          // 2. Warten auf BEIDES: Mindest-Animation (2.5s) UND Datenbank-Antwort
+          const [_, newPet] = await Promise.all([
+              new Promise(resolve => setTimeout(resolve, 2500)), // Mindestens 2.5s wackeln
+              onStartIncubation(boxId, boxType)                  // Echte Daten laden
+          ]);
 
-      setTimeout(() => setAnimationStage('exploding'), 2500);
-      setTimeout(() => setAnimationStage('revealed'), 2800);
+          // 3. Nur weitermachen, wenn wir ein Pet haben
+          if (newPet) {
+              setResultPet(newPet);
+              setAnimationStage('exploding');
+              
+              // Nach 300ms Blitz -> Enthüllen
+              setTimeout(() => {
+                  setAnimationStage('revealed');
+              }, 300);
+          } else {
+              // Fehlerfall (z.B. Inventarfehler)
+              setAnimationStage('idle');
+              setProcessingBoxId(null);
+          }
+      } catch (error) {
+          console.error("Lootbox Error:", error);
+          setAnimationStage('idle');
+          setProcessingBoxId(null);
+      }
   };
 
   const finishAnimation = () => {
@@ -109,7 +131,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                   <div className="fixed inset-0 bg-white z-[110] animate-out fade-out duration-500"></div>
               )}
 
-              {/* PHASE 3: REVEAL */}
+              {/* PHASE 3: REVEAL (SICHERER RENDER) */}
               {animationStage === 'revealed' && resultPet && (
                   <div className="relative w-full h-full flex flex-col items-center justify-center animate-in fade-in duration-500">
                        <div className="absolute inset-0 flex items-center justify-center opacity-50">
@@ -121,18 +143,23 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                            <p className={`text-lg font-bold mb-8 ${RARITIES[resultPet.rarity].color} uppercase tracking-widest`}>{RARITIES[resultPet.rarity].label}</p>
                            
                            <div className="relative mb-10 group scale-150">
-                               {/* HINTERGRUND: Glow in Rarity Farbe */}
                                <div className={`absolute inset-0 ${RARITIES[resultPet.rarity].bg} blur-3xl opacity-60 animate-pulse rounded-full`}></div>
                                
-                               {/* EI: Direktes Egg Icon in Rarity Farbe (statt Box) */}
-                               <Egg className={`w-40 h-40 ${RARITIES[resultPet.rarity].color} drop-shadow-[0_0_25px_rgba(0,0,0,0.5)] relative z-10 animate-bounce-slow`} />
-                               
+                               {/* PetAvatar zeigt jetzt das Ei, aber in groß und schön */}
+                               <div className="relative z-10 animate-bounce-slow">
+                                   <PetAvatar pet={resultPet} className="w-40 h-40 drop-shadow-2xl" />
+                               </div>
+
                                <Sparkles className="absolute top-0 right-0 text-yellow-300 w-12 h-12 animate-ping-slow" />
                            </div>
                            
                            <div className="bg-slate-800/80 backdrop-blur border border-white/10 p-4 rounded-2xl mb-8 text-center">
-                               <p className="text-slate-300 text-sm font-bold">Du hast ein neues Ei erhalten!</p>
-                               <p className="text-xs text-slate-500 mt-1">Bringe es in die Brutstätte.</p>
+                               <p className="text-slate-300 text-sm font-bold">
+                                   {resultPet.isEgg ? 'Ein neues Ei!' : 'Ein neues Pet!'}
+                               </p>
+                               <p className="text-xs text-slate-500 mt-1">
+                                   {resultPet.isEgg ? 'Ab in die Brutstätte damit.' : 'Es wartet im Pet Hub.'}
+                               </p>
                            </div>
                            
                            <button 
@@ -151,6 +178,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
 
   return (
     <div className="h-full flex flex-col animate-in fade-in relative">
+      
       {/* MODAL EIER */}
       {selectedItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6 animate-in zoom-in-50">
@@ -165,12 +193,13 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
              </div>
           </div>
       )}
+
       {/* MODAL LOOTBOX */}
       {selectedBox && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6 animate-in zoom-in-50">
              <div className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-full bg-yellow-500 opacity-5 blur-3xl"></div>
-                 <button onClick={() => setSelectedBox(null)} className="absolute top-4 right-4 p-2 bg-white/5 rounded-full hover:bg-white/20 text-white"><X className="w-5 h-5" /></button>
+                 <button onClick={() => setSelectedBox(null)} className="absolute top-4 right-4 p-2 bg-white/5 text-white rounded-full"><X className="w-5 h-5" /></button>
                  <h2 className="text-2xl font-black text-white mb-1 relative z-10">{selectedBox.variant} BOX</h2>
                  <div className="w-36 h-36 mx-auto flex items-center justify-center my-6 relative">
                      <Package className="w-24 h-24 text-yellow-400 drop-shadow-2xl relative z-10" />
@@ -179,10 +208,14 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
              </div>
           </div>
       )}
+
+      {/* HEADER */}
       <div className="relative flex items-center justify-center mb-6 pt-2 px-4">
           <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-600">RUCKSACK</h1>
           <button onClick={onBack} className="absolute right-4 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500"><X className="w-5 h-5" /></button>
       </div>
+      
+      {/* CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
         {ticketItems.length > 0 && (
             <div className="animate-in slide-in-from-right duration-300">
