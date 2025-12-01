@@ -91,3 +91,6 @@ export function LootboxModal({ pet, onClose }) {
     </div>
   );
 }
+
+// Hinzufügen des Standard-Exports, um den Import in App.jsx zu beheben
+export default { LevelUpModal, LootboxModal };
