@@ -1,19 +1,137 @@
 import React from 'react';
-import { ArrowLeft, Sparkles, Swords, Shield, Zap, Activity, Heart, Timer } from 'lucide-react';
-import { TYPES, RARITIES, ABILITIES } from '../data/gameData';
+import { ArrowLeft, Sparkles, Swords, Shield, Zap, Activity, Heart, Timer, X, Wind, Award, Scroll } from 'lucide-react';
+import { TYPES, RARITIES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
+import PetAvatar from '../components/PetAvatar';
 
 export default function PetDetailScreen({ pet, onBack }) {
     const typeInfo = TYPES[pet.type];
     const rarityInfo = RARITIES[pet.rarity];
     const ability = ABILITIES[pet.abilityId];
     const abilityTypeInfo = TYPES[ability.element] || { color: 'text-slate-400', label: 'Neutral' };
+    const speciesInfo = ZODIAC_ANIMALS[pet.species];
+
+    const xpPercent = (pet.xp / pet.maxXp) * 100;
+
     return (
-      <div className="pt-2 pb-10 space-y-6 animate-in slide-in-from-right duration-300">
-        <div className="flex items-center gap-2"><button onClick={onBack} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"><ArrowLeft className="w-5 h-5" /></button><h2 className="text-xl font-bold">Pet Details</h2></div>
-        <div className={`rounded-3xl p-0.5 bg-gradient-to-br ${rarityInfo.bg} to-slate-800`}><div className="bg-slate-900 rounded-[22px] p-5 relative overflow-hidden"><div className="flex justify-between items-start mb-6 relative z-10"><div><div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${rarityInfo.border} ${rarityInfo.color} mb-1 bg-slate-800/80`}><Sparkles className="w-3 h-3" /> {rarityInfo.label}</div><h3 className="text-3xl font-black">{pet.name}</h3><div className={`text-sm font-bold ${typeInfo.color} flex items-center gap-1`}><div className="w-4 h-4">{typeInfo.icon}</div> {typeInfo.label}-Typ</div></div><div className={`w-20 h-20 ${typeInfo.bg} rounded-2xl flex items-center justify-center text-4xl shadow-lg`}>{typeInfo.icon}</div></div>
-        <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 mb-4 relative z-10"><div className="flex justify-between items-center mb-4"><h4 className="text-xs text-slate-500 font-bold uppercase">Stats (Lvl {pet.level})</h4><div className="text-[10px] text-slate-400">Wachstum: <span className="text-green-400">+{Math.round((0.05 * rarityInfo.multi)*100)}%</span> / Lvl</div></div><div className="grid grid-cols-2 gap-x-8 gap-y-2"><div className="flex justify-between items-center text-sm border-b border-white/5 pb-1"><span className="text-slate-400 flex items-center gap-2"><Swords className="w-4 h-4 text-red-400"/> Angriff</span><span className="font-bold">{pet.atk}</span></div><div className="flex justify-between items-center text-sm border-b border-white/5 pb-1"><span className="text-slate-400 flex items-center gap-2"><Shield className="w-4 h-4 text-slate-300"/> Rüstung</span><span className="font-bold">{pet.def}</span></div><div className="flex justify-between items-center text-sm border-b border-white/5 pb-1"><span className="text-slate-400 flex items-center gap-2"><Zap className="w-4 h-4 text-purple-400"/> Fähigkeit</span><span className="font-bold">{pet.ap}</span></div><div className="flex justify-between items-center text-sm border-b border-white/5 pb-1"><span className="text-slate-400 flex items-center gap-2"><Activity className="w-4 h-4 text-blue-300"/> Resistenz</span><span className="font-bold">{pet.res}</span></div><div className="flex justify-between items-center text-sm pt-1"><span className="text-slate-400 flex items-center gap-2"><Activity className="w-4 h-4 text-yellow-400"/> Speed</span><span className="font-bold">{pet.speed}</span></div><div className="flex justify-between items-center text-sm pt-1"><span className="text-slate-400 flex items-center gap-2"><Heart className="w-4 h-4 text-green-400"/> HP</span><span className="font-bold">{pet.hp}/{pet.maxHp}</span></div></div></div>
-        <div className="bg-slate-800/50 p-3 rounded-xl border border-white/5 mb-4 relative z-10"><div className="flex justify-between text-[10px] mb-1 font-bold text-slate-400"><span>XP Fortschritt</span><span>{pet.xp} / {pet.maxXp}</span></div><div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden"><div className="h-full bg-yellow-400" style={{width: `${(pet.xp / pet.maxXp) * 100}%`}}></div></div></div>
-        <div className="bg-indigo-900/20 border border-indigo-500/30 p-4 rounded-xl relative z-10"><div className="flex justify-between items-start mb-2"><div className="flex items-center gap-2"><div className="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center text-white"><Zap className="w-5 h-5 fill-current" /></div><div><div className="font-bold text-sm text-indigo-300">{ability.name}</div><div className="text-[10px] text-indigo-400/70 uppercase">Aktive Fähigkeit</div></div></div><div className="bg-slate-900 text-[10px] px-2 py-1 rounded border border-white/10 flex items-center gap-1 text-slate-400"><Timer className="w-3 h-3" /> {ability.cd} Runden</div></div><p className="text-xs text-slate-300 leading-relaxed mb-2">{ability.desc}</p><div className="flex items-center gap-1 text-[10px] font-bold uppercase">Element: <span className={`${abilityTypeInfo.color}`}>{abilityTypeInfo.label}</span></div></div>
-        <div className={`absolute -top-10 -right-10 w-64 h-64 ${typeInfo.bg} opacity-10 blur-3xl rounded-full pointer-events-none`}></div></div></div></div>
+      <div className="h-full flex flex-col animate-in fade-in relative bg-slate-900">
+        
+        {/* --- HEADER --- */}
+        <div className="relative flex items-center justify-center mb-2 pt-4 px-4 z-20">
+            <h1 className="text-2xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">
+                DETAILS
+            </h1>
+            <button 
+                onClick={onBack} 
+                className="absolute right-4 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"
+            >
+                <X className="w-5 h-5" />
+            </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
+            
+            {/* --- HERO SECTION (Avatar) --- */}
+            <div className="relative w-full h-64 flex items-center justify-center mb-4 overflow-hidden">
+                <div className={`absolute inset-0 ${typeInfo.bg} opacity-10 blur-3xl`}></div>
+                <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 ${rarityInfo.bg} blur-[60px] opacity-20 animate-pulse`}></div>
+                
+                <div className="relative z-10 scale-150 drop-shadow-2xl">
+                    <PetAvatar pet={pet} className="w-40 h-40" />
+                </div>
+
+                {/* Schwebendes Badge behalten wir als Eyecatcher */}
+                <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full border ${rarityInfo.border} ${rarityInfo.bg} bg-opacity-20 backdrop-blur-md flex items-center gap-2 shadow-lg`}>
+                    <Sparkles className={`w-3 h-3 ${rarityInfo.color}`} />
+                    <span className={`text-xs font-black uppercase tracking-widest text-white`}>{rarityInfo.label}</span>
+                </div>
+            </div>
+
+            <div className="px-4 space-y-4">
+                
+                {/* --- INFO CARD --- */}
+                <div className="bg-slate-800/50 border border-white/10 rounded-3xl p-5 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-4">
+                        <div>
+                            {/* HIER WURDE DIE SELTENHEIT HINZUGEFÜGT */}
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                <span className="text-xs font-bold text-slate-500 uppercase">{speciesInfo.label}</span>
+                                
+                                <div className={`w-1 h-1 rounded-full bg-slate-600`}></div>
+                                <span className={`text-xs font-bold ${typeInfo.color} uppercase`}>{typeInfo.label}</span>
+                                
+                                <div className={`w-1 h-1 rounded-full bg-slate-600`}></div>
+                                <span className={`text-xs font-bold ${rarityInfo.color} uppercase`}>{rarityInfo.label}</span>
+                            </div>
+                            <h2 className="text-3xl font-black text-white leading-none">{pet.name}</h2>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-xs text-slate-500 font-bold uppercase">Level</span>
+                            <span className="text-3xl font-black text-white">{pet.level}</span>
+                        </div>
+                    </div>
+
+                    {/* XP Bar */}
+                    <div className="mb-2">
+                        <div className="flex justify-between text-[10px] font-bold text-slate-400 mb-1">
+                            <span>Erfahrung</span>
+                            <span>{pet.xp} / {pet.maxXp} XP</span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5">
+                            <div className="h-full bg-gradient-to-r from-yellow-500 to-amber-300" style={{width: `${xpPercent}%`}}></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- STATS GRID --- */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-800/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className="p-2 bg-red-500/10 rounded-xl text-red-400"><Swords className="w-5 h-5" /></div>
+                        <div><div className="text-[10px] text-slate-500 font-bold uppercase">Angriff</div><div className="text-xl font-black text-white">{pet.atk}</div></div>
+                    </div>
+                     <div className="bg-slate-800/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className="p-2 bg-green-500/10 rounded-xl text-green-400"><Heart className="w-5 h-5" /></div>
+                        <div><div className="text-[10px] text-slate-500 font-bold uppercase">Leben</div><div className="text-xl font-black text-white">{pet.maxHp}</div></div>
+                    </div>
+                     <div className="bg-slate-800/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className="p-2 bg-slate-500/10 rounded-xl text-slate-400"><Shield className="w-5 h-5" /></div>
+                        <div><div className="text-[10px] text-slate-500 font-bold uppercase">Rüstung</div><div className="text-xl font-black text-white">{pet.def}</div></div>
+                    </div>
+                    <div className="bg-slate-800/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className="p-2 bg-sky-500/10 rounded-xl text-sky-400"><Wind className="w-5 h-5" /></div>
+                        <div><div className="text-[10px] text-slate-500 font-bold uppercase">Tempo</div><div className="text-xl font-black text-white">{pet.speed}</div></div>
+                    </div>
+                    <div className="bg-slate-800/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/10 rounded-xl text-purple-400"><Zap className="w-5 h-5" /></div>
+                        <div><div className="text-[10px] text-slate-500 font-bold uppercase">Magie</div><div className="text-xl font-black text-white">{pet.ap}</div></div>
+                    </div>
+                     <div className="bg-slate-800/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3">
+                        <div className="p-2 bg-pink-500/10 rounded-xl text-pink-400"><Activity className="w-5 h-5" /></div>
+                        <div><div className="text-[10px] text-slate-500 font-bold uppercase">Resistenz</div><div className="text-xl font-black text-white">{pet.res}</div></div>
+                    </div>
+                </div>
+
+                {/* --- ABILITY CARD --- */}
+                <div className="bg-gradient-to-br from-indigo-900/40 to-slate-800 border border-indigo-500/30 p-5 rounded-3xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 p-3 opacity-10"><Scroll className="w-24 h-24 text-indigo-400" /></div>
+                    <div className="relative z-10">
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-indigo-500 p-1.5 rounded-lg text-white shadow-lg shadow-indigo-500/20"><Zap className="w-4 h-4 fill-current" /></div>
+                                <span className="font-black text-indigo-200 uppercase tracking-wider text-xs">Spezialfähigkeit</span>
+                            </div>
+                            <div className="bg-black/30 px-2 py-1 rounded text-[10px] font-bold text-slate-400 border border-white/5 flex items-center gap-1"><Timer className="w-3 h-3" /> {ability.cd} Runden</div>
+                        </div>
+                        <h3 className="text-xl font-black text-white mb-2">{ability.name}</h3>
+                        <p className="text-sm text-indigo-100/80 leading-relaxed">{ability.desc}</p>
+                        <div className="mt-3 pt-3 border-t border-white/5 flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase">Typ:</span>
+                            <span className={`text-[10px] font-bold uppercase ${abilityTypeInfo.color}`}>{abilityTypeInfo.label}</span>
+                        </div>
+                    </div>
+                </div>
+                <div className="h-6"></div>
+            </div>
+        </div>
+      </div>
     );
 }
