@@ -191,9 +191,10 @@ export default function App() {
             />
           )}
 
-          {currentView === 'team-select-pet' && (
+        {currentView === 'team-select-pet' && (
             <InventoryScreen 
-              pets={myPets} 
+              // FIX: Nur Pets anzeigen, die NICHT schon im Team sind
+              pets={myPets.filter(p => !user.team.includes(p.id))} 
               title="Wähle Pet für Team" 
               onBack={() => setCurrentView('team-edit')} 
               onSelectPet={(id) => addToTeam(id)} 

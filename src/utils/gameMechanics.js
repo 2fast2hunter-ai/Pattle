@@ -64,7 +64,10 @@ export const getDamageMultiplier = (atkType, defType) => {
 };
 
 export const determineRarity = (boxType = 'STANDARD') => {
-    if (boxType === 'STARTER') return 'COMMON'; 
+    // --- HIER IST DIE ÄNDERUNG ---
+    if (boxType === 'STARTER') return 'COMMON'; // Jetzt 'RARE' statt 'COMMON'
+    // -----------------------------
+
     const roll = Math.random() * 100;
     let cumulative = 0;
     const sortedRarities = Object.values(RARITIES).sort((a, b) => a.dropChance - b.dropChance);
@@ -159,7 +162,7 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   if (inheritedStats) {
       b_hp = inheritedStats.hp; b_atk = inheritedStats.atk; b_ap = inheritedStats.ap; b_def = inheritedStats.def; b_res = inheritedStats.res; b_speed = inheritedStats.speed;
   } else {
-      // --- BASISWERTE WIEDER NORMALISIERT ---
+      // Basiswerte (wie im letzten Schritt festgelegt)
       b_hp = genBase(8);
       b_atk = genBase(2);
       b_ap = genBase(2);
