@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X } from 'lucide-react';
+import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
 import { getUnlockedHatcherySlots } from '../utils/gameMechanics';
+import PetAvatar from '../components/PetAvatar';
 
 export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
   const unlockedSlots = getUnlockedHatcherySlots(user.level);
@@ -35,44 +36,71 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
         
         {/* --- HATCHING MODAL --- */}
         {hatchingPet && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-6 animate-in zoom-in-50">
-                <div className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl relative overflow-hidden">
-                    {/* Background Glow */}
-                    <div className={`absolute top-0 left-0 w-full h-full ${RARITIES[hatchingPet.rarity].bg} opacity-10 blur-3xl`}></div>
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-xl p-6 animate-in zoom-in-50 duration-300">
+                <div className={`bg-slate-900 border-2 ${RARITIES[hatchingPet.rarity].border} w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden group`}>
                     
-                    <h2 className="text-2xl font-black text-white mb-2 relative z-10">Es schlüpft!</h2>
+                    {/* Hintergrund Licht-Explosion */}
+                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] ${RARITIES[hatchingPet.rarity].bg} opacity-20 blur-[80px] animate-spin-slow`}></div>
                     
-                    <div className="w-32 h-32 mx-auto flex items-center justify-center my-6 relative z-10">
-                        <div className={`absolute inset-0 ${RARITIES[hatchingPet.rarity].bg} blur-2xl opacity-40 rounded-full animate-pulse`}></div>
-                        <div className="relative bg-slate-800 rounded-full p-6 border-4 border-white/10 shadow-xl">
-                            <div className="text-5xl animate-bounce">{TYPES[hatchingPet.type].icon}</div>
+                    <div className="relative z-10">
+                        <h2 className="text-3xl font-black text-white mb-1 uppercase tracking-wider drop-shadow-lg">ES LEBT!</h2>
+                        <p className={`text-xs font-bold uppercase tracking-[0.2em] ${RARITIES[hatchingPet.rarity].color} mb-8`}>
+                            Neuer Begleiter
+                        </p>
+                        
+                        {/* --- VISUALISIERUNG (JETZT VIEL GRÖSSER) --- */}
+                        <div className="relative w-64 h-64 mx-auto flex items-center justify-center mb-8">
+                            {/* Rotierende Ringe */}
+                            <div className={`absolute inset-0 border-4 border-dashed ${RARITIES[hatchingPet.rarity].border} rounded-full opacity-30 animate-spin-slow`}></div>
+                            <div className={`absolute inset-6 border-2 ${RARITIES[hatchingPet.rarity].border} rounded-full opacity-50 animate-ping-slow`}></div>
+                            
+                            {/* Das echte Pet Bild (Groß) */}
+                            <div className="relative z-10 transition-transform hover:scale-105 duration-500">
+                                <PetAvatar 
+                                    pet={{ ...hatchingPet, isEgg: false }} 
+                                    className="w-56 h-56 drop-shadow-[0_15px_35px_rgba(0,0,0,0.4)]" 
+                                />
+                            </div>
+
+                            <Sparkles className="absolute top-0 right-0 text-yellow-300 w-10 h-10 animate-bounce delay-100 z-20" />
+                            <Sparkles className="absolute bottom-0 left-0 text-white w-8 h-8 animate-bounce delay-300 z-20" />
                         </div>
-                    </div>
-                    
-                    <p className="text-slate-300 text-sm mb-6 relative z-10">
-                        Ein <span className={`${RARITIES[hatchingPet.rarity].color} font-bold`}>{RARITIES[hatchingPet.rarity].label}</span> {TYPES[hatchingPet.type].label}-Pet ist bereit!
-                    </p>
-                    
-                    <div className="text-left mb-6 relative z-10">
-                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Name geben</label>
-                        <div className="flex items-center bg-black/40 rounded-xl mt-1 border border-white/10 focus-within:border-emerald-500 transition-colors">
-                            <input 
-                                type="text" 
-                                value={nameInput} 
-                                onChange={(e) => setNameInput(e.target.value)} 
-                                className="bg-transparent w-full p-3 outline-none text-white font-bold placeholder-slate-600" 
-                                autoFocus 
-                            />
-                            <Edit3 className="w-4 h-4 text-slate-500 mr-3" />
+                        
+                        {/* Info Text */}
+                        <div className="bg-slate-800/60 backdrop-blur rounded-2xl p-4 mb-6 border border-white/5">
+                            <p className="text-slate-300 text-sm">
+                                Ein <span className={`${RARITIES[hatchingPet.rarity].color} font-bold`}>{RARITIES[hatchingPet.rarity].label}</span>es <br/>
+                                <span className="font-bold text-white">{TYPES[hatchingPet.type].label}-Monster</span> ist geschlüpft!
+                            </p>
                         </div>
+                        
+                        {/* Namens Input */}
+                        <div className="text-left mb-6">
+                            <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-wider">Gib ihm einen Namen</label>
+                            <div className="flex items-center bg-slate-950 rounded-2xl mt-1 border border-white/10 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all overflow-hidden">
+                                <input 
+                                    type="text" 
+                                    value={nameInput} 
+                                    onChange={(e) => setNameInput(e.target.value)} 
+                                    className="bg-transparent w-full p-4 outline-none text-white font-bold text-lg placeholder-slate-700 text-center" 
+                                    autoFocus 
+                                    onFocus={(e) => e.target.select()}
+                                />
+                                <div className="pr-4 text-slate-600">
+                                    <Edit3 className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Action Button */}
+                        <button 
+                            onClick={confirmHatch} 
+                            className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-lg py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                        >
+                            <Check className="w-6 h-6" />
+                            WILLKOMMEN!
+                        </button>
                     </div>
-                    
-                    <button 
-                        onClick={confirmHatch} 
-                        className="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-900/20 transition-all active:scale-95 relative z-10"
-                    >
-                        WILLKOMMEN HEISSEN!
-                    </button>
                 </div>
             </div>
         )}
@@ -115,7 +143,6 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
               const isUnlocked = index < unlockedSlots;
               const egg = index < incubatingEggs.length ? incubatingEggs[index] : null;
               
-              // 1. LOCKED SLOT
               if (!isUnlocked) {
                   return (
                     <div key={index} className="aspect-square bg-slate-900/50 border-2 border-dashed border-slate-800 rounded-3xl flex flex-col items-center justify-center gap-2 opacity-50">
@@ -129,7 +156,6 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
                   );
               }
 
-              // 2. ACTIVE EGG SLOT
               if (egg) {
                   const timeLeft = Math.max(0, Math.ceil((egg.hatchAt - Date.now()) / 1000));
                   const isReady = timeLeft <= 0;
@@ -137,11 +163,8 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
 
                   return (
                     <div key={egg.id} className="relative aspect-square bg-slate-800 rounded-3xl p-3 flex flex-col items-center justify-between border border-white/5 shadow-lg group overflow-hidden">
-                        
-                        {/* Ambient Glow */}
                         <div className={`absolute inset-0 ${rarity.bg} opacity-5 blur-xl group-hover:opacity-10 transition-opacity`}></div>
                         
-                        {/* Status Indicator (LED) */}
                         <div className="w-full flex justify-end relative z-10">
                             {isReady ? (
                                 <span className="w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
@@ -150,30 +173,21 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
                             )}
                         </div>
 
-                        {/* Egg Visual */}
                         <div className={`relative z-10 ${isReady ? 'animate-bounce' : 'animate-pulse duration-[3000ms]'}`}>
                             <Egg className={`w-14 h-14 ${rarity.color} drop-shadow-lg`} />
-                            {/* Rarity Ring */}
                             <div className={`absolute -inset-2 border-2 ${rarity.border} rounded-full opacity-30 scale-110`}></div>
                         </div>
 
-                        {/* Footer / Action */}
                         <div className="w-full relative z-10">
                             {isReady ? (
-                                <button 
-                                    onClick={() => startHatchingProcess(egg)} 
-                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1"
-                                >
+                                <button onClick={() => startHatchingProcess(egg)} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1">
                                     SCHLÜPFEN
                                 </button>
                             ) : (
                                 <div className="bg-black/30 rounded-xl py-2 px-2 flex items-center justify-center gap-2 border border-white/5">
                                     <Hourglass className="w-3 h-3 text-amber-400 animate-spin-slow" />
                                     <span className="font-mono text-xs text-white font-bold">
-                                        {timeLeft > 3600 
-                                            ? `${Math.floor(timeLeft/3600)}h` 
-                                            : `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`
-                                        }
+                                        {timeLeft > 3600 ? `${Math.floor(timeLeft/3600)}h` : `${Math.floor(timeLeft / 60)}:${(timeLeft % 60).toString().padStart(2, '0')}`}
                                     </span>
                                 </div>
                             )}
@@ -182,7 +196,6 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
                   );
               }
 
-              // 3. EMPTY SLOT
               return (
                 <div key={index} className="aspect-square bg-slate-800/30 border-2 border-slate-700 rounded-3xl flex flex-col items-center justify-center gap-2 group hover:border-slate-600 transition-colors">
                     <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center group-hover:scale-110 transition-transform">

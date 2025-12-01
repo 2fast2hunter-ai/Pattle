@@ -12,23 +12,18 @@ const HOURS = 60 * MINUTES;
 const DAYS = 24 * HOURS;
 
 export const RARITIES = {
-  // HIER WURDE DIE hatchDuration ANGEPASST (10s -> 3 Tage)
-  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, dropChance: 80.0,   breedCooldown: 1 * HOURS,  hatchDuration: 10 * SECONDS },
-  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, dropChance: 15.0,   breedCooldown: 4 * HOURS,  hatchDuration: 5 * MINUTES },
-  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, dropChance: 4.0,    breedCooldown: 12 * HOURS, hatchDuration: 30 * MINUTES },
-  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, dropChance: 0.8,    breedCooldown: 1 * DAYS,   hatchDuration: 2 * HOURS },
-  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, dropChance: 0.15,   breedCooldown: 3 * DAYS,   hatchDuration: 6 * HOURS },
-  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, dropChance: 0.04,   breedCooldown: 7 * DAYS,   hatchDuration: 12 * HOURS },
-  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, dropChance: 0.008,  breedCooldown: 14 * DAYS,  hatchDuration: 1 * DAYS },
-  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, dropChance: 0.0019, breedCooldown: 21 * DAYS,  hatchDuration: 1.5 * DAYS },
-  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, dropChance: 0.0001, breedCooldown: 25 * DAYS,  hatchDuration: 2 * DAYS },
-  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, dropChance: 0.0000,breedCooldown: 30 * DAYS,  hatchDuration: 3 * DAYS },
+  // NEUE ZEIT-SKALIERUNG (10s bis 1 Tag)
+  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, dropChance: 80.0,   breedCooldown: 10 * SECONDS, hatchDuration: 10 * SECONDS },
+  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, dropChance: 15.0,   breedCooldown: 5 * MINUTES,  hatchDuration: 5 * MINUTES },
+  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, dropChance: 4.0,    breedCooldown: 30 * MINUTES, hatchDuration: 30 * MINUTES },
+  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, dropChance: 0.8,    breedCooldown: 1 * HOURS,    hatchDuration: 1 * HOURS },
+  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, dropChance: 0.15,   breedCooldown: 2 * HOURS,    hatchDuration: 2 * HOURS },
+  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, dropChance: 0.04,   breedCooldown: 4 * HOURS,    hatchDuration: 4 * HOURS },
+  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, dropChance: 0.008,  breedCooldown: 8 * HOURS,    hatchDuration: 8 * HOURS },
+  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, dropChance: 0.0019, breedCooldown: 12 * HOURS,   hatchDuration: 12 * HOURS },
+  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, dropChance: 0.0001, breedCooldown: 18 * HOURS,   hatchDuration: 18 * HOURS },
+  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, dropChance: 0.0000,breedCooldown: 1 * DAYS,     hatchDuration: 1 * DAYS },
 };
-
-// ... Rest der Datei (TYPES, ZODIAC_ANIMALS, QUEST_TEMPLATES, SHOP_ITEMS etc.) bleibt unverändert.
-// Bitte fügen Sie hier den restlichen Code der Datei wieder ein, falls Sie ihn nicht im Clipboard haben.
-// (Da ich ihn im vorherigen Schritt bereits komplett geliefert habe, zeige ich hier nur den geänderten RARITIES Block zur Übersicht,
-//  aber Sie sollten sicherstellen, dass die Datei vollständig bleibt.)
 
 export const TYPES = {
   FIRE:      { label: 'Feuer',      color: 'text-orange-500', bg: 'bg-orange-500', bgLight: 'bg-orange-500/20', icon: <Flame /> },
