@@ -20,14 +20,20 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   const getCooldownStatus = (pet) => {
     if (!pet || !pet.bredAt) return null;
     
+    // Hole den korrekten Cooldown für dieses Pet
+    const cooldownDuration = RARITIES[pet.rarity].breedCooldown;
+    
     const cooldownEnd = pet.bredAt + cooldownDuration;
     const timeLeft = cooldownEnd - Date.now();
 
     if (timeLeft <= 0) return null;
 
-    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+    // Formatierung für Tage/Stunden/Minuten
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
 
+    if (days > 0) return `${days}d ${hours}h`;
     return `${hours}h ${minutes}m`;
   }
 

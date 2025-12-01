@@ -157,7 +157,6 @@ export function useGameActions(state, setUserId) {
         showNotification(`1 Zucht-Ticket eingelöst! Du hast jetzt ${user.redeemedTickets + 1} Tickets.`, 'success');
     };
     
-    // --- START BATTLE (MIT LEVEL 1 NERF) ---
     const startBattle = () => {
         if (!user) return; 
         
@@ -174,8 +173,6 @@ export function useGameActions(state, setUserId) {
 
         const enemyBattleTeam = [];
         for (let i = 0; i < myBattleTeam.length; i++) { 
-            
-            // 1. Level bestimmen
             let enemyLevel = 1;
             if (user.level < 10) {
                 enemyLevel = Math.max(1, user.level);
@@ -190,34 +187,16 @@ export function useGameActions(state, setUserId) {
             else if (user.level >= 20 && roll > 80) enemyRarity = 'RARE';
             else if (user.level >= 10 && roll > 70) enemyRarity = 'UNCOMMON';
 
-            // 2. Gegner generieren
             const enemyPet = generatePet(enemyLevel, null, enemyRarity, null, 'ENEMY');
             enemyPet.id = `enemy_${i}_${Date.now()}`; 
 
-            // --- 3. ANFÄNGER-SCHUTZ (LEVEL 1) ---
             if (enemyLevel === 1) {
-                // Level 1 Gegner sind extrem schwach ("Trainings-Dummys")
-                enemyPet.atk = 1;
-                enemyPet.ap = 1;
-                enemyPet.def = 1;
-                enemyPet.res = 1;
-                enemyPet.speed = 1;
-                enemyPet.maxHp = 10; // Ein bisschen HP, damit es nicht sofort vorbei ist
-                enemyPet.hp = 10;
+                enemyPet.atk = 1; enemyPet.ap = 1; enemyPet.def = 1; enemyPet.res = 1; enemyPet.speed = 1; enemyPet.maxHp = 10; enemyPet.hp = 10;
             } else {
-                // --- NORMALE SKALIERUNG AB LEVEL 2 ---
-                // +1 Stat pro 2 Level (mindestens +0)
                 const growthBonus = Math.floor(enemyLevel / 2); 
                 const hpGrowth = enemyLevel * 3;
-
-                enemyPet.atk += growthBonus;
-                enemyPet.ap += growthBonus;
-                enemyPet.def += Math.floor(growthBonus / 2); 
-                enemyPet.res += Math.floor(growthBonus / 2);
-                enemyPet.speed += Math.floor(growthBonus / 2);
-                
-                enemyPet.maxHp += hpGrowth;
-                enemyPet.hp = enemyPet.maxHp;
+                enemyPet.atk += growthBonus; enemyPet.ap += growthBonus; enemyPet.def += Math.floor(growthBonus / 2); enemyPet.res += Math.floor(growthBonus / 2); enemyPet.speed += Math.floor(growthBonus / 2);
+                enemyPet.maxHp += hpGrowth; enemyPet.hp = enemyPet.maxHp;
             }
 
             enemyBattleTeam.push({ ...enemyPet, currentCd: 0, hp: enemyPet.maxHp }); 
@@ -228,22 +207,17 @@ export function useGameActions(state, setUserId) {
         const playerFirst = p1.speed >= e1.speed;
 
         setActiveBattle({ 
-            myTeam: myBattleTeam, 
-            enemyTeam: enemyBattleTeam, 
-            myIndex: 0, 
-            enemyIndex: 0, 
+            myTeam: myBattleTeam, enemyTeam: enemyBattleTeam, myIndex: 0, enemyIndex: 0, 
             log: [`Kampf gegen Level ${enemyBattleTeam[0].level} Gegner gestartet!`], 
-            turn: playerFirst ? 'PLAYER' : 'ENEMY', 
-            isOver: false, 
-            round: 1 
+            turn: playerFirst ? 'PLAYER' : 'ENEMY', isOver: false, round: 1 
         });
         
         setCurrentView('battle');
     };
 
-    // ... (Restlicher Code bleibt unverändert)
     const handleWin = async (reward, winningTeamIds, enemyRating = 1200) => {
         if (!user) return;
+        
         const eloChange = calculateEloChange(user.rating || 1000, enemyRating, true);
         
         let newLevel = user.level || 1;
@@ -279,6 +253,11 @@ export function useGameActions(state, setUserId) {
                 let pLevel = pet.level || 1;
                 let pMaxXp = pet.maxXp || 100;
                 let changes = {};
+
+                if (!pet.b_hp) {
+                     const reverseCalc = (val, lvl) => Math.max(1, Math.floor((val || 10) / (1 + ((lvl || 1) - 1) * 0.1)));
+                     pet.b_hp = reverseCalc(pet.maxHp, pLevel);
+                }
 
                 if (pXp >= pMaxXp) {
                     pLevel++;
@@ -343,7 +322,55 @@ export function useGameActions(state, setUserId) {
     const removeFromTeam = (index) => { if (!user) return; const newTeam = [...user.team]; newTeam[index] = null; updateUser(user.id, { team: newTeam }); };
     const hatchEgg = (petId, customName) => { if (!user) return; const pet = myPets.find(p => p.id === petId); if (!pet || !pet.isEgg || Date.now() < pet.hatchAt) return; updatePetInDB(petId, { isEgg: false, name: customName || pet.name }); updateUser(user.id, { stats: { ...user.stats, hatched: user.stats.hatched + 1 } }); trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1); showNotification(`Geschlüpft: ${customName || pet.name}!`, 'success'); };
     const startIncubation = (id, type) => { if (!user) return; if (type === 'BOX') { const box = user.inventory.find(i => i.id === id); if (!box) return; const newInv = user.inventory.filter(i => i.id !== id); const newPet = generatePet(1, null, determineRarity(box.variant), null, box.variant === 'STARTER' ? 'STARTER' : 'SHOP'); newPet.isEgg = box.variant !== 'STARTER'; newPet.hatchAt = 0; addPetToDB(newPet, user.id); updateUser(user.id, { inventory: newInv }); setLootResult(newPet); } else { const pet = myPets.find(p => p.id === id); if (myPets.filter(p => p.isEgg && p.hatchAt > 0).length >= getUnlockedHatcherySlots(user.level)) { showNotification("Brutstätte voll!", 'error'); return; } updatePetInDB(id, { hatchAt: Date.now() + RARITIES[pet.rarity].hatchDuration * 1000 }); trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1); setCurrentView('hatchery'); showNotification("Inkubation gestartet!", 'success'); } };
-    const breedPets = async (parent1Id, parent2Id) => { if (!user || (user.redeemedTickets || 0) < 1) { showNotification("Kein Ticket!", 'error'); return; } const p1 = myPets.find(p => p.id === parent1Id); const p2 = myPets.find(p => p.id === parent2Id); if (p1.bredAt + 86400000 > Date.now() || p2.bredAt + 86400000 > Date.now()) { showNotification("Cooldown!", 'error'); return; } await updateUser(user.id, { redeemedTickets: user.redeemedTickets - 1, stats: { ...user.stats, bred: (user.stats?.bred || 0) + 1 } }); await updatePetInDB(p1.id, { bredAt: Date.now() }); await updatePetInDB(p2.id, { bredAt: Date.now() }); const child = generatePet(1, p1.type, calculateBreedRarity(p1.rarity, p2.rarity), null, 'BREEDING'); child.isEgg = true; child.hatchAt = Date.now() + RARITIES[child.rarity].hatchDuration * 1000; await addPetToDB(child, user.id); setCurrentView('hatchery'); showNotification("Zucht erfolgreich!", 'success'); };
+    
+    // --- BREED PETS (NEUE PRÜFUNG FÜR BRUTSTÄTTE) ---
+    const breedPets = async (parent1Id, parent2Id) => { 
+        if (!user || (user.redeemedTickets || 0) < 1) { 
+            showNotification("Kein Ticket!", 'error'); 
+            return; 
+        }
+
+        // NEUER CHECK: Ist in der Brutstätte Platz?
+        const incubatingEggs = myPets.filter(p => p.isEgg && p.hatchAt > 0).length;
+        const maxHatchery = getUnlockedHatcherySlots(user.level);
+        
+        if (incubatingEggs >= maxHatchery) {
+            showNotification("Brutstätte ist voll!", 'error');
+            return;
+        }
+
+        const p1 = myPets.find(p => p.id === parent1Id);
+        const p2 = myPets.find(p => p.id === parent2Id);
+        
+        // Cooldown Check (Variable basierend auf Rarity)
+        const cd1 = RARITIES[p1.rarity].breedCooldown;
+        const cd2 = RARITIES[p2.rarity].breedCooldown;
+
+        if ((p1.bredAt || 0) + cd1 > Date.now()) {
+             showNotification(`${p1.name} braucht eine Pause!`, 'error'); return; 
+        }
+        if ((p2.bredAt || 0) + cd2 > Date.now()) {
+             showNotification(`${p2.name} braucht eine Pause!`, 'error'); return; 
+        }
+        
+        await updateUser(user.id, { 
+            redeemedTickets: user.redeemedTickets - 1, 
+            stats: { ...user.stats, bred: (user.stats?.bred || 0) + 1 } 
+        }); 
+        trackQuestProgress(user, QUEST_TYPES.BREED_PET, 1);
+        
+        await updatePetInDB(p1.id, { bredAt: Date.now() });
+        await updatePetInDB(p2.id, { bredAt: Date.now() });
+        
+        const child = generatePet(1, p1.type, calculateBreedRarity(p1.rarity, p2.rarity), null, 'BREEDING');
+        child.isEgg = true;
+        child.hatchAt = Date.now() + RARITIES[child.rarity].hatchDuration * 1000;
+        
+        await addPetToDB(child, user.id);
+        
+        setCurrentView('hatchery');
+        showNotification(`Zucht erfolgreich! Ei startet Inkubation.`, 'success');
+    };
 
     return {
         showNotification, handleLogin, handleLogout,

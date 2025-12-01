@@ -5,17 +5,21 @@ import {
   Clock, Orbit, Aperture, AlertTriangle, Gavel
 } from 'lucide-react';
 
+
+const HOURS = 60 * 60 * 1000;
+const DAYS = 24 * HOURS;
+
 export const RARITIES = {
-  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, hatchDuration: 10, dropChance: 80.0 },    // NEU: 80.0%
-  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, hatchDuration: 30, dropChance: 15.0 },    // NEU: 15.0%
-  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, hatchDuration: 60, dropChance: 4.0 },     // NEU: 4.0%
-  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, hatchDuration: 120, dropChance: 0.8 },     // NEU: 0.8%
-  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, hatchDuration: 300, dropChance: 0.15 },    // NEU: 0.15%
-  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, hatchDuration: 600, dropChance: 0.04 },    // NEU: 0.04%
-  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, hatchDuration: 1200, dropChance: 0.008 },   // NEU: 0.008%
-  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, hatchDuration: 3600, dropChance: 0.0019 },  // NEU: 0.0019%
-  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, hatchDuration: 7200, dropChance: 0.0001 },  // NEU: 0.0001%
-  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, hatchDuration: 14400, dropChance: 0.0000 }, // NEU: 0.0000% (Summe 100%)
+  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, hatchDuration: 10, dropChance: 80.0,   breedCooldown: 1 * HOURS },    // 1 Stunde
+  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, hatchDuration: 30, dropChance: 15.0,   breedCooldown: 4 * HOURS },    // 4 Stunden
+  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, hatchDuration: 60, dropChance: 4.0,    breedCooldown: 12 * HOURS },   // 12 Stunden
+  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, hatchDuration: 120, dropChance: 0.8,    breedCooldown: 1 * DAYS },     // 1 Tag
+  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, hatchDuration: 300, dropChance: 0.15,   breedCooldown: 3 * DAYS },     // 3 Tage
+  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, hatchDuration: 600, dropChance: 0.04,   breedCooldown: 7 * DAYS },     // 7 Tage
+  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, hatchDuration: 1200, dropChance: 0.008,  breedCooldown: 14 * DAYS },    // 14 Tage
+  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, hatchDuration: 3600, dropChance: 0.0019, breedCooldown: 21 * DAYS },    // 21 Tage
+  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, hatchDuration: 7200, dropChance: 0.0001, breedCooldown: 25 * DAYS },    // 25 Tage
+  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, hatchDuration: 14400, dropChance: 0.0000,breedCooldown: 30 * DAYS },    // 30 Tage
 };
 
 export const TYPES = {
