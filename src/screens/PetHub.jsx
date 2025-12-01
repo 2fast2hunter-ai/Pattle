@@ -1,14 +1,74 @@
 import React from 'react';
-import { ArrowLeft, LayoutGrid, Backpack, ThermometerSun, Heart } from 'lucide-react';
+import { LayoutGrid, Backpack, ThermometerSun, Heart, X } from 'lucide-react';
 
 export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory }) {
   return (
-    <div className="space-y-4 pt-4 animate-in fade-in slide-in-from-right duration-300">
-      <div className="flex items-center gap-2 mb-2"><button onClick={onBack} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700"><ArrowLeft className="w-5 h-5" /></button><h2 className="text-2xl font-black italic text-emerald-400">PET HUB</h2></div>
-      <button onClick={onInventory} className="w-full bg-slate-800 border border-slate-700 p-5 rounded-3xl flex items-center justify-between hover:bg-slate-750 active:scale-95 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors"><LayoutGrid className="w-6 h-6" /></div><div className="text-left"><div className="font-bold text-lg">Pet Sammlung</div><div className="text-xs text-slate-400">Alle deine Monster</div></div></div></button>
-      <button onClick={onItemInventory} className="w-full bg-slate-800 border border-slate-700 p-5 rounded-3xl flex items-center justify-between hover:bg-slate-750 active:scale-95 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-2xl flex items-center justify-center group-hover:bg-amber-500 group-hover:text-white transition-colors"><Backpack className="w-6 h-6" /></div><div className="text-left"><div className="font-bold text-lg">Item Inventar</div><div className="text-xs text-slate-400">Eier & Items</div></div></div></button>
-      <button onClick={onHatchery} className="w-full bg-slate-800 border border-slate-700 p-5 rounded-3xl flex items-center justify-between hover:bg-slate-750 active:scale-95 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-colors"><ThermometerSun className="w-6 h-6" /></div><div className="text-left"><div className="font-bold text-lg">Brutstätte</div><div className="text-xs text-slate-400">Eier ausbrüten</div></div></div></button>
-      <button onClick={onBreed} className="w-full bg-slate-800 border border-slate-700 p-5 rounded-3xl flex items-center justify-between hover:bg-slate-750 active:scale-95 transition-all group"><div className="flex items-center gap-4"><div className="w-12 h-12 bg-pink-500/20 text-pink-400 rounded-2xl flex items-center justify-center group-hover:bg-pink-500 group-hover:text-white transition-colors"><Heart className="w-6 h-6 fill-current" /></div><div className="text-left"><div className="font-bold text-lg">Zucht Labor</div><div className="text-xs text-slate-400">Neue Arten erschaffen</div></div></div></button>
+    <div className="h-full flex flex-col animate-in fade-in">
+      
+      {/* --- HEADER --- */}
+      <div className="relative flex items-center justify-center mb-6 pt-2">
+          <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-white">
+              PET HUB
+          </h1>
+          <button 
+              onClick={onBack} 
+              className="absolute right-0 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"
+          >
+              <X className="w-5 h-5" />
+          </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto space-y-4 p-1">
+
+        {/* 1. SAMMLUNG (Blau) */}
+        <button onClick={onInventory} className="w-full bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl p-1 shadow-lg shadow-blue-500/20 relative overflow-hidden group text-left hover:scale-[1.02] transition-transform">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-white/20 to-transparent opacity-50"></div>
+            <div className="bg-slate-900/80 backdrop-blur-sm rounded-[22px] p-6 relative z-10 flex items-center justify-between border border-white/10">
+                <div>
+                    <h2 className="text-xl font-black text-white mb-1">Pet Sammlung</h2>
+                    <p className="text-blue-200 font-bold text-sm">Verwalte deine Monster</p>
+                </div>
+                <LayoutGrid className="w-14 h-14 text-blue-400 opacity-80 group-hover:scale-110 transition-transform" />
+            </div>
+        </button>
+
+        {/* 2. BRUTSTÄTTE (Grün/Emerald) */}
+        <button onClick={onHatchery} className="w-full bg-gradient-to-br from-emerald-500 to-teal-600 rounded-3xl p-1 shadow-lg shadow-emerald-500/20 relative overflow-hidden group text-left hover:scale-[1.02] transition-transform">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-white/20 to-transparent opacity-50"></div>
+            <div className="bg-slate-900/80 backdrop-blur-sm rounded-[22px] p-6 relative z-10 flex items-center justify-between border border-white/10">
+                <div>
+                    <h2 className="text-xl font-black text-white mb-1">Brutstätte</h2>
+                    <p className="text-emerald-200 font-bold text-sm">Brüte neue Eier aus</p>
+                </div>
+                <ThermometerSun className="w-14 h-14 text-emerald-400 opacity-80 group-hover:scale-110 transition-transform" />
+            </div>
+        </button>
+
+        {/* 3. ZUCHT LABOR (Pink) */}
+        <button onClick={onBreed} className="w-full bg-gradient-to-br from-pink-500 to-rose-600 rounded-3xl p-1 shadow-lg shadow-pink-500/20 relative overflow-hidden group text-left hover:scale-[1.02] transition-transform">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-white/20 to-transparent opacity-50"></div>
+            <div className="bg-slate-900/80 backdrop-blur-sm rounded-[22px] p-6 relative z-10 flex items-center justify-between border border-white/10">
+                <div>
+                    <h2 className="text-xl font-black text-white mb-1">Zucht Labor</h2>
+                    <p className="text-pink-200 font-bold text-sm">Erschaffe neue Arten</p>
+                </div>
+                <Heart className="w-14 h-14 text-pink-400 opacity-80 fill-pink-400/20 group-hover:scale-110 transition-transform" />
+            </div>
+        </button>
+
+        {/* 4. ITEM INVENTAR (Amber/Gelb) */}
+        <button onClick={onItemInventory} className="w-full bg-gradient-to-br from-amber-500 to-orange-500 rounded-3xl p-1 shadow-lg shadow-amber-500/20 relative overflow-hidden group text-left hover:scale-[1.02] transition-transform">
+            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_top_left,_var(--tw-gradient-stops))] from-white/20 to-transparent opacity-50"></div>
+            <div className="bg-slate-900/80 backdrop-blur-sm rounded-[22px] p-6 relative z-10 flex items-center justify-between border border-white/10">
+                <div>
+                    <h2 className="text-xl font-black text-white mb-1">Rucksack</h2>
+                    <p className="text-amber-200 font-bold text-sm">Eier, Tickets & Items</p>
+                </div>
+                <Backpack className="w-14 h-14 text-amber-400 opacity-80 group-hover:scale-110 transition-transform" />
+            </div>
+        </button>
+
+      </div>
     </div>
   );
 }

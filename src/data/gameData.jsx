@@ -5,22 +5,30 @@ import {
   Clock, Orbit, Aperture, AlertTriangle, Gavel
 } from 'lucide-react';
 
-
-const HOURS = 60 * 60 * 1000;
+// Helper für Millisekunden-Berechnung
+const SECONDS = 1000;
+const MINUTES = 60 * SECONDS;
+const HOURS = 60 * MINUTES;
 const DAYS = 24 * HOURS;
 
 export const RARITIES = {
-  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, hatchDuration: 10, dropChance: 80.0,   breedCooldown: 1 * HOURS },    // 1 Stunde
-  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, hatchDuration: 30, dropChance: 15.0,   breedCooldown: 4 * HOURS },    // 4 Stunden
-  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, hatchDuration: 60, dropChance: 4.0,    breedCooldown: 12 * HOURS },   // 12 Stunden
-  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, hatchDuration: 120, dropChance: 0.8,    breedCooldown: 1 * DAYS },     // 1 Tag
-  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, hatchDuration: 300, dropChance: 0.15,   breedCooldown: 3 * DAYS },     // 3 Tage
-  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, hatchDuration: 600, dropChance: 0.04,   breedCooldown: 7 * DAYS },     // 7 Tage
-  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, hatchDuration: 1200, dropChance: 0.008,  breedCooldown: 14 * DAYS },    // 14 Tage
-  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, hatchDuration: 3600, dropChance: 0.0019, breedCooldown: 21 * DAYS },    // 21 Tage
-  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, hatchDuration: 7200, dropChance: 0.0001, breedCooldown: 25 * DAYS },    // 25 Tage
-  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, hatchDuration: 14400, dropChance: 0.0000,breedCooldown: 30 * DAYS },    // 30 Tage
+  // HIER WURDE DIE hatchDuration ANGEPASST (10s -> 3 Tage)
+  COMMON:       { id: 1, label: 'Gewöhnlich',   color: 'text-slate-400',   bg: 'bg-slate-500',   border: 'border-slate-400',   multi: 1.0, dropChance: 80.0,   breedCooldown: 1 * HOURS,  hatchDuration: 10 * SECONDS },
+  UNCOMMON:     { id: 2, label: 'Ungewöhnlich', color: 'text-green-400',   bg: 'bg-green-600',   border: 'border-green-500',   multi: 1.2, dropChance: 15.0,   breedCooldown: 4 * HOURS,  hatchDuration: 5 * MINUTES },
+  RARE:         { id: 3, label: 'Selten',       color: 'text-blue-400',    bg: 'bg-blue-600',    border: 'border-blue-500',    multi: 1.5, dropChance: 4.0,    breedCooldown: 12 * HOURS, hatchDuration: 30 * MINUTES },
+  EPIC:         { id: 4, label: 'Episch',       color: 'text-purple-400',  bg: 'bg-purple-600',  border: 'border-purple-500',  multi: 1.8, dropChance: 0.8,    breedCooldown: 1 * DAYS,   hatchDuration: 2 * HOURS },
+  LEGENDARY:    { id: 5, label: 'Legendär',     color: 'text-amber-400',   bg: 'bg-amber-600',   border: 'border-amber-500',   multi: 2.2, dropChance: 0.15,   breedCooldown: 3 * DAYS,   hatchDuration: 6 * HOURS },
+  MYTHIC:       { id: 6, label: 'Mythisch',     color: 'text-red-500',     bg: 'bg-red-700',     border: 'border-red-600',     multi: 2.8, dropChance: 0.04,   breedCooldown: 7 * DAYS,   hatchDuration: 12 * HOURS },
+  DIVINE:       { id: 7, label: 'Göttlich',     color: 'text-cyan-300',    bg: 'bg-cyan-600',    border: 'border-cyan-400',    multi: 3.5, dropChance: 0.008,  breedCooldown: 14 * DAYS,  hatchDuration: 1 * DAYS },
+  ANCIENT:      { id: 8, label: 'Uralt',        color: 'text-stone-400',   bg: 'bg-stone-600',   border: 'border-stone-400',   multi: 4.5, dropChance: 0.0019, breedCooldown: 21 * DAYS,  hatchDuration: 1.5 * DAYS },
+  COSMIC:       { id: 9, label: 'Kosmisch',     color: 'text-fuchsia-400', bg: 'bg-fuchsia-800', border: 'border-fuchsia-500', multi: 6.0, dropChance: 0.0001, breedCooldown: 25 * DAYS,  hatchDuration: 2 * DAYS },
+  TRANSCENDENT: { id: 10,label: 'Transzendent', color: 'text-rose-300',    bg: 'bg-rose-900',    border: 'border-rose-400',    multi: 10.0, dropChance: 0.0000,breedCooldown: 30 * DAYS,  hatchDuration: 3 * DAYS },
 };
+
+// ... Rest der Datei (TYPES, ZODIAC_ANIMALS, QUEST_TEMPLATES, SHOP_ITEMS etc.) bleibt unverändert.
+// Bitte fügen Sie hier den restlichen Code der Datei wieder ein, falls Sie ihn nicht im Clipboard haben.
+// (Da ich ihn im vorherigen Schritt bereits komplett geliefert habe, zeige ich hier nur den geänderten RARITIES Block zur Übersicht,
+//  aber Sie sollten sicherstellen, dass die Datei vollständig bleibt.)
 
 export const TYPES = {
   FIRE:      { label: 'Feuer',      color: 'text-orange-500', bg: 'bg-orange-500', bgLight: 'bg-orange-500/20', icon: <Flame /> },
@@ -94,87 +102,32 @@ export const TYPE_ADVANTAGES = {
 };
 
 export const ABILITIES = {
-  // ELEMENT: FIRE
   fireball:     { name: 'Feuerball',      element: 'FIRE',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Schießt einen mächtigen Feuerball (150% AP)' },
-  
-  // ELEMENT: WATER
   aqua:         { name: 'Wasserstrahl',   element: 'WATER',    dmgScale: 1.3, type: 'MAGIC',    cd: 3, desc: 'Magischer Wasserstrahl (130% AP)' },
-  
-  // ELEMENT: NATURE (Ersetzt Heal durch Schaden, damit der Kampf immer funktioniert)
   thorns:       { name: 'Dornenranke',    element: 'NATURE',   dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Schlingpflanzen greifen an (140% AP)' },
-  
-  // ELEMENT: WIND
   gust:         { name: 'Windstoß',       element: 'WIND',     dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Schneller Windangriff (130% AP)' },
-  
-  // ELEMENT: EARTH
   smash:        { name: 'Erdschlag',      element: 'EARTH',    dmgScale: 1.2, type: 'PHYSICAL', cd: 2, desc: 'Ein schwerer Schlag (120% AD)' },
-  
-  // ELEMENT: ICE
   icicle:       { name: 'Eissplitter',    element: 'ICE',      dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Scharfe Eiskristalle (140% AP)' },
-  
-  // ELEMENT: ELECTRIC
   thundershock: { name: 'Donnerschock',   element: 'ELECTRIC', dmgScale: 1.4, type: 'MAGIC',    cd: 3, desc: 'Elektrischer Schlag (140% AP)' },
-  
-  // ELEMENT: LIGHT
   solarbeam:    { name: 'Solarstrahl',    element: 'LIGHT',    dmgScale: 1.8, type: 'MAGIC',    cd: 4, desc: 'Gebündeltes Licht (180% AP)' },
-  
-  // ELEMENT: DARK
   bite:         { name: 'Knirscher',      element: 'DARK',     dmgScale: 1.4, type: 'PHYSICAL', cd: 3, desc: 'Starker Biss aus dem Schatten (140% AD)' },
-  
-  // ELEMENT: GHOST
   shadowball:   { name: 'Spukball',       element: 'GHOST',    dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Geisterhafte Energie (150% AP)' },
-  
-  // ELEMENT: MAGIC
   arcanepulse:  { name: 'Arkaner Puls',   element: 'MAGIC',    dmgScale: 1.6, type: 'MAGIC',    cd: 4, desc: 'Reine Magie-Energie (160% AP)' },
-  
-  // ELEMENT: PSYCHIC
   psybeam:      { name: 'Psi-Welle',      element: 'PSYCHIC',  dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Mentale Attacke (150% AP)' },
-  
-  // ELEMENT: FIGHTING
   punch:        { name: 'Karatehieb',     element: 'FIGHTING', dmgScale: 1.5, type: 'PHYSICAL', cd: 2, desc: 'Gezielter Kampfsport-Hieb (150% AD)' },
-  
-  // ELEMENT: METAL
   ironhead:     { name: 'Eisenschädel',   element: 'METAL',    dmgScale: 1.3, type: 'PHYSICAL', cd: 3, desc: 'Harter Kopfstoß (130% AD)' },
-  
-  // ELEMENT: ROCK
   rockslide:    { name: 'Steinhagel',     element: 'ROCK',     dmgScale: 1.4, type: 'PHYSICAL', cd: 3, desc: 'Felsbrocken fallen herab (140% AD)' },
-  
-  // ELEMENT: POISON
   sludge:       { name: 'Matschbombe',    element: 'POISON',   dmgScale: 1.3, type: 'MAGIC',    cd: 3, desc: 'Giftiger Schlamm (130% AP)' },
-  
-  // ELEMENT: DRAGON
   dragonbreath: { name: 'Drachenodem',    element: 'DRAGON',   dmgScale: 1.7, type: 'MAGIC',    cd: 4, desc: 'Mystisches Drachenfeuer (170% AP)' },
-  
-  // ELEMENT: FAIRY
   moonblast:    { name: 'Mondgewalt',     element: 'FAIRY',    dmgScale: 1.6, type: 'MAGIC',    cd: 3, desc: 'Kraft des Mondes (160% AP)' },
-  
-  // ELEMENT: TECH
   laser:        { name: 'Laserstrahl',    element: 'TECH',     dmgScale: 1.5, type: 'MAGIC',    cd: 3, desc: 'Cybernetischer Laser (150% AP)' },
-  
-  // ELEMENT: SOUND
   sonicboom:    { name: 'Schallmauer',    element: 'SOUND',    dmgScale: 1.3, type: 'MAGIC',    cd: 2, desc: 'Durchbricht die Schallmauer (130% AP)' },
-  
-  // ELEMENT: TIME
   timewarp:     { name: 'Zeitsprung',     element: 'TIME',     dmgScale: 1.6, type: 'MAGIC',    cd: 4, desc: 'Verwirrt durch Zeitrisse (160% AP)' },
-  
-  // ELEMENT: SPACE
   meteorshower: { name: 'Meteorfall',     element: 'SPACE',    dmgScale: 1.8, type: 'MAGIC',    cd: 5, desc: 'Objekte aus dem All (180% AP)' },
-  
-  // ELEMENT: VOID
   voidblast:    { name: 'Leereblick',     element: 'VOID',     dmgScale: 2.0, type: 'MAGIC',    cd: 5, desc: 'Schaden aus der Leere (200% AP)' },
-  
-  // ELEMENT: CHAOS
   chaosstrike:  { name: 'Chaosklinge',    element: 'CHAOS',    dmgScale: 1.7, type: 'PHYSICAL', cd: 4, desc: 'Unberechenbarer Angriff (170% AD)' },
-  
-  // ELEMENT: ORDER
   judgement:    { name: 'Urteilsspruch',  element: 'ORDER',    dmgScale: 1.7, type: 'MAGIC',    cd: 4, desc: 'Göttliche Ordnung (170% AP)' },
 };
-
-// src/data/gameData.jsx (Füge das am Ende hinzu)
-
-// src/data/gameData.jsx (Am Ende der Datei einfügen)
-
-// --- Quest Konstanten (Füge dies am Ende der Datei hinzu oder ersetze die alten Blöcke) ---
 
 export const QUEST_TYPES = {
   WIN_PVP: 'WIN_PVP',
@@ -184,25 +137,20 @@ export const QUEST_TYPES = {
   EARN_XP: 'EARN_XP'
 };
 
-// Vorlagen für Aufgaben (Einzelbelohnungen bringen jetzt NUR XP)
 export const QUEST_TEMPLATES = [
-  // HOHER WERT (Kernaktivitäten)
   { type: QUEST_TYPES.WIN_PVP,     label: "Gewinne Kämpfe",           baseAmount: 1,  rewardType: 'XP', rewardBase: 100 },    
   { type: QUEST_TYPES.HATCH_EGG,   label: "Brüte Eier aus",           baseAmount: 1,  rewardType: 'XP',  rewardBase: 150 },   
   { type: QUEST_TYPES.BREED_PET,   label: "Züchte neue Pets",         baseAmount: 1,  rewardType: 'XP', rewardBase: 200 },    
-  
-  // NIEDRIGER WERT (Einfache Aktivitäten)
   { type: QUEST_TYPES.SPEND_COINS, label: "Gib Münzen aus",           baseAmount: 500,rewardType: 'XP',    rewardBase: 50 },    
   { type: QUEST_TYPES.EARN_XP,     label: "Sammle Erfahrungspunkte",  baseAmount: 100,rewardType: 'XP', rewardBase: 75 },    
 ];
 
-// Belohnungen für das Abschließen des Gesamtbalkens (Bleiben unverändert)
 export const COMPOSITE_QUEST_REWARDS = {
     DAILY: { rewardType: 'GEMS', rewardAmount: 5, label: "Tages-Bonus" },
     WEEKLY: { rewardType: 'EGG_EPIC', rewardAmount: 1, label: "Wochen-Truhe" },
     MONTHLY: { rewardType: 'COINS', rewardAmount: 10000, label: "Monats-Schatz" }
 };
-// src/data/gameData.jsx (Am Ende hinzufügen)
+
 export const SHOP_ITEMS = {
     TICKET_BUNDLE_COINS: { costCurrency: 'COINS', costAmount: 500, tickets: 1, label: "1 Zucht-Ticket" },
     TICKET_BUNDLE_GEMS: { costCurrency: 'GEMS', costAmount: 10, tickets: 5, label: "5 Zucht-Tickets" },
