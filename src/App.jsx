@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase'; 
 
 // Daten & Logik
-import { RARITIES, QUEST_TYPES } from './data/gameData';
+import { RARITIES, QUEST_TYPES, SHOP_ITEMS } from './data/gameData';
 import { generatePet, calculateEloChange, getUnlockedHatcherySlots, getMaxEnergy, determineRarity, calculateBreedRarity } from './utils/gameMechanics';
 // Datenbank Funktionen
 import { 
@@ -78,7 +78,7 @@ export default function GameApp() {
   const [notification, setNotification] = useState(null);
   const [lootResult, setLootResult] = useState(null); 
   const [selectedFriend, setSelectedFriend] = useState(null);
-  // NEU: Zustand für den Level Up Listener (sollte auf null initialisiert werden)
+  // Zustand für den Level Up Listener
   const [previousLevel, setPreviousLevel] = useState(null); 
 
   // --- AUTO LOGIN CHECK ---
@@ -106,7 +106,7 @@ export default function GameApp() {
     const unsubscribeUser = listenToUser(userId, (userData) => {
         setUser(userData);
         setAuthLoading(false); 
-        // NEU: Initialen Level setzen, sobald User-Daten geladen sind
+        // Initialen Level setzen, sobald User-Daten geladen sind
         if (previousLevel === null) {
              setPreviousLevel({ level: userData.level, id: userData.id }); 
         }
@@ -121,7 +121,7 @@ export default function GameApp() {
     };
   }, [userId]);
 
-  // NEU: LEVEL UP LISTENER (Zentrale Behandlung aller Level-Ups)
+  // LEVEL UP LISTENER (Zentrale Behandlung aller Level-Ups)
   useEffect(() => {
     // Führt diesen Code nur aus, wenn der User existiert und previousLevel gesetzt ist
     if (!user || previousLevel === null) return;
@@ -207,8 +207,6 @@ export default function GameApp() {
       showNotification(`${boxType} Box gekauft!`, 'success');
   };
 
- // src/App.jsx (Ersetze die Funktion const buyTickets = (...) => { ... })
-
   const buyTickets = (item) => {
     let cost = item.costAmount;
     let currency = item.costCurrency;
@@ -250,7 +248,7 @@ export default function GameApp() {
     }
     
     // 1. Item aus dem Inventar entfernen
-    const newInventory = user.inventory.filter(item => item.id !== ticketId);
+    const newInventory = user.inventory.filter(item => item.id !== ticketItem.id);
     
     // 2. Den eingelösten Zähler erhöhen
     await updateUser(user.id, {
@@ -261,6 +259,29 @@ export default function GameApp() {
     showNotification(`1 Zucht-Ticket eingelöst! Du hast jetzt ${user.redeemedTickets + 1} Tickets.`, 'success');
   };
   
+  // NEU: Funktion: Belohnte Werbung ansehen
+  const watchAdForReward = () => {
+    const reward = SHOP_ITEMS.AD_REWARD_ENERGY;
+    const maxEnergy = getMaxEnergy(user.level);
+
+    if (user.energy >= maxEnergy) {
+        showNotification("Energie ist bereits voll!", 'error');
+        return;
+    }
+    
+    // Belohnung anwenden
+    const newEnergy = Math.min(maxEnergy, user.energy + reward.rewardAmount);
+    
+    // lastEnergyUpdate wird auf Date.now() gesetzt, falls die Energie voll ist
+    // Ansonsten wird es bei der Regeneration automatisch aktualisiert.
+    updateUser(user.id, { 
+        energy: newEnergy, 
+        lastEnergyUpdate: Date.now() // Setze auf aktuelle Zeit, um den Timer zurückzusetzen/abzuschließen
+    });
+
+    showNotification(`Video angesehen: +${reward.rewardAmount} Energie!`, 'success');
+  };
+
   const startBattle = () => {
     const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id));
     if (validTeamIds.length === 0) { showNotification("Dein Team ist leer!", 'error'); return; }
@@ -493,7 +514,7 @@ export default function GameApp() {
     
     // --- Phase 1: Kosten abziehen & Cooldown setzen ---
     
-    // NEU: Reduziert den eingelösten Zähler
+    // Reduziert den eingelösten Zähler
     await updateUser(user.id, { 
         redeemedTickets: user.redeemedTickets - 1, // KONSUMIERT DAS TICKET
         stats: { ...user.stats, bred: (user.stats?.bred || 0) + 1 }
@@ -575,7 +596,7 @@ export default function GameApp() {
             <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
             <div className="h-full overflow-y-auto p-4 scrollbar-hide">
               {currentView === 'menu' && (<MainMenu user={user} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} />)}
-              {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} onBuyTickets={buyTickets} />}
+              {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} onBuyTickets={buyTickets} onWatchAd={watchAdForReward} user={user} />}
               {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} myPets={myPets} />}
               {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
               {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}

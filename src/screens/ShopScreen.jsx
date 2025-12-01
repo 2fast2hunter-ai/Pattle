@@ -1,13 +1,42 @@
 import React from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket } from 'lucide-react'; // Ticket NEU
-import { SHOP_ITEMS } from '../data/gameData'; // SHOP_ITEMS NEU
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, Zap } from 'lucide-react'; // Zap ist jetzt korrekt importiert
+import { SHOP_ITEMS } from '../data/gameData'; 
 
-export default function ShopScreen({ onBack, onBuyBox, onBuyTickets }) { // onBuyTickets NEU
+export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, user }) { 
+    const adReward = SHOP_ITEMS.AD_REWARD_ENERGY;
+    
+    // Maximale Energie des Spielers prüfen (für die Deaktivierungslogik des Buttons)
+    // FIX: Nutzt Optional Chaining (user?.level), um den Fehler "Cannot read properties of undefined (reading 'level')" zu vermeiden.
+    const maxEnergy = user?.level ? (10 + ((user.level - 1) * 2)) : 10;
+    // FIX: Nutzt Optional Chaining für user?.energy, falls user noch undefined ist.
+    const isEnergyFull = (user?.energy || 0) >= maxEnergy;
+
     return (
         <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-right duration-300">
             <div className="flex items-center gap-2 mb-2"><button onClick={onBack} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700"><ArrowLeft className="w-5 h-5" /></button><h2 className="text-2xl font-black italic text-yellow-400">ITEM SHOP</h2></div>
             
-            {/* NEU: TICKET SECTION */}
+            {/* NEU: AD REWARD SECTION */}
+            <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 mb-4">
+                <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-400"/> Gratis Energie
+                </h3>
+                <div className="bg-slate-900 p-4 rounded-xl border border-white/10 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <Zap className="w-6 h-6 text-yellow-500" />
+                        <p className="text-xl font-bold text-white">+{adReward.rewardAmount} Energie</p>
+                    </div>
+                    <p className="text-xs text-slate-400 mb-3">Sieh dir ein kurzes Video an, um Energie zu erhalten.</p>
+                    <button 
+                        onClick={onWatchAd} 
+                        disabled={isEnergyFull} // Button deaktivieren, wenn Energie voll ist
+                        className={`w-full font-bold py-2 rounded-lg flex items-center justify-center gap-2 text-sm transition-transform active:scale-95 ${isEnergyFull ? 'bg-slate-700 text-slate-500 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white shadow-md'}`}
+                    >
+                        {isEnergyFull ? 'ENERGIE IST VOLL' : 'VIDEO ANSEHEN (Belohnt)'}
+                    </button>
+                </div>
+            </div>
+
+            {/* TICKET SECTION */}
             <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 mb-4">
                 <h3 className="text-sm font-bold text-slate-300 mb-2 flex items-center gap-2"><Ticket className="w-4 h-4 text-pink-400"/> Zucht-Tickets</h3>
                 <div className="grid grid-cols-2 gap-3">

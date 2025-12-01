@@ -201,5 +201,6 @@ export const COMPOSITE_QUEST_REWARDS = {
 // src/data/gameData.jsx (Am Ende hinzufügen)
 export const SHOP_ITEMS = {
     TICKET_BUNDLE_COINS: { costCurrency: 'COINS', costAmount: 500, tickets: 1, label: "1 Zucht-Ticket" },
-    TICKET_BUNDLE_GEMS: { costCurrency: 'GEMS', costAmount: 10, tickets: 5, label: "5 Zucht-Tickets" }
+    TICKET_BUNDLE_GEMS: { costCurrency: 'GEMS', costAmount: 10, tickets: 5, label: "5 Zucht-Tickets" },
+    AD_REWARD_ENERGY: { rewardType: 'ENERGY', rewardAmount: 3, label: "3 Energie" }
 };
