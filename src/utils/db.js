@@ -4,8 +4,7 @@ import {
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
   runTransaction
 } from 'firebase/firestore';
-// KORREKTUR: initializeUserPets wurde entfernt.
-import { generatePet, generateQuests } from './gameMechanics'; 
+import { generatePet, generateQuests, getMaxEnergy } from './gameMechanics'; 
 
 // --- USER MANAGEMENT ---
 
@@ -40,7 +39,7 @@ export const initializeUser = async (firebaseUser, username) => {
           weekly: generateQuests('WEEKLY'),
           monthly: generateQuests('MONTHLY')
       },
-      redeemedTickets: 0, // NEU: Der Zähler für eingelöste Tickets
+      redeemedTickets: 0, 
     };
 
     await setDoc(userRef, newUserData);
@@ -201,79 +200,166 @@ export const trackQuestProgress = async (user, actionType, amount = 1) => {
 };
 
 export const claimQuestReward = async (user, catKey, questId) => {
-    const categoryData = user.quests[catKey];
-    const questIndex = categoryData.quests.findIndex(q => q.id === questId);
-    const quest = categoryData.quests[questIndex];
+  const userRef = doc(db, "users", user.id);
+  let rewardMessage = null;
 
-    if (!quest || quest.claimed || quest.progress < quest.target) return null;
+  try {
+    await runTransaction(db, async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      if (!userDoc.exists()) throw new Error("User document does not exist.");
 
-    // 1. Quest als "claimed" markieren
-    const updatedList = [...categoryData.quests];
-    updatedList[questIndex] = { ...quest, claimed: true };
-    
-    // 2. Den Zähler für den Gesamtfortschritt erhöhen
-    const newCompletedCount = categoryData.completedCount + 1;
+      const userData = userDoc.data();
+      const categoryData = userData.quests[catKey];
+      const questIndex = categoryData.quests.findIndex(q => q.id === questId);
+      const quest = categoryData.quests[questIndex];
 
-    let updates = {
+      if (!quest || quest.claimed || quest.progress < quest.target) return;
+
+      // 1. Quest als "claimed" markieren
+      const updatedList = [...categoryData.quests];
+      updatedList[questIndex] = { ...quest, claimed: true };
+      
+      // 2. Den Zähler für den Gesamtfortschritt erhöhen
+      const newCompletedCount = (categoryData.completedCount || 0) + 1;
+
+      let updates = {
         [`quests.${catKey}.quests`]: updatedList,
         [`quests.${catKey}.completedCount`]: newCompletedCount 
-    };
+      };
+      
+      let xpGain = 0;
+      let newCoins = userData.coins;
+      let newGems = userData.gems;
 
-    // Belohnung verteilen (Einzel-Belohnung)
-    let rewardMessage = "";
-    if (quest.rewardType === 'COINS') {
-        updates['coins'] = user.coins + quest.rewardAmount;
+      // 3. Belohnung vorbereiten
+      if (quest.rewardType === 'COINS') {
+        newCoins += quest.rewardAmount;
         rewardMessage = `+${quest.rewardAmount} Münzen`;
-    } else if (quest.rewardType === 'GEMS') {
-        updates['gems'] = user.gems + quest.rewardAmount;
+      } else if (quest.rewardType === 'GEMS') {
+        newGems += quest.rewardAmount;
         rewardMessage = `+${quest.rewardAmount} Edelsteine`;
-    } else if (quest.rewardType === 'XP') {
-        updates['xp'] = user.xp + quest.rewardAmount;
+      } else if (quest.rewardType === 'XP') {
+        xpGain = quest.rewardAmount;
         rewardMessage = `+${quest.rewardAmount} XP`;
-    } else if (quest.rewardType.startsWith('EGG')) {
+      } else if (quest.rewardType.startsWith('EGG')) {
         const rarity = quest.rewardType.split('_')[1];
         const newEgg = generatePet(1, null, rarity, null, 'QUEST');
         newEgg.isEgg = true; 
         newEgg.hatchAt = 0;
-        await setDoc(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: user.id });
+        transaction.set(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: userData.id });
         rewardMessage = `Ei (${rarity}) erhalten!`;
-    }
+      }
+      
+      // 4. LEVEL-UP LOGIK
+      let newLevel = userData.level;
+      let newXp = (userData.xp || 0) + xpGain;
+      let newXpToNext = userData.xpToNextLevel;
+      let newEnergy = userData.energy;
+      
+      while (newXp >= newXpToNext) {
+        newLevel++;
+        newXp -= newXpToNext;
+        newXpToNext = Math.floor(newXpToNext * 1.5);
+        newCoins += 1000;
+        newGems += 5;
+        newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
+      }
 
-    await updateDoc(doc(db, "users", user.id), updates);
-    return rewardMessage;
+      // 5. User-Statistiken aktualisieren und Transaction abschließen
+      updates['level'] = newLevel;
+      updates['xp'] = newXp;
+      updates['xpToNextLevel'] = newXpToNext;
+      updates['coins'] = newCoins;
+      updates['gems'] = newGems;
+      updates['energy'] = newEnergy;
+      
+      transaction.update(userRef, updates);
+    });
+    
+    return { message: rewardMessage }; 
+    
+  } catch (e) {
+    console.error("Fehler beim Abholen der Quest-Belohnung:", e);
+    return { message: null };
+  }
 };
 
 export const claimCompositeReward = async (user, catKey) => {
-    const categoryData = user.quests[catKey];
-    if (!categoryData || categoryData.completedCount < categoryData.totalQuests || categoryData.claimedComposite) return null;
+  const userRef = doc(db, "users", user.id);
+  let rewardMessage = null;
 
-    const reward = categoryData.reward;
+  try {
+    await runTransaction(db, async (transaction) => {
+      const userDoc = await transaction.get(userRef);
+      if (!userDoc.exists()) throw new Error("User document does not exist.");
 
-    // Markiere als claimed
-    let updates = {
+      const userData = userDoc.data();
+      const categoryData = userData.quests[catKey];
+
+      if (!categoryData || categoryData.completedCount < categoryData.totalQuests || categoryData.claimedComposite) return;
+
+      const reward = categoryData.reward;
+
+      // Markiere als claimed
+      let updates = {
         [`quests.${catKey}.claimedComposite`]: true 
-    };
+      };
+      
+      let xpGain = 0;
+      let newCoins = userData.coins;
+      let newGems = userData.gems;
 
-    // Belohnung verteilen
-    let rewardMessage = `Gesamt-Belohnung: ${reward.label}. `;
-    if (reward.rewardType === 'COINS') {
-        updates['coins'] = user.coins + reward.rewardAmount;
+      rewardMessage = `Gesamt-Belohnung: ${reward.label}. `;
+
+      // Belohnung verteilen
+      if (reward.rewardType === 'COINS') {
+        newCoins += reward.rewardAmount;
         rewardMessage += `+${reward.rewardAmount} Münzen`;
-    } else if (reward.rewardType === 'GEMS') {
-        updates['gems'] = user.gems + reward.rewardAmount;
+      } else if (reward.rewardType === 'GEMS') {
+        newGems += reward.rewardAmount;
         rewardMessage += `+${reward.rewardAmount} Edelsteine`;
-    } else if (reward.rewardType.startsWith('EGG')) {
+      } else if (reward.rewardType.startsWith('EGG')) {
         const rarity = reward.rewardType.split('_')[1];
         const newEgg = generatePet(1, null, rarity, null, 'QUEST_COMPOSITE');
         newEgg.isEgg = true; 
         newEgg.hatchAt = 0;
-        await setDoc(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: user.id });
+        transaction.set(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: userData.id });
         rewardMessage += `Ei (${rarity}) erhalten!`;
-    } else if (reward.rewardType === 'XP') {
-        updates['xp'] = user.xp + reward.rewardAmount;
+      } else if (reward.rewardType === 'XP') {
+        xpGain = reward.rewardAmount;
         rewardMessage += `+${reward.rewardAmount} XP`;
-    }
+      }
 
-    await updateDoc(doc(db, "users", user.id), updates);
-    return rewardMessage;
+      // LEVEL-UP LOGIK
+      let newLevel = userData.level;
+      let newXp = (userData.xp || 0) + xpGain;
+      let newXpToNext = userData.xpToNextLevel;
+      let newEnergy = userData.energy;
+
+      while (newXp >= newXpToNext) {
+        newLevel++;
+        newXp -= newXpToNext;
+        newXpToNext = Math.floor(newXpToNext * 1.5);
+        newCoins += 1000;
+        newGems += 5;
+        newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
+      }
+
+      // User-Statistiken aktualisieren und Transaction abschließen
+      updates['level'] = newLevel;
+      updates['xp'] = newXp;
+      updates['xpToNextLevel'] = newXpToNext;
+      updates['coins'] = newCoins;
+      updates['gems'] = newGems;
+      updates['energy'] = newEnergy;
+      
+      transaction.update(userRef, updates);
+    });
+    
+    return { message: rewardMessage };
+    
+  } catch (e) {
+    console.error("Fehler beim Abholen der Gesamt-Belohnung:", e);
+    return { message: null };
+  }
 };

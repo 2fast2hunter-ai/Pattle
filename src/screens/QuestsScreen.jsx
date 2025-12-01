@@ -13,18 +13,18 @@ export default function QuestsScreen({ user, onBack }) {
 
     const handleClaim = async (questId) => {
         setClaiming(questId);
-        const msg = await claimQuestReward(user, activeTab, questId);
-        if (msg) {
-            alert("Belohnung: " + msg); 
+        const result = await claimQuestReward(user, activeTab, questId);
+        if (result && result.message) {
+            alert("Belohnung: " + result.message); 
         }
         setClaiming(null);
     };
 
     const handleClaimComposite = async (catKey) => {
         setClaimingComposite(catKey);
-        const msg = await claimCompositeReward(user, catKey);
-        if (msg) {
-            alert(msg); 
+        const result = await claimCompositeReward(user, catKey);
+        if (result && result.message) {
+            alert(result.message); 
         }
         setClaimingComposite(null);
     }
