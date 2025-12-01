@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { onAuthStateChanged } from 'firebase/auth'; 
 import { auth } from './firebase'; 
@@ -80,6 +80,38 @@ export default function GameApp() {
   const [selectedFriend, setSelectedFriend] = useState(null);
   // Zustand für den Level Up Listener
   const [previousLevel, setPreviousLevel] = useState(null); 
+
+  // *** NEU: ADMOB PLUGIN IMPLEMENTIERUNG MIT useMemo ***
+  const AdMob = useMemo(() => {
+      // 1. VERSUCH: Zugriff auf das native Capacitor Plugin
+      if (window.Capacitor) {
+          try {
+              // Native Plattform: Versucht, das installierte Plugin zu finden
+              return window.Capacitor.Plugins.AdMob;
+          } catch (e) {
+              // Tritt auf, wenn das Plugin zwar installiert, aber nicht richtig verlinkt ist.
+              console.warn("Capacitor AdMob Plugin not found in Plugins namespace.", e);
+          }
+      }
+      
+      // 2. FALLBACK: Mock-Implementierung für Web-App (Browser/Entwicklungsumgebung)
+      return {
+    // *** NEU HINZUGEFÜGT ***
+   prepareRewardVideoAd: (options) => {
+        return new Promise(resolve => setTimeout(resolve, 50)); 
+    },
+    showRewardVideoAd: (options) => { 
+        return new Promise(resolve => {
+            console.log("AdMob Mock: Video abspielen (0.5s)");
+            setTimeout(() => {
+                // KORRIGIERTE MOCK-RÜCKGABE: Simuliert das native RewardItem mit einem Betrag (20)
+                // Die Zahl 20 ist der Energy-Betrag in SHOP_ITEMS.AD_REWARD_ENERGY
+                resolve({ amount: 20, type: 'Energy' }); 
+            }, 500); 
+        });
+    }
+};
+  }, []);
 
   // --- AUTO LOGIN CHECK ---
   useEffect(() => {
@@ -260,7 +292,7 @@ export default function GameApp() {
   };
   
   // NEU: Funktion: Belohnte Werbung ansehen
-  const watchAdForReward = () => {
+  const watchAdForReward = async () => {
     const reward = SHOP_ITEMS.AD_REWARD_ENERGY;
     const maxEnergy = getMaxEnergy(user.level);
 
@@ -268,19 +300,48 @@ export default function GameApp() {
         showNotification("Energie ist bereits voll!", 'error');
         return;
     }
-    
-    // Belohnung anwenden
-    const newEnergy = Math.min(maxEnergy, user.energy + reward.rewardAmount);
-    
-    // lastEnergyUpdate wird auf Date.now() gesetzt, falls die Energie voll ist
-    // Ansonsten wird es bei der Regeneration automatisch aktualisiert.
-    updateUser(user.id, { 
-        energy: newEnergy, 
-        lastEnergyUpdate: Date.now() // Setze auf aktuelle Zeit, um den Timer zurückzusetzen/abzuschließen
-    });
 
-    showNotification(`Video angesehen: +${reward.rewardAmount} Energie!`, 'success');
-  };
+    showNotification("Lade Belohnungs-Video...", 'info');
+    
+    // Die Ad-Unit-ID des von Ihnen erstellten Rewarded Videos
+    const adUnitId = 'ca-app-pub-3940256099942544/5224354917'; 
+
+    // 1. Zuerst das Ad vorbereiten/laden (NEUER, NOTWENDIGER SCHRITT)
+    try {
+        // Optionen für prepare müssen die adId enthalten.
+        await AdMob.prepareRewardVideoAd({ adId: adUnitId });
+    } catch (e) {
+        console.error("AdMob Prepare Fehler:", e);
+        showNotification("Laden fehlgeschlagen (Fehler beim Vorbereiten).", 'error');
+        return; 
+    }
+    
+    // 2. Jetzt das Ad anzeigen (darf KEINE adId mehr enthalten)
+   try {
+    const result = await AdMob.showRewardVideoAd();
+
+    // -------------------------------------------------------------------
+    // KORREKTUR DER PRÜFUNG: Prüft auf ein Ergebnisobjekt mit Betrag (amount).
+    if (result && result.amount) { 
+    // -------------------------------------------------------------------
+        // *** REWARD-LOGIK WIRD JETZT AUSGEFÜHRT ***
+        
+        const newEnergy = Math.min(maxEnergy, user.energy + reward.rewardAmount);
+        
+        await updateUser(user.id, { 
+            energy: newEnergy, 
+            lastEnergyUpdate: Date.now()
+        });
+        showNotification(`Video angesehen: +${reward.rewardAmount} Energie!`, 'success');
+    } else {
+         // Wenn das Ad nicht vollständig angesehen wurde oder abgebrochen wurde (z.B. result ist undefined)
+         showNotification("Video nicht abgeschlossen oder abgebrochen.", 'error');
+    }
+} catch (e) {
+    console.error("AdMob-Show-Fehler:", e); 
+    showNotification("Fehler beim Abspielen des Videos.", 'error');
+};
+  }
 
   const startBattle = () => {
     const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id));
