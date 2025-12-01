@@ -144,6 +144,8 @@ export default function App() {
               onBack={() => setCurrentView('menu')} 
               onBattle={startBattle} 
               onTeam={() => setCurrentView('team-edit')}
+              user={user}
+              onLeaderboard={() => setCurrentView('leaderboard')}
             />
           )}
 

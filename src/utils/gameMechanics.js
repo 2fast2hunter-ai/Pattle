@@ -5,86 +5,45 @@ import {
 
 export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5; 
 
-// NEU: Funktion zur Berechnung des nächsten festen Reset-Zeitpunkts (00:00 Uhr lokale Zeit)
+// Reset-Zeit-Berechnung
 const calculateNextResetTime = (category) => {
     let nextTarget = new Date();
-    
     if (category === 'DAILY') {
         nextTarget.setDate(nextTarget.getDate() + 1);
         nextTarget.setHours(0, 0, 0, 0);
-        
     } else if (category === 'WEEKLY') {
         const day = nextTarget.getDay(); 
         let daysUntilMonday = (1 + 7 - day) % 7;
-        
-        if (daysUntilMonday === 0) {
-            daysUntilMonday = 7;
-        }
-
+        if (daysUntilMonday === 0) daysUntilMonday = 7;
         nextTarget.setDate(nextTarget.getDate() + daysUntilMonday);
         nextTarget.setHours(0, 0, 0, 0);
-        
     } else if (category === 'MONTHLY') {
         nextTarget.setFullYear(nextTarget.getFullYear(), nextTarget.getMonth() + 1, 1);
         nextTarget.setHours(0, 0, 0, 0);
     }
-
     return nextTarget.getTime(); 
 };
 
-// NEU: Die Rarity-Berechnungslogik (Exportiert!)
 export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
     const rarityKeys = Object.keys(RARITIES);
     const id1 = RARITIES[rarity1Key].id;
     const id2 = RARITIES[rarity2Key].id;
     const minId = Math.min(id1, id2);
     const maxId = Math.max(id1, id2);
-    
     const roll = Math.random() * 100;
-
     let targetId = minId; 
     
-    // --- 1. Gleichwertige Seltenheit (z.B. Selten + Selten) ---
     if (minId === maxId) {
-        // 5% Chance auf 1 Stufe Upgrade
-        const chanceToGetNextLevel = 5;
-
-        if (roll <= chanceToGetNextLevel) {
-            targetId = Math.min(maxId + 1, rarityKeys.length);
-        } else {
-            // 95% Chance, dass es bei der aktuellen Seltenheit bleibt
-            targetId = maxId; 
-        }
-        
-    } 
-    // --- 2. Ungleichwertige Seltenheit (z.B. Selten + Gewöhnlich) ---
-    else {
-        // Chance, den höheren Wert zu treffen: 9%
-        const chanceToGetHigherParent = 9; 
-        
-        // Chance auf Upgrade auf den höheren Wert (maxId): 9%
-        if (roll <= chanceToGetHigherParent) {
-            targetId = maxId;
-        } 
-        // 91% Chance, dass es den niedrigeren Wert behält (minId)
-        else {
-             targetId = minId;
-        }
-        
-        // NEUE REGEL: 1% Chance auf SUPER-Upgrade, wenn der höhere Wert getroffen wurde
-        const baseChanceForUpgrade = 1;
-        if (targetId === maxId && Math.random() * 100 <= baseChanceForUpgrade) {
-             targetId = Math.min(maxId + 1, rarityKeys.length);
-        }
+        if (roll <= 5) targetId = Math.min(maxId + 1, rarityKeys.length);
+        else targetId = maxId; 
+    } else {
+        if (roll <= 9) targetId = maxId;
+        else targetId = minId;
+        if (targetId === maxId && Math.random() * 100 <= 1) targetId = Math.min(maxId + 1, rarityKeys.length);
     }
-
-    // Sicherstellen, dass das Pet NICHT schlechter wird als die niedrigste Seltenheit
     const finalId = Math.max(minId, targetId);
-
-    // Konvertiere ID zurück zum Key
     return rarityKeys[finalId - 1]; 
 };
-
 
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
     const K = 32;
@@ -106,7 +65,6 @@ export const getDamageMultiplier = (atkType, defType) => {
 
 export const determineRarity = (boxType = 'STANDARD') => {
     if (boxType === 'STARTER') return 'COMMON'; 
-
     const roll = Math.random() * 100;
     let cumulative = 0;
     const sortedRarities = Object.values(RARITIES).sort((a, b) => a.dropChance - b.dropChance);
@@ -122,6 +80,7 @@ export const determineRarity = (boxType = 'STANDARD') => {
     return boxType === 'PREMIUM' ? 'UNCOMMON' : 'COMMON';
 };
 
+// Stat-Berechnung
 export const calculateStatValue = (base, level) => {
     const val = Math.floor(base * (1 + (level - 1) * 0.1));
     return Math.max(1, val); 
@@ -130,23 +89,12 @@ export const calculateStatValue = (base, level) => {
 export const generateQuests = (category) => {
   const count = 5; 
   const newQuests = [];
-  
-  let multiplier = 1;
-
-  if (category === 'DAILY') {
-      multiplier = 1;
-  } else if (category === 'WEEKLY') {
-      multiplier = 5; 
-  } else if (category === 'MONTHLY') {
-      multiplier = 20; 
-  }
+  let multiplier = category === 'DAILY' ? 1 : (category === 'WEEKLY' ? 5 : 20);
 
   for (let i = 0; i < count; i++) {
       const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
-      
       const variance = 0.8 + Math.random() * 0.4;
       const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
-      
       let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
       let rewardType = template.rewardType;
 
@@ -178,16 +126,11 @@ export const generateQuests = (category) => {
   };
 };
 
-
 export const generatePet = (level = 1, fixedType = null, rarityKey = null, inheritedStats = null, source = 'SHOP') => {
   const typeKeys = Object.keys(TYPES);
   const type = fixedType || typeKeys[Math.floor(Math.random() * typeKeys.length)];
   
-  let rarity = rarityKey;
-  if (!rarity) {
-     rarity = 'COMMON';
-  }
-  
+  let rarity = rarityKey || 'COMMON';
   const mult = RARITIES[rarity].multi;
   
   const genBase = (val) => {
@@ -197,52 +140,32 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   };
 
   let abilityKey;
-
   if (source === 'BREEDING') {
       const abilityKeys = Object.keys(ABILITIES);
       abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
   } else {
-      const matchingAbilities = Object.keys(ABILITIES).filter(
-          key => ABILITIES[key].element === type
-      );
-
-      if (matchingAbilities.length > 0) {
-          abilityKey = matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)];
-      } else {
-          const abilityKeys = Object.keys(ABILITIES);
-          abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
-      }
+      const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === type);
+      abilityKey = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : Object.keys(ABILITIES)[0];
   }
 
-  const prefixes = { 
-    FIRE: 'Pyro', WATER: 'Aqua', NATURE: 'Terra', WIND: 'Aero', EARTH: 'Geo',
-    ICE: 'Frost', ELECTRIC: 'Volt', LIGHT: 'Lumen', DARK: 'Umbra', GHOST: 'Phantom',
-    MAGIC: 'Arcan', PSYCHIC: 'Mind', FIGHTING: 'Brawl', METAL: 'Ferrum', ROCK: 'Petra',
-    POISON: 'Venom', DRAGON: 'Draco', FAIRY: 'Pixie', TECH: 'Cyber', SOUND: 'Sonic',
-    TIME: 'Chrono', SPACE: 'Astro', VOID: 'Null', CHAOS: 'Havoc', ORDER: 'Law'
-  };
+  const prefixes = { FIRE: 'Pyro', WATER: 'Aqua', NATURE: 'Terra', WIND: 'Aero', EARTH: 'Geo', ICE: 'Frost', ELECTRIC: 'Volt', LIGHT: 'Lumen', DARK: 'Umbra', GHOST: 'Phantom', MAGIC: 'Arcan', PSYCHIC: 'Mind', FIGHTING: 'Brawl', METAL: 'Ferrum', ROCK: 'Petra', POISON: 'Venom', DRAGON: 'Draco', FAIRY: 'Pixie', TECH: 'Cyber', SOUND: 'Sonic', TIME: 'Chrono', SPACE: 'Astro', VOID: 'Null', CHAOS: 'Havoc', ORDER: 'Law' };
   const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul'];
   const baseName = (prefixes[type] || 'Mono') + suffixes[Math.floor(Math.random() * suffixes.length)];
-
   const speciesKeys = Object.keys(ZODIAC_ANIMALS);
   const speciesKey = speciesKeys[Math.floor(Math.random() * speciesKeys.length)];
 
   let b_hp, b_atk, b_ap, b_def, b_res, b_speed;
 
   if (inheritedStats) {
-      b_hp = inheritedStats.hp;
-      b_atk = inheritedStats.atk;
-      b_ap = inheritedStats.ap;
-      b_def = inheritedStats.def;
-      b_res = inheritedStats.res;
-      b_speed = inheritedStats.speed;
+      b_hp = inheritedStats.hp; b_atk = inheritedStats.atk; b_ap = inheritedStats.ap; b_def = inheritedStats.def; b_res = inheritedStats.res; b_speed = inheritedStats.speed;
   } else {
-      b_hp = genBase(5);
-      b_atk = genBase(1.5);
-      b_ap = genBase(1.5);
-      b_def = genBase(1.0);
-      b_res = genBase(1.0);
-      b_speed = genBase(1.0);
+      // --- BASISWERTE WIEDER NORMALISIERT ---
+      b_hp = genBase(8);
+      b_atk = genBase(2);
+      b_ap = genBase(2);
+      b_def = genBase(1);
+      b_res = genBase(1);
+      b_speed = genBase(1);
   }
 
   return {
@@ -280,12 +203,10 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
 export const getUnlockedTeamSlots = (level) => {
     const maxSlots = 10;
     let slots = 1;
-
     if (level >= 3) {
         slots = 2; 
         slots += Math.floor((level - 3) / 5);
     }
-
     return Math.min(maxSlots, slots);
 };
 
