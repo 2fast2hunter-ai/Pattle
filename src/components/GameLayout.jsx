@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Zap, Coins, Gem, User, LayoutGrid, Settings, Ticket } from 'lucide-react'; // Ticket NEU
+import { Zap, Coins, Gem, Ticket } from 'lucide-react';
 import { getMaxEnergy, ENERGY_REGEN_TIME_MS } from '../utils/gameMechanics';
 
 export function HeaderHUD({ user }) {
+  // --- LOGIK ---
   const xpPercent = Math.min(100, (user.xp / user.xpToNextLevel) * 100);
   const maxEnergy = getMaxEnergy(user.level);
   
   const msPerEnergy = ENERGY_REGEN_TIME_MS; 
-  
   const timeSinceUpdate = Date.now() - user.lastEnergyUpdate;
   const nextEnergyIn = Math.max(0, msPerEnergy - timeSinceUpdate);
-  
   const minutesLeft = Math.ceil(nextEnergyIn / 1000 / 60);
 
   const [, setTick] = useState(0);
@@ -19,59 +18,92 @@ export function HeaderHUD({ user }) {
     return () => clearInterval(interval);
   }, []);
   
-  // Lese den Zähler für eingelöste Tickets
   const redeemedTickets = user?.redeemedTickets || 0;
 
+  // --- RENDER ---
   return (
-    <header className="bg-slate-800/90 backdrop-blur-md p-3 border-b border-white/5 z-20">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-xl shadow-lg border border-white/10 relative overflow-hidden flex-shrink-0">
-            {user.avatar}
-            <div className="absolute bottom-0 left-0 h-1 bg-green-400" style={{width: `${xpPercent}%`}}></div>
-            </div>
-            <div className="hidden sm:block">
-            <div className="text-xs text-slate-400 font-bold uppercase">Lvl {user.level}</div>
-            <div className="w-20 h-1.5 bg-slate-700 rounded-full mt-0.5 overflow-hidden">
-                <div className="h-full bg-green-400" style={{width: `${xpPercent}%`}}></div>
-            </div>
-            </div>
-        </div>
-        <div className="flex gap-2 flex-wrap justify-end">
-            <div className="relative flex flex-col items-center justify-center group">
-                <div className="flex items-center gap-1 bg-slate-900/80 px-2.5 py-1.5 rounded-full border border-white/10">
-                    <Zap className={`w-3.5 h-3.5 ${user.energy > 0 ? 'text-yellow-400 fill-current' : 'text-slate-600'}`} />
-                    <span className="font-bold text-xs">{user.energy}/{maxEnergy}</span>
+    <header className="mx-4 mt-6 mb-2 z-30 relative animate-in slide-in-from-top duration-500">
+        
+        {/* GLASS CONTAINER */}
+        <div className="bg-slate-900/90 backdrop-blur-xl rounded-[28px] p-4 border border-white/10 shadow-2xl shadow-black/40 flex flex-col gap-4 relative overflow-hidden">
+            
+            {/* Glanz-Effekt Hintergrund */}
+            <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-white/5 to-transparent pointer-events-none"></div>
+
+            {/* ZEILE 1: Profil, Name & XP */}
+            <div className="flex items-center gap-4 relative z-10">
+                
+                {/* Großer Avatar */}
+                <div className="relative">
+                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-600 to-violet-700 rounded-2xl flex items-center justify-center text-3xl shadow-lg border-2 border-white/10 relative overflow-hidden">
+                        {user.avatar}
+                    </div>
+                    {/* Level Badge */}
+                    <div className="absolute -bottom-2 -right-2 bg-indigo-500 text-white text-xs font-black px-2 py-0.5 rounded-lg border-2 border-slate-900 shadow-sm z-20">
+                        Lvl {user.level}
+                    </div>
                 </div>
-                {user.energy < maxEnergy && (
-                    <span className="absolute -bottom-2.5 text-[8px] text-slate-400 font-mono bg-slate-900/80 px-1 rounded whitespace-nowrap z-10">
-                        {minutesLeft}m
-                    </span>
-                )}
+
+                {/* Name & Große XP Bar */}
+                <div className="flex-1 flex flex-col justify-center gap-1">
+                    <div className="flex justify-between items-end">
+                        {/* HIER IST DIE ÄNDERUNG: NAME IM ARENA-STYLE */}
+                        <span className="font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-white text-2xl leading-none drop-shadow-sm">
+                            {user.username}
+                        </span>
+                        
+                        {/* Detaillierte XP Anzeige */}
+                        <span className="text-[10px] font-bold text-slate-400 mb-0.5">
+                            <span className="text-emerald-400">{user.xp}</span> / {user.xpToNextLevel} XP
+                        </span>
+                    </div>
+                    
+                    <div className="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10 shadow-inner">
+                        <div 
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 shadow-[0_0_15px_rgba(52,211,153,0.6)] transition-all duration-500" 
+                            style={{width: `${xpPercent}%`}}
+                        ></div>
+                    </div>
+                </div>
             </div>
-            {/* NEU: ANGEZEIGTE ZUCHT-TICKETS */}
-            <div className="flex items-center gap-1 bg-slate-900/80 px-2.5 py-1.5 rounded-full border border-white/10">
-                <Ticket className="w-3.5 h-3.5 text-pink-400 fill-current" />
-                <span className="font-bold text-xs">{redeemedTickets}</span>
+
+            {/* ZEILE 2: Ressourcen (Groß & Grid) */}
+            <div className="grid grid-cols-4 gap-2 relative z-10">
+                
+                {/* Energie */}
+                <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5 relative">
+                    <Zap className={`w-5 h-5 ${user.energy > 0 ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'} mb-1`} />
+                    <span className="font-black text-white text-sm">{user.energy}/{maxEnergy}</span>
+                    {user.energy < maxEnergy && (
+                        <div className="absolute -top-1 -right-1 bg-slate-950 text-[8px] font-mono text-slate-400 px-1.5 rounded border border-white/10">
+                            {minutesLeft}m
+                        </div>
+                    )}
+                </div>
+
+                {/* Tickets */}
+                <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5">
+                    <Ticket className="w-5 h-5 text-pink-400 fill-pink-400/20 mb-1" />
+                    <span className="font-black text-white text-sm">{redeemedTickets}</span>
+                </div>
+
+                {/* Gold */}
+                <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5">
+                    <Coins className="w-5 h-5 text-amber-400 fill-amber-400/20 mb-1" />
+                    <span className="font-black text-white text-sm">{user.coins}</span>
+                </div>
+
+                {/* Gems */}
+                <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5">
+                    <Gem className="w-5 h-5 text-purple-400 fill-purple-400/20 mb-1" />
+                    <span className="font-black text-white text-sm">{user.gems}</span>
+                </div>
+
             </div>
-            {/* BESTEHENDE MÜNZEN UND EDELSTEINE */}
-            <div className="flex items-center gap-1 bg-slate-900/80 px-2.5 py-1.5 rounded-full border border-white/10">
-                <Coins className="w-3.5 h-3.5 text-yellow-400 fill-current" />
-                <span className="font-bold text-xs">{user.coins}</span>
-            </div>
-            <div className="flex items-center gap-1 bg-slate-900/80 px-2.5 py-1.5 rounded-full border border-white/10">
-                <Gem className="w-3.5 h-3.5 text-pink-500 fill-current" />
-                <span className="font-bold text-xs">{user.gems}</span>
-            </div>
+
         </div>
-      </div>
     </header>
   );
 }
 
-export function BottomNav({ currentView, setCurrentView }) {
-  if (currentView === 'battle' || currentView === 'auth') return null;
-  return (
-    <nav className="bg-slate-800 border-t border-white/10 px-6 py-4 pb-8"><ul className="flex justify-around items-center"><li><button onClick={() => setCurrentView('profile')} className={`flex flex-col items-center gap-1 ${currentView === 'profile' ? 'text-indigo-400' : 'text-slate-500'}`}><User className="w-6 h-6" /><span className="text-[10px] font-bold uppercase">Profil</span></button></li><li className="-mt-8"><button onClick={() => setCurrentView('menu')} className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${['menu', 'arena-hub', 'pet-hub', 'shop', 'marketplace', 'leaderboard'].includes(currentView) ? 'bg-indigo-600 text-white ring-4 ring-slate-900 shadow-indigo-500/40' : 'bg-slate-700 text-slate-400 ring-4 ring-slate-900'}`}><LayoutGrid className="w-8 h-8 ml-1" /></button></li><li><button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center gap-1 ${currentView === 'settings' ? 'text-indigo-400' : 'text-slate-500'}`}><Settings className="w-6 h-6" /><span className="text-[10px] font-bold uppercase">Optionen</span></button></li></ul></nav>
-  );
-}
+export function BottomNav() { return null; }

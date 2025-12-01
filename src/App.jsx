@@ -1,10 +1,10 @@
 import React from 'react';
 import './App.css';
 import { useGameLogic } from './hooks/useGameLogic';
-import { AlertTriangle, RefreshCw, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
 
-// Components
-import { HeaderHUD, BottomNav } from "./components/GameLayout"; 
+// Components (BottomNav ENTFERNT)
+import { HeaderHUD } from "./components/GameLayout"; 
 import Notification from "./components/ui/Notification";
 import GameModals from "./components/GameModals";
 
@@ -26,7 +26,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 import MarketplaceScreen from './screens/MarketplaceScreen';
-import InventoryScreen from './screens/InventoryScreen';
+import InventoryScreen from './screens/InventoryScreen'; 
 
 // Error Boundary
 class ErrorBoundary extends React.Component {
@@ -55,23 +55,19 @@ class ErrorBoundary extends React.Component {
 export default function App() {
   const gameLogic = useGameLogic();
   
-  // Destrukturierung für direkten Zugriff
   const { 
     user, currentView, setCurrentView, authLoading, 
-    handleLogin, handleLogout, notification, lootResult, setLootResult, // <--- HIER WURDE handleLogout HINZUGEFÜGT
+    handleLogin, handleLogout, notification, lootResult, setLootResult,
     showLevelUpModal, setShowLevelUpModal, 
-    // Spezifische States für Screens
     myPets, marketListings, activeBattle, setActiveBattle, 
     selectedPetDetail, setSelectedPetDetail, selectedSlotForTeam, setSelectedSlotForTeam,
     selectedFriend, setSelectedFriend, settings, setSettings,
-    // Aktionen
     buyLootbox, buyTickets, handleRedeemTicket, watchAdForReward,
     startBattle, handleWin, handleLose, handleAddFriend,
     handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
     hatchEgg, startIncubation, breedPets
   } = gameLogic;
 
-  // Ladezustand
   if (authLoading) {
       return (
           <div className="flex flex-col h-screen bg-slate-900 text-white justify-center items-center">
@@ -81,7 +77,6 @@ export default function App() {
       );
   }
 
-  // Nicht eingeloggt oder User-Daten fehlen noch
   if (currentView === 'auth' || !user) {
       return <AuthScreen onLogin={handleLogin} />;
   }
@@ -111,6 +106,8 @@ export default function App() {
               onShop={() => setCurrentView('shop')} 
               onMarketplace={() => setCurrentView('marketplace')} 
               onLeaderboard={() => setCurrentView('leaderboard')} 
+              onProfile={() => setCurrentView('profile')}
+              onSettings={() => setCurrentView('settings')}
             />
           )}
 
@@ -141,10 +138,10 @@ export default function App() {
 
           {currentView === 'arena-hub' && (
             <ArenaHub 
+              user={user}
               onBack={() => setCurrentView('menu')} 
               onBattle={startBattle} 
               onTeam={() => setCurrentView('team-edit')}
-              user={user}
               onLeaderboard={() => setCurrentView('leaderboard')}
             />
           )}
@@ -191,9 +188,8 @@ export default function App() {
             />
           )}
 
-        {currentView === 'team-select-pet' && (
+          {currentView === 'team-select-pet' && (
             <InventoryScreen 
-              // FIX: Nur Pets anzeigen, die NICHT schon im Team sind
               pets={myPets.filter(p => !user.team.includes(p.id))} 
               title="Wähle Pet für Team" 
               onBack={() => setCurrentView('team-edit')} 
@@ -253,6 +249,7 @@ export default function App() {
                 setCurrentView('friend-profile'); 
               }} 
               onAddFriend={handleAddFriend} 
+              onBack={() => setCurrentView('menu')}
             />
           )}
 
@@ -268,12 +265,13 @@ export default function App() {
               settings={settings} 
               setSettings={setSettings} 
               onLogout={handleLogout} 
+              onBack={() => setCurrentView('menu')}
             />
           )}
 
         </div>
       </main>
-      <BottomNav currentView={currentView} setCurrentView={setCurrentView} />
+      {/* BOTTOM NAV WURDE ENTFERNT */}
     </div>
   );
 }
