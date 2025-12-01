@@ -26,7 +26,7 @@ import LeaderboardScreen from './screens/LeaderboardScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 import MarketplaceScreen from './screens/MarketplaceScreen';
-import InventoryScreen from './screens/InventoryScreen'; // Fehlte im Import
+import InventoryScreen from './screens/InventoryScreen';
 
 // Error Boundary
 class ErrorBoundary extends React.Component {
@@ -58,7 +58,7 @@ export default function App() {
   // Destrukturierung für direkten Zugriff
   const { 
     user, currentView, setCurrentView, authLoading, 
-    handleLogin, notification, lootResult, setLootResult,
+    handleLogin, handleLogout, notification, lootResult, setLootResult, // <--- HIER WURDE handleLogout HINZUGEFÜGT
     showLevelUpModal, setShowLevelUpModal, 
     // Spezifische States für Screens
     myPets, marketListings, activeBattle, setActiveBattle, 
@@ -100,7 +100,7 @@ export default function App() {
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
         <div className="h-full overflow-y-auto p-4 scrollbar-hide">
           
-          {/* SCREEN ROUTING - Hier werden die Navigations-Funktionen verknüpft */}
+          {/* SCREEN ROUTING */}
           
           {currentView === 'menu' && (
             <MainMenu 
