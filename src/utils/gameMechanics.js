@@ -45,12 +45,14 @@ export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
     return rarityKeys[finalId - 1]; 
 };
 
+// --- HIER IST DIE ÄNDERUNG ---
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
-    const K = 32;
-    const expectedScore = 1 / (1 + Math.pow(10, (enemyRating - playerRating) / 400));
-    const actualScore = isWin ? 1 : 0;
-    return Math.round(K * (actualScore - expectedScore));
+    // Festes System: +15 für Sieg, -10 für Niederlage
+    // Egal wie stark der Gegner war.
+    if (isWin) return 15;
+    return -10;
 };
+// -----------------------------
 
 export const getDamageMultiplier = (atkType, defType) => {
   if (!atkType || !defType) return 1.0;
@@ -64,9 +66,7 @@ export const getDamageMultiplier = (atkType, defType) => {
 };
 
 export const determineRarity = (boxType = 'STANDARD') => {
-    // --- HIER IST DIE ÄNDERUNG ---
-    if (boxType === 'STARTER') return 'COMMON'; // Jetzt 'RARE' statt 'COMMON'
-    // -----------------------------
+    if (boxType === 'STARTER') return 'RARE'; 
 
     const roll = Math.random() * 100;
     let cumulative = 0;
@@ -83,7 +83,6 @@ export const determineRarity = (boxType = 'STANDARD') => {
     return boxType === 'PREMIUM' ? 'UNCOMMON' : 'COMMON';
 };
 
-// Stat-Berechnung
 export const calculateStatValue = (base, level) => {
     const val = Math.floor(base * (1 + (level - 1) * 0.1));
     return Math.max(1, val); 
@@ -162,7 +161,6 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   if (inheritedStats) {
       b_hp = inheritedStats.hp; b_atk = inheritedStats.atk; b_ap = inheritedStats.ap; b_def = inheritedStats.def; b_res = inheritedStats.res; b_speed = inheritedStats.speed;
   } else {
-      // Basiswerte (wie im letzten Schritt festgelegt)
       b_hp = genBase(8);
       b_atk = genBase(2);
       b_ap = genBase(2);
@@ -222,6 +220,7 @@ export const getMaxEnergy = (level) => {
   return 10 + ((level - 1) * 2);
 };
 
+// NEU: Berechnet die TATSÄCHLICHE Energie basierend auf der vergangenen Zeit
 export const calculateCurrentEnergy = (user) => {
     if (!user) return 0;
     
@@ -229,13 +228,9 @@ export const calculateCurrentEnergy = (user) => {
     const now = Date.now();
     const msPerEnergy = 1000 * 60 * 5; // 5 Minuten
     
-    // Zeit seit dem letzten Update
     const timeDiff = now - (user.lastEnergyUpdate || now);
-    
-    // Wie viel Energie wurde in der Zeit regeneriert?
     const energyGained = Math.floor(timeDiff / msPerEnergy);
     
-    // Aktuelle Energie + Regenerierte (aber nicht über Max)
     const totalEnergy = Math.min(maxEnergy, (user.energy || 0) + energyGained);
     
     return totalEnergy;
