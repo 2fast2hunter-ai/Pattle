@@ -221,3 +221,22 @@ export const getUnlockedHatcherySlots = (level) => {
 export const getMaxEnergy = (level) => {
   return 10 + ((level - 1) * 2);
 };
+
+export const calculateCurrentEnergy = (user) => {
+    if (!user) return 0;
+    
+    const maxEnergy = getMaxEnergy(user.level);
+    const now = Date.now();
+    const msPerEnergy = 1000 * 60 * 5; // 5 Minuten
+    
+    // Zeit seit dem letzten Update
+    const timeDiff = now - (user.lastEnergyUpdate || now);
+    
+    // Wie viel Energie wurde in der Zeit regeneriert?
+    const energyGained = Math.floor(timeDiff / msPerEnergy);
+    
+    // Aktuelle Energie + Regenerierte (aber nicht über Max)
+    const totalEnergy = Math.min(maxEnergy, (user.energy || 0) + energyGained);
+    
+    return totalEnergy;
+};

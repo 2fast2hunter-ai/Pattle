@@ -79,36 +79,39 @@ export function useGameLogic() {
     }, [gameLogicState.user?.level, gameLogicState.user?.id]);
 
     useEffect(() => {
-        const { user } = gameLogicState;
+        const { user, setUser } = gameLogicState; // Wir brauchen setUser!
         if (!user) return;
-        
+
         const interval = setInterval(() => {
             const now = Date.now();
             const msPerEnergy = 1000 * 60 * 5; 
             const timeDiff = now - user.lastEnergyUpdate;
-            
-            // Nur berechnen, wenn genug Zeit vergangen ist
-            if (timeDiff >= msPerEnergy) {
-                const maxEn = getMaxEnergy(user.level);
+            const maxEn = getMaxEnergy(user.level);
+
+            // Prüfen, ob wir visuell etwas updaten müssen
+            if (timeDiff >= msPerEnergy && user.energy < maxEn) {
+                const energyGained = Math.floor(timeDiff / msPerEnergy);
                 
-                // NUR schreiben, wenn Energie NICHT voll ist
-                if (user.energy < maxEn) {
-                     const energyToGain = Math.floor(timeDiff / msPerEnergy);
-                     // Nicht mehr Energie geben als Max
-                     const newEnergy = Math.min(maxEn, user.energy + energyToGain);
-                     
-                     // Zeit nur so weit vorspulen, wie Energie regeneriert wurde
-                     // (Verhindert Zeit-Verlust bei Pausen)
-                     const newLastUpdate = user.lastEnergyUpdate + (energyToGain * msPerEnergy);
-                     
-                     updateUser(userId, { energy: newEnergy, lastEnergyUpdate: newLastUpdate });
-                } 
-                // WICHTIG: Der 'else'-Block wurde entfernt! 
-                // Wir schreiben NICHT in die DB, wenn die Energie voll ist.
+                if (energyGained > 0) {
+                    // WICHTIG: Wir ändern nur den LOKALEN State für die UI.
+                    // Wir schreiben NICHT in die Datenbank (spart 99% der Kosten).
+                    const newLocalEnergy = Math.min(maxEn, user.energy + energyGained);
+                    
+                    // Wir "spulen" die lokale Zeit vor, damit der Balken nicht springt
+                    // (Das ist nur für die Anzeige, die echte Berechnung passiert bei Aktionen)
+                    const newLastUpdate = user.lastEnergyUpdate + (energyGained * msPerEnergy);
+                    
+                    setUser(prev => ({
+                        ...prev,
+                        energy: newLocalEnergy,
+                        lastEnergyUpdate: newLastUpdate
+                    }));
+                }
             }
-        }, 10000); 
+        }, 1000); // Jede Sekunde prüfen ist okay, da wir nur lokal rechnen
+
         return () => clearInterval(interval);
-    }, [gameLogicState.user, userId]);
+    }, [gameLogicState.user]); // Abhängigkeit beachten
 
 
     // 4. Rückgabe: Alle States und alle Actions
