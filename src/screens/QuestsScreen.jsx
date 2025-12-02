@@ -1,14 +1,53 @@
 import React, { useState } from 'react';
-import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw } from 'lucide-react';
+import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw, Coins, Gem, Sparkles, Egg, Trophy } from 'lucide-react';
 import { claimQuestReward, claimCompositeReward } from '../utils/db';
+import { RARITIES } from '../data/gameData';
+
+// Hilfskomponente für schöne Belohnungs-Badges
+const RewardBadge = ({ type, amount }) => {
+    let Icon = Sparkles;
+    let color = 'text-slate-400';
+    let bg = 'bg-slate-800';
+    let label = type;
+
+    if (type === 'COINS') {
+        Icon = Coins;
+        color = 'text-yellow-400';
+        bg = 'bg-yellow-500/10 border border-yellow-500/20';
+        label = 'Münzen';
+    } else if (type === 'GEMS') {
+        Icon = Gem;
+        color = 'text-pink-400';
+        bg = 'bg-pink-500/10 border border-pink-500/20';
+        label = 'Edelsteine';
+    } else if (type === 'XP') {
+        Icon = Sparkles;
+        color = 'text-green-400';
+        bg = 'bg-green-500/10 border border-green-500/20';
+        label = 'XP';
+    } else if (type && type.includes('EGG')) {
+        Icon = Egg;
+        const rarityStr = type.split('_')[1] || 'COMMON';
+        const rarity = RARITIES[rarityStr] || RARITIES.COMMON;
+        color = rarity.color;
+        bg = `bg-slate-800 border ${rarity.border}`;
+        label = `${rarity.label} Ei`;
+    }
+
+    return (
+        <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${bg} shadow-sm`}>
+            <Icon className={`w-3.5 h-3.5 ${color}`} />
+            <span className={`text-[10px] font-black ${color} uppercase tracking-wide`}>+{amount} {label}</span>
+        </div>
+    );
+};
 
 export default function QuestsScreen({ user, onBack }) {
     const [claiming, setClaiming] = useState(null); 
-    const [claimingComposite, setClaimingComposite] = useState(null); 
+    const [claimingComposite, setClaimingComposite] = useState(false); 
     const [activeTab, setActiveTab] = useState('daily');
 
-    // --- GUARD CLAUSE ---
-    // Verhindert den Absturz, falls user.quests noch nicht geladen ist
+    // Guard Clause
     if (!user || !user.quests) {
         return (
             <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in">
@@ -18,7 +57,6 @@ export default function QuestsScreen({ user, onBack }) {
         );
     }
 
-    // Kategorien definieren
     const categories = {
         daily: { id: 'daily', label: 'Täglich', icon: RefreshCw, color: 'text-blue-400', data: user.quests.daily },
         weekly: { id: 'weekly', label: 'Wöchentlich', icon: Calendar, color: 'text-purple-400', data: user.quests.weekly },
@@ -27,15 +65,12 @@ export default function QuestsScreen({ user, onBack }) {
 
     const currentCat = categories[activeTab];
     const currentQuestData = currentCat.data;
-    
-    // Sicherstellen, dass Daten da sind
     const isQuestDataReady = currentQuestData && Array.isArray(currentQuestData.quests);
     
     const timeLeft = currentQuestData ? Math.max(0, currentQuestData.expiresAt - Date.now()) : 0;
     const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
     const daysLeft = Math.floor(hoursLeft / 24);
     
-    // Composite Reward (Fortschrittsbalken oben)
     const totalQuests = currentQuestData?.totalQuests || 5; 
     const completedCount = currentQuestData?.completedCount || 0;
     const claimedComposite = currentQuestData?.claimedComposite || false;
@@ -43,23 +78,15 @@ export default function QuestsScreen({ user, onBack }) {
     const isCompositeReady = completedCount >= totalQuests && !claimedComposite;
     const compositeReward = currentQuestData?.reward;
 
-    // --- HANDLERS ---
     const handleClaim = async (questId) => {
         setClaiming(questId);
-        const result = await claimQuestReward(user, activeTab, questId);
-        if (result && result.message) {
-            // Optional: Toast Notification statt Alert
-            // alert("Belohnung: " + result.message); 
-        }
+        await claimQuestReward(user, activeTab, questId);
         setClaiming(null);
     };
 
     const handleClaimComposite = async () => {
         setClaimingComposite(true);
-        const result = await claimCompositeReward(user, activeTab);
-        if (result && result.message) {
-            // alert(result.message); 
-        }
+        await claimCompositeReward(user, activeTab);
         setClaimingComposite(false);
     }
 
@@ -81,17 +108,17 @@ export default function QuestsScreen({ user, onBack }) {
 
             {/* --- TABS --- */}
             <div className="px-4 mb-4">
-                <div className="flex p-1 bg-slate-800 rounded-xl border border-white/5">
+                <div className="flex p-1 bg-slate-900/50 rounded-xl border border-white/10 backdrop-blur-sm">
                     {Object.values(categories).map(cat => (
                         <button 
                             key={cat.id} 
                             onClick={() => setActiveTab(cat.id)} 
                             className={`
-                                flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5
-                                ${activeTab === cat.id ? 'bg-slate-700 text-white shadow-md' : 'text-slate-500 hover:text-slate-300'}
+                                flex-1 py-2.5 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2
+                                ${activeTab === cat.id ? 'bg-slate-800 text-white shadow-md border border-white/10' : 'text-slate-500 hover:text-slate-300'}
                             `}
                         >
-                            <cat.icon className={`w-3 h-3 ${activeTab === cat.id ? cat.color : 'text-slate-600'}`} />
+                            <cat.icon className={`w-3.5 h-3.5 ${activeTab === cat.id ? cat.color : 'text-slate-600'}`} />
                             {cat.label}
                         </button>
                     ))}
@@ -99,58 +126,67 @@ export default function QuestsScreen({ user, onBack }) {
             </div>
 
             {/* --- CONTENT --- */}
-            <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-5">
                 
-                {/* TIMER & INFO */}
-                <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-500 bg-slate-900/50 py-1.5 rounded-lg border border-white/5 mx-8">
+                {/* TIMER */}
+                <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-900/30 py-2 rounded-lg border border-white/5 mx-8">
                     <Clock className="w-3 h-3" />
                     <span>
-                        Neue Aufgaben in: <span className="text-white">{daysLeft > 0 ? `${daysLeft} Tagen` : `${hoursLeft} Stunden`}</span>
+                        Reset in: <span className="text-white">{daysLeft > 0 ? `${daysLeft} Tagen` : `${hoursLeft} Stunden`}</span>
                     </span>
                 </div>
 
                 {/* COMPOSITE REWARD CARD */}
                 {compositeReward && (
-                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-2xl border border-white/10 shadow-lg relative overflow-hidden">
-                        <div className="absolute top-0 right-0 p-6 bg-white/5 rounded-full blur-2xl -mr-4 -mt-4 pointer-events-none"></div>
-                        
-                        <div className="flex justify-between items-center mb-2 relative z-10">
-                            <h3 className="text-sm font-black text-white flex items-center gap-2 uppercase tracking-wide">
-                                {compositeReward.label}
-                            </h3>
-                            <Gift className={`w-5 h-5 ${isCompositeReady ? 'text-yellow-400 animate-bounce' : 'text-slate-600'}`} />
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="relative w-full h-4 bg-slate-950 rounded-full overflow-hidden mb-3 border border-white/5">
-                            <div 
-                                className={`h-full transition-all duration-700 ease-out flex items-center justify-end pr-1 ${isCompositeReady ? 'bg-gradient-to-r from-yellow-500 to-amber-400' : 'bg-gradient-to-r from-indigo-600 to-blue-500'}`} 
-                                style={{width: `${progressPercent}%`}}
-                            >
-                                {progressPercent > 10 && <span className="text-[8px] font-black text-black/50">{Math.floor(progressPercent)}%</span>}
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center relative z-10">
-                            <span className="text-xs text-slate-400 font-bold">{completedCount} / {totalQuests} Erledigt</span>
+                    <div className="relative overflow-hidden rounded-2xl p-0.5 bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/20 group">
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                        <div className="bg-slate-900 rounded-[14px] p-4 relative">
                             
-                            {claimedComposite ? (
-                                <span className="bg-green-500/10 text-green-400 px-3 py-1 rounded-full text-xs font-black border border-green-500/20 flex items-center gap-1">
-                                    <CheckCircle2 className="w-3 h-3" /> Abgeholt
-                                </span>
-                            ) : isCompositeReady ? (
-                                <button
-                                    onClick={() => handleClaimComposite()}
-                                    disabled={claimingComposite}
-                                    className="bg-yellow-500 hover:bg-yellow-400 text-black text-xs font-black px-4 py-1.5 rounded-full active:scale-95 transition-all shadow-lg shadow-yellow-900/20 flex items-center gap-2"
-                                >
-                                    {claimingComposite ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> ABHOLEN</>}
-                                </button>
-                            ) : (
-                                <span className="text-xs text-slate-500 font-mono bg-black/30 px-2 py-1 rounded border border-white/5">
-                                    {compositeReward.rewardAmount} {compositeReward.rewardType.includes('EGG') ? 'Ei' : compositeReward.rewardType}
-                                </span>
-                            )}
+                            <div className="flex justify-between items-center mb-3">
+                                <div>
+                                    <h3 className="text-sm font-black text-white uppercase tracking-wide flex items-center gap-2">
+                                        <Trophy className="w-4 h-4 text-yellow-400" /> {compositeReward.label}
+                                    </h3>
+                                    <p className="text-xs text-slate-400 mt-0.5 font-bold">
+                                        Erledige alle Aufgaben für den Bonus!
+                                    </p>
+                                </div>
+                                {/* Bonus Vorschau */}
+                                <div className="scale-90 origin-right">
+                                    <RewardBadge type={compositeReward.rewardType} amount={compositeReward.rewardAmount} />
+                                </div>
+                            </div>
+
+                            {/* Progress */}
+                            <div className="relative w-full h-3 bg-slate-950 rounded-full overflow-hidden mb-3 border border-white/10 shadow-inner">
+                                <div 
+                                    className={`h-full transition-all duration-700 ease-out ${isCompositeReady ? 'bg-gradient-to-r from-yellow-400 to-orange-500 animate-pulse' : 'bg-gradient-to-r from-indigo-500 to-purple-500'}`} 
+                                    style={{width: `${progressPercent}%`}}
+                                ></div>
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{completedCount} / {totalQuests} FERTIG</span>
+                                
+                                {claimedComposite ? (
+                                    <span className="flex items-center gap-1 text-green-400 text-xs font-black uppercase bg-green-400/10 px-3 py-1.5 rounded-lg border border-green-400/20">
+                                        <CheckCircle2 className="w-3 h-3" /> Eingesammelt
+                                    </span>
+                                ) : (
+                                    <button
+                                        onClick={() => handleClaimComposite()}
+                                        disabled={!isCompositeReady || claimingComposite}
+                                        className={`
+                                            px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-wider flex items-center gap-2 transition-all
+                                            ${isCompositeReady 
+                                                ? 'bg-yellow-500 hover:bg-yellow-400 text-black shadow-lg shadow-yellow-500/20 active:scale-95' 
+                                                : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-white/5'}
+                                        `}
+                                    >
+                                        {claimingComposite ? <Loader2 className="w-3 h-3 animate-spin" /> : (isCompositeReady ? <><Gift className="w-3 h-3" /> ABHOLEN</> : 'LOCKED')}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -158,55 +194,54 @@ export default function QuestsScreen({ user, onBack }) {
                 {/* QUEST LISTE */}
                 <div className="space-y-3">
                     {!isQuestDataReady ? (
-                        <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-slate-600" /></div>
+                        <div className="flex flex-col items-center justify-center py-10 text-slate-500">
+                            <Loader2 className="w-8 h-8 animate-spin mb-2 opacity-50" />
+                            <span className="text-xs font-bold">Daten werden synchronisiert...</span>
+                        </div>
                     ) : (
                         currentQuestData.quests.map(quest => {
                             const isComplete = quest.progress >= quest.target;
                             const percent = Math.min(100, (quest.progress / quest.target) * 100);
 
                             return (
-                                <div key={quest.id} className={`bg-slate-800/50 backdrop-blur-sm p-3 rounded-2xl border ${isComplete ? 'border-green-500/30' : 'border-white/5'} relative overflow-hidden group transition-all hover:bg-slate-800`}>
+                                <div key={quest.id} className={`bg-slate-800 p-3 rounded-xl border ${isComplete ? 'border-green-500/30 bg-green-900/10' : 'border-white/5'} relative transition-all`}>
                                     
-                                    {/* Header */}
-                                    <div className="flex justify-between items-start mb-2 relative z-10">
-                                        <div className="flex-1">
-                                            <h3 className={`font-bold text-xs mb-1 ${quest.claimed ? 'text-slate-500 line-through' : 'text-white'}`}>{quest.label}</h3>
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-16 h-1.5 bg-slate-900 rounded-full overflow-hidden">
-                                                    <div className={`h-full ${isComplete ? 'bg-green-500' : 'bg-indigo-500'}`} style={{width: `${percent}%`}}></div>
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div className="flex-1 pr-2">
+                                            <h3 className={`text-sm font-bold mb-1 ${quest.claimed ? 'text-slate-500 line-through' : 'text-white'}`}>{quest.label}</h3>
+                                            {/* Mini Progress Bar */}
+                                            <div className="flex items-center gap-2">
+                                                <div className="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden">
+                                                    <div className={`h-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`} style={{width: `${percent}%`}}></div>
                                                 </div>
-                                                <span className="text-[10px] text-slate-400 font-mono">{quest.progress}/{quest.target}</span>
+                                                <span className="text-[10px] font-mono text-slate-400">{quest.progress}/{quest.target}</span>
                                             </div>
                                         </div>
 
-                                        {/* Belohnung Badge */}
-                                        <div className={`px-2 py-1 rounded-lg border text-[10px] font-black uppercase flex items-center gap-1 ${quest.claimed ? 'bg-slate-900 text-slate-600 border-transparent' : 'bg-black/30 text-yellow-400 border-yellow-500/20'}`}>
-                                            {quest.rewardType === 'COINS' && '🪙'}
-                                            {quest.rewardType === 'GEMS' && '💎'}
-                                            {quest.rewardType === 'XP' && '✨'}
-                                            {quest.rewardType.includes('EGG') && '🥚'}
-                                            {quest.rewardAmount}
+                                        {/* Belohnung (Rechts) */}
+                                        <div className="shrink-0">
+                                            <RewardBadge type={quest.rewardType} amount={quest.rewardAmount} />
                                         </div>
                                     </div>
 
-                                    {/* Action Button */}
-                                    <div className="mt-2">
+                                    {/* Footer Action */}
+                                    <div className="flex justify-end">
                                         {quest.claimed ? (
-                                            <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-900/50 py-1.5 rounded-lg">
-                                                <CheckCircle2 className="w-3 h-3" /> ERLEDIGT
-                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1 uppercase tracking-wider">
+                                                <CheckCircle2 className="w-3 h-3" /> Fertig
+                                            </span>
                                         ) : isComplete ? (
                                             <button 
                                                 onClick={() => handleClaim(quest.id)} 
                                                 disabled={claiming === quest.id}
-                                                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-2 animate-pulse shadow-lg shadow-green-900/20 active:scale-95 transition-all"
+                                                className="bg-green-600 hover:bg-green-500 text-white text-[10px] font-black uppercase py-1.5 px-4 rounded-lg shadow-md shadow-green-900/20 active:scale-95 transition-all flex items-center gap-1.5 animate-pulse"
                                             >
-                                                {claiming === quest.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <>ABHOLEN</>}
+                                                {claiming === quest.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> BELOHNUNG</>}
                                             </button>
                                         ) : (
-                                            <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-800/50 py-1.5 rounded-lg border border-white/5">
-                                                <Play className="w-3 h-3" /> OFFEN
-                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 uppercase tracking-wider bg-slate-900/50 px-2 py-1 rounded">
+                                                <Play className="w-2.5 h-2.5" /> In Arbeit
+                                            </span>
                                         )}
                                     </div>
 
