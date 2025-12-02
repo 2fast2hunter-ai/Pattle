@@ -206,11 +206,15 @@ export default function App() {
               onBack={() => setCurrentView('pet-hub')} 
               onSelectPet={(id) => { 
                 const p = myPets.find(p => p.id === id); 
-                if (p.isEgg) return; 
+                // WICHTIG: Nur geschlüpfte Pets öffnen Details
+                if (p.isEgg) {
+                    // Optional: Kurze Info, dass es ein Ei ist
+                    return; 
+                }
                 setSelectedPetDetail(p); 
                 setCurrentView('pet-detail'); 
               }} 
-              filterEggs={true} 
+              
             />
           )}
 

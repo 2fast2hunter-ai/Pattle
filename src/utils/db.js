@@ -2,7 +2,7 @@ import { db } from '../firebase';
 import { 
   doc, getDoc, setDoc, updateDoc, collection, addDoc, 
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
-  runTransaction
+  runTransaction, increment // WICHTIG: increment hinzugefügt
 } from 'firebase/firestore';
 import { generatePet, generateQuests, getMaxEnergy } from './gameMechanics'; 
 
@@ -16,7 +16,7 @@ export const initializeUser = async (firebaseUser, username) => {
     return { id: userSnap.id, ...userSnap.data() }; 
   } else {
     const newUserData = {
-      id: firebaseUser.uid, // WICHTIG: ID auch im Dokument speichern
+      id: firebaseUser.uid,
       username: username,
       level: 1,
       xp: 0,
@@ -44,7 +44,6 @@ export const initializeUser = async (firebaseUser, username) => {
   }
 };
 
-// FIX: ID wird jetzt garantiert mitgegeben
 export const listenToUser = (userId, callback) => {
   return onSnapshot(doc(db, "users", userId), (doc) => {
     if (doc.exists()) {
@@ -99,6 +98,74 @@ export const deleteMarketListing = async (listingId) => {
   await deleteDoc(doc(db, "market", listingId));
 };
 
+// --- NEU: SICHERE MARKTPLATZ TRANSAKTION ---
+export const buyMarketItem = async (user, listingId) => {
+    const listingRef = doc(db, "market", listingId);
+    const buyerRef = doc(db, "users", user.id);
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            // 1. Lese Listing
+            const listingSnap = await transaction.get(listingRef);
+            if (!listingSnap.exists()) throw new Error("Angebot nicht mehr verfügbar.");
+
+            const listing = listingSnap.data();
+            const price = listing.price;
+            const sellerId = listing.sellerId;
+            
+            if (sellerId === user.id) throw new Error("Du kannst dein eigenes Angebot nicht kaufen.");
+
+            // 2. Lese Käufer
+            const buyerSnap = await transaction.get(buyerRef);
+            if (!buyerSnap.exists()) throw new Error("Käufer Profilfehler.");
+            
+            const currentCoins = buyerSnap.data().coins || 0;
+            if (currentCoins < price) throw new Error("Nicht genug Münzen!");
+
+            // 3. Finanz-Updates
+            const fee = Math.floor(price * 0.05);
+            const payout = price - fee;
+            const sellerRef = doc(db, "users", sellerId);
+
+            transaction.update(buyerRef, {
+                coins: increment(-price),
+                "stats.marketSpent": increment(price)
+            });
+
+            transaction.update(sellerRef, {
+                coins: increment(payout),
+                "stats.marketEarned": increment(payout)
+            });
+
+            // 4. PETS ÜBERTRAGEN (Einzeln oder Bundle)
+            if (listing.pets && Array.isArray(listing.pets)) {
+                // BUNDLE: Alle Pets im Array wiederherstellen
+                listing.pets.forEach((p, index) => {
+                    // Neue ID generieren, um Kollisionen zu vermeiden
+                    const newId = `${Date.now()}_${index}_${Math.floor(Math.random()*1000)}`;
+                    const newPet = { ...p, id: newId, ownerId: user.id };
+                    transaction.set(doc(db, "pets", newId), newPet);
+                });
+            } else {
+                // EINZELN (Legacy Fallback)
+                const newId = `${Date.now()}_${Math.floor(Math.random()*1000)}`;
+                const newPet = { ...listing.pet, id: newId, ownerId: user.id };
+                transaction.set(doc(db, "pets", newId), newPet);
+            }
+
+            // 5. Listing löschen
+            transaction.delete(listingRef);
+        });
+
+        return { success: true, message: `Kauf erfolgreich!` };
+
+    } catch (e) {
+        console.error("Marktplatz Fehler:", e);
+        return { success: false, message: e.message };
+    }
+};
+
+
 // --- LEADERBOARD & SOCIAL ---
 
 export const getLeaderboard = async () => {
@@ -134,7 +201,6 @@ export const checkAndResetQuests = async (user) => {
 
     const checkCategory = (catKey, catName) => {
         const current = user.quests?.[catKey];
-        // Reset, wenn keine Quests da sind ODER Zeit abgelaufen ist
         if (!current || !current.expiresAt || now > current.expiresAt) { 
             console.log(`Resette Quests für: ${catName}`);
             const newData = generateQuests(catName);
@@ -153,9 +219,7 @@ export const checkAndResetQuests = async (user) => {
 };
 
 export const trackQuestProgress = async (user, actionType, amount = 1) => {
-    // FIX: Robuster Check auf User ID
     if (!user || !user.id || amount === 0) {
-        console.warn("Quest Tracking abgebrochen: User oder ID fehlt", user);
         return;
     }
 
@@ -179,12 +243,10 @@ export const trackQuestProgress = async (user, actionType, amount = 1) => {
                 let categoryChanged = false;
                 
                 const updatedList = categoryData.quests.map(quest => {
-                    // Prüfen: Richtiger Typ? Nicht abgeholt? Noch nicht fertig?
                     if (quest.type === actionType && !quest.claimed && quest.progress < quest.target) {
                         const newProgress = Math.min(quest.target, quest.progress + amount);
                         if (newProgress !== quest.progress) {
                             categoryChanged = true;
-                            console.log(`Quest Fortschritt (${catKey}): ${quest.label} -> ${newProgress}/${quest.target}`);
                             return { ...quest, progress: newProgress };
                         }
                     }
@@ -222,11 +284,9 @@ export const claimQuestReward = async (user, catKey, questId) => {
 
       if (!quest || quest.claimed || quest.progress < quest.target) return;
 
-      // 1. Quest als "claimed" markieren
       const updatedList = [...categoryData.quests];
       updatedList[questIndex] = { ...quest, claimed: true };
       
-      // 2. Zähler erhöhen
       const newCompletedCount = (categoryData.completedCount || 0) + 1;
 
       let updates = {
@@ -238,7 +298,6 @@ export const claimQuestReward = async (user, catKey, questId) => {
       let newCoins = userData.coins;
       let newGems = userData.gems;
 
-      // 3. Belohnung
       if (quest.rewardType === 'COINS') {
         newCoins += quest.rewardAmount;
         rewardMessage = `+${quest.rewardAmount} Münzen`;
@@ -257,7 +316,6 @@ export const claimQuestReward = async (user, catKey, questId) => {
         rewardMessage = `Ei (${rarity}) erhalten!`;
       }
       
-      // 4. Level Up Logik
       let newLevel = userData.level;
       let newXp = (userData.xp || 0) + xpGain;
       let newXpToNext = userData.xpToNextLevel;
