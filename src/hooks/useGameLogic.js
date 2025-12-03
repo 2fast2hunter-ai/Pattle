@@ -3,7 +3,6 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
-import { getMaxEnergy } from '../utils/gameMechanics';
 import { updateUser, checkAndResetQuests } from '../utils/db';
 
 
@@ -77,43 +76,6 @@ export function useGameLogic() {
 
         setPreviousLevel({ level: user.level, id: user.id });
     }, [gameLogicState.user?.level, gameLogicState.user?.id]);
-
-    useEffect(() => {
-        const { user, setUser } = gameLogicState; // Wir brauchen setUser!
-        if (!user) return;
-
-        const interval = setInterval(() => {
-            const now = Date.now();
-            const msPerEnergy = 1000 * 60 * 5; 
-            const timeDiff = now - user.lastEnergyUpdate;
-            const maxEn = getMaxEnergy(user.level);
-
-            // Prüfen, ob wir visuell etwas updaten müssen
-            if (timeDiff >= msPerEnergy && user.energy < maxEn) {
-                const energyGained = Math.floor(timeDiff / msPerEnergy);
-                
-                if (energyGained > 0) {
-                    // WICHTIG: Wir ändern nur den LOKALEN State für die UI.
-                    // Wir schreiben NICHT in die Datenbank (spart 99% der Kosten).
-                    const newLocalEnergy = Math.min(maxEn, user.energy + energyGained);
-                    
-                    // Wir "spulen" die lokale Zeit vor, damit der Balken nicht springt
-                    // (Das ist nur für die Anzeige, die echte Berechnung passiert bei Aktionen)
-                    const newLastUpdate = user.lastEnergyUpdate + (energyGained * msPerEnergy);
-                    
-                    setUser(prev => ({
-                        ...prev,
-                        energy: newLocalEnergy,
-                        lastEnergyUpdate: newLastUpdate
-                    }));
-                }
-            }
-        }, 1000); // Jede Sekunde prüfen ist okay, da wir nur lokal rechnen
-
-        return () => clearInterval(interval);
-    }, [gameLogicState.user]); // Abhängigkeit beachten
-
-
     // 4. Rückgabe: Alle States und alle Actions
     return { ...gameLogicState, ...actions };
 }

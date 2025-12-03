@@ -1,26 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Zap, Coins, Gem, Ticket } from 'lucide-react';
-import { getMaxEnergy, ENERGY_REGEN_TIME_MS } from '../utils/gameMechanics';
+import React from 'react';
+import { Coins, Gem, Ticket } from 'lucide-react';
 
 export function HeaderHUD({ user }) {
-  // --- LOGIK ---
   const xpPercent = Math.min(100, (user.xp / user.xpToNextLevel) * 100);
-  const maxEnergy = getMaxEnergy(user.level);
-  
-  const msPerEnergy = ENERGY_REGEN_TIME_MS; 
-  const timeSinceUpdate = Date.now() - user.lastEnergyUpdate;
-  const nextEnergyIn = Math.max(0, msPerEnergy - timeSinceUpdate);
-  const minutesLeft = Math.ceil(nextEnergyIn / 1000 / 60);
-
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const interval = setInterval(() => setTick(t => t + 1), 10000); 
-    return () => clearInterval(interval);
-  }, []);
-  
   const redeemedTickets = user?.redeemedTickets || 0;
 
-  // --- RENDER ---
   return (
     <header className="mx-4 mt-6 mb-2 z-30 relative animate-in slide-in-from-top duration-500">
         
@@ -47,7 +31,6 @@ export function HeaderHUD({ user }) {
                 {/* Name & Große XP Bar */}
                 <div className="flex-1 flex flex-col justify-center gap-1">
                     <div className="flex justify-between items-end">
-                        {/* HIER IST DIE ÄNDERUNG: NAME IM ARENA-STYLE */}
                         <span className="font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-white text-2xl leading-none drop-shadow-sm">
                             {user.username}
                         </span>
@@ -67,20 +50,9 @@ export function HeaderHUD({ user }) {
                 </div>
             </div>
 
-            {/* ZEILE 2: Ressourcen (Groß & Grid) */}
-            <div className="grid grid-cols-4 gap-2 relative z-10">
+            {/* ZEILE 2: Ressourcen (OHNE ENERGIE) */}
+            <div className="grid grid-cols-3 gap-3 relative z-10">
                 
-                {/* Energie */}
-                <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5 relative">
-                    <Zap className={`w-5 h-5 ${user.energy > 0 ? 'text-yellow-400 fill-yellow-400' : 'text-slate-600'} mb-1`} />
-                    <span className="font-black text-white text-sm">{user.energy}/{maxEnergy}</span>
-                    {user.energy < maxEnergy && (
-                        <div className="absolute -top-1 -right-1 bg-slate-950 text-[8px] font-mono text-slate-400 px-1.5 rounded border border-white/10">
-                            {minutesLeft}m
-                        </div>
-                    )}
-                </div>
-
                 {/* Tickets */}
                 <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5">
                     <Ticket className="w-5 h-5 text-pink-400 fill-pink-400/20 mb-1" />
@@ -106,4 +78,5 @@ export function HeaderHUD({ user }) {
   );
 }
 
+// BottomNav existiert nicht mehr, geben null zurück falls irgendwo importiert
 export function BottomNav() { return null; }

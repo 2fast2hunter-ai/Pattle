@@ -2,12 +2,11 @@ import { db } from '../firebase';
 import { 
   doc, getDoc, setDoc, updateDoc, collection, addDoc, 
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
-  runTransaction, increment // WICHTIG: increment hinzugefügt
+  runTransaction, increment 
 } from 'firebase/firestore';
-import { generatePet, generateQuests, getMaxEnergy } from './gameMechanics'; 
+import { generatePet, generateQuests } from './gameMechanics'; // WICHTIG: getMaxEnergy ENTFERNT
 
 // --- USER MANAGEMENT ---
-
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
   const userSnap = await getDoc(userRef);
@@ -25,8 +24,8 @@ export const initializeUser = async (firebaseUser, username) => {
       gems: 10,
       avatar: '🛡️',
       rating: 1000,
-      energy: 10, 
-      lastEnergyUpdate: Date.now(),
+      // energy: 10, <-- ENTFERNT
+      // lastEnergyUpdate: Date.now(), <-- ENTFERNT
       team: [], 
       inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], 
       friends: [],
@@ -38,7 +37,6 @@ export const initializeUser = async (firebaseUser, username) => {
       },
       redeemedTickets: 0, 
     };
-
     await setDoc(userRef, newUserData);
     return newUserData;
   }
@@ -46,9 +44,7 @@ export const initializeUser = async (firebaseUser, username) => {
 
 export const listenToUser = (userId, callback) => {
   return onSnapshot(doc(db, "users", userId), (doc) => {
-    if (doc.exists()) {
-        callback({ id: doc.id, ...doc.data() });
-    }
+    if (doc.exists()) callback({ id: doc.id, ...doc.data() });
   });
 };
 
@@ -70,7 +66,6 @@ export const listenToMarket = (callback) => {
 };
 
 // --- GENERAL ACTIONS ---
-
 export const updateUser = async (userId, data) => {
   if (!userId) return;
   const userRef = doc(db, "users", userId);
@@ -98,14 +93,13 @@ export const deleteMarketListing = async (listingId) => {
   await deleteDoc(doc(db, "market", listingId));
 };
 
-// --- NEU: SICHERE MARKTPLATZ TRANSAKTION ---
+// --- MARKTPLATZ TRANSAKTION ---
 export const buyMarketItem = async (user, listingId) => {
     const listingRef = doc(db, "market", listingId);
     const buyerRef = doc(db, "users", user.id);
 
     try {
         await runTransaction(db, async (transaction) => {
-            // 1. Lese Listing
             const listingSnap = await transaction.get(listingRef);
             if (!listingSnap.exists()) throw new Error("Angebot nicht mehr verfügbar.");
 
@@ -115,14 +109,12 @@ export const buyMarketItem = async (user, listingId) => {
             
             if (sellerId === user.id) throw new Error("Du kannst dein eigenes Angebot nicht kaufen.");
 
-            // 2. Lese Käufer
             const buyerSnap = await transaction.get(buyerRef);
             if (!buyerSnap.exists()) throw new Error("Käufer Profilfehler.");
             
             const currentCoins = buyerSnap.data().coins || 0;
             if (currentCoins < price) throw new Error("Nicht genug Münzen!");
 
-            // 3. Finanz-Updates
             const fee = Math.floor(price * 0.05);
             const payout = price - fee;
             const sellerRef = doc(db, "users", sellerId);
@@ -137,23 +129,19 @@ export const buyMarketItem = async (user, listingId) => {
                 "stats.marketEarned": increment(payout)
             });
 
-            // 4. PETS ÜBERTRAGEN (Einzeln oder Bundle)
             if (listing.pets && Array.isArray(listing.pets)) {
-                // BUNDLE: Alle Pets im Array wiederherstellen
                 listing.pets.forEach((p, index) => {
-                    // Neue ID generieren, um Kollisionen zu vermeiden
                     const newId = `${Date.now()}_${index}_${Math.floor(Math.random()*1000)}`;
                     const newPet = { ...p, id: newId, ownerId: user.id };
-                    transaction.set(doc(db, "pets", newId), newPet);
+                    const newPetRef = doc(db, "pets", newId);
+                    transaction.set(newPetRef, newPet);
                 });
             } else {
-                // EINZELN (Legacy Fallback)
                 const newId = `${Date.now()}_${Math.floor(Math.random()*1000)}`;
                 const newPet = { ...listing.pet, id: newId, ownerId: user.id };
                 transaction.set(doc(db, "pets", newId), newPet);
             }
 
-            // 5. Listing löschen
             transaction.delete(listingRef);
         });
 
@@ -165,15 +153,9 @@ export const buyMarketItem = async (user, listingId) => {
     }
 };
 
-
-// --- LEADERBOARD & SOCIAL ---
-
+// --- RESTLICHE FUNKTIONEN ---
 export const getLeaderboard = async () => {
-  const q = query(
-    collection(db, "users"), 
-    orderBy("rating", "desc"), 
-    limit(101) 
-  );
+  const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(101));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 };
@@ -184,67 +166,45 @@ export const findUserPublic = async (targetId) => {
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() };
         return null;
-    } catch (e) {
-        console.error("User Search Error:", e);
-        return null;
-    }
+    } catch (e) { return null; }
 }
-
-// --- QUEST SYSTEM ---
 
 export const checkAndResetQuests = async (user) => {
     if (!user || !user.id) return;
-    
     const now = Date.now();
     let updates = {};
     let hasUpdates = false;
-
     const checkCategory = (catKey, catName) => {
         const current = user.quests?.[catKey];
         if (!current || !current.expiresAt || now > current.expiresAt) { 
-            console.log(`Resette Quests für: ${catName}`);
             const newData = generateQuests(catName);
             updates[`quests.${catKey}`] = newData;
             hasUpdates = true;
         }
     };
-
     checkCategory('daily', 'DAILY');
     checkCategory('weekly', 'WEEKLY');
     checkCategory('monthly', 'MONTHLY');
-
-    if (hasUpdates) {
-        await updateDoc(doc(db, "users", user.id), updates);
-    }
+    if (hasUpdates) await updateDoc(doc(db, "users", user.id), updates);
 };
 
 export const trackQuestProgress = async (user, actionType, amount = 1, subTypes = []) => {
     if (!user || !user.id || amount === 0) return;
-
     const userRef = doc(db, "users", user.id);
-
     try {
         await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists()) return;
-
             const userData = userDoc.data();
             if (!userData.quests) return;
-
             let updates = {};
             let hasUpdates = false;
-
-            // Alle Quest-Kategorien durchgehen
             ['daily', 'weekly', 'monthly'].forEach(catKey => {
                 const categoryData = userData.quests[catKey];
                 if (!categoryData || !categoryData.quests) return;
-
                 let categoryChanged = false;
-                
                 const updatedList = categoryData.quests.map(quest => {
-                    // LOGIK: Ist die Quest vom Haupt-Typ ODER einem der Sub-Typen?
                     const isMatch = (quest.type === actionType) || (subTypes && subTypes.includes(quest.type));
-                    
                     if (isMatch && !quest.claimed && quest.progress < quest.target) {
                         const newProgress = Math.min(quest.target, quest.progress + amount);
                         if (newProgress !== quest.progress) {
@@ -254,174 +214,126 @@ export const trackQuestProgress = async (user, actionType, amount = 1, subTypes 
                     }
                     return quest;
                 });
-
-                if (categoryChanged) {
-                    updates[`quests.${catKey}.quests`] = updatedList;
-                    hasUpdates = true;
-                }
+                if (categoryChanged) { updates[`quests.${catKey}.quests`] = updatedList; hasUpdates = true; }
             });
-
-            if (hasUpdates) {
-                transaction.update(userRef, updates);
-            }
+            if (hasUpdates) { transaction.update(userRef, updates); }
         });
-    } catch (e) {
-        console.error("Fehler beim Quest-Tracking:", e);
-    }
+    } catch (e) { console.error("Fehler beim Quest-Tracking:", e); }
 };
 
 export const claimQuestReward = async (user, catKey, questId) => {
   const userRef = doc(db, "users", user.id);
   let rewardMessage = null;
-
   try {
     await runTransaction(db, async (transaction) => {
       const userDoc = await transaction.get(userRef);
       if (!userDoc.exists()) throw new Error("User document does not exist.");
-
       const userData = userDoc.data();
       const categoryData = userData.quests[catKey];
       const questIndex = categoryData.quests.findIndex(q => q.id === questId);
       const quest = categoryData.quests[questIndex];
-
       if (!quest || quest.claimed || quest.progress < quest.target) return;
-
       const updatedList = [...categoryData.quests];
       updatedList[questIndex] = { ...quest, claimed: true };
-      
       const newCompletedCount = (categoryData.completedCount || 0) + 1;
-
-      let updates = {
-        [`quests.${catKey}.quests`]: updatedList,
-        [`quests.${catKey}.completedCount`]: newCompletedCount 
-      };
-      
-      let xpGain = 0;
-      let newCoins = userData.coins;
-      let newGems = userData.gems;
-
-      if (quest.rewardType === 'COINS') {
-        newCoins += quest.rewardAmount;
-        rewardMessage = `+${quest.rewardAmount} Münzen`;
-      } else if (quest.rewardType === 'GEMS') {
-        newGems += quest.rewardAmount;
-        rewardMessage = `+${quest.rewardAmount} Edelsteine`;
-      } else if (quest.rewardType === 'XP') {
-        xpGain = quest.rewardAmount;
-        rewardMessage = `+${quest.rewardAmount} XP`;
-      } else if (quest.rewardType.startsWith('EGG')) {
+      let updates = { [`quests.${catKey}.quests`]: updatedList, [`quests.${catKey}.completedCount`]: newCompletedCount };
+      let xpGain = 0; let newCoins = userData.coins; let newGems = userData.gems;
+      if (quest.rewardType === 'COINS') { newCoins += quest.rewardAmount; rewardMessage = `+${quest.rewardAmount} Münzen`; } 
+      else if (quest.rewardType === 'GEMS') { newGems += quest.rewardAmount; rewardMessage = `+${quest.rewardAmount} Edelsteine`; } 
+      else if (quest.rewardType === 'XP') { xpGain = quest.rewardAmount; rewardMessage = `+${quest.rewardAmount} XP`; } 
+      else if (quest.rewardType.startsWith('EGG')) {
         const rarity = quest.rewardType.split('_')[1];
         const newEgg = generatePet(1, null, rarity, null, 'QUEST');
-        newEgg.isEgg = true; 
-        newEgg.hatchAt = 0;
+        newEgg.isEgg = true; newEgg.hatchAt = 0;
         transaction.set(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: userData.id });
         rewardMessage = `Ei (${rarity}) erhalten!`;
       }
+      let newLevel = userData.level; let newXp = (userData.xp || 0) + xpGain; let newXpToNext = userData.xpToNextLevel;
       
-      let newLevel = userData.level;
-      let newXp = (userData.xp || 0) + xpGain;
-      let newXpToNext = userData.xpToNextLevel;
-      let newEnergy = userData.energy;
-      
-      while (newXp >= newXpToNext) {
-        newLevel++;
-        newXp -= newXpToNext;
-        newXpToNext = Math.floor(newXpToNext * 1.5);
-        newCoins += 1000;
-        newGems += 5;
-        newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
+      // UPDATE: Energie-Logik hier entfernt!
+      while (newXp >= newXpToNext) { 
+          newLevel++; 
+          newXp -= newXpToNext; 
+          newXpToNext = Math.floor(newXpToNext * 1.5); 
+          newCoins += 1000; 
+          newGems += 5; 
       }
-
-      updates['level'] = newLevel;
-      updates['xp'] = newXp;
-      updates['xpToNextLevel'] = newXpToNext;
-      updates['coins'] = newCoins;
-      updates['gems'] = newGems;
-      updates['energy'] = newEnergy;
       
+      updates['level'] = newLevel; updates['xp'] = newXp; updates['xpToNextLevel'] = newXpToNext; updates['coins'] = newCoins; updates['gems'] = newGems;
       transaction.update(userRef, updates);
     });
-    
     return { message: rewardMessage }; 
-    
-  } catch (e) {
-    console.error("Fehler beim Abholen der Quest-Belohnung:", e);
-    return { message: null };
-  }
+  } catch (e) { console.error("Fehler beim Abholen der Quest-Belohnung:", e); return { message: null }; }
 };
 
 export const claimCompositeReward = async (user, catKey) => {
   const userRef = doc(db, "users", user.id);
   let rewardMessage = null;
-
   try {
     await runTransaction(db, async (transaction) => {
       const userDoc = await transaction.get(userRef);
       if (!userDoc.exists()) throw new Error("User document does not exist.");
-
       const userData = userDoc.data();
       const categoryData = userData.quests[catKey];
-
       if (!categoryData || categoryData.completedCount < categoryData.totalQuests || categoryData.claimedComposite) return;
-
       const reward = categoryData.reward;
-
-      let updates = {
-        [`quests.${catKey}.claimedComposite`]: true 
-      };
-      
-      let xpGain = 0;
-      let newCoins = userData.coins;
-      let newGems = userData.gems;
-
+      let updates = { [`quests.${catKey}.claimedComposite`]: true };
+      let xpGain = 0; let newCoins = userData.coins; let newGems = userData.gems;
       rewardMessage = `Bonus: ${reward.label}. `;
-
-      if (reward.rewardType === 'COINS') {
-        newCoins += reward.rewardAmount;
-        rewardMessage += `+${reward.rewardAmount} Münzen`;
-      } else if (reward.rewardType === 'GEMS') {
-        newGems += reward.rewardAmount;
-        rewardMessage += `+${reward.rewardAmount} Edelsteine`;
-      } else if (reward.rewardType.startsWith('EGG')) {
+      if (reward.rewardType === 'COINS') { newCoins += reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} Münzen`; } 
+      else if (reward.rewardType === 'GEMS') { newGems += reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} Edelsteine`; } 
+      else if (reward.rewardType.startsWith('EGG')) {
         const rarity = reward.rewardType.split('_')[1];
         const newEgg = generatePet(1, null, rarity, null, 'QUEST_COMPOSITE');
-        newEgg.isEgg = true; 
-        newEgg.hatchAt = 0;
+        newEgg.isEgg = true; newEgg.hatchAt = 0;
         transaction.set(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: userData.id });
         rewardMessage += `Ei (${rarity}) erhalten!`;
-      } else if (reward.rewardType === 'XP') {
-        xpGain = reward.rewardAmount;
-        rewardMessage += `+${reward.rewardAmount} XP`;
+      } else if (reward.rewardType === 'XP') { xpGain = reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} XP`; }
+      let newLevel = userData.level; let newXp = (userData.xp || 0) + xpGain; let newXpToNext = userData.xpToNextLevel;
+
+      // UPDATE: Energie-Logik hier entfernt!
+      while (newXp >= newXpToNext) { 
+          newLevel++; 
+          newXp -= newXpToNext; 
+          newXpToNext = Math.floor(newXpToNext * 1.5); 
+          newCoins += 1000; 
+          newGems += 5; 
       }
-
-      let newLevel = userData.level;
-      let newXp = (userData.xp || 0) + xpGain;
-      let newXpToNext = userData.xpToNextLevel;
-      let newEnergy = userData.energy;
-
-      while (newXp >= newXpToNext) {
-        newLevel++;
-        newXp -= newXpToNext;
-        newXpToNext = Math.floor(newXpToNext * 1.5);
-        newCoins += 1000;
-        newGems += 5;
-        newEnergy = Math.min(getMaxEnergy(newLevel), newEnergy + 2);
-      }
-
-      updates['level'] = newLevel;
-      updates['xp'] = newXp;
-      updates['xpToNextLevel'] = newXpToNext;
-      updates['coins'] = newCoins;
-      updates['gems'] = newGems;
-      updates['energy'] = newEnergy;
       
+      updates['level'] = newLevel; updates['xp'] = newXp; updates['xpToNextLevel'] = newXpToNext; updates['coins'] = newCoins; updates['gems'] = newGems;
       transaction.update(userRef, updates);
     });
-    
     return { message: rewardMessage };
-    
-  } catch (e) {
-    console.error("Fehler beim Abholen der Gesamt-Belohnung:", e);
-    return { message: null };
-  }
+  } catch (e) { console.error("Fehler beim Abholen der Gesamt-Belohnung:", e); return { message: null }; }
+};
+
+export const adminResetQuests = async (userId) => {
+    if (!userId) return;
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, {
+            quests: {
+                daily: generateQuests('DAILY'),
+                weekly: generateQuests('WEEKLY'),
+                monthly: generateQuests('MONTHLY')
+            }
+        });
+        console.log("Quests wurden zurückgesetzt!");
+        return true;
+    } catch (e) {
+        console.error("Fehler beim Quest-Reset:", e);
+        return false;
+    }
+};
+
+// Admin-Funktion zum Leeren des Marktplatzes (optional, kann bleiben)
+export const clearMarketplace = async () => {
+    try {
+        const q = query(collection(db, "market"));
+        const snapshot = await getDocs(q);
+        const deletePromises = [];
+        snapshot.forEach((doc) => { deletePromises.push(deleteDoc(doc.ref)); });
+        await Promise.all(deletePromises);
+        return true;
+    } catch (e) { return false; }
 };

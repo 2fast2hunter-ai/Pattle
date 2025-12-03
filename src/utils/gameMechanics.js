@@ -3,7 +3,7 @@ import {
   QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS, FUSION_RECIPES
 } from '../data/gameData'; 
 
-export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5; 
+
 
 // Reset-Zeit-Berechnung
 const calculateNextResetTime = (category) => {
@@ -369,15 +369,4 @@ export const getUnlockedTeamSlots = (level) => {
 export const getUnlockedHatcherySlots = (level) => {
   if (level < 15) return 1;
   return Math.min(10, 2 + Math.floor((level - 15) / 10));
-};
-export const getMaxEnergy = (level) => { return 10 + ((level - 1) * 2); };
-export const calculateCurrentEnergy = (user) => {
-    if (!user) return 0;
-    const maxEnergy = getMaxEnergy(user.level);
-    const now = Date.now();
-    const msPerEnergy = 1000 * 60 * 5; 
-    const timeDiff = now - (user.lastEnergyUpdate || now);
-    const energyGained = Math.floor(timeDiff / msPerEnergy);
-    const totalEnergy = Math.min(maxEnergy, (user.energy || 0) + energyGained);
-    return totalEnergy;
 };

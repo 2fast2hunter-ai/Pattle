@@ -95,16 +95,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
 
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
 
-                {/* GRATIS ENERGIE */}
-                <div className="relative overflow-hidden rounded-3xl p-0.5 bg-gradient-to-r from-green-500 to-emerald-600 shadow-lg shadow-green-900/20 group">
-                    <div className="bg-slate-900 rounded-[22px] p-5 relative">
-                        <div className="flex justify-between items-center mb-4">
-                            <div><h3 className="text-xl font-black text-white flex items-center gap-2"><Zap className="w-5 h-5 text-yellow-400 fill-yellow-400 animate-pulse"/> GRATIS ENERGIE</h3><p className="text-xs text-emerald-200 font-bold mt-1">Fülle deine Energie auf!</p></div>
-                            <div className="bg-slate-800 p-2 rounded-xl border border-white/10"><PlayCircle className="w-8 h-8 text-emerald-500" /></div>
-                        </div>
-                        <button onClick={onWatchAd} disabled={isEnergyFull} className={`w-full py-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${isEnergyFull ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg'}`}>{isEnergyFull ? 'ENERGIE IST VOLL' : 'VIDEO ANSEHEN (+3)'}</button>
-                    </div>
-                </div>
+               
 
                 {/* LOOTBOXEN */}
                 <div>
