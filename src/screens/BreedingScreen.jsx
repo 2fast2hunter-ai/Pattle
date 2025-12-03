@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, X, Search, Heart, Dna, Ticket, Timer, Ghost, Swords, Shield, Zap, ArrowDownWideNarrow, Trash2 } from 'lucide-react';
+import { ArrowLeft, Filter, X, Search, Heart, Dna, Ticket, Timer, Ghost, Swords, Shield, Zap, ArrowDownWideNarrow, Trash2, Clock } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
 export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   // --- STATES ---
-  const [selected, setSelected] = useState([]); // IDs der Eltern
+  const [selected, setSelected] = useState([]); 
   
-  // Filter & Sort States (Analog zum Inventar)
+  // Filter & Sort States
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTypeFilter, setActiveTypeFilter] = useState('ALL');
@@ -17,7 +17,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   // --- HELPER: Cooldown Berechnung ---
   const getCooldownStatus = (pet) => {
     if (!pet || !pet.bredAt) return null;
-    const cooldownDuration = RARITIES[pet.rarity].breedCooldown;
+    const cooldownDuration = RARITIES[pet.rarity]?.breedCooldown || 0; // Safe access
     const cooldownEnd = pet.bredAt + cooldownDuration;
     const timeLeft = cooldownEnd - Date.now();
 
@@ -34,16 +34,13 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   // --- LOGIK: Selektion ---
   const toggleSelect = (id) => {
       const pet = pets.find(p => p.id === id);
-      if (getCooldownStatus(pet)) return; // Cooldown Pets nicht wählbar
+      if (getCooldownStatus(pet)) return; 
 
       if (selected.includes(id)) {
           setSelected(selected.filter(pid => pid !== id));
       } else {
           if (selected.length < 2) setSelected([...selected, id]);
           else {
-              // Wenn schon 2 gewählt, tausche den ersten aus (Queue-Verhalten) oder blockiere?
-              // Besser: Ersetze den letzten, oder tu nichts. Hier: Tu nichts.
-              // Alternativ: Ersetze den zweiten Slot
               const newSel = [selected[0], id];
               setSelected(newSel);
           }
@@ -51,7 +48,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   };
 
   // --- FILTER LOGIK ---
-  let filteredPets = pets.filter(p => !p.isEgg); // Keine Eier
+  let filteredPets = pets.filter(p => !p.isEgg); 
 
   if (searchTerm) {
       const lower = searchTerm.toLowerCase();
@@ -60,7 +57,16 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   if (activeTypeFilter !== 'ALL') filteredPets = filteredPets.filter(p => p.type === activeTypeFilter);
   if (activeRarityFilter !== 'ALL') filteredPets = filteredPets.filter(p => p.rarity === activeRarityFilter);
 
+  // --- SORTIERUNG (NEU: Cooldown nach unten) ---
   filteredPets.sort((a, b) => {
+      const cdA = getCooldownStatus(a) !== null; // true wenn Cooldown
+      const cdB = getCooldownStatus(b) !== null;
+
+      // 1. Primär: Verfügbarkeit (Cooldown nach unten)
+      if (cdA && !cdB) return 1;  // A hat CD -> A nach unten
+      if (!cdA && cdB) return -1; // B hat CD -> A nach oben
+
+      // 2. Sekundär: Gewählte Sortierung
       switch (sortBy) {
           case 'ATK': return b.atk - a.atk;
           case 'HP': return b.hp - a.hp;
@@ -84,7 +90,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   return (
     <div className="h-full flex flex-col animate-in fade-in relative">
       
-      {/* --- SIDEBAR (Gleich wie Inventar) --- */}
+      {/* --- SIDEBAR --- */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 flex">
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>
@@ -94,7 +100,6 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
                     <button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-6 scrollbar-hide">
-                     {/* Suche */}
                      <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase">Suche</label>
                         <div className="relative">
@@ -102,7 +107,6 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
                             <input type="text" placeholder="Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-pink-500" />
                         </div>
                     </div>
-                    {/* Sortierung */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase">Sortieren</label>
                         <div className="grid grid-cols-2 gap-2">
@@ -111,7 +115,6 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
                             ))}
                         </div>
                     </div>
-                    {/* Typen */}
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase">Element</label>
                         <div className="grid grid-cols-4 gap-2">
@@ -140,36 +143,34 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
           <button onClick={onBack} className="p-2 bg-slate-800 text-slate-400 rounded-full hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
       </div>
 
-      {/* --- BREEDING STATION (Eltern Auswahl) --- */}
+      {/* --- BREEDING STATION --- */}
       <div className="px-4 mb-4">
         <div className="bg-slate-800/50 border border-white/10 rounded-3xl p-4 relative overflow-hidden">
-            {/* Verbindungslinie */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-1 bg-slate-700 z-0"></div>
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-slate-900 p-2 rounded-full border border-white/10 z-10 shadow-xl">
                 <Heart className={`w-5 h-5 ${canBreed ? 'text-pink-500 fill-pink-500 animate-pulse' : 'text-slate-600'}`} />
             </div>
 
             <div className="flex justify-between relative z-10">
-                {/* Parent 1 Slot */}
+                {/* Parent 1 */}
                 <div className="flex flex-col items-center gap-2 w-24">
                     <div onClick={() => p1 && toggleSelect(p1.id)} className={`w-20 h-20 rounded-2xl flex items-center justify-center border-2 transition-all cursor-pointer relative overflow-hidden ${p1 ? `${RARITIES[p1.rarity].border} bg-slate-800` : 'border-dashed border-slate-600 bg-slate-900/50'}`}>
                         {p1 ? <PetAvatar pet={p1} className="w-16 h-16" /> : <Dna className="w-8 h-8 text-slate-600" />}
-                        {p1 && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors flex items-center justify-center opacity-0 hover:opacity-100"><Trash2 className="text-white w-6 h-6 drop-shadow-md" /></div>}
+                        {p1 && <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100"><Trash2 className="text-white w-6 h-6" /></div>}
                     </div>
                     <span className="text-[10px] font-bold text-slate-400 truncate max-w-full">{p1 ? p1.name : 'Elternteil 1'}</span>
                 </div>
 
-                {/* Parent 2 Slot */}
+                {/* Parent 2 */}
                 <div className="flex flex-col items-center gap-2 w-24">
                      <div onClick={() => p2 && toggleSelect(p2.id)} className={`w-20 h-20 rounded-2xl flex items-center justify-center border-2 transition-all cursor-pointer relative overflow-hidden ${p2 ? `${RARITIES[p2.rarity].border} bg-slate-800` : 'border-dashed border-slate-600 bg-slate-900/50'}`}>
                         {p2 ? <PetAvatar pet={p2} className="w-16 h-16" /> : <Dna className="w-8 h-8 text-slate-600" />}
-                        {p2 && <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors flex items-center justify-center opacity-0 hover:opacity-100"><Trash2 className="text-white w-6 h-6 drop-shadow-md" /></div>}
+                        {p2 && <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100"><Trash2 className="text-white w-6 h-6" /></div>}
                     </div>
                     <span className="text-[10px] font-bold text-slate-400 truncate max-w-full">{p2 ? p2.name : 'Elternteil 2'}</span>
                 </div>
             </div>
             
-            {/* Action Button */}
             <button 
                 onClick={() => canBreed && onBreed(p1.id, p2.id)}
                 disabled={!canBreed}
@@ -181,7 +182,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
         </div>
       </div>
 
-      {/* --- LISTE DER PETS --- */}
+      {/* --- LISTE --- */}
       <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide">
           {filteredPets.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-slate-500 opacity-50"><Ghost className="w-12 h-12 mb-2"/><p className="text-xs font-bold">Keine passenden Pets.</p></div>
@@ -196,21 +197,21 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
                       return (
                         <div 
                             key={pet.id} 
-                            onClick={() => toggleSelect(pet.id)} 
+                            onClick={() => !cooldown && toggleSelect(pet.id)} // Klick nur wenn kein CD
                             className={`
-                                relative overflow-hidden rounded-2xl p-2 cursor-pointer transition-all
+                                relative overflow-hidden rounded-2xl p-2 transition-all
                                 bg-slate-800 border-2 
-                                ${isSelected ? 'border-pink-500 ring-2 ring-pink-500/30 scale-[0.98]' : (cooldown ? 'border-slate-700 opacity-60 grayscale-[0.5]' : `${rarity.border} active:scale-95`)}
+                                ${isSelected ? 'border-pink-500 ring-2 ring-pink-500/30 scale-[0.98]' : (cooldown ? 'border-slate-700 opacity-60 grayscale-[0.5] cursor-not-allowed' : `${rarity.border} cursor-pointer active:scale-95`)}
                             `}
                         >
-                            {/* Selection Indicator */}
                             {isSelected && <div className="absolute top-2 right-2 w-4 h-4 bg-pink-500 rounded-full border-2 border-white z-20 shadow-lg"></div>}
                             
                             {/* Cooldown Overlay */}
                             {cooldown && (
-                                <div className="absolute inset-0 bg-black/60 z-20 flex flex-col items-center justify-center backdrop-blur-[1px]">
-                                    <Timer className="w-6 h-6 text-white mb-1" />
-                                    <span className="text-xs font-black text-white">{cooldown}</span>
+                                <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center backdrop-blur-[1px]">
+                                    <Clock className="w-6 h-6 text-red-400 mb-1" />
+                                    <span className="text-xs font-black text-red-200">{cooldown}</span>
+                                    <span className="text-[9px] text-red-400 font-bold uppercase mt-1">Pause</span>
                                 </div>
                             )}
 

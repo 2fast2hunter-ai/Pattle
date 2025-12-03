@@ -1,5 +1,5 @@
 import { 
-  RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES,
+  RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES, SPECIES_BY_TYPE,
   QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS
 } from '../data/gameData'; 
 
@@ -30,6 +30,7 @@ export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
     const id2 = RARITIES[rarity2Key].id;
     const minId = Math.min(id1, id2);
     const maxId = Math.max(id1, id2);
+    
     const roll = Math.random() * 100;
     let targetId = minId; 
     
@@ -45,14 +46,10 @@ export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
     return rarityKeys[finalId - 1]; 
 };
 
-// --- HIER IST DIE ÄNDERUNG ---
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
-    // Festes System: +15 für Sieg, -10 für Niederlage
-    // Egal wie stark der Gegner war.
     if (isWin) return 15;
     return -10;
 };
-// -----------------------------
 
 export const getDamageMultiplier = (atkType, defType) => {
   if (!atkType || !defType) return 1.0;
@@ -128,9 +125,22 @@ export const generateQuests = (category) => {
   };
 };
 
-export const generatePet = (level = 1, fixedType = null, rarityKey = null, inheritedStats = null, source = 'SHOP') => {
+export const generatePet = (level = 1, fixedType = null, rarityKey = null, inheritedStats = null, source = 'SHOP', speciesKeyOverride = null) => {
   const typeKeys = Object.keys(TYPES);
-  const type = fixedType || typeKeys[Math.floor(Math.random() * typeKeys.length)];
+  
+  // Wenn Override da ist, nehmen wir dessen Typ, sonst Random oder fixedType
+  let type = fixedType;
+  let speciesKey = speciesKeyOverride;
+
+  if (speciesKeyOverride) {
+      // Wenn eine geheime Spezies erzwungen wird, holen wir ihren Typ
+      const forcedSpecies = ZODIAC_ANIMALS[speciesKeyOverride];
+      if (forcedSpecies) {
+          type = forcedSpecies.type;
+      }
+  } else if (!type) {
+      type = typeKeys[Math.floor(Math.random() * typeKeys.length)];
+  }
   
   let rarity = rarityKey || 'COMMON';
   const mult = RARITIES[rarity].multi;
@@ -141,8 +151,9 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       return Math.max(1, Math.floor(raw + (Math.random() * raw * 0.2))); 
   };
 
+  // --- FÄHIGKEIT WÄHLEN ---
   let abilityKey;
-  if (source === 'BREEDING') {
+  if (source === 'BREEDING' && !speciesKeyOverride) {
       const abilityKeys = Object.keys(ABILITIES);
       abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
   } else {
@@ -150,12 +161,29 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       abilityKey = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : Object.keys(ABILITIES)[0];
   }
 
-  const prefixes = { FIRE: 'Pyro', WATER: 'Aqua', NATURE: 'Terra', WIND: 'Aero', EARTH: 'Geo', ICE: 'Frost', ELECTRIC: 'Volt', LIGHT: 'Lumen', DARK: 'Umbra', GHOST: 'Phantom', MAGIC: 'Arcan', PSYCHIC: 'Mind', FIGHTING: 'Brawl', METAL: 'Ferrum', ROCK: 'Petra', POISON: 'Venom', DRAGON: 'Draco', FAIRY: 'Pixie', TECH: 'Cyber', SOUND: 'Sonic', TIME: 'Chrono', SPACE: 'Astro', VOID: 'Null', CHAOS: 'Havoc', ORDER: 'Law' };
-  const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul'];
-  const baseName = (prefixes[type] || 'Mono') + suffixes[Math.floor(Math.random() * suffixes.length)];
-  const speciesKeys = Object.keys(ZODIAC_ANIMALS);
-  const speciesKey = speciesKeys[Math.floor(Math.random() * speciesKeys.length)];
+  // --- SPEZIES WÄHLEN ---
+  if (!speciesKey) {
+      const validSpeciesKeys = SPECIES_BY_TYPE[type] || [];
+      if (validSpeciesKeys.length > 0) {
+          const rollSpecies = Math.random() * 100;
+          // 2% Chance auf "Rare Species" (1. in der Liste)
+          if (rollSpecies <= 2 && validSpeciesKeys.length >= 2) {
+              speciesKey = validSpeciesKeys[0]; 
+          } else {
+              const remainingSpecies = validSpeciesKeys.slice(1);
+              speciesKey = remainingSpecies[Math.floor(Math.random() * remainingSpecies.length)];
+          }
+      } else {
+          speciesKey = Object.keys(ZODIAC_ANIMALS)[0]; 
+      }
+  }
 
+  const speciesData = ZODIAC_ANIMALS[speciesKey];
+  
+  const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul', 'heart', 'claw'];
+  const baseName = speciesData.label + (Math.random() > 0.5 ? '' : ' ' + suffixes[Math.floor(Math.random() * suffixes.length)]);
+
+  // Stats generieren
   let b_hp, b_atk, b_ap, b_def, b_res, b_speed;
 
   if (inheritedStats) {
@@ -220,18 +248,95 @@ export const getMaxEnergy = (level) => {
   return 10 + ((level - 1) * 2);
 };
 
-// NEU: Berechnet die TATSÄCHLICHE Energie basierend auf der vergangenen Zeit
+export const generateHybridPet = (p1, p2) => {
+    // 1. Sortiere Typen für Rezept-Suche (Alphabetisch)
+    const types = [p1.type, p2.type].sort();
+    const recipeKey = `${types[0]}_${types[1]}`;
+    
+    // 2. Prüfe auf festes Rezept
+    const recipe = FUSION_RECIPES[recipeKey];
+
+    let newLabel, newIcon, newType, isSecretRecipe;
+
+    if (recipe) {
+        // REZEPT GEFUNDEN!
+        newLabel = recipe.label;
+        newIcon = recipe.icon;
+        newType = recipe.type;
+        isSecretRecipe = true;
+    } else {
+        // KEIN REZEPT -> PROZEDURALE MUTATION
+        // Wir mischen die Namen und Icons der Eltern
+        isSecretRecipe = false;
+        newType = Math.random() > 0.5 ? p1.type : p2.type; // Erbt einen Typ zufällig
+        
+        // Icon Mix: Einfach beide Icons nebeneinander
+        const icon1 = ZODIAC_ANIMALS[p1.species]?.icon || '❓';
+        const icon2 = ZODIAC_ANIMALS[p2.species]?.icon || '❓';
+        newIcon = `${icon1}${icon2}`;
+
+        // Namens-Mix (Erste Hälfte von P1 + Zweite Hälfte von P2)
+        // Wir nehmen den Basis-Label aus den Daten, nicht den individuellen Namen
+        const label1 = ZODIAC_ANIMALS[p1.species]?.label || p1.name;
+        const label2 = ZODIAC_ANIMALS[p2.species]?.label || p2.name;
+        
+        const part1 = label1.substring(0, Math.ceil(label1.length / 2));
+        const part2 = label2.substring(Math.ceil(label2.length / 2));
+        newLabel = part1 + part2;
+    }
+
+    // Basis-Pet erstellen
+    // Wir nutzen 'MUTANT' als Rarity-Platzhalter, wird aber gleich überschrieben
+    // inheritedStats = null (wird unten berechnet)
+    const basePet = generatePet(1, newType, null, null, 'BREEDING');
+
+    // Rarity berechnen (Mutanten sind oft stark)
+    const rarityKey = calculateBreedRarity(p1.rarity, p2.rarity);
+    
+    // ID und Spezies setzen
+    // WICHTIG: Wir nutzen 'CUSTOM' als Spezies-Key, damit das UI weiß, dass es Custom-Daten nutzen soll
+    basePet.species = 'CUSTOM'; 
+    
+    // Custom Daten ins Pet schreiben (für die Anzeige und Speicherung)
+    basePet.customData = {
+        label: newLabel,
+        icon: newIcon,
+        isSecret: isSecretRecipe,
+        parents: [p1.name, p2.name] // Optional: Für Stammbaum
+    };
+    
+    basePet.name = newLabel; // Startname = Speziesname
+    basePet.rarity = rarityKey;
+
+    // Stats Vererbung (Mix + kleiner Mutations-Bonus)
+    const mix = (v1, v2) => Math.floor((v1 + v2) / 2 * 1.1); // 10% Bonus für Mutation
+    
+    basePet.b_hp = mix(p1.b_hp || 10, p2.b_hp || 10);
+    basePet.b_atk = mix(p1.b_atk || 2, p2.b_atk || 2);
+    basePet.b_ap = mix(p1.b_ap || 2, p2.b_ap || 2);
+    basePet.b_def = mix(p1.b_def || 1, p2.b_def || 1);
+    basePet.b_res = mix(p1.b_res || 1, p2.b_res || 1);
+    basePet.b_speed = mix(p1.b_speed || 1, p2.b_speed || 1);
+
+    // Stats neu berechnen mit den neuen Basiswerten
+    basePet.maxHp = calculateStatValue(basePet.b_hp, 1);
+    basePet.hp = basePet.maxHp;
+    basePet.atk = calculateStatValue(basePet.b_atk, 1);
+    basePet.ap = calculateStatValue(basePet.b_ap, 1);
+    basePet.def = calculateStatValue(basePet.b_def, 1);
+    basePet.res = calculateStatValue(basePet.b_res, 1);
+    basePet.speed = calculateStatValue(basePet.b_speed, 1);
+
+    return basePet;
+};
+
 export const calculateCurrentEnergy = (user) => {
     if (!user) return 0;
-    
     const maxEnergy = getMaxEnergy(user.level);
     const now = Date.now();
-    const msPerEnergy = 1000 * 60 * 5; // 5 Minuten
-    
+    const msPerEnergy = 1000 * 60 * 5; 
     const timeDiff = now - (user.lastEnergyUpdate || now);
     const energyGained = Math.floor(timeDiff / msPerEnergy);
-    
     const totalEnergy = Math.min(maxEnergy, (user.energy || 0) + energyGained);
-    
     return totalEnergy;
 };

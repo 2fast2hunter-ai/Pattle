@@ -4,11 +4,13 @@ import { TYPES, RARITIES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
 export default function PetDetailScreen({ pet, onBack }) {
-    const typeInfo = TYPES[pet.type];
-    const rarityInfo = RARITIES[pet.rarity];
-    const ability = ABILITIES[pet.abilityId];
+    const typeInfo = TYPES[pet.type] || TYPES.FIRE;
+    const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
+    const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
     const abilityTypeInfo = TYPES[ability.element] || { color: 'text-slate-400', label: 'Neutral' };
-    const speciesInfo = ZODIAC_ANIMALS[pet.species];
+    
+    // FIX: Fallback für unbekannte Spezies (alte Pets)
+    const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt', icon: '?' };
 
     const xpPercent = (pet.xp / pet.maxXp) * 100;
 
@@ -30,7 +32,7 @@ export default function PetDetailScreen({ pet, onBack }) {
 
         <div className="flex-1 overflow-y-auto scrollbar-hide pb-20">
             
-            {/* --- HERO SECTION (Avatar) --- */}
+            {/* --- HERO SECTION --- */}
             <div className="relative w-full h-64 flex items-center justify-center mb-4 overflow-hidden">
                 <div className={`absolute inset-0 ${typeInfo.bg} opacity-10 blur-3xl`}></div>
                 <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 ${rarityInfo.bg} blur-[60px] opacity-20 animate-pulse`}></div>
@@ -39,7 +41,6 @@ export default function PetDetailScreen({ pet, onBack }) {
                     <PetAvatar pet={pet} className="w-40 h-40" />
                 </div>
 
-                {/* Schwebendes Badge behalten wir als Eyecatcher */}
                 <div className={`absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full border ${rarityInfo.border} ${rarityInfo.bg} bg-opacity-20 backdrop-blur-md flex items-center gap-2 shadow-lg`}>
                     <Sparkles className={`w-3 h-3 ${rarityInfo.color}`} />
                     <span className={`text-xs font-black uppercase tracking-widest text-white`}>{rarityInfo.label}</span>
@@ -52,7 +53,6 @@ export default function PetDetailScreen({ pet, onBack }) {
                 <div className="bg-slate-800/50 border border-white/10 rounded-3xl p-5 relative overflow-hidden">
                     <div className="flex justify-between items-start mb-4">
                         <div>
-                            {/* HIER WURDE DIE SELTENHEIT HINZUGEFÜGT */}
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="text-xs font-bold text-slate-500 uppercase">{speciesInfo.label}</span>
                                 
@@ -129,6 +129,7 @@ export default function PetDetailScreen({ pet, onBack }) {
                         </div>
                     </div>
                 </div>
+                
                 <div className="h-6"></div>
             </div>
         </div>

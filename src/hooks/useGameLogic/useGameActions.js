@@ -228,22 +228,46 @@ const handleSellMarket = async (petsToSell, totalPrice) => {
         const cd1 = RARITIES[p1.rarity].breedCooldown;
         const cd2 = RARITIES[p2.rarity].breedCooldown;
 
-        if ((p1.bredAt || 0) + cd1 > Date.now()) { showNotification(`${p1.name} braucht eine Pause!`, 'error'); return; }
+       if ((p1.bredAt || 0) + cd1 > Date.now()) { showNotification(`${p1.name} braucht eine Pause!`, 'error'); return; }
         if ((p2.bredAt || 0) + cd2 > Date.now()) { showNotification(`${p2.name} braucht eine Pause!`, 'error'); return; }
         
-        await updateUser(user.id, { redeemedTickets: user.redeemedTickets - 1, stats: { ...user.stats, bred: (user.stats?.bred || 0) + 1 } }); 
+        await updateUser(user.id, { 
+            redeemedTickets: user.redeemedTickets - 1, 
+            stats: { ...user.stats, bred: (user.stats?.bred || 0) + 1 } 
+        }); 
         trackQuestProgress(user, QUEST_TYPES.BREED_PET, 1);
         
         await updatePetInDB(p1.id, { bredAt: Date.now() });
         await updatePetInDB(p2.id, { bredAt: Date.now() });
         
-        const child = generatePet(1, p1.type, calculateBreedRarity(p1.rarity, p2.rarity), null, 'BREEDING');
+        // --- NEUE LOGIK START ---
+        let child;
+        const rollMutation = Math.random() * 100;
+        
+        // 10% Chance auf Mutation (für JEDES Paar möglich)
+        if (rollMutation <= 10) {
+            child = generateHybridPet(p1, p2);
+            // Optional: Visuelles Feedback im Notification, dass etwas Besonderes passiert ist?
+            // Wir lassen es eine Überraschung für das Schlüpfen.
+        } else {
+            // Normale Zucht
+            const childType = Math.random() > 0.5 ? p1.type : p2.type;
+            child = generatePet(1, childType, calculateBreedRarity(p1.rarity, p2.rarity), null, 'BREEDING');
+            
+            // Stats Vererbung für normales Kind (Durchschnitt + kleiner Zufall)
+            const mix = (v1, v2) => Math.floor((v1 + v2) / 2);
+            child.b_hp = mix(p1.b_hp || 10, p2.b_hp || 10);
+            // ... (Du kannst hier die Vererbung detaillierter machen wenn du willst, 
+            // aber generatePet macht schon einen guten Job mit Random Stats)
+        }
+        // --- NEUE LOGIK ENDE ---
+
         child.isEgg = true;
         child.hatchAt = Date.now() + RARITIES[child.rarity].hatchDuration; 
         
         await addPetToDB(child, user.id); 
         setCurrentView('hatchery'); 
-        showNotification("Zucht erfolgreich!", 'success'); 
+        showNotification("Zucht erfolgreich! Ei startet Inkubation.", 'success'); 
     };
 
     return {
