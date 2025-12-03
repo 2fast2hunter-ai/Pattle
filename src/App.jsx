@@ -247,7 +247,8 @@ export default function App() {
           {currentView === 'profile' && (
             <ProfileScreen 
               user={user} 
-              petCount={myPets.length} 
+              // ÄNDERUNG: Wir übergeben jetzt das ganze Array, nicht nur die Länge
+              pets={myPets} 
               onViewFriend={(friend) => { 
                 setSelectedFriend(friend); 
                 setCurrentView('friend-profile'); 
