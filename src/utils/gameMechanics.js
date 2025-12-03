@@ -1,6 +1,6 @@
 import { 
   RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES, SPECIES_BY_TYPE,
-  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS
+  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS, FUSION_RECIPES
 } from '../data/gameData'; 
 
 export const ENERGY_REGEN_TIME_MS = 1000 * 60 * 5; 
@@ -62,22 +62,54 @@ export const getDamageMultiplier = (atkType, defType) => {
   return 1.0;
 };
 
+// --- NEUE BOXEN LOGIK (Standard, Premium, Master, Divine) ---
 export const determineRarity = (boxType = 'STANDARD') => {
     if (boxType === 'STARTER') return 'RARE'; 
 
-    const roll = Math.random() * 100;
-    let cumulative = 0;
-    const sortedRarities = Object.values(RARITIES).sort((a, b) => a.dropChance - b.dropChance);
-    for (const rarity of sortedRarities) {
-        let chance = rarity.dropChance;
-        if (boxType === 'PREMIUM') {
-            if (rarity.id === 1) continue; 
-            chance = chance * 1.6; 
-        }
-        cumulative += chance;
-        if (roll <= cumulative) return Object.keys(RARITIES).find(key => RARITIES[key].id === rarity.id);
+    let pool = Object.values(RARITIES);
+
+    // CAP: Standard & Premium nur bis Legendär (ID 5)
+    if (boxType === 'STANDARD' || boxType === 'PREMIUM') {
+        pool = pool.filter(r => r.id <= 5);
     }
-    return boxType === 'PREMIUM' ? 'UNCOMMON' : 'COMMON';
+
+    // MIN: Premium ab Ungewöhnlich
+    if (boxType === 'PREMIUM') {
+        pool = pool.filter(r => r.id > 1);
+    }
+
+    // MIN: Divine ab Selten
+    if (boxType === 'DIVINE') {
+        pool = pool.filter(r => r.id >= 3);
+    }
+
+    // Master hat keinen Filter (1-10)
+
+    // GEWICHTUNG
+    let weightedPool = pool.map(r => {
+        let weight = r.dropChance;
+        if (boxType === 'PREMIUM') weight *= 1.6;
+        if (boxType === 'MASTER') weight *= 1.2;
+        if (boxType === 'DIVINE') {
+            if (r.id >= 6) weight *= 5.0; // High Tier Boost
+        }
+        return { ...r, weight };
+    });
+
+    const totalWeight = weightedPool.reduce((sum, r) => sum + r.weight, 0);
+    let randomValue = Math.random() * totalWeight;
+
+    // Sortieren wir hier aufsteigend nach ID
+    weightedPool.sort((a, b) => a.id - b.id);
+
+    for (const rarity of weightedPool) {
+        randomValue -= rarity.weight;
+        if (randomValue <= 0) {
+             return Object.keys(RARITIES).find(key => RARITIES[key].id === rarity.id);
+        }
+    }
+    // Fallback: Das seltenste aus dem Pool
+    return Object.keys(RARITIES).find(key => RARITIES[key].id === weightedPool[weightedPool.length - 1].id);
 };
 
 export const calculateStatValue = (base, level) => {
@@ -89,19 +121,16 @@ export const generateQuests = (category) => {
   const count = 5; 
   const newQuests = [];
   let multiplier = category === 'DAILY' ? 1 : (category === 'WEEKLY' ? 5 : 20);
-
   for (let i = 0; i < count; i++) {
       const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
       const variance = 0.8 + Math.random() * 0.4;
       const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
       let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
       let rewardType = template.rewardType;
-
       if (category === 'MONTHLY' && Math.random() > 0.5) {
           rewardType = 'EGG_RARE';
           rewardAmount = 1;
       }
-
       newQuests.push({
           id: Date.now() + Math.random().toString(),
           type: template.type,
@@ -114,7 +143,6 @@ export const generateQuests = (category) => {
           category: category
       });
   }
-
   return {
       quests: newQuests,
       expiresAt: calculateNextResetTime(category),
@@ -127,17 +155,11 @@ export const generateQuests = (category) => {
 
 export const generatePet = (level = 1, fixedType = null, rarityKey = null, inheritedStats = null, source = 'SHOP', speciesKeyOverride = null) => {
   const typeKeys = Object.keys(TYPES);
-  
-  // Wenn Override da ist, nehmen wir dessen Typ, sonst Random oder fixedType
   let type = fixedType;
   let speciesKey = speciesKeyOverride;
-
   if (speciesKeyOverride) {
-      // Wenn eine geheime Spezies erzwungen wird, holen wir ihren Typ
       const forcedSpecies = ZODIAC_ANIMALS[speciesKeyOverride];
-      if (forcedSpecies) {
-          type = forcedSpecies.type;
-      }
+      if (forcedSpecies) { type = forcedSpecies.type; }
   } else if (!type) {
       type = typeKeys[Math.floor(Math.random() * typeKeys.length)];
   }
@@ -151,7 +173,6 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       return Math.max(1, Math.floor(raw + (Math.random() * raw * 0.2))); 
   };
 
-  // --- FÄHIGKEIT WÄHLEN ---
   let abilityKey;
   if (source === 'BREEDING' && !speciesKeyOverride) {
       const abilityKeys = Object.keys(ABILITIES);
@@ -161,12 +182,10 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       abilityKey = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : Object.keys(ABILITIES)[0];
   }
 
-  // --- SPEZIES WÄHLEN ---
   if (!speciesKey) {
       const validSpeciesKeys = SPECIES_BY_TYPE[type] || [];
       if (validSpeciesKeys.length > 0) {
           const rollSpecies = Math.random() * 100;
-          // 2% Chance auf "Rare Species" (1. in der Liste)
           if (rollSpecies <= 2 && validSpeciesKeys.length >= 2) {
               speciesKey = validSpeciesKeys[0]; 
           } else {
@@ -179,22 +198,15 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   }
 
   const speciesData = ZODIAC_ANIMALS[speciesKey];
-  
   const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul', 'heart', 'claw'];
   const baseName = speciesData.label + (Math.random() > 0.5 ? '' : ' ' + suffixes[Math.floor(Math.random() * suffixes.length)]);
 
-  // Stats generieren
   let b_hp, b_atk, b_ap, b_def, b_res, b_speed;
 
   if (inheritedStats) {
       b_hp = inheritedStats.hp; b_atk = inheritedStats.atk; b_ap = inheritedStats.ap; b_def = inheritedStats.def; b_res = inheritedStats.res; b_speed = inheritedStats.speed;
   } else {
-      b_hp = genBase(8);
-      b_atk = genBase(2);
-      b_ap = genBase(2);
-      b_def = genBase(1);
-      b_res = genBase(1);
-      b_speed = genBase(1);
+      b_hp = genBase(8); b_atk = genBase(2); b_ap = genBase(2); b_def = genBase(1); b_res = genBase(1); b_speed = genBase(1);
   }
 
   return {
@@ -208,9 +220,7 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
     xp: 0,
     maxXp: 100 * level,
     abilityId: abilityKey,
-    
     b_hp, b_atk, b_ap, b_def, b_res, b_speed,
-
     maxHp: calculateStatValue(b_hp, level),
     hp: calculateStatValue(b_hp, level),
     atk: calculateStatValue(b_atk, level),
@@ -218,7 +228,6 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
     def: calculateStatValue(b_def, level),
     res: calculateStatValue(b_res, level),
     speed: calculateStatValue(b_speed, level),
-
     critRate: 5 + Math.floor(Math.random() * 10),
     critDmg: 150,
     currentCd: 0,
@@ -229,54 +238,27 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   };
 };
 
-export const getUnlockedTeamSlots = (level) => {
-    const maxSlots = 10;
-    let slots = 1;
-    if (level >= 3) {
-        slots = 2; 
-        slots += Math.floor((level - 3) / 5);
-    }
-    return Math.min(maxSlots, slots);
-};
-
-export const getUnlockedHatcherySlots = (level) => {
-  if (level < 15) return 1;
-  return Math.min(10, 2 + Math.floor((level - 15) / 10));
-};
-
-export const getMaxEnergy = (level) => {
-  return 10 + ((level - 1) * 2);
-};
-
 export const generateHybridPet = (p1, p2) => {
-    // 1. Sortiere Typen für Rezept-Suche (Alphabetisch)
     const types = [p1.type, p2.type].sort();
     const recipeKey = `${types[0]}_${types[1]}`;
     
-    // 2. Prüfe auf festes Rezept
     const recipe = FUSION_RECIPES[recipeKey];
 
     let newLabel, newIcon, newType, isSecretRecipe;
 
     if (recipe) {
-        // REZEPT GEFUNDEN!
         newLabel = recipe.label;
         newIcon = recipe.icon;
         newType = recipe.type;
         isSecretRecipe = true;
     } else {
-        // KEIN REZEPT -> PROZEDURALE MUTATION
-        // Wir mischen die Namen und Icons der Eltern
         isSecretRecipe = false;
-        newType = Math.random() > 0.5 ? p1.type : p2.type; // Erbt einen Typ zufällig
+        newType = Math.random() > 0.5 ? p1.type : p2.type;
         
-        // Icon Mix: Einfach beide Icons nebeneinander
         const icon1 = ZODIAC_ANIMALS[p1.species]?.icon || '❓';
         const icon2 = ZODIAC_ANIMALS[p2.species]?.icon || '❓';
         newIcon = `${icon1}${icon2}`;
 
-        // Namens-Mix (Erste Hälfte von P1 + Zweite Hälfte von P2)
-        // Wir nehmen den Basis-Label aus den Daten, nicht den individuellen Namen
         const label1 = ZODIAC_ANIMALS[p1.species]?.label || p1.name;
         const label2 = ZODIAC_ANIMALS[p2.species]?.label || p2.name;
         
@@ -285,31 +267,23 @@ export const generateHybridPet = (p1, p2) => {
         newLabel = part1 + part2;
     }
 
-    // Basis-Pet erstellen
-    // Wir nutzen 'MUTANT' als Rarity-Platzhalter, wird aber gleich überschrieben
-    // inheritedStats = null (wird unten berechnet)
     const basePet = generatePet(1, newType, null, null, 'BREEDING');
 
-    // Rarity berechnen (Mutanten sind oft stark)
     const rarityKey = calculateBreedRarity(p1.rarity, p2.rarity);
     
-    // ID und Spezies setzen
-    // WICHTIG: Wir nutzen 'CUSTOM' als Spezies-Key, damit das UI weiß, dass es Custom-Daten nutzen soll
     basePet.species = 'CUSTOM'; 
     
-    // Custom Daten ins Pet schreiben (für die Anzeige und Speicherung)
     basePet.customData = {
         label: newLabel,
         icon: newIcon,
         isSecret: isSecretRecipe,
-        parents: [p1.name, p2.name] // Optional: Für Stammbaum
+        parents: [p1.name, p2.name]
     };
     
-    basePet.name = newLabel; // Startname = Speziesname
+    basePet.name = newLabel; 
     basePet.rarity = rarityKey;
 
-    // Stats Vererbung (Mix + kleiner Mutations-Bonus)
-    const mix = (v1, v2) => Math.floor((v1 + v2) / 2 * 1.1); // 10% Bonus für Mutation
+    const mix = (v1, v2) => Math.floor((v1 + v2) / 2 * 1.1); 
     
     basePet.b_hp = mix(p1.b_hp || 10, p2.b_hp || 10);
     basePet.b_atk = mix(p1.b_atk || 2, p2.b_atk || 2);
@@ -318,7 +292,6 @@ export const generateHybridPet = (p1, p2) => {
     basePet.b_res = mix(p1.b_res || 1, p2.b_res || 1);
     basePet.b_speed = mix(p1.b_speed || 1, p2.b_speed || 1);
 
-    // Stats neu berechnen mit den neuen Basiswerten
     basePet.maxHp = calculateStatValue(basePet.b_hp, 1);
     basePet.hp = basePet.maxHp;
     basePet.atk = calculateStatValue(basePet.b_atk, 1);
@@ -330,6 +303,17 @@ export const generateHybridPet = (p1, p2) => {
     return basePet;
 };
 
+export const getUnlockedTeamSlots = (level) => {
+    const maxSlots = 10;
+    let slots = 1;
+    if (level >= 3) { slots = 2; slots += Math.floor((level - 3) / 5); }
+    return Math.min(maxSlots, slots);
+};
+export const getUnlockedHatcherySlots = (level) => {
+  if (level < 15) return 1;
+  return Math.min(10, 2 + Math.floor((level - 15) / 10));
+};
+export const getMaxEnergy = (level) => { return 10 + ((level - 1) * 2); };
 export const calculateCurrentEnergy = (user) => {
     if (!user) return 0;
     const maxEnergy = getMaxEnergy(user.level);
