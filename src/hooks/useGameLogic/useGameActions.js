@@ -359,8 +359,59 @@ export function useGameActions(state, setUserId) {
     
     const handleAddFriend = async (friendId) => { if (!user || !friendId || friendId === user.id) return; const foundUser = await findUserPublic(friendId); if (foundUser) { const newFriends = [...(user.friends || []), { id: foundUser.id, username: foundUser.username, avatar: foundUser.avatar, level: foundUser.level, rating: foundUser.rating }]; updateUser(user.id, { friends: newFriends }); showNotification(`${foundUser.username} hinzugefügt!`, 'success'); } else { showNotification("Spieler nicht gefunden.", 'error'); } };
     const handleBuyMarket = async (listingId) => { if (!user) return; const result = await buyMarketItem(user, listingId); if (result.success) { showNotification(result.message, 'success'); trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 1); } else { showNotification(result.message, 'error'); } };
-    const handleSellMarket = async (petsToSell, totalPrice) => { if (!user) return; const petArray = Array.isArray(petsToSell) ? petsToSell : [petsToSell]; if (petArray.length === 0) return; const newListing = { sellerName: user.username, sellerId: user.id, price: totalPrice, pet: petArray[0], pets: petArray, quantity: petArray.length, isBundle: petArray.length > 1, createdAt: Date.now() }; await createMarketListing(newListing); for (const p of petArray) { await removePetFromDB(p.id); } showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt!` : "Angebot erstellt!", 'success'); };
-    
+const handleSellMarket = async (input, totalPrice) => {
+        if (!user) return;
+
+        let petArray = [];
+
+        // FALL 1: Input ist bereits ein Array (vom Bulk-Stacking)
+        if (Array.isArray(input)) {
+            petArray = input;
+        } 
+        // FALL 2: Input ist eine ID als String (vom Einzelverkauf)
+        else if (typeof input === 'string') {
+            const found = myPets.find(p => p.id === input);
+            if (found) petArray = [found];
+        }
+        // FALL 3: Input ist ein einzelnes Pet-Objekt (Sicherheits-Fallback)
+        else if (typeof input === 'object' && input !== null) {
+            petArray = [input];
+        }
+
+        if (petArray.length === 0) {
+            console.error("Fehler: Konnte Pets nicht für den Verkauf finden.", input);
+            showNotification("Fehler beim Erstellen des Angebots.", 'error');
+            return;
+        }
+
+        // Listing erstellen
+        const newListing = { 
+            sellerName: user.username, 
+            sellerId: user.id, 
+            price: totalPrice, 
+            pet: petArray[0], // Für die Vorschau
+            pets: petArray,   // Für die Transaktion (alle Items)
+            quantity: petArray.length,
+            isBundle: petArray.length > 1,
+            createdAt: Date.now() 
+        };
+
+        try {
+            await createMarketListing(newListing);
+            
+            // WICHTIG: Wir löschen basierend auf den gefundenen Objekten
+            for (const p of petArray) {
+                if (p && p.id) {
+                    await removePetFromDB(p.id);
+                }
+            }
+            
+            showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt!` : "Angebot erstellt!", 'success');
+        } catch (e) {
+            console.error("Fehler beim Verkauf:", e);
+            showNotification("Fehler beim Verkauf.", 'error');
+        }
+    };    
     // --- UPDATE: addToTeam (mit Duplikat-Check) ---
     const addToTeam = (petId) => {
         if (!user || selectedSlotForTeam === null) return;

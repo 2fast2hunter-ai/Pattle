@@ -40,14 +40,25 @@ export default function PetAvatar({ pet, className = "w-16 h-16" }) {
       );
   }
 
-  // Normales Pet (mit Fallback)
-  let animalInfo = ZODIAC_ANIMALS[pet.species];
-  if (!animalInfo) animalInfo = { id: 'UNKNOWN', label: 'Unbekannt', icon: <HelpCircle className="w-6 h-6 text-white" /> };
+  // 3. NORMALES PET (mit sicherem Fallback für alte/kaputte Daten)
+  
+  // Sicherer Zugriff auf Species Key
+  const speciesKey = pet.species || 'UNKNOWN';
+  let animalInfo = ZODIAC_ANIMALS[speciesKey];
+  
+  // Fallback, falls Spezies nicht in der Liste ist
+  if (!animalInfo) {
+      animalInfo = { id: 'UNKNOWN', label: 'Unbekannt', icon: <HelpCircle className="w-1/2 h-1/2 text-white/80" /> };
+  }
 
-  const fileName = `${pet.species.toLowerCase()}_${pet.type.toLowerCase()}.png`;
+  // Sicherer Zugriff auf Strings für Dateinamen (verhindert den Crash)
+  const safeSpecies = (pet.species || 'unknown').toLowerCase();
+  const safeType = (pet.type || 'fire').toLowerCase();
+  
+  const fileName = `${safeSpecies}_${safeType}.png`;
   const imagePath = `/pets/${fileName}`; 
 
-  // Fallback: Emoji/Icon anzeigen
+  // Fallback: Emoji/Icon anzeigen, wenn Bildfehler oder kein String-Icon
   if (imgError || !animalInfo.icon || typeof animalInfo.icon !== 'string') {
     // Falls das Icon eine Komponente ist (HelpCircle) oder Bildfehler
     const displayIcon = (typeof animalInfo.icon === 'string') ? animalInfo.icon : <HelpCircle className="w-1/2 h-1/2 text-white/80" />;
@@ -55,7 +66,6 @@ export default function PetAvatar({ pet, className = "w-16 h-16" }) {
     return (
       <div className={`${className} ${typeInfo.bg} rounded-2xl flex items-center justify-center shadow-md border-2 border-white/20 relative overflow-hidden`}>
          <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-white/20 to-transparent pointer-events-none"></div>
-         {/* TEXT FIX: text-3xl und leading-none verhindern Abschneiden */}
          <span className="drop-shadow-lg filter text-3xl leading-none select-none flex items-center justify-center w-full h-full">
              {displayIcon}
          </span>
@@ -69,7 +79,7 @@ export default function PetAvatar({ pet, className = "w-16 h-16" }) {
         <div className={`absolute inset-2 ${typeInfo.bg} opacity-20 blur-md rounded-full`}></div>
         <img 
             src={imagePath} 
-            alt={pet.name} 
+            alt={pet.name || 'Pet'} 
             className="w-full h-full object-contain drop-shadow-xl z-10 hover:scale-110 transition-transform duration-300"
             onError={() => setImgError(true)} 
         />
