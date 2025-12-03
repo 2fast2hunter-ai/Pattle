@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package, Backpack, Ticket, Loader2, Gift, Sparkles } from 'lucide-react';
 import { RARITIES } from '../data/gameData';
+import PetAvatar from '../components/PetAvatar';
 
-// --- MODERNE KACHEL KOMPONENTE (Optimiert) ---
-const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, borderColor, onClick, specialIcon, footerButton, ringColor }) => (
+// --- MODERNE KACHEL KOMPONENTE ---
+const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, onClick, specialIcon, footerButton, ringColor }) => (
     <div 
         onClick={onClick} 
         className={`
@@ -14,15 +15,12 @@ const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, borderCo
             flex flex-col items-center justify-between
         `}
     >
-        {/* Hintergrund Leuchten */}
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full ${bgColor} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`}></div>
 
-        {/* Count Badge */}
         <div className="w-full flex justify-end relative z-10">
             <span className="bg-slate-950/80 text-[10px] font-black text-white px-2 py-0.5 rounded-full border border-white/10 shadow-sm backdrop-blur-sm">x{count}</span>
         </div>
 
-        {/* Main Icon (Etwas kleiner für mehr Platz) */}
         <div className="relative z-10 flex-1 flex items-center justify-center">
             <div className="relative">
                 <Icon className={`w-12 h-12 ${colorColor} drop-shadow-[0_5px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform`} />
@@ -30,7 +28,6 @@ const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, borderCo
             </div>
         </div>
         
-        {/* Label / Footer */}
         <div className="relative z-10 w-full text-center">
             {footerButton ? (
                 footerButton
@@ -43,13 +40,11 @@ const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, borderCo
     </div>
 );
 
-
 // --- MODERNES MODAL ---
 const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, actionIcon: ActionIcon, onAction, onClose, colorClass, bgClass, borderClass, specialBadge }) => (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in zoom-in-50 duration-300">
         <div className={`bg-slate-900/90 border border-white/10 w-full max-w-sm rounded-[32px] p-0 relative overflow-hidden flex flex-col shadow-2xl shadow-black/50`}>
             
-            {/* Hero Header */}
             <div className="relative h-44 flex items-center justify-center overflow-hidden shrink-0 bg-gradient-to-b from-slate-800/50 to-slate-900/50">
                 <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 ${bgClass} blur-[60px] opacity-30 animate-pulse`}></div>
                 
@@ -67,7 +62,6 @@ const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, a
                 </button>
             </div>
 
-            {/* Content */}
             <div className="p-6 text-center">
                 <h2 className={`text-2xl font-black ${colorClass} mb-3 uppercase tracking-wide drop-shadow-sm`}>{title}</h2>
                 <p className="text-sm text-slate-300 leading-relaxed mb-6">{description}</p>
@@ -88,9 +82,13 @@ const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, a
 export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket }) { 
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  
+  // --- ANIMATION STATES ---
+  const [animationStage, setAnimationStage] = useState('idle'); 
+  const [processingBoxId, setProcessingBoxId] = useState(null);
+  const [resultPet, setResultPet] = useState(null); 
 
-  // --- STAPEL LOGIK (Unverändert) ---
+  // --- STAPEL LOGIK ---
   const stacks = {};
   pets.forEach(pet => {
       if (pet.isEgg && pet.hatchAt === 0) {
@@ -126,22 +124,119 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const boxItems = Object.values(boxStacks);
   const ticketItems = Object.values(ticketStacks); 
 
-  const handleBoxOpen = async (id, type) => {
-      setIsProcessing(true); await onStartIncubation(id, type); setIsProcessing(false);
-  }
+  // --- ANIMATION SEQUENCE ---
+  const startLootboxSequence = async (boxId, boxType) => {
+      setSelectedBox(null);
+      setProcessingBoxId(boxId);
+      setAnimationStage('shaking');
+      setResultPet(null);
+
+      try {
+        // 2.5s Wackeln + DB Call
+        const [_, newPet] = await Promise.all([
+            new Promise(resolve => setTimeout(resolve, 2500)),
+            onStartIncubation(boxId, boxType)
+        ]);
+
+        if (newPet) {
+            setResultPet(newPet);
+            setAnimationStage('exploding');
+            setTimeout(() => setAnimationStage('revealed'), 300);
+        } else {
+            setAnimationStage('idle');
+            setProcessingBoxId(null);
+        }
+      } catch (e) {
+          console.error(e);
+          setAnimationStage('idle');
+          setProcessingBoxId(null);
+      }
+  };
+
+  const finishAnimation = () => {
+    setAnimationStage('idle');
+    setProcessingBoxId(null);
+    setResultPet(null);
+  };
+  
   const handleTicketRedeem = async (ticketId) => {
-      setIsProcessing(true); await onRedeemTicket(ticketId); setIsProcessing(false);
+      onRedeemTicket(ticketId); 
   }
 
-  // --- RENDERING ---
-  if (isProcessing) {
+  // --- CSS ANIMATIONEN ---
+  const animStyles = `
+    @keyframes shake-hard { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+    .animate-shake-hard { animation: shake-hard 0.5s linear infinite; }
+    @keyframes spin-slow-reverse { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+    .animate-spin-slow-reverse { animation: spin-slow-reverse 12s linear infinite; }
+    @keyframes float-up { from { transform: translateY(20px); opacity:0; } to { transform: translateY(0); opacity:1;} }
+    .animate-float-up { animation: float-up 1s ease-out forwards; }
+  `;
+
+  // --- VOLLBILD ANIMATION ---
+  if (animationStage !== 'idle') {
       return (
-          <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in">
-              <div className="relative">
-                <div className="absolute inset-0 bg-yellow-500 blur-xl opacity-20 animate-pulse"></div>
-                <Loader2 className="w-16 h-16 text-yellow-400 animate-spin relative z-10" />
-              </div>
-              <p className="text-slate-300 font-bold mt-6 text-lg tracking-wide animate-pulse">Verarbeite...</p>
+          <div className="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center overflow-hidden">
+              <style>{animStyles}</style>
+              
+              {/* PHASE 1: SHAKING */}
+              {animationStage === 'shaking' && (
+                  <div className="relative flex flex-col items-center justify-center animate-in fade-in duration-300">
+                      <div className="absolute inset-0 bg-yellow-500/30 blur-[100px] animate-pulse rounded-full scale-150"></div>
+                      <div className="absolute -inset-20 bg-gradient-radial from-yellow-400/20 to-transparent animate-spin-slow opacity-70"></div>
+                      <div className="relative z-10 animate-shake-hard">
+                          <Package className="w-48 h-48 text-yellow-400 drop-shadow-[0_10px_30px_rgba(250,204,21,0.5)]" />
+                      </div>
+                      <p className="text-yellow-200 font-black tracking-widest mt-12 text-xl animate-pulse uppercase relative z-10">Wird geöffnet...</p>
+                  </div>
+              )}
+
+              {/* PHASE 2: EXPLOSION */}
+              {animationStage === 'exploding' && (
+                  <div className="fixed inset-0 bg-white z-[110] animate-out fade-out duration-500"></div>
+              )}
+
+              {/* PHASE 3: REVEAL */}
+              {animationStage === 'revealed' && resultPet && (
+                  <div className="relative w-full h-full flex flex-col items-center justify-center animate-in fade-in duration-500">
+                       <div className="absolute inset-0 flex items-center justify-center opacity-50">
+                           <div className={`w-[200vw] h-[200vw] bg-gradient-conic from-${RARITIES[resultPet.rarity].color.split('-')[1]}-500/0 via-${RARITIES[resultPet.rarity].color.split('-')[1]}-500/20 to-${RARITIES[resultPet.rarity].color.split('-')[1]}-500/0 animate-spin-slow`}></div>
+                       </div>
+
+                       <div className="relative z-10 flex flex-col items-center animate-float-up">
+                           <h2 className="text-4xl font-black text-white mb-2 uppercase tracking-wider drop-shadow-lg">GEFUNDEN!</h2>
+                           <p className={`text-lg font-bold mb-8 ${RARITIES[resultPet.rarity].color} uppercase tracking-widest`}>{RARITIES[resultPet.rarity].label}</p>
+                           
+                           <div className="relative mb-10 group scale-150">
+                               <div className={`absolute inset-0 ${RARITIES[resultPet.rarity].bg} blur-3xl opacity-60 animate-pulse rounded-full`}></div>
+                               
+                               {/* HIER: PetAvatar mit dem echten Ergebnis */}
+                               <div className="relative z-10 animate-bounce-slow">
+                                   <PetAvatar pet={resultPet} className="w-40 h-40 drop-shadow-2xl" />
+                               </div>
+
+                               <Sparkles className="absolute top-0 right-0 text-yellow-300 w-12 h-12 animate-ping-slow" />
+                           </div>
+                           
+                           <div className="bg-slate-800/80 backdrop-blur border border-white/10 p-4 rounded-2xl mb-8 text-center">
+                               <p className="text-slate-300 text-sm font-bold">
+                                   {resultPet.isEgg ? 'Ein neues Ei!' : 'Ein neues Pet!'}
+                               </p>
+                               <p className="text-xs text-slate-500 mt-1">
+                                   {resultPet.isEgg ? 'Ab in die Brutstätte damit.' : 'Es wartet im Pet Hub.'}
+                               </p>
+                           </div>
+                           
+                           <button 
+                               onClick={finishAnimation}
+                               className="px-10 py-4 bg-white text-slate-900 font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95 flex items-center gap-3"
+                           >
+                               <ThermometerSun className="w-6 h-6" />
+                               ALLES KLAR
+                           </button>
+                       </div>
+                  </div>
+              )}
           </div>
       );
   }
@@ -155,7 +250,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
             title={`${RARITIES[selectedItem.base.rarity].label} Ei`}
             icon={Egg}
             count={selectedItem.count}
-            description={<span>Ein {selectedItem.source === 'BREEDING' ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei der Stufe <span className={`${RARITIES[selectedItem.rarity].color} font-bold`}>{RARITIES[selectedItem.rarity].label}</span>. Ab in den Inkubator damit!</span>}
+            description={<span>Ein {selectedItem.source === 'BREEDING' ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei der Stufe <span className={`${RARITIES[selectedItem.base.rarity].color} font-bold`}>{RARITIES[selectedItem.base.rarity].label}</span>. Ab in den Inkubator damit!</span>}
             actionLabel="INKUBIEREN"
             actionIcon={ThermometerSun}
             onAction={() => { onStartIncubation(selectedItem.ids[0]); setSelectedItem(null); }}
@@ -173,7 +268,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
             description="Eine verschlossene Schatzkiste. Enthält ein zufälliges Ei! Was wird wohl drin sein?"
             actionLabel="ÖFFNEN"
             actionIcon={BoxSelect}
-            onAction={() => handleBoxOpen(selectedBox.ids[0], 'BOX')}
+            onAction={() => startLootboxSequence(selectedBox.ids[0], 'BOX')}
             onClose={() => setSelectedBox(null)}
             colorClass="text-yellow-400"
             bgClass="bg-yellow-500"
@@ -198,8 +293,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {ticketItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Ticket className="w-4 h-4 text-pink-400" /> Spezial-Items</h3>
-              
-              {/* HIER: 2 SPALTEN STATT 3 FÜR MEHR PLATZ */}
               <div className="grid grid-cols-2 gap-4">
                   {ticketItems.map((ticket, idx) => (
                       <InventoryCard 
@@ -228,8 +321,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {boxItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-200">
                <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Package className="w-4 h-4 text-yellow-400" /> Schatzkisten</h3>
-              
-              {/* HIER: 2 SPALTEN STATT 3 */}
               <div className="grid grid-cols-2 gap-4">
                   {boxItems.map((box, idx) => (
                       <InventoryCard 
@@ -259,7 +350,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                 <p className="text-sm text-slate-400 max-w-[200px] leading-relaxed">Dein Rucksack ist leer. Besuche den Shop oder züchte Pets!</p>
             </div>
           ) : (
-              /* HIER: 2 SPALTEN STATT 3 */
               <div className="grid grid-cols-2 gap-4">
                   {inventoryItems.map((item, idx) => { 
                       const rarity = RARITIES[item.base.rarity]; 
