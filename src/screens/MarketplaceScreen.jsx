@@ -3,14 +3,12 @@ import { ArrowLeft, Filter, X, Store, Coins, Tag, DollarSign, Egg, Search, Sword
 import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-// --- DETAIL MODAL ---
+// --- DETAIL MODAL (Unverändert) ---
 function MarketDetailModal({ pet, onClose, price, onBuy, isOwner }) {
     if (pet.isEgg) return null;
     const typeInfo = TYPES[pet.type] || TYPES.FIRE;
     const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
     const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
-    
-    // FIX: Sicherer Zugriff auf speciesInfo
     const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt' };
 
     return (
@@ -62,8 +60,8 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             const matchesName = pet.name.toLowerCase().includes(term);
-            // FIX: Sicherer Zugriff für Suche
-            const matchesSpecies = !pet.isEgg && (ZODIAC_ANIMALS[pet.species]?.label || '').toLowerCase().includes(term);
+            const speciesData = ZODIAC_ANIMALS[pet.species];
+            const matchesSpecies = !pet.isEgg && speciesData?.label.toLowerCase().includes(term);
             if (!matchesName && !matchesSpecies) return false;
         }
         if (filterRarity !== 'ALL' && pet.rarity !== filterRarity) return false;
@@ -76,30 +74,88 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         return true;
     };
 
-    // ... (Listen, Actions, etc. bleiben gleich)
-    const buyList = listings.filter(l => checkFilters(l.pet, l.price)).sort((a, b) => b.createdAt - a.createdAt);
-    const rawSellItems = myPets.filter(p => !user.team.includes(p.id)).filter(p => !p.isEgg || (p.isEgg && (p.hatchAt === 0 || !p.hatchAt))).filter(p => checkFilters(p));
+    // --- 1. KAUFEN LISTE (SORTIERT NACH RARITY -> DATUM) ---
+    const buyList = listings
+        .filter(l => checkFilters(l.pet, l.price))
+        .sort((a, b) => {
+            // Sortierung nach Seltenheit (höchste ID zuerst)
+            const rA = RARITIES[a.pet.rarity]?.id || 0;
+            const rB = RARITIES[b.pet.rarity]?.id || 0;
+            
+            if (rB !== rA) return rB - rA;
+            
+            // Wenn Seltenheit gleich, dann neueste zuerst
+            return b.createdAt - a.createdAt;
+        });
+
+
+    // --- 2. VERKAUFEN LISTE (SORTIERT & GESTAPELT) ---
+    const rawSellItems = myPets
+        .filter(p => !user.team.includes(p.id)) 
+        .filter(p => !p.isEgg || (p.isEgg && (p.hatchAt === 0 || !p.hatchAt)))
+        .filter(p => checkFilters(p));
+
     const sellList = [];
     const eggStacks = {};
+
     rawSellItems.forEach(p => {
         if (p.isEgg) {
-            if (!eggStacks[p.rarity]) { eggStacks[p.rarity] = { ...p, id: `stack-${p.rarity}`, isStack: true, count: 0, pets: [] }; }
+            if (!eggStacks[p.rarity]) {
+                eggStacks[p.rarity] = { ...p, id: `stack-${p.rarity}`, isStack: true, count: 0, pets: [] };
+            }
             eggStacks[p.rarity].count++;
             eggStacks[p.rarity].pets.push(p);
-        } else { sellList.push(p); }
+        } else {
+            sellList.push(p);
+        }
     });
-    const finalSellList = [...sellList, ...Object.values(eggStacks)];
-    const handleSellSubmit = () => { if (!selectedForSale || !sellPrice || isNaN(sellPrice) || sellPrice <= 0) return; const price = parseInt(sellPrice); if (selectedForSale.isStack) { const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count)); const petsToSell = selectedForSale.pets.slice(0, qty); petsToSell.forEach(p => onSell(p.id, price)); } else { onSell(selectedForSale.id, price); } setSelectedForSale(null); setSellPrice(''); setSellQuantity(1); }
-    const toggleSaleSelection = (item) => { if (selectedForSale?.id === item.id) { setSelectedForSale(null); setSellPrice(''); setSellQuantity(1); } else { setSelectedForSale(item); setSellPrice(''); setSellQuantity(1); } };
+
+    // Kombinieren und Sortieren nach Seltenheit
+    const finalSellList = [...sellList, ...Object.values(eggStacks)].sort((a, b) => {
+        const rA = RARITIES[a.rarity]?.id || 0;
+        const rB = RARITIES[b.rarity]?.id || 0;
+        if (rB !== rA) return rB - rA;
+        
+        return b.level - a.level; // Bei gleicher Seltenheit: Level (nur bei Pets relevant)
+    });
+
+
+    // --- ACTIONS ---
+    const handleSellSubmit = () => {
+        if (!selectedForSale || !sellPrice || isNaN(sellPrice) || sellPrice <= 0) return;
+        const price = parseInt(sellPrice);
+
+        if (selectedForSale.isStack) {
+            const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
+            const petsToSell = selectedForSale.pets.slice(0, qty);
+            petsToSell.forEach(p => onSell(p.id, price));
+        } else {
+            onSell(selectedForSale.id, price);
+        }
+
+        setSelectedForSale(null);
+        setSellPrice('');
+        setSellQuantity(1);
+    }
+
+    const toggleSaleSelection = (item) => {
+        if (selectedForSale?.id === item.id) { 
+            setSelectedForSale(null); setSellPrice(''); setSellQuantity(1); 
+        } else { 
+            setSelectedForSale(item); setSellPrice(''); setSellQuantity(1); 
+        }
+    };
+
     const resetFilters = () => { setSearchTerm(''); setFilterRarity('ALL'); setFilterType('ALL'); setMinPrice(''); setMaxPrice(''); };
     const activeFilterCount = (filterRarity !== 'ALL' ? 1 : 0) + (filterType !== 'ALL' ? 1 : 0) + (minPrice || maxPrice ? 1 : 0) + (searchTerm ? 1 : 0);
 
     // --- CARD COMPONENT ---
-   const MarketCard = ({ pet, price, seller, isSelected, onClickCard, onClickAction }) => {
+    const MarketCard = ({ pet, price, seller, isSelected, onClickCard, onClickAction }) => {
         const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
         const isEgg = pet.isEgg;
         const type = isEgg ? null : (TYPES[pet.type] || TYPES.FIRE);
         const isStack = pet.isStack; 
+        
         const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt' };
 
         return (
@@ -107,7 +163,6 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                  <div className="p-3 flex items-center gap-4 relative">
                     
                     <div className="flex-1 flex items-center gap-4 cursor-pointer" onClick={() => { if (!isEgg && onClickCard) onClickCard(); }}>
-                        {/* AVATAR TEIL (Unverändert) */}
                         <div className="relative shrink-0">
                             <div className={`absolute -inset-2 ${isEgg ? 'bg-slate-700' : type.bg} opacity-20 blur-xl rounded-full group-hover:opacity-30 transition-opacity`}></div>
                             {isEgg ? (
@@ -121,40 +176,30 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                             {!isEgg && <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30"><div className="bg-black/60 p-1 rounded-full backdrop-blur-sm"><Eye className="w-4 h-4 text-white" /></div></div>}
                         </div>
 
-                        {/* TEXT TEIL (Optimiert) */}
                         <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-center mb-1">
+                                <h3 className={`font-black text-sm truncate ${isSelected ? 'text-green-400' : (isEgg ? 'text-white' : rarity.color)}`}>
+                                    {isStack ? `${rarity.label}e Eier` : (isEgg ? 'Mysteriöses Ei' : pet.name)}
+                                </h3>
+                                <span className={`text-[9px] ${rarity.color} font-bold uppercase bg-black/30 px-1.5 py-0.5 rounded`}>{rarity.label}</span>
+                            </div>
+
                             {isEgg ? (
-                                // EI ANSICHT
-                                <div>
-                                    <h3 className={`font-black text-sm truncate ${rarity.color} mb-1`}>
-                                        {isStack ? `${rarity.label}e Eier` : 'Mysteriöses Ei'}
-                                    </h3>
-                                    <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900/50 p-1.5 rounded border border-white/5 w-fit">
-                                        <HelpCircle className="w-3 h-3" />
-                                        <span className="font-mono text-[10px]">Inhalt unbekannt</span>
-                                    </div>
+                                <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 bg-slate-900/50 p-1.5 rounded border border-white/5 w-fit">
+                                    <HelpCircle className="w-3 h-3" />
+                                    <span className="font-mono text-[10px]">Inhalt unbekannt</span>
                                 </div>
                             ) : (
-                                // PET ANSICHT
-                                <div>
-                                    <div className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase mb-0.5">
-                                        <span>{speciesInfo.label}</span>
-                                        <span className={`px-1.5 py-0.5 rounded ${rarity.bg} text-white text-[8px]`}>{rarity.label}</span>
-                                    </div>
-                                    <h3 className={`font-black text-sm truncate text-white mb-1`}>{pet.name}</h3>
-                                    
-                                    <div className="flex gap-2 text-[10px] text-slate-400 font-mono flex-wrap">
-                                        <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/20 ${type.color} uppercase font-bold border border-white/5`}>{type.label}</span>
-                                        <span className="flex items-center gap-0.5 bg-black/20 px-1.5 py-0.5 rounded"><Swords className="w-2.5 h-2.5 text-red-400" />{pet.atk}</span>
-                                        <span className="flex items-center gap-0.5 bg-black/20 px-1.5 py-0.5 rounded"><Heart className="w-2.5 h-2.5 text-green-400" />{pet.hp}</span>
-                                    </div>
+                                <div className="flex gap-2 mt-1 text-[10px] text-slate-400 font-mono flex-wrap">
+                                    <span className={`flex items-center gap-1 px-1.5 py-0.5 rounded bg-black/20 ${type.color} uppercase font-bold border border-white/5`}>{type.label}</span>
+                                    <span className="flex items-center gap-0.5 bg-black/20 px-1.5 py-0.5 rounded"><Swords className="w-2.5 h-2.5 text-red-400" />{pet.atk}</span>
+                                    <span className="flex items-center gap-0.5 bg-black/20 px-1.5 py-0.5 rounded"><Heart className="w-2.5 h-2.5 text-green-400" />{pet.hp}</span>
                                 </div>
                             )}
                             {seller && <div className="text-[10px] text-slate-600 mt-1 truncate">Verkäufer: {seller}</div>}
                         </div>
                     </div>
 
-                    {/* Preis */}
                     <div onClick={onClickAction} className="cursor-pointer pl-2 border-l border-white/5 flex flex-col items-center justify-center min-w-[60px]">
                         {price ? (
                             <div className="bg-yellow-500 hover:bg-yellow-400 transition-colors text-black font-black px-3 py-2 rounded-xl text-xs shadow-lg flex flex-col items-center gap-0.5 active:scale-95">
@@ -179,7 +224,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                 <div className="fixed inset-0 z-50 flex">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>
                     <div className="relative w-4/5 max-w-xs bg-slate-900 h-full shadow-2xl p-5 flex flex-col gap-6 border-r border-white/10 animate-in slide-in-from-left duration-300">
-                        {/* Sidebar Content gekürzt für Übersicht... */}
+                        {/* Sidebar Content gekürzt... */}
                         <div className="flex justify-between items-center pb-4 border-b border-white/10"><h2 className="text-xl font-black text-white flex items-center gap-2"><Filter className="w-5 h-5 text-cyan-400" /> FILTER</h2><button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-slate-400" /></button></div>
                         <div className="flex-1 overflow-y-auto space-y-6 scrollbar-hide">
                              <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase">Suche</label><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" /><input type="text" placeholder="Name, Art..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-cyan-500" /></div></div>
@@ -249,9 +294,12 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                         />
                                         {isSelected && (
                                             <div className="p-3 mt-[-4px] mx-0.5 border-x border-b border-green-500/30 rounded-b-2xl bg-slate-900/80 animate-in slide-in-from-top-2 mb-3">
+                                                
+                                                {/* MENGEN AUSWAHL (Nur bei Stacks) */}
                                                 {item.isStack && item.count > 1 && (
                                                     <div className="flex items-center justify-between mb-3 bg-black/30 p-2 rounded-xl"><span className="text-xs font-bold text-slate-400 ml-2">Menge:</span><div className="flex items-center gap-3"><button onClick={() => setSellQuantity(Math.max(1, sellQuantity - 1))} className="p-1 bg-slate-700 rounded hover:bg-slate-600"><Minus className="w-4 h-4 text-white" /></button><span className="font-black text-white w-6 text-center">{sellQuantity}</span><button onClick={() => setSellQuantity(Math.min(item.count, sellQuantity + 1))} className="p-1 bg-slate-700 rounded hover:bg-slate-600"><Plus className="w-4 h-4 text-white" /></button></div></div>
                                                 )}
+
                                                 <div className="flex gap-2 items-center">
                                                     <div className="relative flex-1"><div className="absolute inset-y-0 left-3 flex items-center pointer-events-none"><Coins className="w-4 h-4 text-yellow-500" /></div><input type="number" placeholder="Stückpreis" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:border-green-500 font-bold" autoFocus /></div>
                                                     <button onClick={handleSellSubmit} className="bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-3 rounded-xl transition-colors shadow-lg active:scale-95">OK</button>

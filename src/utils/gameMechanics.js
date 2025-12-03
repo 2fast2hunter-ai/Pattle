@@ -118,21 +118,77 @@ export const calculateStatValue = (base, level) => {
 };
 
 export const generateQuests = (category) => {
-  const count = 5; 
+  let count = 5; // Default (Daily)
+  let multiplier = 1;
+
+  if (category === 'DAILY') {
+      count = 5;
+      multiplier = 1; 
+  } else if (category === 'WEEKLY') {
+      count = 10; // Mehr Aufgaben
+      multiplier = 5; 
+  } else if (category === 'MONTHLY') {
+      count = 20; // Viele Aufgaben
+      multiplier = 20; 
+  }
+
   const newQuests = [];
-  let multiplier = category === 'DAILY' ? 1 : (category === 'WEEKLY' ? 5 : 20);
-  for (let i = 0; i < count; i++) {
-      const template = QUEST_TEMPLATES[Math.floor(Math.random() * QUEST_TEMPLATES.length)];
+
+  // 1. Templates gruppieren nach "Kategorie" (Prefix)
+  const groupedTemplates = {};
+  QUEST_TEMPLATES.forEach(template => {
+      const categoryKey = template.type.split('_')[0]; 
+      if (!groupedTemplates[categoryKey]) {
+          groupedTemplates[categoryKey] = [];
+      }
+      groupedTemplates[categoryKey].push(template);
+  });
+
+  // 2. Kategorien mischen
+  const availableCategories = Object.keys(groupedTemplates);
+  // Einfacher Shuffle
+  for (let i = availableCategories.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [availableCategories[i], availableCategories[j]] = [availableCategories[j], availableCategories[i]];
+  }
+
+  // 3. Auswahl der Kategorien für die Aufgaben
+  const selectedCategories = [];
+  
+  // Schritt A: Jede verfügbare Kategorie mindestens 1x hinzufügen (damit Vielfalt garantiert ist)
+  // (Solange wir noch Platz im 'count' haben)
+  for (const cat of availableCategories) {
+      if (selectedCategories.length < count) {
+          selectedCategories.push(cat);
+      }
+  }
+
+  // Schritt B: Den Rest zufällig auffüllen (hier sind Doppelungen erlaubt und gewollt)
+  while (selectedCategories.length < count) {
+      const randomCat = availableCategories[Math.floor(Math.random() * availableCategories.length)];
+      selectedCategories.push(randomCat);
+  }
+
+  // 4. Konkrete Quests generieren
+  selectedCategories.forEach(catKey => {
+      const templatesInCat = groupedTemplates[catKey];
+      // Wähle zufälliges Template aus dieser Kategorie
+      const template = templatesInCat[Math.floor(Math.random() * templatesInCat.length)];
+
       const variance = 0.8 + Math.random() * 0.4;
       const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
+      
       let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
       let rewardType = template.rewardType;
-      if (category === 'MONTHLY' && Math.random() > 0.5) {
+
+      // Bonus-Chance bei monatlichen Quests
+      if (category === 'MONTHLY' && Math.random() > 0.7) { // Etwas seltener
           rewardType = 'EGG_RARE';
           rewardAmount = 1;
       }
+
       newQuests.push({
-          id: Date.now() + Math.random().toString(),
+          id: Date.now() + Math.random().toString(), 
           type: template.type,
           label: template.label,
           target: targetAmount,
@@ -142,7 +198,8 @@ export const generateQuests = (category) => {
           claimed: false,
           category: category
       });
-  }
+  });
+
   return {
       quests: newQuests,
       expiresAt: calculateNextResetTime(category),

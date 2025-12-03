@@ -218,10 +218,8 @@ export const checkAndResetQuests = async (user) => {
     }
 };
 
-export const trackQuestProgress = async (user, actionType, amount = 1) => {
-    if (!user || !user.id || amount === 0) {
-        return;
-    }
+export const trackQuestProgress = async (user, actionType, amount = 1, subTypes = []) => {
+    if (!user || !user.id || amount === 0) return;
 
     const userRef = doc(db, "users", user.id);
 
@@ -236,6 +234,7 @@ export const trackQuestProgress = async (user, actionType, amount = 1) => {
             let updates = {};
             let hasUpdates = false;
 
+            // Alle Quest-Kategorien durchgehen
             ['daily', 'weekly', 'monthly'].forEach(catKey => {
                 const categoryData = userData.quests[catKey];
                 if (!categoryData || !categoryData.quests) return;
@@ -243,7 +242,10 @@ export const trackQuestProgress = async (user, actionType, amount = 1) => {
                 let categoryChanged = false;
                 
                 const updatedList = categoryData.quests.map(quest => {
-                    if (quest.type === actionType && !quest.claimed && quest.progress < quest.target) {
+                    // LOGIK: Ist die Quest vom Haupt-Typ ODER einem der Sub-Typen?
+                    const isMatch = (quest.type === actionType) || (subTypes && subTypes.includes(quest.type));
+                    
+                    if (isMatch && !quest.claimed && quest.progress < quest.target) {
                         const newProgress = Math.min(quest.target, quest.progress + amount);
                         if (newProgress !== quest.progress) {
                             categoryChanged = true;
