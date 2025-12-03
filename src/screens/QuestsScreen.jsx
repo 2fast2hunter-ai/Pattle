@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw, Coins, Gem, Sparkles, Egg, Trophy } from 'lucide-react';
+import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw, Coins, Gem, Sparkles, Egg, Trophy, Info } from 'lucide-react';
 import { claimQuestReward, claimCompositeReward } from '../utils/db';
-import { RARITIES } from '../data/gameData';
+import { RARITIES, TYPES } from '../data/gameData';
 
 // Hilfskomponente für schöne Belohnungs-Badges
 const RewardBadge = ({ type, amount }) => {
@@ -90,6 +90,46 @@ export default function QuestsScreen({ user, onBack }) {
         setClaimingComposite(false);
     }
 
+    // --- NEU: GENERIERT BESCHREIBUNGSTEXT ---
+    const getQuestDescription = (quest) => {
+        const { type, target } = quest;
+        
+        if (type === 'WIN_PVP') return `Gewinne ${target} Kämpfe in der Arena.`;
+        if (type === 'HATCH_EGG') return `Brüte ${target} Eier in der Brutstätte aus.`;
+        if (type === 'BREED_PET') return `Züchte ${target} neue Pets im Labor.`;
+        if (type === 'SPEND_COINS') return `Gib insgesamt ${target} Münzen aus.`;
+        if (type === 'EARN_XP') return `Sammle ${target} Erfahrungspunkte.`;
+        if (type === 'LEVEL_UP_PET') return `Level deine Pets ${target} mal auf.`;
+        
+        // Spezifische Element-Wins
+        if (type.startsWith('WIN_')) {
+            const element = type.split('_')[1];
+            const typeLabel = TYPES[element]?.label || element;
+            return `Gewinne ${target}x mit einem ${typeLabel}-Pet im Team.`;
+        }
+
+        // Spezifische Zucht
+        if (type.startsWith('BREED_')) {
+            const element = type.split('_')[1];
+            const typeLabel = TYPES[element]?.label || element;
+            return `Züchte ${target} Pets vom Typ ${typeLabel}.`;
+        }
+
+        // Spezifisches Brüten (Element oder Rarity)
+        if (type.startsWith('HATCH_')) {
+            const suffix = type.split('_')[1];
+            // Check ob Rarity oder Type
+            const rarityLabel = RARITIES[suffix]?.label;
+            const typeLabel = TYPES[suffix]?.label;
+
+            if (rarityLabel) return `Brüte ${target} Eier der Seltenheit "${rarityLabel}".`;
+            if (typeLabel) return `Brüte ${target} Eier vom Typ ${typeLabel}.`;
+            return `Brüte ${target} spezielle Eier aus.`;
+        }
+
+        return `Erfülle das Ziel ${target} mal.`;
+    };
+
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
             
@@ -151,7 +191,6 @@ export default function QuestsScreen({ user, onBack }) {
                                         Erledige alle Aufgaben für den Bonus!
                                     </p>
                                 </div>
-                                {/* Bonus Vorschau */}
                                 <div className="scale-90 origin-right">
                                     <RewardBadge type={compositeReward.rewardType} amount={compositeReward.rewardAmount} />
                                 </div>
@@ -165,7 +204,7 @@ export default function QuestsScreen({ user, onBack }) {
                                 ></div>
                             </div>
 
-                            <div className="flex justify-between items-center">
+                            <div className="flex justify-between items-center relative z-10">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{completedCount} / {totalQuests} FERTIG</span>
                                 
                                 {claimedComposite ? (
@@ -209,13 +248,21 @@ export default function QuestsScreen({ user, onBack }) {
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex-1 pr-2">
                                             <h3 className={`text-sm font-bold mb-1 ${quest.claimed ? 'text-slate-500 line-through' : 'text-white'}`}>{quest.label}</h3>
-                                            {/* Mini Progress Bar */}
-                                            <div className="flex items-center gap-2">
+                                            
+                                            {/* Progress Bar */}
+                                            <div className="flex items-center gap-2 mb-2">
                                                 <div className="flex-1 h-1.5 bg-slate-900 rounded-full overflow-hidden">
                                                     <div className={`h-full transition-all duration-500 ${isComplete ? 'bg-green-500' : 'bg-blue-500'}`} style={{width: `${percent}%`}}></div>
                                                 </div>
                                                 <span className="text-[10px] font-mono text-slate-400">{quest.progress}/{quest.target}</span>
                                             </div>
+
+                                            {/* NEU: BESCHREIBUNGSTEXT UNTER DEM BALKEN */}
+                                            <p className="text-[10px] text-slate-400 leading-tight flex items-center gap-1">
+                                                <Info className="w-3 h-3 inline opacity-50" />
+                                                {getQuestDescription(quest)}
+                                            </p>
+
                                         </div>
 
                                         {/* Belohnung (Rechts) */}
@@ -225,7 +272,7 @@ export default function QuestsScreen({ user, onBack }) {
                                     </div>
 
                                     {/* Footer Action */}
-                                    <div className="flex justify-end">
+                                    <div className="flex justify-end pt-2 border-t border-white/5 mt-2">
                                         {quest.claimed ? (
                                             <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1 uppercase tracking-wider">
                                                 <CheckCircle2 className="w-3 h-3" /> Fertig
