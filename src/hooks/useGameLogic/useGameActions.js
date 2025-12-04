@@ -29,7 +29,6 @@ export function useGameActions(state, setUserId) {
     const handleLogin = async (firebaseUser, displayName) => { try { await initializeUser(firebaseUser, displayName); setUserId(firebaseUser.uid); } catch (error) { showNotification("Fehler beim Laden der Daten", "error"); setAuthLoading(false); } };
     const handleLogout = () => { auth.signOut(); setUser(null); setUserId(null); setMyPets([]); setCurrentView('auth'); };
 
-    // --- UPDATED: BUY LOOTBOX LOGIC ---
     const buyLootbox = (boxType, cost, currency) => {
         if (!user) return; 
         
@@ -40,14 +39,12 @@ export function useGameActions(state, setUserId) {
                 showNotification("Du hast die Daily Box heute schon abgeholt!", "error");
                 return;
             }
-            // Kein Cost Check nötig, da 0
             const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
             updateUser(user.id, { inventory: newInv, lastDailyBoxClaim: today });
             showNotification(`${LOOTBOXES.DAILY.label} erhalten!`, 'success');
             return;
         }
 
-        // 2. Normal Boxes
         if (currency === 'COINS') {
             if (user.coins < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
             const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
@@ -136,32 +133,25 @@ export function useGameActions(state, setUserId) {
         });
 
         const enemyBattleTeam = [];
-        // --- NEUE GEGNER-LOGIK ---
         for (let i = 0; i < myBattleTeam.length; i++) {
             const playerPet = myBattleTeam[i];
             let enemyLevel = 1;
-            
-            // Level Bestimmung
             if (user.level >= 4) {
                 enemyLevel = playerPet.level;
             } else {
                 enemyLevel = Math.max(1, user.level);
             }
 
-            // Rarity Bestimmung
             let enemyRarity = 'COMMON'; 
             const roll = Math.random() * 100; 
             if (user.level >= 30 && roll > 90) enemyRarity = 'EPIC'; 
             else if (user.level >= 20 && roll > 80) enemyRarity = 'RARE'; 
             else if (user.level >= 10 && roll > 70) enemyRarity = 'UNCOMMON';
             
-            // Gegner generieren (Zufallselement & Spezies)
             const enemyPet = generatePet(enemyLevel, null, enemyRarity, null, 'ENEMY');
             enemyPet.id = `enemy_${i}_${Date.now()}`;
 
-            // Stats anpassen für Balance
             if (user.level >= 4) {
-                // Varianz Funktion: +/- 2
                 const vary = (val) => Math.max(1, val + (Math.floor(Math.random() * 5) - 2));
                 
                 enemyPet.maxHp = vary(playerPet.maxHp);
@@ -172,7 +162,6 @@ export function useGameActions(state, setUserId) {
                 enemyPet.res = vary(playerPet.res);
                 enemyPet.speed = vary(playerPet.speed);
             } else {
-                // Low Level: Standard generierte Stats nutzen
                 enemyPet.hp = enemyPet.maxHp;
             }
             
@@ -253,51 +242,40 @@ export function useGameActions(state, setUserId) {
 
     const handleAddFriend = async (friendId) => { if (!user || !friendId || friendId === user.id) return; const foundUser = await findUserPublic(friendId); if (foundUser) { const newFriends = [...(user.friends || []), { id: foundUser.id, username: foundUser.username, avatar: foundUser.avatar, level: foundUser.level, rating: foundUser.rating }]; updateUser(user.id, { friends: newFriends }); showNotification(`${foundUser.username} hinzugefügt!`, 'success'); } else { showNotification("Spieler nicht gefunden.", 'error'); } };
     const handleBuyMarket = async (listingId) => { if (!user) return; const result = await buyMarketItem(user, listingId); if (result.success) { showNotification(result.message, 'success'); trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, 1); } else { showNotification(result.message, 'error'); } };
-    const handleSellMarket = async (petsToSell, totalPrice) => { if (!user) return; const petArray = Array.isArray(petsToSell) ? petsToSell : [petsToSell]; if (petArray.length === 0) return; const newListing = { sellerName: user.username, sellerId: user.id, price: totalPrice, pet: petArray[0], pets: petArray, quantity: petArray.length, isBundle: petArray.length > 1, createdAt: Date.now() }; await createMarketListing(newListing); for (const p of petArray) { await removePetFromDB(p.id); } showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt!` : "Angebot erstellt!", 'success'); };
+    
+    // --- FIXED: SELL MARKET LOGIC ---
+    const handleSellMarket = async (petsToSell, totalPrice) => { 
+        if (!user) return; 
+        const petArray = Array.isArray(petsToSell) ? petsToSell : [petsToSell]; 
+        if (petArray.length === 0) return; 
+        
+        // Wichtig: Wir speichern das erste Pet als Repräsentant für das Listing
+        const newListing = { 
+            sellerName: user.username, 
+            sellerId: user.id, 
+            price: totalPrice, 
+            pet: petArray[0], 
+            pets: petArray, 
+            quantity: petArray.length, 
+            isBundle: petArray.length > 1, 
+            createdAt: Date.now() 
+        }; 
+        
+        await createMarketListing(newListing); 
+        
+        // Löschen aus der 'pets' Collection
+        for (const p of petArray) { 
+            if (p && p.id) {
+                await removePetFromDB(p.id); 
+            }
+        } 
+        
+        showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt!` : "Angebot erstellt!", 'success'); 
+    };
+    
     const addToTeam = (petId) => { if (!user || selectedSlotForTeam === null) return; const pet = myPets.find(p => p.id === petId); if (!pet) return; if (pet.isEgg) { showNotification("Eier kämpfen nicht!", 'error'); return; } const currentTeamIds = user.team || []; const newPetType = pet.type; for (let i = 0; i < currentTeamIds.length; i++) { if (i === selectedSlotForTeam) continue; const slotPetId = currentTeamIds[i]; if (slotPetId) { const slotPet = myPets.find(p => p.id === slotPetId); if (slotPet && slotPet.type === newPetType) { const typeLabel = TYPES[newPetType] ? TYPES[newPetType].label : newPetType; showNotification(`Ein ${typeLabel}-Pet ist bereits im Team!`, 'error'); return; } } } const newTeam = [...currentTeamIds]; while(newTeam.length <= selectedSlotForTeam) { newTeam.push(null); } const existingIndex = newTeam.indexOf(petId); if (existingIndex !== -1) { newTeam[existingIndex] = null; } newTeam[selectedSlotForTeam] = petId; updateUser(user.id, { team: newTeam }); setCurrentView('team-edit'); state.setSelectedSlotForTeam(null); };
     const removeFromTeam = (index) => { if (!user) return; const newTeam = [...user.team]; newTeam[index] = null; updateUser(user.id, { team: newTeam }); };
-    
-    const hatchEgg = async (petId, customName) => { 
-        if (!user) return; 
-        const pet = myPets.find(p => p.id === petId); 
-        if (!pet || !pet.isEgg) return; 
-        if (Date.now() < pet.hatchAt) { showNotification("Noch nicht bereit!", 'error'); return; } 
-        
-        await updatePetInDB(petId, { isEgg: false, name: customName || pet.name }); 
-        
-        const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
-        const xpGain = rarityInfo.hatchXp || 5;
-        
-        let newLevel = user.level || 1;
-        let newXp = (user.xp || 0) + xpGain;
-        let newXpToNext = user.xpToNextLevel || 100;
-        let newCoins = user.coins || 0;
-        let newGems = user.gems || 0;
-
-        while (newXp >= newXpToNext) { 
-            newLevel++; 
-            newXp -= newXpToNext; 
-            newXpToNext = Math.floor(newXpToNext * 1.5); 
-            newCoins += 1000; 
-            newGems += 5; 
-        }
-
-        await updateUser(user.id, { 
-            level: newLevel,
-            xp: newXp,
-            xpToNextLevel: newXpToNext,
-            coins: newCoins,
-            gems: newGems,
-            stats: { ...user.stats, hatched: (user.stats?.hatched || 0) + 1 } 
-        }); 
-        
-        const tags = ['HATCH_EGG', `HATCH_${pet.rarity}`, `HATCH_${pet.type}`]; 
-        trackQuestProgress(user, 'HATCH_EGG', 1, tags); 
-        trackQuestProgress(user, 'EARN_XP', xpGain);
-        
-        showNotification(`Geschlüpft: ${customName || pet.name} (+${xpGain} XP)!`, 'success'); 
-    };
-
+    const hatchEgg = (petId, customName) => { if (!user) return; const pet = myPets.find(p => p.id === petId); if (!pet || !pet.isEgg) return; if (Date.now() < pet.hatchAt) { showNotification("Noch nicht bereit!", 'error'); return; } updatePetInDB(petId, { isEgg: false, name: customName || pet.name }); updateUser(user.id, { stats: { ...user.stats, hatched: (user.stats?.hatched || 0) + 1 } }); const tags = ['HATCH_EGG', `HATCH_${pet.rarity}`, `HATCH_${pet.type}`]; trackQuestProgress(user, 'HATCH_EGG', 1, tags); showNotification(`Geschlüpft: ${customName || pet.name}!`, 'success'); };
     const startIncubation = async (id, type) => { if (!user) return null; if (type === 'BOX') { const box = user.inventory.find(i => i.id === id); if (!box) return null; const newInv = user.inventory.filter(i => i.id !== id); const newPet = generatePet(1, null, determineRarity(box.variant), null, box.variant === 'STARTER' ? 'STARTER' : 'SHOP'); newPet.isEgg = box.variant !== 'STARTER'; newPet.hatchAt = 0; await addPetToDB(newPet, user.id); await updateUser(user.id, { inventory: newInv }); return newPet; } else { const pet = myPets.find(p => p.id === id); if (myPets.filter(p => p.isEgg && p.hatchAt > 0).length >= getUnlockedHatcherySlots(user.level)) { showNotification("Brutstätte voll!", 'error'); return null; } await updatePetInDB(id, { hatchAt: Date.now() + RARITIES[pet.rarity].hatchDuration }); trackQuestProgress(user, QUEST_TYPES.HATCH_EGG, 1); setCurrentView('hatchery'); showNotification("Inkubation gestartet!", 'success'); return null; } };
     
     const breedPets = async (parent1Id, parent2Id) => { 

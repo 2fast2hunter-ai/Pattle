@@ -3,9 +3,9 @@ import { ArrowLeft, Filter, X, Store, Coins, Tag, DollarSign, Egg, Search, Sword
 import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-// --- DETAIL MODAL (Unverändert) ---
+// --- DETAIL MODAL ---
 function MarketDetailModal({ pet, onClose, price, onBuy, isOwner }) {
-    if (pet.isEgg) return null;
+    if (!pet || pet.isEgg) return null;
     const typeInfo = TYPES[pet.type] || TYPES.FIRE;
     const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
     const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
@@ -57,9 +57,10 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
     const [maxPrice, setMaxPrice] = useState('');
 
     const checkFilters = (pet, price = null) => {
+        if (!pet) return false; // Safety check
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
-            const matchesName = pet.name.toLowerCase().includes(term);
+            const matchesName = pet.name && pet.name.toLowerCase().includes(term);
             const speciesData = ZODIAC_ANIMALS[pet.species];
             const matchesSpecies = !pet.isEgg && speciesData?.label.toLowerCase().includes(term);
             if (!matchesName && !matchesSpecies) return false;
@@ -74,17 +75,14 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         return true;
     };
 
-    // --- 1. KAUFEN LISTE (SORTIERT NACH RARITY -> DATUM) ---
+    // --- 1. KAUFEN LISTE (GEFILTERT & SORTIERT) ---
     const buyList = listings
+        .filter(l => l && l.pet && typeof l.pet === 'object') // Filter broken listings
         .filter(l => checkFilters(l.pet, l.price))
         .sort((a, b) => {
-            // Sortierung nach Seltenheit (höchste ID zuerst)
             const rA = RARITIES[a.pet.rarity]?.id || 0;
             const rB = RARITIES[b.pet.rarity]?.id || 0;
-            
             if (rB !== rA) return rB - rA;
-            
-            // Wenn Seltenheit gleich, dann neueste zuerst
             return b.createdAt - a.createdAt;
         });
 
@@ -100,23 +98,22 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
     rawSellItems.forEach(p => {
         if (p.isEgg) {
-            if (!eggStacks[p.rarity]) {
-                eggStacks[p.rarity] = { ...p, id: `stack-${p.rarity}`, isStack: true, count: 0, pets: [] };
+            const stackKey = `${p.rarity}`;
+            if (!eggStacks[stackKey]) {
+                eggStacks[stackKey] = { ...p, id: `stack-${p.rarity}`, isStack: true, count: 0, pets: [] };
             }
-            eggStacks[p.rarity].count++;
-            eggStacks[p.rarity].pets.push(p);
+            eggStacks[stackKey].count++;
+            eggStacks[stackKey].pets.push(p);
         } else {
             sellList.push(p);
         }
     });
 
-    // Kombinieren und Sortieren nach Seltenheit
     const finalSellList = [...sellList, ...Object.values(eggStacks)].sort((a, b) => {
         const rA = RARITIES[a.rarity]?.id || 0;
         const rB = RARITIES[b.rarity]?.id || 0;
         if (rB !== rA) return rB - rA;
-        
-        return b.level - a.level; // Bei gleicher Seltenheit: Level (nur bei Pets relevant)
+        return b.level - a.level;
     });
 
 
@@ -127,10 +124,18 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
         if (selectedForSale.isStack) {
             const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
+            // Wir nehmen die echten Pet-Objekte aus dem Stack
             const petsToSell = selectedForSale.pets.slice(0, qty);
-            petsToSell.forEach(p => onSell(p.id, price));
+            
+            // Berechne Gesamtpreis für das Listing
+            const totalPrice = price * qty;
+            
+            // Übergebe das Array von Objekten
+            onSell(petsToSell, totalPrice);
         } else {
-            onSell(selectedForSale.id, price);
+            // Übergebe das einzelne Objekt (als Array oder direkt, je nach Implementierung in App.jsx/useGameActions)
+            // useGameActions erwartet ein Array oder Objekt
+            onSell(selectedForSale, price);
         }
 
         setSelectedForSale(null);
@@ -150,13 +155,16 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
     const activeFilterCount = (filterRarity !== 'ALL' ? 1 : 0) + (filterType !== 'ALL' ? 1 : 0) + (minPrice || maxPrice ? 1 : 0) + (searchTerm ? 1 : 0);
 
     // --- CARD COMPONENT ---
-    const MarketCard = ({ pet, price, seller, isSelected, onClickCard, onClickAction }) => {
+    const MarketCard = ({ pet, price, seller, isSelected, onClickCard, onClickAction, quantity }) => {
+        if (!pet) return null;
+
         const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
         const isEgg = pet.isEgg;
         const type = isEgg ? null : (TYPES[pet.type] || TYPES.FIRE);
-        const isStack = pet.isStack; 
         
-        const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt' };
+        // Bestimme, ob eine Menge angezeigt werden soll (vom Stack oder vom Listing)
+        const displayCount = pet.isStack ? pet.count : (quantity > 1 ? quantity : 1);
+        const showCount = displayCount > 1;
 
         return (
             <div className={`bg-slate-800 rounded-2xl border-2 transition-all overflow-hidden ${isSelected ? 'border-green-500 shadow-lg shadow-green-900/20' : 'border-white/5 hover:bg-slate-750'} group`}>
@@ -171,15 +179,15 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                 <PetAvatar pet={pet} className="w-16 h-16 relative z-10 drop-shadow-md" />
                             )}
                             {!isEgg && <div className="absolute -bottom-1 -right-1 bg-slate-900 text-white text-[10px] font-black px-1.5 py-0.5 rounded border border-white/10 z-20">Lvl {pet.level}</div>}
-                            {isStack && <div className="absolute -top-1 -right-1 bg-white text-slate-900 text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg z-20">x{pet.count}</div>}
-                            {!isStack && isEgg && <div className="absolute -bottom-1 -right-1 bg-slate-950 text-slate-400 text-[10px] font-black px-1.5 py-0.5 rounded border border-white/10 z-20">EI</div>}
+                            {showCount && <div className="absolute -top-1 -right-1 bg-white text-slate-900 text-[10px] font-black px-1.5 py-0.5 rounded shadow-lg z-20">x{displayCount}</div>}
+                            {!showCount && isEgg && <div className="absolute -bottom-1 -right-1 bg-slate-950 text-slate-400 text-[10px] font-black px-1.5 py-0.5 rounded border border-white/10 z-20">EI</div>}
                             {!isEgg && <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-30"><div className="bg-black/60 p-1 rounded-full backdrop-blur-sm"><Eye className="w-4 h-4 text-white" /></div></div>}
                         </div>
 
                         <div className="flex-1 min-w-0">
                             <div className="flex justify-between items-center mb-1">
                                 <h3 className={`font-black text-sm truncate ${isSelected ? 'text-green-400' : (isEgg ? 'text-white' : rarity.color)}`}>
-                                    {isStack ? `${rarity.label}e Eier` : (isEgg ? 'Mysteriöses Ei' : pet.name)}
+                                    {pet.isStack ? `${rarity.label}e Eier` : (isEgg ? 'Mysteriöses Ei' : pet.name)}
                                 </h3>
                                 <span className={`text-[9px] ${rarity.color} font-bold uppercase bg-black/30 px-1.5 py-0.5 rounded`}>{rarity.label}</span>
                             </div>
@@ -224,7 +232,6 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                 <div className="fixed inset-0 z-50 flex">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>
                     <div className="relative w-4/5 max-w-xs bg-slate-900 h-full shadow-2xl p-5 flex flex-col gap-6 border-r border-white/10 animate-in slide-in-from-left duration-300">
-                        {/* Sidebar Content gekürzt... */}
                         <div className="flex justify-between items-center pb-4 border-b border-white/10"><h2 className="text-xl font-black text-white flex items-center gap-2"><Filter className="w-5 h-5 text-cyan-400" /> FILTER</h2><button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-slate-400" /></button></div>
                         <div className="flex-1 overflow-y-auto space-y-6 scrollbar-hide">
                              <div className="space-y-2"><label className="text-xs font-bold text-slate-500 uppercase">Suche</label><div className="relative"><Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" /><input type="text" placeholder="Name, Art..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-cyan-500" /></div></div>
