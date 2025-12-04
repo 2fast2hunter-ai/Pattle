@@ -2,15 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Optionaler globaler Style für den dunklen Hintergrund */
+:root {
+  /* Safe Area Variablen für Notches und Home Bars */
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+}
+
 body {
-  @apply bg-slate-900 text-white;
+  @apply bg-slate-950 text-white;
   margin: 0;
   padding: 0;
-  height: 100vh;
+  /* Nutzt die dynamische Viewport-Höhe für mobile Browser */
+  height: 100dvh;
   width: 100vw;
+  overflow: hidden;
+  /* Verhindert "Bounce" Effekt auf iOS */
+  overscroll-behavior: none;
 }
+
 #root {
   height: 100%;
   width: 100%;
+  /* Padding für Safe Areas */
+  padding-top: var(--sat);
+  padding-bottom: var(--sab);
+  padding-left: var(--sal);
+  padding-right: var(--sar);
+}
+
+/* Scrollbar verstecken für sauberen Look */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }

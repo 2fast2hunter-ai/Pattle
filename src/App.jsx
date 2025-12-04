@@ -1,9 +1,9 @@
 import React from 'react';
 import './App.css';
 import { useGameLogic } from './hooks/useGameLogic';
-import { AlertTriangle, RefreshCw, AlertCircle, Loader2 } from 'lucide-react';
+import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
 
-// Components (BottomNav ENTFERNT)
+// Components
 import { HeaderHUD } from "./components/GameLayout"; 
 import Notification from "./components/ui/Notification";
 import GameModals from "./components/GameModals";
@@ -82,18 +82,19 @@ export default function App() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-slate-900 font-sans text-white max-w-md mx-auto shadow-2xl overflow-hidden border-x border-slate-800 relative">
+    <div className="flex flex-col h-full w-full bg-slate-900 font-sans text-white sm:max-w-md mx-auto shadow-2xl overflow-hidden sm:border-x border-slate-800 relative">
       
       {/* GLOBAL UI OVERLAYS */}
       {notification && <Notification notification={notification} />}
       {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
       {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
       
-      <HeaderHUD user={user} />
+      {/* Header wird in Battles ausgeblendet für mehr Platz */}
+      {currentView !== 'battle' && <HeaderHUD user={user} />}
       
       <main className="flex-1 relative overflow-hidden bg-slate-900">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
-        <div className="h-full overflow-y-auto p-4 scrollbar-hide">
+        <div className="h-full overflow-y-auto p-4 scrollbar-hide pb-10">
           
           {/* SCREEN ROUTING */}
           
@@ -207,11 +208,7 @@ export default function App() {
               onBack={() => setCurrentView('pet-hub')} 
               onSelectPet={(id) => { 
                 const p = myPets.find(p => p.id === id); 
-                // WICHTIG: Nur geschlüpfte Pets öffnen Details
-                if (p.isEgg) {
-                    // Optional: Kurze Info, dass es ein Ei ist
-                    return; 
-                }
+                if (p.isEgg) return; 
                 setSelectedPetDetail(p); 
                 setCurrentView('pet-detail'); 
               }} 
@@ -249,7 +246,6 @@ export default function App() {
           {currentView === 'profile' && (
             <ProfileScreen 
               user={user} 
-              // ÄNDERUNG: Wir übergeben jetzt das ganze Array, nicht nur die Länge
               pets={myPets} 
               onViewFriend={(friend) => { 
                 setSelectedFriend(friend); 
@@ -278,7 +274,6 @@ export default function App() {
 
         </div>
       </main>
-      {/* BOTTOM NAV WURDE ENTFERNT */}
     </div>
   );
 }
