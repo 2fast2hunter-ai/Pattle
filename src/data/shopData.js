@@ -14,14 +14,14 @@ export const LOOTBOXES = {
     PREMIUM: {
         id: 'PREMIUM',
         label: 'Premium Box',
-        cost: 7500,
+        cost: 2500,
         currency: 'COINS',
         drops: {
-            LEGENDARY: 1.23,
-            EPIC: 6.27,
-            RARE: 18.17,
-            UNCOMMON: 50.34,
-            COMMON: 24.00
+            LEGENDARY: 0.50,
+            EPIC: 2.00,
+            RARE: 5.00,
+            UNCOMMON: 20.00,
+            COMMON: 72.50
         }
     },
     MASTER: {
