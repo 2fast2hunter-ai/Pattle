@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock } from 'lucide-react';
-import { SHOP_ITEMS, LOOTBOXES, RARITIES } from '../data/gameData'; 
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp } from 'lucide-react';
+import { SHOP_ITEMS, LOOTBOXES, RARITIES, AD_REWARDS } from '../data/gameData'; 
 import AdModal from '../components/ui/AdModal';
 import { showRewardedAd } from '../utils/adManager';
 
@@ -8,28 +8,35 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const [viewingBox, setViewingBox] = useState(null); 
     const [showDevAdModal, setShowDevAdModal] = useState(false);
     
-    // COOLDOWN LOGIK (10 Minuten)
-    const AD_COOLDOWN_MS = 10 * 60 * 1000;
-    const [timeLeft, setTimeLeft] = useState(0);
+    // Temporärer State, um zu wissen, welche Belohnung gerade angefordert wird
+    const [pendingReward, setPendingReward] = useState(null);
 
-    // Timer Hook
+    const AD_COOLDOWN_MS = 10 * 60 * 1000;
+    const [adTimers, setAdTimers] = useState({}); // Speichert Restzeit pro Reward-ID
+
+    // Timer Hook: Berechnet für JEDE Belohnung die Restzeit
     useEffect(() => {
-        const updateTimer = () => {
-            if (!user?.lastAdWatchTime) {
-                setTimeLeft(0);
-                return;
-            }
-            const diff = Date.now() - user.lastAdWatchTime;
-            const remaining = Math.max(0, AD_COOLDOWN_MS - diff);
-            setTimeLeft(remaining);
+        const updateTimers = () => {
+            const now = Date.now();
+            const newTimers = {};
+            
+            AD_REWARDS.forEach(reward => {
+                const lastClaim = user?.adClaims?.[reward.id] || 0;
+                const diff = now - lastClaim;
+                if (diff < AD_COOLDOWN_MS) {
+                    newTimers[reward.id] = AD_COOLDOWN_MS - diff;
+                } else {
+                    newTimers[reward.id] = 0;
+                }
+            });
+            setAdTimers(newTimers);
         };
 
-        updateTimer(); // Initial
-        const interval = setInterval(updateTimer, 1000); // Jede Sekunde
+        updateTimers(); 
+        const interval = setInterval(updateTimers, 1000);
         return () => clearInterval(interval);
-    }, [user?.lastAdWatchTime]);
+    }, [user?.adClaims]);
 
-    // Formatierung MM:SS
     const formatTime = (ms) => {
         const m = Math.floor(ms / 60000);
         const s = Math.floor((ms % 60000) / 1000);
@@ -64,15 +71,19 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
         return user?.lastDailyBoxClaim !== today;
     };
 
-    const handleAdClick = () => {
-        if (timeLeft > 0) return; // Klick verhindern wenn Cooldown läuft
+    const handleAdClick = (reward) => {
+        if (adTimers[reward.id] > 0) return; // Cooldown aktiv
+
+        setPendingReward(reward);
 
         showRewardedAd({
             onReward: () => {
-                onWatchAd(); 
+                onWatchAd(reward); // Belohnung auszahlen
+                setPendingReward(null);
             },
             onError: () => {
                 alert("Werbung konnte nicht geladen werden. Bitte deaktiviere deinen AdBlocker.");
+                setPendingReward(null);
             },
             onOpenDevModal: () => {
                 setShowDevAdModal(true);
@@ -86,7 +97,12 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
             {showDevAdModal && (
                 <AdModal 
                     onClose={() => setShowDevAdModal(false)} 
-                    onReward={() => { onWatchAd(); }} 
+                    onReward={() => { 
+                        if (pendingReward) {
+                            onWatchAd(pendingReward);
+                            setPendingReward(null);
+                        }
+                    }} 
                 />
             )}
 
@@ -161,44 +177,57 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
 
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
 
-               {/* FREE STUFF */}
-               <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 blur-[50px] rounded-full pointer-events-none"></div>
-                    
-                    <div className="relative z-10">
-                        <h3 className="font-black text-white text-lg italic uppercase mb-1">Gratis Edelsteine</h3>
-                        <div className="flex items-center gap-1 text-pink-300 text-xs font-bold">
-                            {timeLeft > 0 ? (
-                                <>
-                                    <Clock className="w-4 h-4" />
-                                    <span>Wartezeit</span>
-                                </>
-                            ) : (
-                                <>
-                                    <PlayCircle className="w-4 h-4" />
-                                    <span>Video ansehen</span>
-                                </>
-                            )}
-                        </div>
+               {/* FREE STUFF GRID */}
+               <div>
+                    <div className="flex items-center gap-2 mb-3 text-indigo-300 px-1">
+                        <PlayCircle className="w-4 h-4" />
+                        <h3 className="text-xs font-black uppercase tracking-widest">Gratis & Boosts</h3>
                     </div>
 
-                    <button 
-                        onClick={handleAdClick}
-                        disabled={timeLeft > 0}
-                        className={`
-                            relative z-10 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg flex items-center gap-2 transition-all
-                            ${timeLeft > 0 
-                                ? 'bg-slate-700 text-slate-400 cursor-not-allowed border border-white/5' 
-                                : 'bg-white text-indigo-900 hover:scale-105 active:scale-95'
-                            }
-                        `}
-                    >
-                        {timeLeft > 0 ? (
-                            <span>{formatTime(timeLeft)}</span>
-                        ) : (
-                            <>+ {SHOP_ITEMS.AD_REWARD.rewardAmount} <Gem className="w-4 h-4 fill-indigo-900" /></>
-                        )}
-                    </button>
+                    <div className="grid grid-cols-2 gap-3">
+                        {AD_REWARDS.map((reward) => {
+                            const cooldown = adTimers[reward.id];
+                            const isReady = !cooldown || cooldown <= 0;
+                            
+                            return (
+                                <button 
+                                    key={reward.id}
+                                    onClick={() => handleAdClick(reward)}
+                                    disabled={!isReady}
+                                    className={`
+                                        bg-slate-800 border border-white/5 rounded-2xl p-3 flex flex-col items-center text-center relative overflow-hidden group transition-all
+                                        ${isReady ? 'hover:bg-slate-750 hover:border-white/10 active:scale-95 cursor-pointer' : 'opacity-75 cursor-not-allowed'}
+                                    `}
+                                >
+                                    {/* Background Glow */}
+                                    {isReady && <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>}
+                                    
+                                    <div className="w-10 h-10 rounded-full bg-black/30 flex items-center justify-center mb-2 shadow-inner border border-white/5 relative z-10">
+                                        {reward.type === 'GEMS' && <Gem className="w-5 h-5 text-pink-400 drop-shadow-md" />}
+                                        {reward.type === 'COINS' && <Coins className="w-5 h-5 text-yellow-400 drop-shadow-md" />}
+                                        {reward.type === 'BUFF' && reward.buffType === 'COIN_BOOST' && <div className="relative"><Coins className="w-5 h-5 text-yellow-400" /><ArrowUp className="w-3 h-3 text-green-400 absolute -top-1 -right-1 bg-black/50 rounded-full" /></div>}
+                                        {reward.type === 'BUFF' && reward.buffType === 'XP_BOOST' && <div className="relative"><Star className="w-5 h-5 text-green-400" /><ArrowUp className="w-3 h-3 text-white absolute -top-1 -right-1 bg-black/50 rounded-full" /></div>}
+                                    </div>
+
+                                    <div className="relative z-10">
+                                        <div className="text-[10px] font-bold text-slate-400 uppercase mb-0.5 leading-tight">{reward.label}</div>
+                                    </div>
+
+                                    {/* Status / Timer */}
+                                    <div className={`
+                                        mt-2 w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 relative z-10
+                                        ${isReady ? 'bg-white text-indigo-900' : 'bg-slate-900 text-slate-500 border border-white/5'}
+                                    `}>
+                                        {isReady ? (
+                                            <><PlayCircle className="w-3 h-3" /> Video</>
+                                        ) : (
+                                            <><Clock className="w-3 h-3" /> {formatTime(cooldown)}</>
+                                        )}
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
                </div>
 
                 {/* LOOTBOXEN */}

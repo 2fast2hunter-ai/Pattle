@@ -68,20 +68,49 @@ export function useBattleActions(state, showNotification) {
         const currentDailyChange = isNewDay ? 0 : (user.dailyEloChange || 0);
         const newDailyChange = currentDailyChange + eloChange;
 
+        let xpGain = reward.xp;
+        let coinsGain = reward.coins;
+        
+        // Check for Buffs
+        const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
+        let newBuffs = { ...currentBuffs };
+
+        if (currentBuffs.coinBoostMatches > 0) {
+            coinsGain *= 2;
+            newBuffs.coinBoostMatches -= 1;
+            showNotification("Doppelte Münzen aktiviert!", "success");
+        }
+        if (currentBuffs.xpBoostMatches > 0) {
+            xpGain *= 2;
+            newBuffs.xpBoostMatches -= 1;
+            showNotification("Doppelte XP aktiviert!", "success");
+        }
+
         let newLevel = user.level || 1;
-        let newXp = (user.xp || 0) + reward.xp;
+        let newXp = (user.xp || 0) + xpGain;
         let newXpToNext = user.xpToNextLevel || 100; 
-        let newCoins = (user.coins || 0) + reward.coins;
+        let newCoins = (user.coins || 0) + coinsGain;
         let newGems = user.gems || 0;
         
         while (newXp >= newXpToNext) { newLevel++; newXp -= newXpToNext; newXpToNext = Math.floor(newXpToNext * 1.5); newCoins += 1000; newGems += 5; }
 
-        await updateUser(user.id, { coins: newCoins, gems: newGems, rating: (user.rating || 1000) + eloChange, xp: newXp, level: newLevel, xpToNextLevel: newXpToNext, dailyEloChange: newDailyChange, lastEloDate: today, stats: { ...user.stats, pvpWins: (user.stats?.pvpWins || 0) + 1, pvpTotal: (user.stats?.pvpTotal || 0) + 1 } });
+        await updateUser(user.id, { 
+            coins: newCoins, 
+            gems: newGems, 
+            rating: (user.rating || 1000) + eloChange, 
+            xp: newXp, 
+            level: newLevel, 
+            xpToNextLevel: newXpToNext, 
+            dailyEloChange: newDailyChange, 
+            lastEloDate: today, 
+            stats: { ...user.stats, pvpWins: (user.stats?.pvpWins || 0) + 1, pvpTotal: (user.stats?.pvpTotal || 0) + 1 },
+            buffs: newBuffs // Update buffs in DB
+        });
 
         const questTags = ['WIN_PVP'];
         if (winningTeamIds && winningTeamIds.length > 0) { const firstPet = myPets.find(p => p.id === winningTeamIds[0]); if (firstPet) { questTags.push(`WIN_${firstPet.type}`); } }
         trackQuestProgress(user, 'WIN_PVP', 1, questTags);
-        trackQuestProgress(user, 'EARN_XP', reward.xp);
+        trackQuestProgress(user, 'EARN_XP', xpGain);
 
         const idsToLevel = winningTeamIds || (state.activeBattle ? state.activeBattle.myTeam.map(p => p.id) : []);
         idsToLevel.forEach(petId => {
@@ -107,11 +136,48 @@ export function useBattleActions(state, showNotification) {
         const isNewDay = user.lastEloDate !== today;
         const currentDailyChange = isNewDay ? 0 : (user.dailyEloChange || 0);
         const newDailyChange = currentDailyChange + eloChange;
-        const lossReward = { xp: 10, coins: 5 }; const petXpGain = 10; 
-        let newLevel = user.level || 1; let newXp = (user.xp || 0) + lossReward.xp; let newXpToNext = user.xpToNextLevel || 100; let newCoins = (user.coins || 0) + lossReward.coins; let newGems = user.gems || 0;
+        
+        let xpGain = 10;
+        let coinsGain = 5;
+
+        // Check for Buffs (Even on loss?)
+        // Usually buffs apply on wins, but user said "next 10 battles".
+        // Assuming it consumes a charge even on loss if it grants bonus.
+        // Or we can decide to only consume on win. "next 10 battles" implies any battle.
+        // Let's apply it to be consistent with "battles".
+
+        const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
+        let newBuffs = { ...currentBuffs };
+
+        if (currentBuffs.coinBoostMatches > 0) {
+            coinsGain *= 2;
+            newBuffs.coinBoostMatches -= 1;
+            showNotification("Doppelte Münzen aktiviert!", "success");
+        }
+        if (currentBuffs.xpBoostMatches > 0) {
+            xpGain *= 2;
+            newBuffs.xpBoostMatches -= 1;
+            showNotification("Doppelte XP aktiviert!", "success");
+        }
+
+        let newLevel = user.level || 1; let newXp = (user.xp || 0) + xpGain; let newXpToNext = user.xpToNextLevel || 100; let newCoins = (user.coins || 0) + coinsGain; let newGems = user.gems || 0;
         while (newXp >= newXpToNext) { newLevel++; newXp -= newXpToNext; newXpToNext = Math.floor(newXpToNext * 1.5); newCoins += 1000; newGems += 5; }
-        await updateUser(user.id, { rating: Math.max(0, (user.rating || 1000) + eloChange), xp: newXp, level: newLevel, xpToNextLevel: newXpToNext, coins: newCoins, gems: newGems, dailyEloChange: newDailyChange, lastEloDate: today, stats: { ...user.stats, pvpTotal: (user.stats?.pvpTotal || 0) + 1 } });
+        
+        await updateUser(user.id, { 
+            rating: Math.max(0, (user.rating || 1000) + eloChange), 
+            xp: newXp, 
+            level: newLevel, 
+            xpToNextLevel: newXpToNext, 
+            coins: newCoins, 
+            gems: newGems, 
+            dailyEloChange: newDailyChange, 
+            lastEloDate: today, 
+            stats: { ...user.stats, pvpTotal: (user.stats?.pvpTotal || 0) + 1 },
+            buffs: newBuffs // Update buffs
+        });
+        
         const idsToLevel = state.activeBattle ? state.activeBattle.myTeam.map(p => p.id) : [];
+        const petXpGain = 10;
         idsToLevel.forEach(petId => {
             const pet = myPets.find(p => p.id === petId);
             if(pet) {

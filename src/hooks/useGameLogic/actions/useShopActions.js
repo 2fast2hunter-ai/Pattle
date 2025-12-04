@@ -56,22 +56,41 @@ export function useShopActions(state, showNotification) {
         showNotification(`${item.tickets} Zucht-Tickets gekauft und im Inventar abgelegt!`, 'success');
     };
 
-    const watchAdForReward = async () => {
-        if (!user) return;
+    // UPDATE: Akzeptiert nun das spezifische Reward-Objekt
+    const watchAdForReward = async (reward) => {
+        if (!user || !reward) return;
         
-        const reward = SHOP_ITEMS.AD_REWARD;
+        // Speichere den Zeitstempel spezifisch für DIESE Belohnung
+        const currentClaims = user.adClaims || {};
         let updateData = {
-            lastAdWatchTime: Date.now() // <--- ZEITSTEMPEL SPEICHERN
+            adClaims: {
+                ...currentClaims,
+                [reward.id]: Date.now() // Z.B. { 'GEMS_5': 1715... }
+            }
         };
         
-        if (reward.rewardType === 'GEMS') {
-            updateData.gems = (user.gems || 0) + reward.rewardAmount;
-        } else if (reward.rewardType === 'COINS') {
-            updateData.coins = (user.coins || 0) + reward.rewardAmount;
+        // Belohnung gutschreiben
+        if (reward.type === 'GEMS') {
+            updateData.gems = (user.gems || 0) + reward.amount;
+        } else if (reward.type === 'COINS') {
+            updateData.coins = (user.coins || 0) + reward.amount;
+        } else if (reward.type === 'BUFF') {
+            const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
+            if (reward.buffType === 'COIN_BOOST') {
+                updateData.buffs = {
+                    ...currentBuffs,
+                    coinBoostMatches: (currentBuffs.coinBoostMatches || 0) + reward.amount
+                };
+            } else if (reward.buffType === 'XP_BOOST') {
+                updateData.buffs = {
+                    ...currentBuffs,
+                    xpBoostMatches: (currentBuffs.xpBoostMatches || 0) + reward.amount
+                };
+            }
         }
 
         await updateUser(user.id, updateData);
-        showNotification(`Werbung angesehen: +${reward.rewardAmount} Edelsteine!`, 'success');
+        showNotification(`${reward.label} erhalten!`, 'success');
     };
 
     return { buyLootbox, buyTickets, watchAdForReward };
