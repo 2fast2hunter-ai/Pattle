@@ -136,15 +136,48 @@ export function useGameActions(state, setUserId) {
         });
 
         const enemyBattleTeam = [];
-        for (let i = 0; i < myBattleTeam.length; i++) { 
+        // --- NEUE GEGNER-LOGIK ---
+        for (let i = 0; i < myBattleTeam.length; i++) {
+            const playerPet = myBattleTeam[i];
             let enemyLevel = 1;
-            if (user.level < 10) { enemyLevel = Math.max(1, user.level); } else { const variance = Math.floor(Math.random() * 7) - 3; enemyLevel = Math.max(1, user.level + variance); }
-            let enemyRarity = 'COMMON'; const roll = Math.random() * 100; if (user.level >= 30 && roll > 90) enemyRarity = 'EPIC'; else if (user.level >= 20 && roll > 80) enemyRarity = 'RARE'; else if (user.level >= 10 && roll > 70) enemyRarity = 'UNCOMMON';
+            
+            // Level Bestimmung
+            if (user.level >= 4) {
+                enemyLevel = playerPet.level;
+            } else {
+                enemyLevel = Math.max(1, user.level);
+            }
+
+            // Rarity Bestimmung
+            let enemyRarity = 'COMMON'; 
+            const roll = Math.random() * 100; 
+            if (user.level >= 30 && roll > 90) enemyRarity = 'EPIC'; 
+            else if (user.level >= 20 && roll > 80) enemyRarity = 'RARE'; 
+            else if (user.level >= 10 && roll > 70) enemyRarity = 'UNCOMMON';
+            
+            // Gegner generieren (Zufallselement & Spezies)
             const enemyPet = generatePet(enemyLevel, null, enemyRarity, null, 'ENEMY');
-            enemyPet.id = `enemy_${i}_${Date.now()}`; 
-            if (enemyLevel === 1) { enemyPet.atk = 1; enemyPet.ap = 1; enemyPet.def = 1; enemyPet.res = 1; enemyPet.speed = 1; enemyPet.maxHp = 10; enemyPet.hp = 10; } 
-            else { const growthBonus = Math.floor(enemyLevel / 2); const hpGrowth = enemyLevel * 3; enemyPet.atk += growthBonus; enemyPet.ap += growthBonus; enemyPet.def += Math.floor(growthBonus / 2); enemyPet.res += Math.floor(growthBonus / 2); enemyPet.speed += Math.floor(growthBonus / 2); enemyPet.maxHp += hpGrowth; enemyPet.hp = enemyPet.maxHp; }
-            enemyBattleTeam.push({ ...enemyPet, currentCd: 0, hp: enemyPet.maxHp }); 
+            enemyPet.id = `enemy_${i}_${Date.now()}`;
+
+            // Stats anpassen für Balance
+            if (user.level >= 4) {
+                // Varianz Funktion: +/- 2
+                const vary = (val) => Math.max(1, val + (Math.floor(Math.random() * 5) - 2));
+                
+                enemyPet.maxHp = vary(playerPet.maxHp);
+                enemyPet.hp = enemyPet.maxHp;
+                enemyPet.atk = vary(playerPet.atk);
+                enemyPet.ap = vary(playerPet.ap);
+                enemyPet.def = vary(playerPet.def);
+                enemyPet.res = vary(playerPet.res);
+                enemyPet.speed = vary(playerPet.speed);
+            } else {
+                // Low Level: Standard generierte Stats nutzen
+                enemyPet.hp = enemyPet.maxHp;
+            }
+            
+            enemyPet.currentCd = 0;
+            enemyBattleTeam.push(enemyPet);
         }
         
         const p1 = myBattleTeam[0]; const e1 = enemyBattleTeam[0]; const playerFirst = p1.speed >= e1.speed;
