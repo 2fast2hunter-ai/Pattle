@@ -53,7 +53,6 @@ function BattleUnit({ pet, isEnemy, isActive, isHit, damageText }) {
         <div className="relative">
             <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 sm:w-20 sm:h-20 ${typeInfo.bg} opacity-30 blur-[30px] sm:blur-[40px] rounded-full`}></div>
             <div className="drop-shadow-xl filter transition-transform">
-                {/* Kleinere Avatare auf kleinen Screens */}
                 <div className="w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center">
                     <PetAvatar pet={pet} className="w-full h-full" />
                 </div>
@@ -139,7 +138,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
       if (animatingUnit || hitUnit) return; 
       if (turn === 'PLAYER') executeTurn(myPet, enemyPet, 'PLAYER');
       else executeTurn(enemyPet, myPet, 'ENEMY');
-    }, 1200);
+    }, 800); // Etwas schnellerer Loop (vorher 1200)
     return () => clearTimeout(timer);
   }, [turn, isOver, animatingUnit, hitUnit, myPet, enemyPet]);
 
@@ -169,7 +168,8 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     }
     damage = Math.max(1, damage);
     const newHp = Math.max(0, defender.hp - damage);
-    await new Promise(r => setTimeout(r, 250));
+    
+    await new Promise(r => setTimeout(r, 200)); // Kürzerer Impact (vorher 300)
 
     const targetSide = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
     setHitUnit(targetSide);
@@ -178,7 +178,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
         col: isCrit ? 'text-yellow-400' : 'text-white', 
         target: targetSide 
     });
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 500)); // Kürzeres Lesen (vorher 800)
 
     setAnimatingUnit(null);
     setHitUnit(null);
@@ -218,7 +218,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
                   <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 shadow-[0_0_40px_rgba(0,0,0,0.5)] border-4 border-white/10 ${won ? 'bg-gradient-to-br from-yellow-400 to-amber-600' : 'bg-gradient-to-br from-red-500 to-red-800'}`}>
                       {won ? <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-md" /> : <Skull className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-md" />}
                   </div>
-                  <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 drop-shadow-lg">
+                  <h2 className="text-4xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 drop-shadow-lg">
                       {won ? 'SIEG!' : 'NIEDERLAGE'}
                   </h2>
               </div>
