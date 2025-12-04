@@ -1,6 +1,6 @@
 import { 
   RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, TYPE_ADVANTAGES, SPECIES_BY_TYPE,
-  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS, FUSION_RECIPES
+  QUEST_TEMPLATES, COMPOSITE_QUEST_REWARDS, SHOP_ITEMS, FUSION_RECIPES, LOOTBOXES
 } from '../data/gameData'; 
 
 
@@ -62,54 +62,40 @@ export const getDamageMultiplier = (atkType, defType) => {
   return 1.0;
 };
 
-// --- NEUE BOXEN LOGIK (Standard, Premium, Master, Divine) ---
-export const determineRarity = (boxType = 'STANDARD') => {
-    if (boxType === 'STARTER') return 'RARE'; 
+// --- UPDATED: BOXEN LOGIK MIT LOOTBOXES CONSTANT ---
+export const determineRarity = (boxType = 'DAILY') => {
+    // Fallback für Starter/Legacy - JETZT COMMON
+    if (boxType === 'STARTER') return 'COMMON'; 
+    if (boxType === 'STANDARD') boxType = 'DAILY'; // Mapping alt -> neu falls nötig
 
-    let pool = Object.values(RARITIES);
+    const boxData = LOOTBOXES[boxType];
+    if (!boxData || !boxData.drops) return 'COMMON';
 
-    // CAP: Standard & Premium nur bis Legendär (ID 5)
-    if (boxType === 'STANDARD' || boxType === 'PREMIUM') {
-        pool = pool.filter(r => r.id <= 5);
-    }
+    const drops = boxData.drops;
+    let totalWeight = 0;
+    const weightedPool = [];
 
-    // MIN: Premium ab Ungewöhnlich
-    if (boxType === 'PREMIUM') {
-        pool = pool.filter(r => r.id > 1);
-    }
-
-    // MIN: Divine ab Selten
-    if (boxType === 'DIVINE') {
-        pool = pool.filter(r => r.id >= 3);
-    }
-
-    // Master hat keinen Filter (1-10)
-
-    // GEWICHTUNG
-    let weightedPool = pool.map(r => {
-        let weight = r.dropChance;
-        if (boxType === 'PREMIUM') weight *= 1.6;
-        if (boxType === 'MASTER') weight *= 1.2;
-        if (boxType === 'DIVINE') {
-            if (r.id >= 6) weight *= 5.0; // High Tier Boost
+    // Erstelle Pool basierend auf der Konfiguration
+    for (const [rarityKey, chance] of Object.entries(drops)) {
+        if (RARITIES[rarityKey]) {
+            totalWeight += chance;
+            weightedPool.push({ id: RARITIES[rarityKey].id, key: rarityKey, weight: chance });
         }
-        return { ...r, weight };
-    });
+    }
 
-    const totalWeight = weightedPool.reduce((sum, r) => sum + r.weight, 0);
-    let randomValue = Math.random() * totalWeight;
-
-    // Sortieren wir hier aufsteigend nach ID
+    // Sortieren (Sicherstellen einer deterministischen Reihenfolge)
     weightedPool.sort((a, b) => a.id - b.id);
 
-    for (const rarity of weightedPool) {
-        randomValue -= rarity.weight;
+    let randomValue = Math.random() * totalWeight;
+
+    for (const item of weightedPool) {
+        randomValue -= item.weight;
         if (randomValue <= 0) {
-             return Object.keys(RARITIES).find(key => RARITIES[key].id === rarity.id);
+             return item.key;
         }
     }
-    // Fallback: Das seltenste aus dem Pool
-    return Object.keys(RARITIES).find(key => RARITIES[key].id === weightedPool[weightedPool.length - 1].id);
+    // Fallback: Das letzte Element
+    return weightedPool[weightedPool.length - 1].key;
 };
 
 export const calculateStatValue = (base, level) => {
@@ -178,13 +164,24 @@ export const generateQuests = (category) => {
       const variance = 0.8 + Math.random() * 0.4;
       const targetAmount = Math.ceil(template.baseAmount * multiplier * variance);
       
-      let rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
+      let rewardAmount = 0;
       let rewardType = template.rewardType;
 
       // Bonus-Chance bei monatlichen Quests
-      if (category === 'MONTHLY' && Math.random() > 0.7) { // Etwas seltener
+      if (category === 'MONTHLY' && Math.random() > 0.7) { 
           rewardType = 'EGG_RARE';
           rewardAmount = 1;
+      } else {
+          // Standard Logik für XP und andere Rewards
+          if (rewardType === 'XP') {
+              // Feste XP Werte pro Kategorie
+              if (category === 'DAILY') rewardAmount = 75;
+              else if (category === 'WEEKLY') rewardAmount = 250;
+              else if (category === 'MONTHLY') rewardAmount = 750;
+          } else {
+              // Fallback für andere Typen (falls vorhanden)
+              rewardAmount = Math.ceil(template.rewardBase * multiplier * variance);
+          }
       }
 
       newQuests.push({

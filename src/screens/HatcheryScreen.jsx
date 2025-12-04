@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles, Ticket, FastForward } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
 import { getUnlockedHatcherySlots } from '../utils/gameMechanics';
 import PetAvatar from '../components/PetAvatar';
 
-export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
+export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown }) {
   const unlockedSlots = getUnlockedHatcherySlots(user.level);
   const maxSlots = 10;
   const [hatchingPet, setHatchingPet] = useState(null);
   const [nameInput, setNameInput] = useState('');
+  
+  // UPDATE: Zählt Tickets direkt aus dem Inventar
+  const ticketCount = user?.inventory?.filter(i => i.type === 'TICKET').length || 0;
   
   // Timer force update
   const [, setTick] = useState(0);
@@ -42,7 +45,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
   return (
       <div className="h-full flex flex-col animate-in fade-in relative">
         
-        {/* --- HATCHING MODAL (Bleibt gleich) --- */}
+        {/* --- HATCHING MODAL --- */}
         {hatchingPet && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-xl p-6 animate-in zoom-in-50 duration-300">
                 <div className={`bg-slate-900 border-2 ${RARITIES[hatchingPet.rarity].border} w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden group`}>
@@ -133,8 +136,11 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
                         <div className="text-sm font-black text-white">{incubatingEggs.length} / {unlockedSlots} Eier</div>
                     </div>
                 </div>
-                <div className="text-xs text-slate-500 font-mono bg-black/30 px-2 py-1 rounded">
-                    T {20 + user.level}°C
+                
+                {/* Tickets Info */}
+                <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5">
+                    <Ticket className="w-3.5 h-3.5 text-pink-400" />
+                    <span className="text-xs font-bold text-white">{ticketCount}</span>
                 </div>
             </div>
         </div>
@@ -187,14 +193,23 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg }) {
                                     SCHLÜPFEN
                                 </button>
                             ) : (
-                                <div className="bg-black/30 rounded-xl py-2 px-2 flex items-center justify-center gap-2 border border-white/5">
-                                    <Hourglass className="w-3 h-3 text-amber-400 animate-spin-slow" />
+                                <div className="flex gap-1">
+                                    <div className="bg-black/30 rounded-xl py-2 px-2 flex-1 flex items-center justify-center gap-1 border border-white/5">
+                                        <Hourglass className="w-3 h-3 text-amber-400 animate-spin-slow" />
+                                        <span className="font-mono text-xs text-white font-bold">
+                                            {formatTime(timeLeft)}
+                                        </span>
+                                    </div>
                                     
-                                    {/* HIER WURDE DER TIMER ANGEPASST */}
-                                    <span className="font-mono text-xs text-white font-bold">
-                                        {formatTime(timeLeft)}
-                                    </span>
-                                    
+                                    {ticketCount > 0 && (
+                                        <button 
+                                            onClick={() => onReduceCooldown(egg.id, 'HATCHING')}
+                                            className="bg-pink-600 hover:bg-pink-500 text-white p-2 rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                            title="-5 Min"
+                                        >
+                                            <FastForward className="w-3 h-3" />
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>

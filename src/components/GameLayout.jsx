@@ -3,7 +3,9 @@ import { Coins, Gem, Ticket } from 'lucide-react';
 
 export function HeaderHUD({ user }) {
   const xpPercent = Math.min(100, (user.xp / user.xpToNextLevel) * 100);
-  const redeemedTickets = user?.redeemedTickets || 0;
+  
+  // ÄNDERUNG: Zählt Tickets direkt aus dem Inventar
+  const ticketCount = user?.inventory?.filter(i => i.type === 'TICKET').length || 0;
 
   return (
     <header className="mx-4 mt-6 mb-2 z-30 relative animate-in slide-in-from-top duration-500">
@@ -50,13 +52,13 @@ export function HeaderHUD({ user }) {
                 </div>
             </div>
 
-            {/* ZEILE 2: Ressourcen (OHNE ENERGIE) */}
+            {/* ZEILE 2: Ressourcen */}
             <div className="grid grid-cols-3 gap-3 relative z-10">
                 
                 {/* Tickets */}
                 <div className="bg-slate-800/60 rounded-xl p-2 flex flex-col items-center border border-white/5">
                     <Ticket className="w-5 h-5 text-pink-400 fill-pink-400/20 mb-1" />
-                    <span className="font-black text-white text-sm">{redeemedTickets}</span>
+                    <span className="font-black text-white text-sm">{ticketCount}</span>
                 </div>
 
                 {/* Gold */}
@@ -78,5 +80,4 @@ export function HeaderHUD({ user }) {
   );
 }
 
-// BottomNav existiert nicht mehr, geben null zurück falls irgendwo importiert
 export function BottomNav() { return null; }

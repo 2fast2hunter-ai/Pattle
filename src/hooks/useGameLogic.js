@@ -3,62 +3,47 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
-import { updateUser, checkAndResetQuests } from '../utils/db';
-
+import { updateUser, checkAndResetQuests } from '../utils/db'; 
+// WICHTIG: getMaxEnergy IMPORT ENTFERNT!
 
 export function useGameLogic() {
-    // 1. STATES FÜR ABHÄNGIGKEITS-KETTE
     const [userId, setUserId] = useState(null); 
     
-    // 2. Initialisiere Hooks
     const gameLogicState = useGameLogicState(userId); 
     const actions = useGameActions(gameLogicState, setUserId); 
     
-    // Ref, um Endlosschleifen bei useEffect zu vermeiden
     const actionsRef = useRef(actions);
     const stateRef = useRef(gameLogicState);
     
-    // Aktualisiere Refs bei jedem Render (für Zugriff in useEffects ohne Re-Trigger)
     useEffect(() => {
         actionsRef.current = actions;
         stateRef.current = gameLogicState;
     });
 
-    // --- CORE HOOKS ---
-
-    // A. AUTO LOGIN CHECK (FIX: Läuft nur EINMAL beim Mounten)
+    // A. AUTO LOGIN CHECK
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
             if (currentUser) {
-                // Wenn User eingeloggt: Starte den Login-Prozess
-                // Wir nutzen die Refs, damit wir sie nicht in die Dependency-Array packen müssen
                 await actionsRef.current.handleLogin(currentUser, currentUser.displayName);
-                
                 stateRef.current.setCurrentView('menu'); 
                 stateRef.current.setAuthLoading(false); 
             } else {
-                // Wenn KEIN User gefunden wird: Beende den Ladezustand
                 stateRef.current.setAuthLoading(false);
             }
         });
 
         return () => unsubscribe();
-    }, []); // WICHTIG: Leeres Array = Nur beim Start ausführen!
-
+    }, []); 
 
     // B. LADEZUSTAND & QUEST-INIT
     useEffect(() => {
-        // Sobald der User geladen ist (gameLogicState.user existiert)
         if (userId && gameLogicState.user) {
             if (gameLogicState.authLoading) {
                 gameLogicState.setAuthLoading(false);
             }
-            
-            // Fix: Quests initialisieren
             checkAndResetQuests(gameLogicState.user).catch(console.error);
         }
-    }, [userId, gameLogicState.user]); // Reagiert nur, wenn User-Daten da sind
-
+    }, [userId, gameLogicState.user]); 
 
     // C. PASSIVE EFFEKTE (Level Up)
     useEffect(() => {
@@ -76,6 +61,7 @@ export function useGameLogic() {
 
         setPreviousLevel({ level: user.level, id: user.id });
     }, [gameLogicState.user?.level, gameLogicState.user?.id]);
+
     // 4. Rückgabe: Alle States und alle Actions
     return { ...gameLogicState, ...actions };
 }

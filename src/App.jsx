@@ -62,7 +62,7 @@ export default function App() {
     myPets, marketListings, activeBattle, setActiveBattle, 
     selectedPetDetail, setSelectedPetDetail, selectedSlotForTeam, setSelectedSlotForTeam,
     selectedFriend, setSelectedFriend, settings, setSettings,
-    buyLootbox, buyTickets, handleRedeemTicket, watchAdForReward,
+    buyLootbox, buyTickets, handleRedeemTicket, handleReduceCooldown, watchAdForReward,
     startBattle, handleWin, handleLose, handleAddFriend,
     handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
     hatchEgg, startIncubation, breedPets
@@ -162,6 +162,7 @@ export default function App() {
               user={user} 
               onBack={() => setCurrentView('pet-hub')} 
               onHatchEgg={hatchEgg}
+              onReduceCooldown={handleReduceCooldown}
             />
           )}
 
@@ -230,6 +231,7 @@ export default function App() {
               pets={myPets} 
               onBack={() => setCurrentView('pet-hub')} 
               onBreed={breedPets} 
+              onReduceCooldown={handleReduceCooldown}
               user={user}
             />
           )}

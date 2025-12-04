@@ -35,13 +35,56 @@ export const initializeUser = async (firebaseUser, username) => {
           weekly: generateQuests('WEEKLY'),
           monthly: generateQuests('MONTHLY')
       },
-      redeemedTickets: 0, 
+     
     };
     await setDoc(userRef, newUserData);
     return newUserData;
   }
 };
 
+export const speedUpCooldown = async (user, petId, type) => {
+    const userRef = doc(db, "users", user.id);
+    const petRef = doc(db, "pets", petId);
+    const REDUCTION_MS = 5 * 60 * 1000; // 5 Minuten
+
+    try {
+        await runTransaction(db, async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            const petDoc = await transaction.get(petRef);
+
+            if (!userDoc.exists() || !petDoc.exists()) throw new Error("Daten nicht gefunden.");
+
+            const userData = userDoc.data();
+            const petData = petDoc.data();
+
+            if ((userData.redeemedTickets || 0) < 1) {
+                throw new Error("Keine Tickets verfügbar!");
+            }
+
+            // Ticket abziehen
+            transaction.update(userRef, { redeemedTickets: increment(-1) });
+
+            // Zeit abziehen
+            if (type === 'HATCH') {
+                // Schlüpfzeit verringern (hatchAt nach vorne ziehen = früher fertig)
+                // Eigentlich: hatchAt ist der Zeitpunkt in der Zukunft. Wir müssen ihn verringern.
+                const newHatchTime = (petData.hatchAt || Date.now()) - REDUCTION_MS;
+                transaction.update(petRef, { hatchAt: newHatchTime });
+            } else if (type === 'BREED') {
+                // Zucht-Cooldown verringern
+                // Der Cooldown basiert auf "bredAt" (Startzeit). 
+                // Damit er früher endet, müssen wir so tun, als wäre er früher gestartet.
+                // Also: bredAt weiter in die Vergangenheit schieben (- 5 Min)
+                const newBredTime = (petData.bredAt || Date.now()) - REDUCTION_MS;
+                transaction.update(petRef, { bredAt: newBredTime });
+            }
+        });
+        return { success: true, message: "-5 Minuten!" };
+    } catch (e) {
+        console.error("SpeedUp Fehler:", e);
+        return { success: false, message: e.message };
+    }
+};
 export const listenToUser = (userId, callback) => {
   return onSnapshot(doc(db, "users", userId), (doc) => {
     if (doc.exists()) callback({ id: doc.id, ...doc.data() });

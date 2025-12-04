@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package, Backpack, Ticket, Loader2, Gift, Sparkles } from 'lucide-react';
+import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package, Backpack, Ticket, Loader2, Gift, Sparkles, Info } from 'lucide-react';
 import { RARITIES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
@@ -79,7 +79,7 @@ const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, a
 );
 
 
-export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket }) { 
+export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user }) { 
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
   
@@ -158,10 +158,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
     setProcessingBoxId(null);
     setResultPet(null);
   };
-  
-  const handleTicketRedeem = async (ticketId) => {
-      onRedeemTicket(ticketId); 
-  }
 
   // --- CSS ANIMATIONEN ---
   const animStyles = `
@@ -303,14 +299,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                           colorColor="text-pink-400"
                           bgColor="bg-pink-600"
                           ringColor="ring-pink-500/50"
-                          footerButton={
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); handleTicketRedeem(ticket.ids[0]); }} 
-                                className='w-full bg-pink-600 hover:bg-pink-500 text-white text-[10px] font-black py-2 rounded-xl shadow-lg shadow-pink-900/20 flex justify-center items-center gap-1 active:scale-95 transition-all'
-                            >
-                                <Gift className='w-3 h-3' /> EINLÖSEN
-                            </button>
-                          }
+                          /* BUTTON WURDE HIER ENTFERNT */
                       />
                   ))}
               </div>

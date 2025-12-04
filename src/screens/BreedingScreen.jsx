@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, X, Search, Heart, Dna, Ticket, Timer, Ghost, Swords, Shield, Zap, ArrowDownWideNarrow, Trash2, Clock } from 'lucide-react';
+import { ArrowLeft, Filter, X, Search, Heart, Dna, Ticket, Timer, Ghost, Swords, Shield, Zap, ArrowDownWideNarrow, Trash2, Clock, FastForward, Lock } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-export default function BreedingScreen({ pets, onBreed, onBack, user }) {
+export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCooldown }) {
   // --- STATES ---
   const [selected, setSelected] = useState([]); 
   
@@ -14,10 +14,13 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   const [activeRarityFilter, setActiveRarityFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('RARITY');
 
+  // UPDATE: Zählt Tickets direkt aus dem Inventar
+  const ticketCount = user?.inventory?.filter(i => i.type === 'TICKET').length || 0;
+
   // --- HELPER: Cooldown Berechnung ---
   const getCooldownStatus = (pet) => {
     if (!pet || !pet.bredAt) return null;
-    const cooldownDuration = RARITIES[pet.rarity]?.breedCooldown || 0; // Safe access
+    const cooldownDuration = RARITIES[pet.rarity]?.breedCooldown || 0; 
     const cooldownEnd = pet.bredAt + cooldownDuration;
     const timeLeft = cooldownEnd - Date.now();
 
@@ -31,10 +34,15 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
     return `${hours}h ${minutes}m`;
   }
 
+  const getLevelReq = (pet) => {
+      return RARITIES[pet.rarity]?.minBreedLevel || 0;
+  };
+
   // --- LOGIK: Selektion ---
   const toggleSelect = (id) => {
       const pet = pets.find(p => p.id === id);
       if (getCooldownStatus(pet)) return; 
+      if (pet.level < getLevelReq(pet)) return; // Check Level
 
       if (selected.includes(id)) {
           setSelected(selected.filter(pid => pid !== id));
@@ -57,14 +65,14 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   if (activeTypeFilter !== 'ALL') filteredPets = filteredPets.filter(p => p.type === activeTypeFilter);
   if (activeRarityFilter !== 'ALL') filteredPets = filteredPets.filter(p => p.rarity === activeRarityFilter);
 
-  // --- SORTIERUNG (NEU: Cooldown nach unten) ---
+  // --- SORTIERUNG ---
   filteredPets.sort((a, b) => {
-      const cdA = getCooldownStatus(a) !== null; // true wenn Cooldown
+      const cdA = getCooldownStatus(a) !== null; 
       const cdB = getCooldownStatus(b) !== null;
 
       // 1. Primär: Verfügbarkeit (Cooldown nach unten)
-      if (cdA && !cdB) return 1;  // A hat CD -> A nach unten
-      if (!cdA && cdB) return -1; // B hat CD -> A nach oben
+      if (cdA && !cdB) return 1;  
+      if (!cdA && cdB) return -1; 
 
       // 2. Sekundär: Gewählte Sortierung
       switch (sortBy) {
@@ -84,8 +92,8 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
   // --- BREEDING STATUS ---
   const p1 = selected.length > 0 ? pets.find(p => p.id === selected[0]) : null;
   const p2 = selected.length > 1 ? pets.find(p => p.id === selected[1]) : null;
-  const ticketCount = user?.redeemedTickets || 0;
-  const canBreed = p1 && p2 && ticketCount > 0;
+  // UPDATE: Ticket Zwang entfernt, nur Pets nötig
+  const canBreed = p1 && p2;
 
   return (
     <div className="h-full flex flex-col animate-in fade-in relative">
@@ -176,10 +184,17 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
                 disabled={!canBreed}
                 className={`w-full mt-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg ${canBreed ? 'bg-pink-600 text-white hover:scale-[1.02] active:scale-95 shadow-pink-900/30' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
             >
-                {ticketCount < 1 ? 'KEIN TICKET' : (canBreed ? 'JETZT ZÜCHTEN' : 'WÄHLE 2 PETS')}
-                {ticketCount > 0 && <span className="bg-black/20 px-2 py-0.5 rounded text-[9px] flex items-center gap-1"><Ticket className="w-3 h-3" /> {ticketCount}</span>}
+                {canBreed ? 'JETZT ZÜCHTEN' : 'WÄHLE 2 PETS'}
             </button>
         </div>
+      </div>
+
+      {/* --- INFO ÜBER TICKETS --- */}
+      <div className="px-4 mb-2 flex justify-end">
+          <div className="flex items-center gap-1.5 bg-slate-800/60 px-3 py-1.5 rounded-full border border-white/5">
+              <Ticket className="w-3.5 h-3.5 text-pink-400" />
+              <span className="text-xs font-bold text-white">{ticketCount} Tickets</span>
+          </div>
       </div>
 
       {/* --- LISTE --- */}
@@ -193,25 +208,49 @@ export default function BreedingScreen({ pets, onBreed, onBack, user }) {
                       const type = TYPES[pet.type];
                       const isSelected = selected.includes(pet.id);
                       const cooldown = getCooldownStatus(pet);
+                      const minLevel = getLevelReq(pet);
+                      const isLevelLow = pet.level < minLevel;
 
                       return (
                         <div 
                             key={pet.id} 
-                            onClick={() => !cooldown && toggleSelect(pet.id)} // Klick nur wenn kein CD
+                            onClick={() => !cooldown && !isLevelLow && toggleSelect(pet.id)} // Klick nur wenn kein CD und Level OK
                             className={`
                                 relative overflow-hidden rounded-2xl p-2 transition-all
                                 bg-slate-800 border-2 
-                                ${isSelected ? 'border-pink-500 ring-2 ring-pink-500/30 scale-[0.98]' : (cooldown ? 'border-slate-700 opacity-60 grayscale-[0.5] cursor-not-allowed' : `${rarity.border} cursor-pointer active:scale-95`)}
+                                ${isSelected ? 'border-pink-500 ring-2 ring-pink-500/30 scale-[0.98]' : (cooldown || isLevelLow ? 'border-slate-700 opacity-80 cursor-not-allowed' : `${rarity.border} cursor-pointer active:scale-95`)}
                             `}
                         >
                             {isSelected && <div className="absolute top-2 right-2 w-4 h-4 bg-pink-500 rounded-full border-2 border-white z-20 shadow-lg"></div>}
                             
+                            {/* Level Low Overlay */}
+                            {isLevelLow && (
+                                <div className="absolute inset-0 bg-black/80 z-30 flex flex-col items-center justify-center backdrop-blur-[2px] p-2 text-center animate-in fade-in">
+                                    <Lock className="w-5 h-5 text-slate-400 mb-1" />
+                                    <span className="text-xs font-black text-slate-200 mb-1">Lvl {minLevel}</span>
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase">Benötigt</span>
+                                </div>
+                            )}
+
                             {/* Cooldown Overlay */}
-                            {cooldown && (
-                                <div className="absolute inset-0 bg-black/70 z-30 flex flex-col items-center justify-center backdrop-blur-[1px]">
-                                    <Clock className="w-6 h-6 text-red-400 mb-1" />
-                                    <span className="text-xs font-black text-red-200">{cooldown}</span>
-                                    <span className="text-[9px] text-red-400 font-bold uppercase mt-1">Pause</span>
+                            {!isLevelLow && cooldown && (
+                                <div className="absolute inset-0 bg-black/80 z-30 flex flex-col items-center justify-center backdrop-blur-[2px] p-2 text-center animate-in fade-in">
+                                    <Clock className="w-5 h-5 text-red-400 mb-1" />
+                                    <span className="text-xs font-black text-red-200 mb-2">{cooldown}</span>
+                                    
+                                    {ticketCount > 0 ? (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Verhindert Selektion
+                                                onReduceCooldown(pet.id, 'BREEDING');
+                                            }}
+                                            className="bg-pink-600 hover:bg-pink-500 text-white text-[9px] font-bold px-2 py-1.5 rounded-lg flex items-center gap-1 active:scale-95 transition-all shadow-lg"
+                                        >
+                                            <Ticket className="w-3 h-3" /> -5m
+                                        </button>
+                                    ) : (
+                                        <span className="text-[9px] text-slate-500 font-bold">Warten...</span>
+                                    )}
                                 </div>
                             )}
 
