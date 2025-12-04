@@ -58,16 +58,16 @@ export function useShopActions(state, showNotification) {
 
     const watchAdForReward = async () => {
         if (!user) return;
-        // Hier würde die Ad-Logik des Providers stehen
-        // Wir simulieren es im Frontend, die Belohnung kommt nach Erfolg
         
         const reward = SHOP_ITEMS.AD_REWARD;
-        let updateData = {};
+        let updateData = {
+            lastAdWatchTime: Date.now() // <--- ZEITSTEMPEL SPEICHERN
+        };
         
         if (reward.rewardType === 'GEMS') {
-            updateData = { gems: (user.gems || 0) + reward.rewardAmount };
+            updateData.gems = (user.gems || 0) + reward.rewardAmount;
         } else if (reward.rewardType === 'COINS') {
-            updateData = { coins: (user.coins || 0) + reward.rewardAmount };
+            updateData.coins = (user.coins || 0) + reward.rewardAmount;
         }
 
         await updateUser(user.id, updateData);

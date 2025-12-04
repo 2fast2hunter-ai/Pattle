@@ -1,14 +1,40 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock } from 'lucide-react';
 import { SHOP_ITEMS, LOOTBOXES, RARITIES } from '../data/gameData'; 
 import AdModal from '../components/ui/AdModal';
-import { showRewardedAd } from '../utils/adManager'; // Importiere unseren neuen Manager
+import { showRewardedAd } from '../utils/adManager';
 
 export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, user }) { 
     const [viewingBox, setViewingBox] = useState(null); 
-    
-    // State für unser Simulations-Modal (nur für Dev-Mode wichtig)
     const [showDevAdModal, setShowDevAdModal] = useState(false);
+    
+    // COOLDOWN LOGIK (10 Minuten)
+    const AD_COOLDOWN_MS = 10 * 60 * 1000;
+    const [timeLeft, setTimeLeft] = useState(0);
+
+    // Timer Hook
+    useEffect(() => {
+        const updateTimer = () => {
+            if (!user?.lastAdWatchTime) {
+                setTimeLeft(0);
+                return;
+            }
+            const diff = Date.now() - user.lastAdWatchTime;
+            const remaining = Math.max(0, AD_COOLDOWN_MS - diff);
+            setTimeLeft(remaining);
+        };
+
+        updateTimer(); // Initial
+        const interval = setInterval(updateTimer, 1000); // Jede Sekunde
+        return () => clearInterval(interval);
+    }, [user?.lastAdWatchTime]);
+
+    // Formatierung MM:SS
+    const formatTime = (ms) => {
+        const m = Math.floor(ms / 60000);
+        const s = Math.floor((ms % 60000) / 1000);
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
 
     const boxConfig = {
         'DAILY': { color: 'text-sky-300', bg: 'bg-sky-600', icon: Box, border: 'border-sky-400', glow: 'shadow-sky-500/20' },
@@ -17,7 +43,6 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
         'DIVINE': { color: 'text-emerald-300', bg: 'bg-emerald-600', icon: Sparkles, border: 'border-emerald-400', glow: 'shadow-emerald-500/20' },
     };
 
-    // Helper: Sortierte Liste der Drops für die Vorschau
     const getDropList = (boxKey) => {
         const box = LOOTBOXES[boxKey];
         if (!box) return [];
@@ -39,18 +64,17 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
         return user?.lastDailyBoxClaim !== today;
     };
 
-    // --- NEUE AD LOGIK ---
     const handleAdClick = () => {
+        if (timeLeft > 0) return; // Klick verhindern wenn Cooldown läuft
+
         showRewardedAd({
             onReward: () => {
-                // Diese Funktion wird aufgerufen, wenn die Werbung erfolgreich war
                 onWatchAd(); 
             },
             onError: () => {
                 alert("Werbung konnte nicht geladen werden. Bitte deaktiviere deinen AdBlocker.");
             },
             onOpenDevModal: () => {
-                // Nur für Localhost: Öffne unsere Simulation
                 setShowDevAdModal(true);
             }
         });
@@ -59,13 +83,10 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
             
-            {/* Nur sichtbar im Dev-Mode durch den Manager gesteuert */}
             {showDevAdModal && (
                 <AdModal 
                     onClose={() => setShowDevAdModal(false)} 
-                    onReward={() => { 
-                        onWatchAd(); // Belohnung im Dev Mode
-                    }} 
+                    onReward={() => { onWatchAd(); }} 
                 />
             )}
 
@@ -147,16 +168,36 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                     <div className="relative z-10">
                         <h3 className="font-black text-white text-lg italic uppercase mb-1">Gratis Edelsteine</h3>
                         <div className="flex items-center gap-1 text-pink-300 text-xs font-bold">
-                            <PlayCircle className="w-4 h-4" />
-                            <span>Video ansehen</span>
+                            {timeLeft > 0 ? (
+                                <>
+                                    <Clock className="w-4 h-4" />
+                                    <span>Wartezeit</span>
+                                </>
+                            ) : (
+                                <>
+                                    <PlayCircle className="w-4 h-4" />
+                                    <span>Video ansehen</span>
+                                </>
+                            )}
                         </div>
                     </div>
 
                     <button 
-                        onClick={handleAdClick} // <-- HIER: Nutzt jetzt den neuen Handler
-                        className="relative z-10 bg-white text-indigo-900 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg hover:scale-105 transition-transform active:scale-95 flex items-center gap-2"
+                        onClick={handleAdClick}
+                        disabled={timeLeft > 0}
+                        className={`
+                            relative z-10 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg flex items-center gap-2 transition-all
+                            ${timeLeft > 0 
+                                ? 'bg-slate-700 text-slate-400 cursor-not-allowed border border-white/5' 
+                                : 'bg-white text-indigo-900 hover:scale-105 active:scale-95'
+                            }
+                        `}
                     >
-                        + {SHOP_ITEMS.AD_REWARD.rewardAmount} <Gem className="w-4 h-4 fill-indigo-900" />
+                        {timeLeft > 0 ? (
+                            <span>{formatTime(timeLeft)}</span>
+                        ) : (
+                            <>+ {SHOP_ITEMS.AD_REWARD.rewardAmount} <Gem className="w-4 h-4 fill-indigo-900" /></>
+                        )}
                     </button>
                </div>
 
