@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock } from 'lucide-react';
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle } from 'lucide-react';
 import { SHOP_ITEMS, LOOTBOXES, RARITIES } from '../data/gameData'; 
+import AdModal from '../components/ui/AdModal';
+import { showRewardedAd } from '../utils/adManager'; // Importiere unseren neuen Manager
 
-export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, user }) { 
+export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, user }) { 
     const [viewingBox, setViewingBox] = useState(null); 
+    
+    // State für unser Simulations-Modal (nur für Dev-Mode wichtig)
+    const [showDevAdModal, setShowDevAdModal] = useState(false);
 
     const boxConfig = {
         'DAILY': { color: 'text-sky-300', bg: 'bg-sky-600', icon: Box, border: 'border-sky-400', glow: 'shadow-sky-500/20' },
@@ -21,7 +26,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, user }) {
                 ...RARITIES[rarityKey], 
                 chance 
             }))
-            .sort((a, b) => b.id - a.id); // Seltenste oben
+            .sort((a, b) => b.id - a.id); 
     };
 
     const handleBuy = (boxKey) => {
@@ -29,15 +34,41 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, user }) {
         setViewingBox(null); 
     };
 
-    // Daily Check für UI
     const isDailyAvailable = () => {
         const today = new Date().toDateString();
         return user?.lastDailyBoxClaim !== today;
     };
 
+    // --- NEUE AD LOGIK ---
+    const handleAdClick = () => {
+        showRewardedAd({
+            onReward: () => {
+                // Diese Funktion wird aufgerufen, wenn die Werbung erfolgreich war
+                onWatchAd(); 
+            },
+            onError: () => {
+                alert("Werbung konnte nicht geladen werden. Bitte deaktiviere deinen AdBlocker.");
+            },
+            onOpenDevModal: () => {
+                // Nur für Localhost: Öffne unsere Simulation
+                setShowDevAdModal(true);
+            }
+        });
+    };
+
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
             
+            {/* Nur sichtbar im Dev-Mode durch den Manager gesteuert */}
+            {showDevAdModal && (
+                <AdModal 
+                    onClose={() => setShowDevAdModal(false)} 
+                    onReward={() => { 
+                        onWatchAd(); // Belohnung im Dev Mode
+                    }} 
+                />
+            )}
+
             {viewingBox && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6 animate-in zoom-in-50">
                     <div className={`bg-slate-900 border-2 ${boxConfig[viewingBox].border} w-full max-w-md rounded-[32px] p-0 relative overflow-hidden flex flex-col max-h-[85vh] shadow-2xl`}>
@@ -109,7 +140,27 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, user }) {
 
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
 
-                {/* --- LOOTBOXEN --- */}
+               {/* FREE STUFF */}
+               <div className="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl p-4 flex items-center justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/20 blur-[50px] rounded-full pointer-events-none"></div>
+                    
+                    <div className="relative z-10">
+                        <h3 className="font-black text-white text-lg italic uppercase mb-1">Gratis Edelsteine</h3>
+                        <div className="flex items-center gap-1 text-pink-300 text-xs font-bold">
+                            <PlayCircle className="w-4 h-4" />
+                            <span>Video ansehen</span>
+                        </div>
+                    </div>
+
+                    <button 
+                        onClick={handleAdClick} // <-- HIER: Nutzt jetzt den neuen Handler
+                        className="relative z-10 bg-white text-indigo-900 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg hover:scale-105 transition-transform active:scale-95 flex items-center gap-2"
+                    >
+                        + {SHOP_ITEMS.AD_REWARD.rewardAmount} <Gem className="w-4 h-4 fill-indigo-900" />
+                    </button>
+               </div>
+
+                {/* LOOTBOXEN */}
                 <div>
                     <div className="flex items-center gap-2 mb-3 text-yellow-500 px-1">
                         <Package className="w-4 h-4" />
@@ -156,7 +207,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, user }) {
                             </div>
                         </div>
 
-                        {/* DIVINE - Full Width Highlight */}
+                        {/* DIVINE */}
                         <div onClick={() => setViewingBox('DIVINE')} className="col-span-2 bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/60 rounded-[24px] p-1 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg shadow-emerald-900/20">
                             <div className="absolute inset-0 bg-emerald-500/10 blur-xl animate-pulse"></div>
                             <div className="bg-slate-900/80 backdrop-blur-md rounded-[20px] p-4 flex items-center justify-between relative z-10">
@@ -184,7 +235,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, user }) {
                     </div>
                 </div>
 
-                {/* TICKETS (Unverändert) */}
+                {/* TICKETS */}
                 <div>
                     <div className="flex items-center gap-2 mb-3 text-pink-400 px-1">
                         <Ticket className="w-4 h-4" />

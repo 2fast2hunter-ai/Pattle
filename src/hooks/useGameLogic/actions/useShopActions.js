@@ -1,4 +1,4 @@
-import { QUEST_TYPES, LOOTBOXES } from '../../../data/gameData';
+import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS } from '../../../data/gameData';
 import { updateUser, trackQuestProgress } from '../../../utils/db';
 
 export function useShopActions(state, showNotification) {
@@ -56,5 +56,23 @@ export function useShopActions(state, showNotification) {
         showNotification(`${item.tickets} Zucht-Tickets gekauft und im Inventar abgelegt!`, 'success');
     };
 
-    return { buyLootbox, buyTickets };
+    const watchAdForReward = async () => {
+        if (!user) return;
+        // Hier würde die Ad-Logik des Providers stehen
+        // Wir simulieren es im Frontend, die Belohnung kommt nach Erfolg
+        
+        const reward = SHOP_ITEMS.AD_REWARD;
+        let updateData = {};
+        
+        if (reward.rewardType === 'GEMS') {
+            updateData = { gems: (user.gems || 0) + reward.rewardAmount };
+        } else if (reward.rewardType === 'COINS') {
+            updateData = { coins: (user.coins || 0) + reward.rewardAmount };
+        }
+
+        await updateUser(user.id, updateData);
+        showNotification(`Werbung angesehen: +${reward.rewardAmount} Edelsteine!`, 'success');
+    };
+
+    return { buyLootbox, buyTickets, watchAdForReward };
 }
