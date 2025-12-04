@@ -1,5 +1,5 @@
 import React from 'react';
-import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings } from 'lucide-react';
+import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock } from 'lucide-react';
 
 export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings }) {
   
@@ -13,6 +13,13 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           id: 'pethub', title: 'PET HUB', subtitle: 'Sammlung',
           icon: Egg, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-900/20',
           onClick: onPetHub
+      },
+      // NEU: Das Dorf (Gesperrt)
+      { 
+          id: 'village', title: 'DORF', subtitle: 'Coming Soon',
+          icon: Home, color: 'from-stone-600 to-stone-700', shadow: 'shadow-stone-900/20',
+          onClick: () => {}, 
+          locked: true
       },
       { 
           id: 'quests', title: 'AUFGABEN', subtitle: 'Missionen',
@@ -28,11 +35,6 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           id: 'shop', title: 'SHOP', subtitle: 'Items',
           icon: ShoppingBag, color: 'from-yellow-500 to-amber-600', shadow: 'shadow-yellow-900/20',
           onClick: onShop
-      },
-      { 
-          id: 'leaderboard', title: 'RANGLISTE', subtitle: 'Top Spieler',
-          icon: Trophy, color: 'from-indigo-600 to-violet-600', shadow: 'shadow-indigo-900/20',
-          onClick: onLeaderboard
       },
       { 
           id: 'profile', title: 'PROFIL', subtitle: 'Stats',
@@ -54,17 +56,26 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           {menuItems.map((item) => (
               <button 
                 key={item.id}
-                onClick={item.onClick} 
+                onClick={item.locked ? null : item.onClick} 
+                disabled={item.locked}
                 className={`
                     group relative w-full aspect-square p-0.5 rounded-[24px] shadow-lg ${item.shadow}
                     bg-gradient-to-br ${item.color}
-                    transform transition-all duration-200 hover:scale-[1.02] active:scale-95
+                    transform transition-all duration-200 
+                    ${item.locked ? 'opacity-80 cursor-not-allowed grayscale-[0.3]' : 'hover:scale-[1.02] active:scale-95'}
                 `}
               >
-                  <div className="bg-slate-900/40 backdrop-blur-sm rounded-[22px] p-4 h-full flex flex-col items-center justify-center text-center border border-white/10 gap-3">
+                  <div className="bg-slate-900/40 backdrop-blur-sm rounded-[22px] p-4 h-full flex flex-col items-center justify-center text-center border border-white/10 gap-3 relative overflow-hidden">
                       
+                      {/* Lock Overlay bei gesperrten Items */}
+                      {item.locked && (
+                          <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                              <Lock className="w-8 h-8 text-white/50" />
+                          </div>
+                      )}
+
                       {/* Icon Container */}
-                      <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner border border-white/20 group-hover:scale-110 transition-transform duration-300">
+                      <div className={`w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner border border-white/20 ${!item.locked && 'group-hover:scale-110 transition-transform duration-300'}`}>
                           <item.icon className="w-7 h-7 text-white drop-shadow-md" />
                       </div>
                       
