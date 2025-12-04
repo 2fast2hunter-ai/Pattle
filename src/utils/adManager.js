@@ -13,7 +13,7 @@ export const showRewardedAd = ({ onReward, onError, onOpenDevModal }) => {
     console.log("[AdManager] Live-Mode: Öffne Werbung...");
 
     // Trage hier deinen "Direct Link" von Monetag ein:
-    const AD_URL = "https://otieu.com/4/10277319"; 
+    const AD_URL = "https://otieu.com/4/10277360"; 
 
     if (!AD_URL || AD_URL.includes("DEIN_MONETAG")) {
         console.error("Bitte trage den echten Monetag Link in src/utils/adManager.js ein!");
