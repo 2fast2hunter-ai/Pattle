@@ -137,10 +137,8 @@ export function useBattleActions(state, showNotification) {
         // --- AUTO BATTLE LOOP ---
         if (autoBattleRemaining > 1) {
             setAutoBattleRemaining(prev => prev - 1);
-            // Nächsten Kampf sofort starten
             startBattle(); 
         } else {
-            // Fertig
             if (autoBattleRemaining === 1) {
                 setAutoBattleRemaining(0);
                 showNotification("Auto-Kampf Sequenz abgeschlossen!", "success");
@@ -202,7 +200,7 @@ export function useBattleActions(state, showNotification) {
         }
     };
 
-    // --- AUTO BATTLE INIT (GRAFISCH) ---
+    // --- AUTO BATTLE INIT ---
     const handleAutoBattle = async (ticketsToUse = 1) => {
         if (!user) return;
         if ((user.adTickets || 0) < ticketsToUse) {
@@ -213,22 +211,20 @@ export function useBattleActions(state, showNotification) {
         const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id));
         if (validTeamIds.length === 0) { showNotification("Team ist leer!", "error"); return; }
 
-        // Tickets abziehen
         await updateUser(user.id, { adTickets: user.adTickets - ticketsToUse });
         
-        // Anzahl der Kämpfe setzen (1 Ticket = 10 Kämpfe)
         const totalBattles = ticketsToUse * 10;
         setAutoBattleRemaining(totalBattles);
         
         showNotification(`Starte ${totalBattles} Auto-Kämpfe...`, "success");
-        
-        // Ersten Kampf starten
-        // Wichtig: startBattle nutzt den aktuellen State. Da setAutoBattleRemaining async ist,
-        // übergeben wir hier nichts, aber handleWin wird den neuen State lesen.
-        // Für den ERSTEN Kampf ist es egal, ob die Variable schon gesetzt ist, 
-        // wichtig ist sie erst am Ende von handleWin.
         startBattle();
     };
+    
+    // NEU: Abbruch Funktion
+    const cancelAutoBattle = () => {
+        setAutoBattleRemaining(0);
+        showNotification("Auto-Kampf Sequenz abgebrochen.", "info");
+    };
 
-    return { startBattle, handleWin, handleLose, handleAutoBattle };
+    return { startBattle, handleWin, handleLose, handleAutoBattle, cancelAutoBattle };
 }

@@ -28,7 +28,6 @@ import FriendProfileScreen from './screens/FriendProfileScreen';
 import MarketplaceScreen from './screens/MarketplaceScreen';
 import InventoryScreen from './screens/InventoryScreen'; 
 
-// Error Boundary
 class ErrorBoundary extends React.Component {
     constructor(props) {
       super(props);
@@ -51,7 +50,6 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-// MAIN APP
 export default function App() {
   const gameLogic = useGameLogic();
   
@@ -66,8 +64,7 @@ export default function App() {
     startBattle, handleWin, handleLose, handleAddFriend,
     handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
     hatchEgg, startIncubation, breedPets,
-    // WICHTIG: Diese fehlten!
-    handleAutoBattle, autoBattleRemaining
+    handleAutoBattle, autoBattleRemaining, cancelAutoBattle // NEU: cancelAutoBattle
   } = gameLogic;
 
   if (authLoading) {
@@ -90,7 +87,6 @@ export default function App() {
       {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
       {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
       
-      {/* Header nur anzeigen wenn NICHT im Battle */}
       {currentView !== 'battle' && <HeaderHUD user={user} />}
       
       <main className="flex-1 relative overflow-hidden bg-slate-900">
@@ -143,7 +139,6 @@ export default function App() {
               onBattle={startBattle} 
               onTeam={() => setCurrentView('team-edit')}
               onLeaderboard={() => setCurrentView('leaderboard')}
-              // HIER WAR DER FEHLER: Die Funktion wurde nicht übergeben
               onAutoBattle={handleAutoBattle}
             />
           )}
@@ -241,9 +236,9 @@ export default function App() {
               user={user} 
               onWin={handleWin} 
               onLose={handleLose}
-              // HIER: Auto-Battle Props übergeben
               isAutoBattle={autoBattleRemaining > 0}
               autoBattleRemaining={autoBattleRemaining}
+              onCancelAutoBattle={cancelAutoBattle} // HIER: Übergeben
             />
           )}
 
