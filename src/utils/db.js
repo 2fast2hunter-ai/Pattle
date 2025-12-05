@@ -4,7 +4,7 @@ import {
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
   runTransaction, increment 
 } from 'firebase/firestore';
-import { generatePet, generateQuests } from './gameMechanics'; // WICHTIG: getMaxEnergy ENTFERNT
+import { generatePet, generateQuests } from './gameMechanics'; 
 
 // --- USER MANAGEMENT ---
 export const initializeUser = async (firebaseUser, username) => {
@@ -24,8 +24,6 @@ export const initializeUser = async (firebaseUser, username) => {
       gems: 10,
       avatar: '🛡️',
       rating: 1000,
-      // energy: 10, <-- ENTFERNT
-      // lastEnergyUpdate: Date.now(), <-- ENTFERNT
       team: [], 
       inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], 
       friends: [],
@@ -36,38 +34,57 @@ export const initializeUser = async (firebaseUser, username) => {
           monthly: generateQuests('MONTHLY')
       },
       redeemedTickets: 0, 
-      // NEU: Buffs für temporäre Boni
-      buffs: {
-          coinBoostMatches: 0,
-          xpBoostMatches: 0
-      }
+      adTickets: 0, 
+      buffs: { coinBoostMatches: 0, xpBoostMatches: 0 }
     };
     await setDoc(userRef, newUserData);
     return newUserData;
   }
 };
 
+// --- LISTENERS MIT ERROR HANDLING ---
+
 export const listenToUser = (userId, callback) => {
-  return onSnapshot(doc(db, "users", userId), (doc) => {
-    if (doc.exists()) callback({ id: doc.id, ...doc.data() });
-  });
+  console.log("[DB] Starte User-Listener für:", userId);
+  return onSnapshot(doc(db, "users", userId), 
+    (doc) => {
+      if (doc.exists()) {
+        callback({ id: doc.id, ...doc.data() });
+      } else {
+        console.warn("[DB] User Dokument existiert (noch) nicht!");
+      }
+    }, 
+    (error) => {
+      console.error("[DB] FEHLER im User-Listener:", error);
+    }
+  );
 };
 
 export const listenToPets = (userId, callback) => {
   const q = query(collection(db, "pets"), where("ownerId", "==", userId));
-  return onSnapshot(q, (snapshot) => {
-    const pets = [];
-    snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() }));
-    callback(pets);
-  });
+  return onSnapshot(q, 
+    (snapshot) => {
+      const pets = [];
+      snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() }));
+      callback(pets);
+    },
+    (error) => {
+      console.error("[DB] FEHLER im Pets-Listener:", error);
+    }
+  );
 };
 
 export const listenToMarket = (callback) => {
-  return onSnapshot(collection(db, "market"), (snapshot) => {
-    const listings = [];
-    snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() }));
-    callback(listings);
-  });
+  return onSnapshot(collection(db, "market"), 
+    (snapshot) => {
+      const listings = [];
+      snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() }));
+      callback(listings);
+    },
+    (error) => {
+      console.error("[DB] FEHLER im Market-Listener:", error);
+    }
+  );
 };
 
 // --- GENERAL ACTIONS ---
@@ -255,7 +272,6 @@ export const claimQuestReward = async (user, catKey, questId) => {
       }
       let newLevel = userData.level; let newXp = (userData.xp || 0) + xpGain; let newXpToNext = userData.xpToNextLevel;
       
-      // UPDATE: Energie-Logik hier entfernt!
       while (newXp >= newXpToNext) { 
           newLevel++; 
           newXp -= newXpToNext; 
@@ -296,7 +312,6 @@ export const claimCompositeReward = async (user, catKey) => {
       } else if (reward.rewardType === 'XP') { xpGain = reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} XP`; }
       let newLevel = userData.level; let newXp = (userData.xp || 0) + xpGain; let newXpToNext = userData.xpToNextLevel;
 
-      // UPDATE: Energie-Logik hier entfernt!
       while (newXp >= newXpToNext) { 
           newLevel++; 
           newXp -= newXpToNext; 
@@ -331,7 +346,6 @@ export const adminResetQuests = async (userId) => {
     }
 };
 
-// Admin-Funktion zum Leeren des Marktplatzes (optional, kann bleiben)
 export const clearMarketplace = async () => {
     try {
         const q = query(collection(db, "market"));

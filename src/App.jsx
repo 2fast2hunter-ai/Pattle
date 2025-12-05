@@ -65,7 +65,9 @@ export default function App() {
     buyLootbox, buyTickets, handleRedeemTicket, handleReduceCooldown, watchAdForReward,
     startBattle, handleWin, handleLose, handleAddFriend,
     handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
-    hatchEgg, startIncubation, breedPets
+    hatchEgg, startIncubation, breedPets,
+    // WICHTIG: Diese fehlten!
+    handleAutoBattle, autoBattleRemaining
   } = gameLogic;
 
   if (authLoading) {
@@ -84,19 +86,16 @@ export default function App() {
   return (
     <div className="flex flex-col h-full w-full bg-slate-900 font-sans text-white sm:max-w-md mx-auto shadow-2xl overflow-hidden sm:border-x border-slate-800 relative">
       
-      {/* GLOBAL UI OVERLAYS */}
       {notification && <Notification notification={notification} />}
       {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
       {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
       
-      {/* Header wird in Battles ausgeblendet für mehr Platz */}
+      {/* Header nur anzeigen wenn NICHT im Battle */}
       {currentView !== 'battle' && <HeaderHUD user={user} />}
       
       <main className="flex-1 relative overflow-hidden bg-slate-900">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
         <div className="h-full overflow-y-auto p-4 scrollbar-hide pb-10">
-          
-          {/* SCREEN ROUTING */}
           
           {currentView === 'menu' && (
             <MainMenu 
@@ -144,6 +143,8 @@ export default function App() {
               onBattle={startBattle} 
               onTeam={() => setCurrentView('team-edit')}
               onLeaderboard={() => setCurrentView('leaderboard')}
+              // HIER WAR DER FEHLER: Die Funktion wurde nicht übergeben
+              onAutoBattle={handleAutoBattle}
             />
           )}
 
@@ -240,6 +241,9 @@ export default function App() {
               user={user} 
               onWin={handleWin} 
               onLose={handleLose}
+              // HIER: Auto-Battle Props übergeben
+              isAutoBattle={autoBattleRemaining > 0}
+              autoBattleRemaining={autoBattleRemaining}
             />
           )}
 

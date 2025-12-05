@@ -7,7 +7,6 @@ export function useShopActions(state, showNotification) {
     const buyLootbox = (boxType, cost, currency) => {
         if (!user) return; 
         
-        // 1. Daily Box Logic
         if (boxType === 'DAILY') {
             const today = new Date().toDateString();
             if (user.lastDailyBoxClaim === today) {
@@ -20,7 +19,6 @@ export function useShopActions(state, showNotification) {
             return;
         }
 
-        // 2. Normal Boxes
         if (currency === 'COINS') {
             if (user.coins < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
             const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
@@ -56,20 +54,20 @@ export function useShopActions(state, showNotification) {
         showNotification(`${item.tickets} Zucht-Tickets gekauft und im Inventar abgelegt!`, 'success');
     };
 
-    // UPDATE: Akzeptiert nun das spezifische Reward-Objekt
+    // UPDATE: Gibt jetzt zusätzlich 1 Werbe-Ticket
     const watchAdForReward = async (reward) => {
         if (!user || !reward) return;
         
-        // Speichere den Zeitstempel spezifisch für DIESE Belohnung
         const currentClaims = user.adClaims || {};
         let updateData = {
             adClaims: {
                 ...currentClaims,
-                [reward.id]: Date.now() // Z.B. { 'GEMS_5': 1715... }
-            }
+                [reward.id]: Date.now()
+            },
+            // NEU: Ticket hinzufügen
+            adTickets: (user.adTickets || 0) + 1
         };
         
-        // Belohnung gutschreiben
         if (reward.type === 'GEMS') {
             updateData.gems = (user.gems || 0) + reward.amount;
         } else if (reward.type === 'COINS') {
@@ -77,20 +75,14 @@ export function useShopActions(state, showNotification) {
         } else if (reward.type === 'BUFF') {
             const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
             if (reward.buffType === 'COIN_BOOST') {
-                updateData.buffs = {
-                    ...currentBuffs,
-                    coinBoostMatches: (currentBuffs.coinBoostMatches || 0) + reward.amount
-                };
+                updateData.buffs = { ...currentBuffs, coinBoostMatches: (currentBuffs.coinBoostMatches || 0) + reward.amount };
             } else if (reward.buffType === 'XP_BOOST') {
-                updateData.buffs = {
-                    ...currentBuffs,
-                    xpBoostMatches: (currentBuffs.xpBoostMatches || 0) + reward.amount
-                };
+                updateData.buffs = { ...currentBuffs, xpBoostMatches: (currentBuffs.xpBoostMatches || 0) + reward.amount };
             }
         }
 
         await updateUser(user.id, updateData);
-        showNotification(`${reward.label} erhalten!`, 'success');
+        showNotification(`${reward.label} + 1 Auto-Kampf Ticket erhalten!`, 'success');
     };
 
     return { buyLootbox, buyTickets, watchAdForReward };

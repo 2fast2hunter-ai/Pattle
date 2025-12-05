@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, Skull, Trophy, Swords, Shield, Activity, Wind, Timer, Coins, Star, ArrowUp } from 'lucide-react';
+import { Zap, Skull, Trophy, Swords, Shield, Activity, Wind, Timer, Coins, Star, ArrowUp, Repeat } from 'lucide-react';
 import { ABILITIES, TYPES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
@@ -116,38 +116,68 @@ const StatBox = ({ icon: Icon, val, color, bg }) => (
     </div>
 );
 
-export default function BattleScreen({ battleState, setBattleState, onWin, onLose }) {
+
+// --- HAUPTKOMPONENTE ---
+
+export default function BattleScreen({ battleState, setBattleState, onWin, onLose, isAutoBattle, autoBattleRemaining }) {
   const [animatingUnit, setAnimatingUnit] = useState(null); 
   const [hitUnit, setHitUnit] = useState(null); 
   const [floatingDamage, setFloatingDamage] = useState(null); 
+  const [autoTimer, setAutoTimer] = useState(null);
   
   const logEndRef = useRef(null);
   const { myTeam, enemyTeam, myIndex, enemyIndex, turn, log, isOver, round } = battleState;
   const myPet = myTeam[myIndex];
   const enemyPet = enemyTeam[enemyIndex];
 
+  // Auto-Scroll für Log
   useEffect(() => {
     if (logEndRef.current) {
         logEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [log]);
 
+  // Game Loop
   useEffect(() => {
     if (isOver) return;
     const timer = setTimeout(() => {
       if (animatingUnit || hitUnit) return; 
       if (turn === 'PLAYER') executeTurn(myPet, enemyPet, 'PLAYER');
       else executeTurn(enemyPet, myPet, 'ENEMY');
-    }, 800); // Etwas schnellerer Loop (vorher 1200)
+    }, 800); // Schnellerer Loop
     return () => clearTimeout(timer);
   }, [turn, isOver, animatingUnit, hitUnit, myPet, enemyPet]);
 
+  // AUTO BATTLE: Weiterleitung nach Ende
+  useEffect(() => {
+      if (isOver && isAutoBattle) {
+          const won = enemyTeam[enemyTeam.length - 1].hp === 0;
+          const myTeamIds = myTeam.map(p => p.id);
+          
+          // Standard-Rewards für die Berechnung (wird im Backend nochmal geprüft/überschrieben)
+          const rewardCoins = won ? 50 : 5;
+          const rewardXp = won ? 50 : 5;
+          
+          // Warte 2 Sekunden, dann klicke automatisch
+          const t = setTimeout(() => {
+               if (won) onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds);
+               else onLose();
+          }, 2000);
+          
+          setAutoTimer(t);
+          return () => clearTimeout(t);
+      }
+  }, [isOver, isAutoBattle]); // Abhängigkeiten
+
+
   const executeTurn = async (attacker, defender, who) => {
     setAnimatingUnit(who);
+    
     let newLog = [...log];
     let damage = 0;
     let isAbility = (attacker.currentCd <= 0);
     let isCrit = false;
+    
     const ability = ABILITIES[attacker.abilityId];
     const safeAbility = ability || { name: 'Angriff', type: 'PHYSICAL', element: attacker.type, dmgScale: 1.0, cd: 0 };
     
@@ -157,11 +187,13 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     let rawDmg = isAbility 
         ? (safeAbility.type === 'PHYSICAL' ? attacker.atk : attacker.ap) * (safeAbility.dmgScale || 1) 
         : attacker.atk;
+    
     let defense = isAbility 
         ? (safeAbility.type === 'PHYSICAL' ? defender.def : defender.res)
         : defender.def;
 
     damage = Math.floor(rawDmg * (100 / (100 + defense)));
+
     if (Math.random() * 100 < attacker.critRate) { 
         isCrit = true;
         damage = Math.floor(damage * 1.5); 
@@ -169,7 +201,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     damage = Math.max(1, damage);
     const newHp = Math.max(0, defender.hp - damage);
     
-    await new Promise(r => setTimeout(r, 200)); // Kürzerer Impact (vorher 300)
+    await new Promise(r => setTimeout(r, 200)); // Schnellerer Impact
 
     const targetSide = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
     setHitUnit(targetSide);
@@ -178,7 +210,8 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
         col: isCrit ? 'text-yellow-400' : 'text-white', 
         target: targetSide 
     });
-    await new Promise(r => setTimeout(r, 500)); // Kürzeres Lesen (vorher 800)
+
+    await new Promise(r => setTimeout(r, 500)); // Schnelleres Lesen
 
     setAnimatingUnit(null);
     setHitUnit(null);
@@ -186,6 +219,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
 
     const updatedAttacker = { ...attacker, currentCd: isAbility ? safeAbility.cd : Math.max(0, attacker.currentCd - 1) };
     const updatedDefender = { ...defender, hp: newHp };
+
     let nextMyIndex = myIndex, nextEnemyIndex = enemyIndex, gameOver = false, nextTurn = who === 'PLAYER' ? 'ENEMY' : 'PLAYER', nextRound = who === 'ENEMY' ? round + 1 : round;
 
     if (newHp === 0) {
@@ -201,9 +235,12 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     setBattleState({ ...battleState, myTeam: newMyTeam, enemyTeam: newEnemyTeam, myIndex: nextMyIndex, enemyIndex: nextEnemyIndex, log: newLog, turn: nextTurn, round: nextRound, isOver: gameOver });
   };
 
+  // --- END SCREEN ---
   if (isOver) {
     const won = enemyTeam[enemyTeam.length - 1].hp === 0;
     const myTeamIds = myTeam.map(p => p.id);
+    
+    // Rewards (Anzeige)
     const rewardCoins = won ? 50 : 5;
     const rewardXp = won ? 50 : 5;
     const petXpGain = won ? 50 : 10;
@@ -214,11 +251,20 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-slate-900/0 via-slate-950 to-black"></div>
 
           <div className="relative z-10 flex flex-col h-full p-6">
+              
+              {/* AUTO BATTLE INDICATOR */}
+              {isAutoBattle && (
+                  <div className="absolute top-4 right-4 bg-purple-600/90 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-2 animate-pulse z-50 shadow-lg">
+                      <Repeat className="w-3 h-3" />
+                      Auto: Noch {autoBattleRemaining}
+                  </div>
+              )}
+
               <div className="flex flex-col items-center mb-6 mt-4">
                   <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full flex items-center justify-center mb-3 shadow-[0_0_40px_rgba(0,0,0,0.5)] border-4 border-white/10 ${won ? 'bg-gradient-to-br from-yellow-400 to-amber-600' : 'bg-gradient-to-br from-red-500 to-red-800'}`}>
                       {won ? <Trophy className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-md" /> : <Skull className="w-8 h-8 sm:w-10 sm:h-10 text-white drop-shadow-md" />}
                   </div>
-                  <h2 className="text-4xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 drop-shadow-lg">
+                  <h2 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-400 drop-shadow-lg">
                       {won ? 'SIEG!' : 'NIEDERLAGE'}
                   </h2>
               </div>
@@ -276,9 +322,13 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
               
               <button 
                 onClick={() => won ? onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds) : onLose()} 
-                className="w-full py-4 rounded-2xl bg-white text-slate-950 font-black text-lg shadow-lg hover:scale-[1.02] transition-transform active:scale-95 flex justify-center items-center gap-2"
+                className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg flex justify-center items-center gap-2 transition-all ${isAutoBattle ? 'bg-purple-600 text-white animate-pulse' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95'}`}
               >
-                  WEITER
+                  {isAutoBattle ? (
+                      <> <Repeat className="w-5 h-5" /> AUTO WEITER ({autoBattleRemaining}) </>
+                  ) : (
+                      "WEITER"
+                  )}
               </button>
           </div>
         </div>
@@ -288,6 +338,14 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
   return (
     <div className="h-full flex flex-col relative overflow-hidden bg-slate-950">
       
+      {/* Auto Battle Overlay */}
+      {isAutoBattle && (
+        <div className="absolute top-14 right-4 z-20 bg-purple-600/80 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg">
+            <Repeat className="w-3 h-3 animate-spin-slow" />
+            Auto: {autoBattleRemaining}
+        </div>
+      )}
+
       <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-900/20 blur-[100px] rounded-full"></div>
           <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-red-900/20 blur-[100px] rounded-full"></div>
