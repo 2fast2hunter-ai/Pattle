@@ -64,7 +64,8 @@ export default function App() {
     startBattle, handleWin, handleLose, handleAddFriend,
     handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
     hatchEgg, startIncubation, breedPets,
-    handleAutoBattle, autoBattleRemaining, cancelAutoBattle // NEU: cancelAutoBattle
+    handleAutoBattle, autoBattleRemaining, cancelAutoBattle, startFriendBattle,
+    handleRemoveListing, renamePet // <--- NEU: renamePet importiert
   } = gameLogic;
 
   if (authLoading) {
@@ -124,6 +125,7 @@ export default function App() {
               onBack={() => setCurrentView('menu')} 
               onBuy={handleBuyMarket} 
               onSell={handleSellMarket} 
+              onRemoveListing={handleRemoveListing}
               myPets={myPets} 
             />
           )}
@@ -160,6 +162,7 @@ export default function App() {
               onBack={() => setCurrentView('pet-hub')} 
               onHatchEgg={hatchEgg}
               onReduceCooldown={handleReduceCooldown}
+              onStartIncubation={startIncubation}
             />
           )}
 
@@ -216,6 +219,7 @@ export default function App() {
             <PetDetailScreen 
               pet={selectedPetDetail} 
               onBack={() => setCurrentView('inventory')}
+              onRenamePet={renamePet} // <--- NEU: Hier übergeben
             />
           )}
 
@@ -238,7 +242,7 @@ export default function App() {
               onLose={handleLose}
               isAutoBattle={autoBattleRemaining > 0}
               autoBattleRemaining={autoBattleRemaining}
-              onCancelAutoBattle={cancelAutoBattle} // HIER: Übergeben
+              onCancelAutoBattle={cancelAutoBattle}
             />
           )}
 
@@ -259,6 +263,7 @@ export default function App() {
             <FriendProfileScreen 
               friend={selectedFriend} 
               onBack={() => setCurrentView('profile')} 
+              onStartBattle={startFriendBattle} 
             />
           )}
 

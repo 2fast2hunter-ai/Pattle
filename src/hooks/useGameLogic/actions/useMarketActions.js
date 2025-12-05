@@ -1,5 +1,4 @@
-import { QUEST_TYPES } from '../../../data/gameData';
-import { buyMarketItem, createMarketListing, removePetFromDB } from '../../../utils/db';
+import { buyMarketItem, createMarketListing, removePetFromDB, updateUser, cancelMarketListing } from '../../../utils/db'; // cancelMarketListing importieren
 
 export function useMarketActions(state, showNotification) {
     const { user } = state;
@@ -9,12 +8,6 @@ export function useMarketActions(state, showNotification) {
         const result = await buyMarketItem(user, listingId); 
         if (result.success) { 
             showNotification(result.message, 'success'); 
-            // Track quest progress nur bei Erfolg und wenn user existiert
-            // Wir importieren trackQuestProgress hier nicht direkt, da es im buyMarketItem Context schwer ist.
-            // Besser: Quest Tracking direkt in buyMarketItem in db.js oder hier separat.
-            // Da wir hier sind, können wir es hier tun, WENN wir trackQuestProgress importieren.
-            // Oben ist es nicht importiert. Ich füge es hinzu oder lasse es weg, wenn buyMarketItem es nicht tut.
-            // In der alten Datei wurde es hier gemacht.
         } else { 
             showNotification(result.message, 'error'); 
         } 
@@ -24,7 +17,17 @@ export function useMarketActions(state, showNotification) {
         if (!user) return; 
         const petArray = Array.isArray(petsToSell) ? petsToSell : [petsToSell]; 
         if (petArray.length === 0) return; 
+
+        // 1. GEBÜHR PRÜFEN
+        const LISTING_FEE = 100;
+        if (user.coins < LISTING_FEE) {
+            showNotification("Nicht genügend Münzen für die Einstellgebühr (100 Gold)!", "error");
+            return;
+        }
         
+        // 2. GEBÜHR ABZIEHEN
+        await updateUser(user.id, { coins: user.coins - LISTING_FEE });
+
         const newListing = { 
             sellerName: user.username, 
             sellerId: user.id, 
@@ -44,8 +47,21 @@ export function useMarketActions(state, showNotification) {
             }
         } 
         
-        showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt!` : "Angebot erstellt!", 'success'); 
+        showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt! (-100G)` : "Angebot erstellt! (-100G)", 'success'); 
     };
 
-    return { handleBuyMarket, handleSellMarket };
+    // NEU: EIGENES ANGEBOT LÖSCHEN
+    const handleRemoveListing = async (listingId) => {
+        if (!user) return;
+        
+        const result = await cancelMarketListing(user, listingId);
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+        } else {
+            showNotification(result.message, 'error');
+        }
+    };
+
+    return { handleBuyMarket, handleSellMarket, handleRemoveListing };
 }

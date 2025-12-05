@@ -42,49 +42,27 @@ export const initializeUser = async (firebaseUser, username) => {
   }
 };
 
-// --- LISTENERS MIT ERROR HANDLING ---
-
 export const listenToUser = (userId, callback) => {
-  console.log("[DB] Starte User-Listener für:", userId);
-  return onSnapshot(doc(db, "users", userId), 
-    (doc) => {
-      if (doc.exists()) {
-        callback({ id: doc.id, ...doc.data() });
-      } else {
-        console.warn("[DB] User Dokument existiert (noch) nicht!");
-      }
-    }, 
-    (error) => {
-      console.error("[DB] FEHLER im User-Listener:", error);
-    }
-  );
+  return onSnapshot(doc(db, "users", userId), (doc) => {
+    if (doc.exists()) callback({ id: doc.id, ...doc.data() });
+  });
 };
 
 export const listenToPets = (userId, callback) => {
   const q = query(collection(db, "pets"), where("ownerId", "==", userId));
-  return onSnapshot(q, 
-    (snapshot) => {
-      const pets = [];
-      snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() }));
-      callback(pets);
-    },
-    (error) => {
-      console.error("[DB] FEHLER im Pets-Listener:", error);
-    }
-  );
+  return onSnapshot(q, (snapshot) => {
+    const pets = [];
+    snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() }));
+    callback(pets);
+  });
 };
 
 export const listenToMarket = (callback) => {
-  return onSnapshot(collection(db, "market"), 
-    (snapshot) => {
-      const listings = [];
-      snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() }));
-      callback(listings);
-    },
-    (error) => {
-      console.error("[DB] FEHLER im Market-Listener:", error);
-    }
-  );
+  return onSnapshot(collection(db, "market"), (snapshot) => {
+    const listings = [];
+    snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() }));
+    callback(listings);
+  });
 };
 
 // --- GENERAL ACTIONS ---
@@ -115,7 +93,9 @@ export const deleteMarketListing = async (listingId) => {
   await deleteDoc(doc(db, "market", listingId));
 };
 
-// --- MARKTPLATZ TRANSAKTION ---
+// --- MARKTPLATZ TRANSAKTIONEN ---
+
+// Kaufen
 export const buyMarketItem = async (user, listingId) => {
     const listingRef = doc(db, "market", listingId);
     const buyerRef = doc(db, "users", user.id);
@@ -174,6 +154,45 @@ export const buyMarketItem = async (user, listingId) => {
         return { success: false, message: e.message };
     }
 };
+
+// NEU: Angebot abbrechen (Listing löschen -> Pets zurück zum User)
+export const cancelMarketListing = async (user, listingId) => {
+    const listingRef = doc(db, "market", listingId);
+    
+    try {
+        await runTransaction(db, async (transaction) => {
+            const listingSnap = await transaction.get(listingRef);
+            if (!listingSnap.exists()) throw new Error("Angebot existiert nicht mehr.");
+            
+            const listing = listingSnap.data();
+            
+            // Sicherheitscheck: Gehört das Listing dem User?
+            if (listing.sellerId !== user.id) throw new Error("Das ist nicht dein Angebot!");
+
+            // Pets wiederherstellen
+            if (listing.pets && Array.isArray(listing.pets)) {
+                listing.pets.forEach((p) => {
+                    // Wir nutzen die ursprüngliche ID, um das Pet "wiederzubeleben"
+                    const petRef = doc(db, "pets", p.id);
+                    transaction.set(petRef, { ...p, ownerId: user.id });
+                });
+            } else if (listing.pet) {
+                const petRef = doc(db, "pets", listing.pet.id);
+                transaction.set(petRef, { ...listing.pet, ownerId: user.id });
+            }
+
+            // Listing löschen
+            transaction.delete(listingRef);
+        });
+
+        return { success: true, message: "Angebot entfernt. Pets sind zurück!" };
+
+    } catch (e) {
+        console.error("Cancel Listing Fehler:", e);
+        return { success: false, message: e.message };
+    }
+};
+
 
 // --- RESTLICHE FUNKTIONEN ---
 export const getLeaderboard = async () => {

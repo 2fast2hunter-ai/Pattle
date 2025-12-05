@@ -192,5 +192,35 @@ export function usePetActions(state, showNotification) {
         showNotification(`Zucht erfolgreich (+${xpGain} XP)!`, 'success'); 
     };
 
-    return { handleReduceCooldown, addToTeam, removeFromTeam, hatchEgg, startIncubation, breedPets };
+    // --- NEU: RENAME FUNCTION ---
+    const renamePet = async (petId, newName) => {
+        if (!user) return false;
+        const COST = 100; // Gems
+
+        if (user.gems < COST) {
+            showNotification(`Nicht genügend Edelsteine! (Benötigt: ${COST})`, 'error');
+            return false;
+        }
+
+        if (!newName || newName.trim().length < 3 || newName.trim().length > 15) {
+             showNotification("Name muss zwischen 3 und 15 Zeichen lang sein.", "error");
+             return false;
+        }
+
+        try {
+            // Gems abziehen
+            await updateUser(user.id, { gems: user.gems - COST });
+            // Name speichern
+            await updatePetInDB(petId, { name: newName.trim() });
+            
+            showNotification(`Pet umbenannt in "${newName.trim()}"!`, 'success');
+            return true;
+        } catch (e) {
+            console.error(e);
+            showNotification("Fehler beim Umbenennen.", "error");
+            return false;
+        }
+    };
+
+    return { handleReduceCooldown, addToTeam, removeFromTeam, hatchEgg, startIncubation, breedPets, renamePet };
 }

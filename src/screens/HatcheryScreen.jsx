@@ -1,18 +1,115 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles, Ticket, FastForward } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles, Ticket, FastForward, Plus, Backpack } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
 import { getUnlockedHatcherySlots } from '../utils/gameMechanics';
 import PetAvatar from '../components/PetAvatar';
 
-export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown }) {
+// --- HELPER: EIER AUSWAHL MODAL ---
+function EggSelectionModal({ eggs, onSelect, onClose }) {
+    // 1. Eier stapeln und sortieren
+    const eggStacks = useMemo(() => {
+        const stacks = {};
+        
+        eggs.forEach(egg => {
+            // Wir gruppieren nach Seltenheit (und Quelle, falls gewünscht, hier simpel nach Rarity)
+            const key = egg.rarity; 
+            if (!stacks[key]) {
+                stacks[key] = { 
+                    rarity: egg.rarity, 
+                    count: 0, 
+                    egg: egg, // Ein Referenz-Ei für die Anzeige
+                    ids: []   // Alle IDs in diesem Stack
+                };
+            }
+            stacks[key].count++;
+            stacks[key].ids.push(egg.id);
+        });
+
+        // In Array umwandeln und sortieren (Höchste Seltenheit zuerst)
+        return Object.values(stacks).sort((a, b) => {
+            const rA = RARITIES[a.rarity]?.id || 0;
+            const rB = RARITIES[b.rarity]?.id || 0;
+            return rB - rA; 
+        });
+    }, [eggs]);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-3xl flex flex-col shadow-2xl relative overflow-hidden max-h-[80vh]">
+                
+                {/* Header */}
+                <div className="p-5 border-b border-white/10 flex justify-between items-center bg-slate-950/50">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-indigo-500/20 p-2 rounded-xl text-indigo-400">
+                            <Backpack className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-black text-white text-lg leading-none">Ei auswählen</h3>
+                            <p className="text-xs text-slate-400 font-bold mt-1">{eggs.length} verfügbar</p>
+                        </div>
+                    </div>
+                    <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
+                        <X className="w-5 h-5 text-white" />
+                    </button>
+                </div>
+
+                {/* Liste */}
+                <div className="flex-1 overflow-y-auto p-4 scrollbar-hide space-y-3">
+                    {eggStacks.length === 0 ? (
+                        <div className="text-center py-10 text-slate-500 flex flex-col items-center">
+                            <Egg className="w-12 h-12 mb-3 opacity-20" />
+                            <p className="font-bold">Keine Eier im Rucksack</p>
+                            <p className="text-xs mt-1">Besuche den Shop oder züchte Pets!</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-3">
+                            {eggStacks.map((stack) => {
+                                const rarity = RARITIES[stack.rarity];
+                                return (
+                                    <button 
+                                        key={stack.rarity}
+                                        onClick={() => onSelect(stack.ids[0])} // Nimm das erste Ei vom Stapel
+                                        className="relative group bg-slate-800 border border-white/5 hover:border-white/20 rounded-2xl p-3 transition-all active:scale-95 flex flex-col items-center text-center overflow-hidden"
+                                    >
+                                        <div className={`absolute inset-0 ${rarity.bg} opacity-0 group-hover:opacity-10 transition-opacity`}></div>
+                                        
+                                        {/* Counter Badge */}
+                                        <div className="absolute top-2 right-2 bg-white text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm z-10">
+                                            x{stack.count}
+                                        </div>
+
+                                        <div className="mb-2 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
+                                            <Egg className={`w-12 h-12 ${rarity.color} drop-shadow-md`} />
+                                        </div>
+                                        
+                                        <div className="relative z-10">
+                                            <div className={`text-xs font-black ${rarity.color} uppercase mb-0.5`}>{rarity.label}</div>
+                                            <div className="text-[9px] text-slate-500 font-bold">Bereit zum Ausbrüten</div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+
+// --- MAIN SCREEN ---
+export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation }) {
   const unlockedSlots = getUnlockedHatcherySlots(user.level);
   const maxSlots = 10;
+  
+  // States
   const [hatchingPet, setHatchingPet] = useState(null);
   const [nameInput, setNameInput] = useState('');
-  
-  // UPDATE: Zählt Tickets direkt aus dem Inventar
+  const [showSelector, setShowSelector] = useState(false); // Zeigt das Auswahl-Modal
+
   const ticketCount = user?.inventory?.filter(i => i.type === 'TICKET').length || 0;
-  
+
   // Timer force update
   const [, setTick] = useState(0);
   useEffect(() => {
@@ -20,7 +117,27 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
     return () => clearInterval(interval);
   }, []);
 
+  // Eier filtern
   const incubatingEggs = pets.filter(p => p.isEgg && p.hatchAt > 0);
+  const inventoryEggs = pets.filter(p => p.isEgg && (p.hatchAt === 0 || !p.hatchAt));
+
+  // Slots belegen Logik (Arrays für das Grid bauen)
+  // Wir mappen über die Indizes 0..9
+  // Wenn index < incubatingEggs.length -> Zeige Ei
+  // Wenn index >= incubatingEggs.length UND index < unlockedSlots -> Zeige "Leer" (Klickbar)
+  // Sonst -> "Gesperrt"
+
+  const handleSlotClick = (index) => {
+      // Prüfen ob Slot leer und freigeschaltet ist
+      if (index >= incubatingEggs.length && index < unlockedSlots) {
+          setShowSelector(true);
+      }
+  };
+
+  const handleSelectEgg = (eggId) => {
+      onStartIncubation(eggId);
+      setShowSelector(false);
+  };
 
   const startHatchingProcess = (pet) => {
       setHatchingPet(pet);
@@ -34,7 +151,6 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
       }
   }
 
-  // --- HELPER: Format HH:MM:SS ---
   const formatTime = (seconds) => {
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
@@ -45,7 +161,16 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
   return (
       <div className="h-full flex flex-col animate-in fade-in relative">
         
-        {/* --- HATCHING MODAL --- */}
+        {/* MODAL: EI AUSWAHL */}
+        {showSelector && (
+            <EggSelectionModal 
+                eggs={inventoryEggs} 
+                onSelect={handleSelectEgg} 
+                onClose={() => setShowSelector(false)} 
+            />
+        )}
+
+        {/* MODAL: SCHLÜPFEN */}
         {hatchingPet && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-xl p-6 animate-in zoom-in-50 duration-300">
                 <div className={`bg-slate-900 border-2 ${RARITIES[hatchingPet.rarity].border} w-full max-w-sm rounded-[32px] p-8 text-center shadow-2xl relative overflow-hidden group`}>
@@ -137,7 +262,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                     </div>
                 </div>
                 
-                {/* Tickets Info */}
+                {/* Tickets Info (zum Beschleunigen) */}
                 <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5">
                     <Ticket className="w-3.5 h-3.5 text-pink-400" />
                     <span className="text-xs font-bold text-white">{ticketCount}</span>
@@ -150,8 +275,10 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
           <div className="grid grid-cols-2 gap-4">
             {Array.from({ length: maxSlots }).map((_, index) => {
               const isUnlocked = index < unlockedSlots;
+              // Das "i-te" Ei aus der Inkubations-Liste
               const egg = index < incubatingEggs.length ? incubatingEggs[index] : null;
               
+              // GESPERRT
               if (!isUnlocked) {
                   return (
                     <div key={index} className="aspect-square bg-slate-900/50 border-2 border-dashed border-slate-800 rounded-3xl flex flex-col items-center justify-center gap-2 opacity-50">
@@ -165,6 +292,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                   );
               }
 
+              // BELEGT MIT EI
               if (egg) {
                   const timeLeft = Math.max(0, Math.ceil((egg.hatchAt - Date.now()) / 1000));
                   const isReady = timeLeft <= 0;
@@ -217,13 +345,18 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                   );
               }
 
+              // FREIER SLOT (JETZT KLICKBAR)
               return (
-                <div key={index} className="aspect-square bg-slate-800/30 border-2 border-slate-700 rounded-3xl flex flex-col items-center justify-center gap-2 group hover:border-slate-600 transition-colors">
-                    <div className="w-12 h-12 rounded-full bg-slate-800/50 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <div className="w-2 h-2 bg-slate-600 rounded-full"></div>
+                <button 
+                    key={index} 
+                    onClick={() => handleSlotClick(index)}
+                    className="aspect-square bg-slate-800/30 border-2 border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800/50 rounded-3xl flex flex-col items-center justify-center gap-2 group transition-all active:scale-95 cursor-pointer"
+                >
+                    <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-white/5">
+                        <Plus className="w-6 h-6 text-slate-500 group-hover:text-emerald-400" />
                     </div>
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Leer</div>
-                </div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-emerald-400">Belegen</div>
+                </button>
               );
             })}
           </div>

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Filter, X, Store, Coins, Tag, DollarSign, Egg, Search, Swords, Shield, Zap, Heart, Info, HelpCircle, Eye, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Filter, X, Store, Coins, Tag, DollarSign, Egg, Search, Swords, Shield, Zap, Heart, Info, Eye, Minus, Plus, Trash2 } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
 // --- DETAIL MODAL ---
-function MarketDetailModal({ pet, onClose, price, onBuy, isOwner }) {
+function MarketDetailModal({ pet, onClose, price, onBuy, isOwner, onRemove }) {
     if (!pet || pet.isEgg) return null;
     const typeInfo = TYPES[pet.type] || TYPES.FIRE;
     const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
@@ -36,13 +36,23 @@ function MarketDetailModal({ pet, onClose, price, onBuy, isOwner }) {
                     </div>
                     <div className="bg-slate-800/50 p-3 rounded-xl border border-white/5"><div className="flex items-center gap-2 mb-1"><span className="text-[10px] font-bold text-slate-500 uppercase">Fähigkeit</span><span className="text-[10px] font-bold text-indigo-400 uppercase">{ability.name}</span></div><p className="text-xs text-slate-400 leading-relaxed">{ability.desc}</p></div>
                 </div>
-                {onBuy && !isOwner && (<div className="p-4 bg-slate-900 border-t border-white/10 shrink-0"><button onClick={onBuy} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform"><Coins className="w-4 h-4 fill-black/20" /> KAUFEN FÜR {price}</button></div>)}
+                <div className="p-4 bg-slate-900 border-t border-white/10 shrink-0">
+                    {isOwner ? (
+                        <button onClick={onRemove} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                            <Trash2 className="w-4 h-4" /> ANGEBOT ENTFERNEN
+                        </button>
+                    ) : (
+                        <button onClick={onBuy} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                            <Coins className="w-4 h-4 fill-black/20" /> KAUFEN FÜR {price}
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
 
-export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, myPets }) {
+export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, onRemoveListing, myPets }) {
     const [activeTab, setActiveTab] = useState('buy'); 
     const [sellPrice, setSellPrice] = useState('');
     const [sellQuantity, setSellQuantity] = useState(1); 
@@ -57,7 +67,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
     const [maxPrice, setMaxPrice] = useState('');
 
     const checkFilters = (pet, price = null) => {
-        if (!pet) return false; // Safety check
+        if (!pet) return false; 
         if (searchTerm) {
             const term = searchTerm.toLowerCase();
             const matchesName = pet.name && pet.name.toLowerCase().includes(term);
@@ -77,17 +87,25 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
     // --- 1. KAUFEN LISTE (GEFILTERT & SORTIERT) ---
     const buyList = listings
-        .filter(l => l && l.pet && typeof l.pet === 'object') // Filter broken listings
+        .filter(l => l && l.pet && typeof l.pet === 'object')
         .filter(l => checkFilters(l.pet, l.price))
         .sort((a, b) => {
+            // NEU: Eigene Angebote zuerst
+            const isMyA = a.sellerId === user.id;
+            const isMyB = b.sellerId === user.id;
+            
+            if (isMyA && !isMyB) return -1;
+            if (!isMyA && isMyB) return 1;
+
+            // Dann nach Seltenheit
             const rA = RARITIES[a.pet.rarity]?.id || 0;
             const rB = RARITIES[b.pet.rarity]?.id || 0;
             if (rB !== rA) return rB - rA;
+
+            // Zuletzt nach Datum
             return b.createdAt - a.createdAt;
         });
 
-
-    // --- 2. VERKAUFEN LISTE (SORTIERT & GESTAPELT) ---
     const rawSellItems = myPets
         .filter(p => !user.team.includes(p.id)) 
         .filter(p => !p.isEgg || (p.isEgg && (p.hatchAt === 0 || !p.hatchAt)))
@@ -116,25 +134,16 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         return b.level - a.level;
     });
 
-
-    // --- ACTIONS ---
     const handleSellSubmit = () => {
         if (!selectedForSale || !sellPrice || isNaN(sellPrice) || sellPrice <= 0) return;
         const price = parseInt(sellPrice);
 
         if (selectedForSale.isStack) {
             const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
-            // Wir nehmen die echten Pet-Objekte aus dem Stack
             const petsToSell = selectedForSale.pets.slice(0, qty);
-            
-            // Berechne Gesamtpreis für das Listing
             const totalPrice = price * qty;
-            
-            // Übergebe das Array von Objekten
             onSell(petsToSell, totalPrice);
         } else {
-            // Übergebe das einzelne Objekt (als Array oder direkt, je nach Implementierung in App.jsx/useGameActions)
-            // useGameActions erwartet ein Array oder Objekt
             onSell(selectedForSale, price);
         }
 
@@ -154,15 +163,12 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
     const resetFilters = () => { setSearchTerm(''); setFilterRarity('ALL'); setFilterType('ALL'); setMinPrice(''); setMaxPrice(''); };
     const activeFilterCount = (filterRarity !== 'ALL' ? 1 : 0) + (filterType !== 'ALL' ? 1 : 0) + (minPrice || maxPrice ? 1 : 0) + (searchTerm ? 1 : 0);
 
-    // --- CARD COMPONENT ---
-    const MarketCard = ({ pet, price, seller, isSelected, onClickCard, onClickAction, quantity }) => {
+    const MarketCard = ({ pet, price, seller, isSelected, onClickCard, onClickAction, quantity, isOwner, listingId }) => {
         if (!pet) return null;
 
         const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
         const isEgg = pet.isEgg;
         const type = isEgg ? null : (TYPES[pet.type] || TYPES.FIRE);
-        
-        // Bestimme, ob eine Menge angezeigt werden soll (vom Stack oder vom Listing)
         const displayCount = pet.isStack ? pet.count : (quantity > 1 ? quantity : 1);
         const showCount = displayCount > 1;
 
@@ -194,7 +200,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
                             {isEgg ? (
                                 <div className="flex items-center gap-2 text-xs text-slate-500 mt-1 bg-slate-900/50 p-1.5 rounded border border-white/5 w-fit">
-                                    <HelpCircle className="w-3 h-3" />
+                                    <Info className="w-3 h-3" />
                                     <span className="font-mono text-[10px]">Inhalt unbekannt</span>
                                 </div>
                             ) : (
@@ -204,21 +210,30 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                     <span className="flex items-center gap-0.5 bg-black/20 px-1.5 py-0.5 rounded"><Heart className="w-2.5 h-2.5 text-green-400" />{pet.hp}</span>
                                 </div>
                             )}
-                            {seller && <div className="text-[10px] text-slate-600 mt-1 truncate">Verkäufer: {seller}</div>}
+                            {seller && <div className="text-[10px] text-slate-600 mt-1 truncate">{isOwner ? "Dein Angebot" : `Verkäufer: ${seller}`}</div>}
                         </div>
                     </div>
 
-                    <div onClick={onClickAction} className="cursor-pointer pl-2 border-l border-white/5 flex flex-col items-center justify-center min-w-[60px]">
-                        {price ? (
-                            <div className="bg-yellow-500 hover:bg-yellow-400 transition-colors text-black font-black px-3 py-2 rounded-xl text-xs shadow-lg flex flex-col items-center gap-0.5 active:scale-95">
-                                <Coins className="w-4 h-4 fill-black/20" /> <span>{price}</span>
+                    {/* ACTION BUTTON */}
+                    {isOwner ? (
+                        <div onClick={() => onRemoveListing(listingId)} className="cursor-pointer pl-2 border-l border-white/5 flex flex-col items-center justify-center min-w-[60px]">
+                             <div className="bg-red-600 hover:bg-red-500 transition-colors text-white font-black p-2 rounded-xl shadow-lg active:scale-95">
+                                <Trash2 className="w-4 h-4" />
                             </div>
-                        ) : (
-                            <div className={`p-2 rounded-full ${isSelected ? 'bg-green-500 text-black' : 'bg-slate-700 text-slate-400'}`}>
-                                <DollarSign className="w-5 h-5" />
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        <div onClick={onClickAction} className="cursor-pointer pl-2 border-l border-white/5 flex flex-col items-center justify-center min-w-[60px]">
+                            {price ? (
+                                <div className="bg-yellow-500 hover:bg-yellow-400 transition-colors text-black font-black px-3 py-2 rounded-xl text-xs shadow-lg flex flex-col items-center gap-0.5 active:scale-95">
+                                    <Coins className="w-4 h-4 fill-black/20" /> <span>{price}</span>
+                                </div>
+                            ) : (
+                                <div className={`p-2 rounded-full ${isSelected ? 'bg-green-500 text-black' : 'bg-slate-700 text-slate-400'}`}>
+                                    <DollarSign className="w-5 h-5" />
+                                </div>
+                            )}
+                        </div>
+                    )}
                  </div>
             </div>
         );
@@ -226,7 +241,16 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
-            {viewingPetDetails && (<MarketDetailModal pet={viewingPetDetails.pet} price={viewingPetDetails.price} isOwner={viewingPetDetails.isOwner} onBuy={viewingPetDetails.onBuy} onClose={() => setViewingPetDetails(null)} />)}
+            {viewingPetDetails && (
+                <MarketDetailModal 
+                    pet={viewingPetDetails.pet} 
+                    price={viewingPetDetails.price} 
+                    isOwner={viewingPetDetails.isOwner} 
+                    onBuy={viewingPetDetails.onBuy} 
+                    onRemove={() => { onRemoveListing(viewingPetDetails.listingId); setViewingPetDetails(null); }}
+                    onClose={() => setViewingPetDetails(null)} 
+                />
+            )}
             
             {isSidebarOpen && (
                 <div className="fixed inset-0 z-50 flex">
@@ -270,10 +294,13 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                     price={listing.price} 
                                     seller={listing.sellerName}
                                     quantity={listing.quantity}
+                                    isOwner={listing.sellerId === user.id}
+                                    listingId={listing.id}
                                     onClickCard={() => setViewingPetDetails({ 
                                         pet: listing.pet, 
                                         price: listing.price, 
                                         isOwner: listing.sellerId === user.id,
+                                        listingId: listing.id,
                                         onBuy: () => { onBuy(listing.id); setViewingPetDetails(null); }
                                     })}
                                     onClickAction={() => onBuy(listing.id)}
@@ -285,7 +312,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
                 {activeTab === 'sell' && (
                     <div className="grid grid-cols-1 gap-3">
-                         <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-xl flex items-center gap-3 mb-2"><Info className="w-5 h-5 text-blue-400 shrink-0" /><p className="text-xs text-blue-200">Gebühr: 5% des Verkaufspreises werden vom Erlös abgezogen.</p></div>
+                         <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-xl flex items-center gap-3 mb-2"><Info className="w-5 h-5 text-blue-400 shrink-0" /><p className="text-xs text-blue-200">Gebühr: 100 Gold pro Angebot.</p></div>
                         {finalSellList.length === 0 ? (
                             <div className="text-center text-slate-500 py-20"><Tag className="w-16 h-16 mx-auto mb-4 opacity-20" /><p className="font-bold">Nichts zu verkaufen.</p></div>
                         ) : (
@@ -302,7 +329,6 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                         {isSelected && (
                                             <div className="p-3 mt-[-4px] mx-0.5 border-x border-b border-green-500/30 rounded-b-2xl bg-slate-900/80 animate-in slide-in-from-top-2 mb-3">
                                                 
-                                                {/* MENGEN AUSWAHL (Nur bei Stacks) */}
                                                 {item.isStack && item.count > 1 && (
                                                     <div className="flex items-center justify-between mb-3 bg-black/30 p-2 rounded-xl"><span className="text-xs font-bold text-slate-400 ml-2">Menge:</span><div className="flex items-center gap-3"><button onClick={() => setSellQuantity(Math.max(1, sellQuantity - 1))} className="p-1 bg-slate-700 rounded hover:bg-slate-600"><Minus className="w-4 h-4 text-white" /></button><span className="font-black text-white w-6 text-center">{sellQuantity}</span><button onClick={() => setSellQuantity(Math.min(item.count, sellQuantity + 1))} className="p-1 bg-slate-700 rounded hover:bg-slate-600"><Plus className="w-4 h-4 text-white" /></button></div></div>
                                                 )}
@@ -311,7 +337,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                                     <div className="relative flex-1"><div className="absolute inset-y-0 left-3 flex items-center pointer-events-none"><Coins className="w-4 h-4 text-yellow-500" /></div><input type="number" placeholder="Stückpreis" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-white outline-none focus:border-green-500 font-bold" autoFocus /></div>
                                                     <button onClick={handleSellSubmit} className="bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-3 rounded-xl transition-colors shadow-lg active:scale-95">OK</button>
                                                 </div>
-                                                {sellPrice && !isNaN(sellPrice) && (<p className="text-[10px] text-slate-400 mt-2 text-center">Gesamt-Erlös: <span className="text-yellow-400 font-bold">{Math.floor(sellPrice * 0.95) * sellQuantity}</span></p>)}
+                                                {sellPrice && !isNaN(sellPrice) && (<p className="text-[10px] text-slate-400 mt-2 text-center">Gesamt-Erlös: <span className="text-yellow-400 font-bold">{Math.floor(sellPrice * 0.95) * sellQuantity}</span> ( -100G Gebühr )</p>)}
                                             </div>
                                         )}
                                     </div>
