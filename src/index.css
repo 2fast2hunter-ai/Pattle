@@ -2,41 +2,40 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Safe Area Variablen für Notches und Home Bars */
-  --sat: env(safe-area-inset-top);
-  --sab: env(safe-area-inset-bottom);
-  --sal: env(safe-area-inset-left);
-  --sar: env(safe-area-inset-right);
-}
-
 body {
-  @apply bg-slate-950 text-white;
+  @apply bg-slate-900 text-white;
   margin: 0;
   padding: 0;
-  /* Nutzt die dynamische Viewport-Höhe für mobile Browser */
-  height: 100dvh;
+  height: 100vh;
   width: 100vw;
-  overflow: hidden;
-  /* Verhindert "Bounce" Effekt auf iOS */
-  overscroll-behavior: none;
 }
-
 #root {
   height: 100%;
   width: 100%;
-  /* Padding für Safe Areas */
-  padding-top: var(--sat);
-  padding-bottom: var(--sab);
-  padding-left: var(--sal);
-  padding-right: var(--sar);
 }
 
-/* Scrollbar verstecken für sauberen Look */
-.scrollbar-hide::-webkit-scrollbar {
-    display: none;
+/* --- NEU: HOLO SHINY EFFEKT --- */
+@keyframes holo {
+  0% { background-position: 0% 50%; opacity: 0.4; }
+  50% { background-position: 100% 50%; opacity: 0.7; }
+  100% { background-position: 0% 50%; opacity: 0.4; }
 }
-.scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+.holo-effect {
+  background: linear-gradient(
+    115deg, 
+    transparent 20%, 
+    rgba(255, 255, 255, 0.4) 40%, 
+    rgba(255, 255, 255, 0.7) 45%, 
+    rgba(255, 0, 255, 0.5) 50%, 
+    rgba(0, 255, 255, 0.5) 55%,
+    rgba(255, 255, 255, 0.4) 60%,
+    transparent 80%
+  );
+  background-size: 200% 200%;
+  mix-blend-mode: overlay;
+  animation: holo 3s ease infinite;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 50; 
 }

@@ -31,6 +31,7 @@ import VillageScreen from './screens/VillageScreen';
 import ResourceDetailScreen from './screens/ResourceDetailScreen';
 import VillageMilestonesScreen from './screens/VillageMilestonesScreen';
 import VillageTradingScreen from './screens/VillageTradingScreen';
+import VillageCosmeticsScreen from './screens/VillageCosmeticsScreen';
 
 class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -70,15 +71,18 @@ export default function App() {
     hatchEgg, startIncubation, breedPets,
     handleAutoBattle, autoBattleRemaining, cancelAutoBattle, startFriendBattle,
     handleRemoveListing, renamePet,
-    // Village Actions
     assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
-    tradeResources, claimMilestone, addIdleTime // <--- NEU: addIdleTime ist hier
+    tradeResources, claimMilestone, addIdleTime, 
+    buyCosmetic, buySpecialOffer, applyXpItem
   } = gameLogic;
 
   const [selectedVillageSlot, setSelectedVillageSlot] = useState(null);
   const [selectedResource, setSelectedResource] = useState(null);
+  const [selectedConsumableId, setSelectedConsumableId] = useState(null);
 
-  // --- VILLAGE HANDLER ---
+  // FIX: Pet immer live aus myPets holen, damit Updates (Shiny, XP) sichtbar sind
+  const activePetDetail = selectedPetDetail ? myPets.find(p => p.id === selectedPetDetail.id) : null;
+
   const handleCollectVillage = async () => {
       const result = await collectVillageResources();
       if (result && result.items && result.items.length > 0) {
@@ -91,271 +95,57 @@ export default function App() {
       }
   };
 
-  const handleOpenResource = (resKey) => {
-      setSelectedResource(resKey);
-      setCurrentView('village-detail');
-  };
+  const handleOpenResource = (resKey) => { setSelectedResource(resKey); setCurrentView('village-detail'); };
+  const handleOpenVillageSelector = (resourceId, slotIndex) => { setSelectedVillageSlot({ resourceId, slotIndex }); setCurrentView('village-select-pet'); };
+  const handleAssignVillageWorker = (petId) => { if (selectedVillageSlot) { assignWorker(selectedVillageSlot.resourceId, selectedVillageSlot.slotIndex, petId); setSelectedVillageSlot(null); setCurrentView('village-detail'); } };
+  const handleUseItemRequest = (itemId) => { setSelectedConsumableId(itemId); setCurrentView('item-use-select-pet'); };
+  const handleApplyItemToPet = async (petId) => { if (selectedConsumableId) { await applyXpItem(petId, selectedConsumableId); setSelectedConsumableId(null); setCurrentView('item-inventory'); } };
 
-  const handleOpenVillageSelector = (resourceId, slotIndex) => {
-      setSelectedVillageSlot({ resourceId, slotIndex });
-      setCurrentView('village-select-pet');
-  };
-
-  const handleAssignVillageWorker = (petId) => {
-      if (selectedVillageSlot) {
-          assignWorker(selectedVillageSlot.resourceId, selectedVillageSlot.slotIndex, petId);
-          setSelectedVillageSlot(null);
-          setCurrentView('village-detail'); 
-      }
-  };
-
-  if (authLoading) {
-      return (
-          <div className="flex flex-col h-screen bg-slate-900 text-white justify-center items-center">
-              <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-              <p className="text-slate-400 font-bold animate-pulse">Lade Spieldaten...</p>
-          </div>
-      );
-  }
-
-  if (currentView === 'auth' || !user) {
-      return <AuthScreen onLogin={handleLogin} />;
-  }
+  if (authLoading) return (<div className="flex flex-col h-screen bg-slate-900 text-white justify-center items-center"><Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" /><p className="text-slate-400 font-bold animate-pulse">Lade Spieldaten...</p></div>);
+  if (currentView === 'auth' || !user) return <AuthScreen onLogin={handleLogin} />;
 
   return (
     <div className="flex flex-col h-full w-full bg-slate-900 font-sans text-white sm:max-w-md mx-auto shadow-2xl overflow-hidden sm:border-x border-slate-800 relative">
-      
       {notification && <Notification notification={notification} />}
       {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
       {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
-      
       {currentView !== 'battle' && <HeaderHUD user={user} />}
       
       <main className="flex-1 relative overflow-hidden bg-slate-900">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
         <div className="h-full overflow-y-auto p-4 scrollbar-hide pb-10">
           
-          {currentView === 'menu' && (
-            <MainMenu 
-              user={user} 
-              onQuests={() => setCurrentView('quests')} 
-              onArena={() => setCurrentView('arena-hub')} 
-              onPetHub={() => setCurrentView('pet-hub')} 
-              onShop={() => setCurrentView('shop')} 
-              onMarketplace={() => setCurrentView('marketplace')} 
-              onLeaderboard={() => setCurrentView('leaderboard')} 
-              onProfile={() => setCurrentView('profile')}
-              onSettings={() => setCurrentView('settings')}
-              onVillage={() => setCurrentView('village')}
-            />
-          )}
+          {currentView === 'menu' && (<MainMenu user={user} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} />)}
+          
+          {currentView === 'village' && (<VillageScreen user={user} onBack={() => setCurrentView('menu')} onCollect={handleCollectVillage} onSelectResource={handleOpenResource} productionRates={calculateProductionRate} onOpenMilestones={() => setCurrentView('village-milestones')} onOpenTrading={() => setCurrentView('village-trading')} onAddIdleTime={addIdleTime} onOpenCosmetics={() => setCurrentView('village-cosmetics')} />)}
+          {currentView === 'village-detail' && selectedResource && (<ResourceDetailScreen resourceId={selectedResource} user={user} pets={myPets} onBack={() => setCurrentView('village')} onAssignWorker={handleOpenVillageSelector} onRemoveWorker={removeWorker} onUpgradeBuilding={upgradeBuilding} productionRates={calculateProductionRate} onCollect={handleCollectVillage} />)}
+          {currentView === 'village-select-pet' && (<InventoryScreen pets={myPets.filter(p => !p.isEgg)} title="Arbeiter wählen" onBack={() => setCurrentView('village-detail')} onSelectPet={handleAssignVillageWorker} highlightMode={true} />)}
+          {currentView === 'village-milestones' && (<VillageMilestonesScreen user={user} onBack={() => setCurrentView('village')} onClaim={claimMilestone} />)}
+          {currentView === 'village-trading' && (<VillageTradingScreen user={user} onBack={() => setCurrentView('village')} onTrade={tradeResources} />)}
+          {currentView === 'village-cosmetics' && (<VillageCosmeticsScreen user={user} onBack={() => setCurrentView('village')} onBuy={buyCosmetic} onBuySpecial={buySpecialOffer} />)}
 
-          {currentView === 'village' && (
-              <VillageScreen 
-                  user={user}
-                  onBack={() => setCurrentView('menu')}
-                  onCollect={handleCollectVillage}
-                  onSelectResource={handleOpenResource}
-                  productionRates={calculateProductionRate}
-                  onOpenMilestones={() => setCurrentView('village-milestones')}
-                  onOpenTrading={() => setCurrentView('village-trading')}
-                  onAddIdleTime={addIdleTime} // <--- NEU: Übergeben
-              />
-          )}
+          {currentView === 'item-inventory' && (<ItemInventoryScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onRedeemTicket={handleRedeemTicket} onStartIncubation={startIncubation} user={user} onUseConsumable={handleUseItemRequest} />)}
+          {currentView === 'item-use-select-pet' && (<InventoryScreen pets={myPets.filter(p => !p.isEgg)} title="Wähle ein Pet" onBack={() => setCurrentView('item-inventory')} onSelectPet={handleApplyItemToPet} highlightMode={true} />)}
 
-          {currentView === 'village-detail' && selectedResource && (
-              <ResourceDetailScreen 
-                  resourceId={selectedResource}
-                  user={user}
-                  pets={myPets}
-                  onBack={() => setCurrentView('village')}
-                  onAssignWorker={handleOpenVillageSelector}
-                  onRemoveWorker={removeWorker}
-                  onUpgradeBuilding={upgradeBuilding}
-                  productionRates={calculateProductionRate}
-                  onCollect={handleCollectVillage} 
-              />
-          )}
-
-          {currentView === 'village-select-pet' && (
-            <InventoryScreen 
-              pets={myPets.filter(p => !p.isEgg)} 
-              title="Arbeiter wählen" 
-              onBack={() => setCurrentView('village-detail')} 
-              onSelectPet={handleAssignVillageWorker} 
-              highlightMode={true} 
-            />
-          )}
-
-          {currentView === 'village-milestones' && (
-              <VillageMilestonesScreen 
-                  user={user}
-                  onBack={() => setCurrentView('village')}
-                  onClaim={claimMilestone}
-              />
-          )}
-
-          {currentView === 'village-trading' && (
-              <VillageTradingScreen 
-                  user={user}
-                  onBack={() => setCurrentView('village')}
-                  onTrade={tradeResources}
-              />
-          )}
-
-          {/* ... Shop, Market, etc. (bleiben gleich) ... */}
-          {currentView === 'shop' && (
-            <ShopScreen 
-              onBack={() => setCurrentView('menu')} 
-              onBuyBox={buyLootbox} 
-              onBuyTickets={buyTickets} 
-              onWatchAd={watchAdForReward} 
-              user={user} 
-            />
-          )}
-
-          {currentView === 'marketplace' && (
-            <MarketplaceScreen 
-              user={user} 
-              listings={marketListings} 
-              onBack={() => setCurrentView('menu')} 
-              onBuy={handleBuyMarket} 
-              onSell={handleSellMarket} 
-              onRemoveListing={handleRemoveListing}
-              myPets={myPets} 
-            />
-          )}
-
+          {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} onBuyTickets={buyTickets} onWatchAd={watchAdForReward} user={user} />}
+          {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} onRemoveListing={handleRemoveListing} myPets={myPets} />}
           {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
           {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
-          {currentView === 'arena-hub' && (
-            <ArenaHub 
-              user={user}
-              onBack={() => setCurrentView('menu')} 
-              onBattle={startBattle} 
-              onTeam={() => setCurrentView('team-edit')}
-              onLeaderboard={() => setCurrentView('leaderboard')}
-              onAutoBattle={handleAutoBattle}
-            />
-          )}
-          {currentView === 'pet-hub' && (
-            <PetHub 
-              onBack={() => setCurrentView('menu')} 
-              onInventory={() => setCurrentView('inventory')} 
-              onItemInventory={() => setCurrentView('item-inventory')} 
-              onBreed={() => setCurrentView('breeding')} 
-              onHatchery={() => setCurrentView('hatchery')}
-            />
-          )}
-          {currentView === 'hatchery' && (
-            <HatcheryScreen 
-              pets={myPets} 
-              user={user} 
-              onBack={() => setCurrentView('pet-hub')} 
-              onHatchEgg={hatchEgg}
-              onReduceCooldown={handleReduceCooldown}
-              onStartIncubation={startIncubation}
-            />
-          )}
-          {currentView === 'item-inventory' && (
-            <ItemInventoryScreen 
-              pets={myPets} 
-              onBack={() => setCurrentView('pet-hub')} 
-              onRedeemTicket={handleRedeemTicket} 
-              onStartIncubation={startIncubation} 
-              user={user} 
-            />
-          )}
-          {currentView === 'team-edit' && (
-            <TeamEditScreen 
-              user={user} 
-              pets={myPets} 
-              onBack={() => setCurrentView('arena-hub')} 
-              onAddPet={(slotIndex) => { 
-                setSelectedSlotForTeam(slotIndex); 
-                setCurrentView('team-select-pet'); 
-              }} 
-              onRemovePet={removeFromTeam}
-            />
-          )}
-          {currentView === 'team-select-pet' && (
-            <InventoryScreen 
-              pets={myPets.filter(p => !user.team.includes(p.id))} 
-              title="Wähle Pet für Team" 
-              onBack={() => setCurrentView('team-edit')} 
-              onSelectPet={(id) => addToTeam(id)} 
-              highlightMode={true} 
-              filterEggs={true} 
-            />
-          )}
-          {currentView === 'inventory' && (
-            <InventoryScreen 
-              pets={myPets} 
-              title="Deine Sammlung" 
-              onBack={() => setCurrentView('pet-hub')} 
-              onSelectPet={(id) => { 
-                const p = myPets.find(p => p.id === id); 
-                if (p.isEgg) return; 
-                setSelectedPetDetail(p); 
-                setCurrentView('pet-detail'); 
-              }} 
-            />
-          )}
-          {currentView === 'pet-detail' && selectedPetDetail && (
-            <PetDetailScreen 
-              pet={selectedPetDetail} 
-              onBack={() => setCurrentView('inventory')}
-              onRenamePet={renamePet}
-            />
-          )}
-          {currentView === 'breeding' && (
-            <BreedingScreen 
-              pets={myPets} 
-              onBack={() => setCurrentView('pet-hub')} 
-              onBreed={breedPets} 
-              onReduceCooldown={handleReduceCooldown}
-              user={user}
-            />
-          )}
-          {currentView === 'battle' && activeBattle && (
-            <BattleScreen 
-              battleState={activeBattle} 
-              setBattleState={setActiveBattle} 
-              user={user} 
-              onWin={handleWin} 
-              onLose={handleLose}
-              isAutoBattle={autoBattleRemaining > 0}
-              autoBattleRemaining={autoBattleRemaining}
-              onCancelAutoBattle={cancelAutoBattle}
-            />
-          )}
-          {currentView === 'profile' && (
-            <ProfileScreen 
-              user={user} 
-              pets={myPets} 
-              onViewFriend={(friend) => { 
-                setSelectedFriend(friend); 
-                setCurrentView('friend-profile'); 
-              }} 
-              onAddFriend={handleAddFriend} 
-              onBack={() => setCurrentView('menu')}
-            />
-          )}
-          {currentView === 'friend-profile' && selectedFriend && (
-            <FriendProfileScreen 
-              friend={selectedFriend} 
-              onBack={() => setCurrentView('profile')} 
-              onStartBattle={startFriendBattle} 
-            />
-          )}
-          {currentView === 'settings' && (
-            <SettingsScreen 
-              settings={settings} 
-              setSettings={setSettings} 
-              onLogout={handleLogout} 
-              onBack={() => setCurrentView('menu')}
-            />
-          )}
+          {currentView === 'arena-hub' && <ArenaHub user={user} onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')} onLeaderboard={() => setCurrentView('leaderboard')} onAutoBattle={handleAutoBattle} />}
+          {currentView === 'pet-hub' && <PetHub onBack={() => setCurrentView('menu')} onInventory={() => setCurrentView('inventory')} onItemInventory={() => setCurrentView('item-inventory')} onBreed={() => setCurrentView('breeding')} onHatchery={() => setCurrentView('hatchery')} />}
+          {currentView === 'hatchery' && <HatcheryScreen pets={myPets} user={user} onBack={() => setCurrentView('pet-hub')} onHatchEgg={hatchEgg} onReduceCooldown={handleReduceCooldown} onStartIncubation={startIncubation} />}
+          {currentView === 'team-edit' && <TeamEditScreen user={user} pets={myPets} onBack={() => setCurrentView('arena-hub')} onAddPet={(slotIndex) => { setSelectedSlotForTeam(slotIndex); setCurrentView('team-select-pet'); }} onRemovePet={removeFromTeam} />}
+          {currentView === 'team-select-pet' && <InventoryScreen pets={myPets.filter(p => !user.team.includes(p.id))} title="Wähle Pet für Team" onBack={() => setCurrentView('team-edit')} onSelectPet={(id) => addToTeam(id)} highlightMode={true} filterEggs={true} />}
+          {currentView === 'inventory' && <InventoryScreen pets={myPets} title="Deine Sammlung" onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }} />}
+          
+          {/* FIX: Hier nutzen wir jetzt 'activePetDetail' statt 'selectedPetDetail' */}
+          {currentView === 'pet-detail' && activePetDetail && <PetDetailScreen pet={activePetDetail} onBack={() => setCurrentView('inventory')} onRenamePet={renamePet} />}
+          
+          {currentView === 'breeding' && <BreedingScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onBreed={breedPets} onReduceCooldown={handleReduceCooldown} user={user} />}
+          {currentView === 'battle' && activeBattle && <BattleScreen battleState={activeBattle} setBattleState={setActiveBattle} user={user} onWin={handleWin} onLose={handleLose} isAutoBattle={autoBattleRemaining > 0} autoBattleRemaining={autoBattleRemaining} onCancelAutoBattle={cancelAutoBattle} />}
+          {currentView === 'profile' && <ProfileScreen user={user} pets={myPets} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={handleAddFriend} onBack={() => setCurrentView('menu')} />}
+          {currentView === 'friend-profile' && selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('profile')} onStartBattle={startFriendBattle} />}
+          {currentView === 'settings' && <SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout} onBack={() => setCurrentView('menu')} />}
 
         </div>
       </main>

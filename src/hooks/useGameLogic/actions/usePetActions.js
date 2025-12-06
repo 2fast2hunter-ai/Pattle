@@ -1,4 +1,4 @@
-import { RARITIES, TYPES, QUEST_TYPES, RESOURCES } from '../../../data/gameData'; // RESOURCES importieren für Label
+import { RARITIES, TYPES, QUEST_TYPES, RESOURCES, CONSUMABLES, COSMETICS } from '../../../data/gameData';
 import { 
     generatePet, 
     getUnlockedHatcherySlots, 
@@ -13,6 +13,7 @@ import {
 export function usePetActions(state, showNotification) {
     const { user, myPets, setCurrentView, selectedSlotForTeam, setSelectedSlotForTeam } = state;
 
+    // --- COOLDOWN REDUZIEREN ---
     const handleReduceCooldown = async (petId, type) => {
         if (!user) return;
         const ticketItem = user.inventory?.find(i => i.type === 'TICKET');
@@ -43,13 +44,13 @@ export function usePetActions(state, showNotification) {
         }
     };
 
+    // --- TEAM ---
     const addToTeam = (petId) => {
         if (!user || selectedSlotForTeam === null) return;
         const pet = myPets.find(p => p.id === petId);
         if (!pet) return;
         if (pet.isEgg) { showNotification("Eier kämpfen nicht!", 'error'); return; }
         
-        // NEU: Check ob Pet im Dorf arbeitet
         if (user.village && user.village.workers) {
             for (const [resKey, slots] of Object.entries(user.village.workers)) {
                 if (slots.includes(petId)) {
@@ -95,6 +96,7 @@ export function usePetActions(state, showNotification) {
         updateUser(user.id, { team: newTeam });
     };
 
+    // --- BRUTSTÄTTE ---
     const hatchEgg = async (petId, customName) => { 
         if (!user) return; 
         const pet = myPets.find(p => p.id === petId); 
@@ -151,6 +153,7 @@ export function usePetActions(state, showNotification) {
         }
     };
 
+    // --- ZUCHT ---
     const breedPets = async (parent1Id, parent2Id) => { 
         if (!user) return; 
         if (myPets.filter(p => p.isEgg && p.hatchAt > 0).length >= getUnlockedHatcherySlots(user.level)) { showNotification("Brutstätte ist voll!", 'error'); return; } 
@@ -216,5 +219,88 @@ export function usePetActions(state, showNotification) {
         } catch (e) { console.error(e); showNotification("Fehler beim Umbenennen.", "error"); return false; }
     };
 
-    return { handleReduceCooldown, addToTeam, removeFromTeam, hatchEgg, startIncubation, breedPets, renamePet };
+    // --- ITEMS ANWENDEN ---
+    const applyItem = async (petId, itemId) => {
+        if (!user) return;
+
+        const inventoryItem = user.inventory.find(i => i.id === itemId);
+        if (!inventoryItem) { showNotification("Item nicht gefunden!", "error"); return; }
+
+        const pet = myPets.find(p => p.id === petId);
+        if (!pet) return;
+
+        // 1. SHINY TRANK (WICHTIG: MUSS VOR CONSUMABLES KOMMEN, DA ER AUCH EINER IST)
+        if (inventoryItem.variant === 'SHINY_POTION') {
+            if (pet.isEgg) { showNotification("Eier können nicht Shiny werden!", "error"); return; }
+            if (pet.isShiny) { showNotification("Dieses Pet ist bereits Shiny!", "error"); return; }
+
+            // Stats erhöhen
+            const updates = {
+                isShiny: true,
+                atk: (pet.atk || 0) + 1,
+                def: (pet.def || 0) + 1,
+                ap: (pet.ap || 0) + 1,
+                res: (pet.res || 0) + 1,
+                speed: (pet.speed || 0) + 1,
+                maxHp: (pet.maxHp || 10) + 10,
+                hp: (pet.maxHp || 10) + 10
+            };
+
+            await updatePetInDB(petId, updates);
+
+            // Item entfernen
+            const newInventory = user.inventory.filter(i => i.id !== itemId);
+            await updateUser(user.id, { inventory: newInventory });
+
+            showNotification(`${pet.name} ist jetzt SHINY! ✨`, "success");
+            return;
+        }
+
+        // 2. XP TRANK
+        if (CONSUMABLES[inventoryItem.variant]) {
+            if (pet.isEgg) { showNotification("Eier können keine Erfahrung sammeln!", "error"); return; }
+            
+            const consumable = CONSUMABLES[inventoryItem.variant];
+            let pXp = (pet.xp || 0) + consumable.value;
+            let pLevel = pet.level || 1;
+            let pMaxXp = pet.maxXp || 100;
+            let levelUps = 0;
+
+            while (pXp >= pMaxXp) {
+                pLevel++;
+                pXp -= pMaxXp;
+                pMaxXp = Math.floor(pMaxXp * 1.2);
+                levelUps++;
+            }
+
+            await updatePetInDB(petId, { xp: pXp, level: pLevel, maxXp: pMaxXp });
+            
+            const newInventory = user.inventory.filter(i => i.id !== itemId);
+            await updateUser(user.id, { inventory: newInventory });
+
+            if (levelUps > 0) showNotification(`${pet.name} ist ${levelUps} Level aufgestiegen!`, "success");
+            else showNotification(`${pet.name} hat ${consumable.value} XP erhalten.`, "success");
+            return;
+        }
+
+        // 3. KOSMETIK
+        if (COSMETICS[inventoryItem.variant]) {
+            const cosmetic = COSMETICS[inventoryItem.variant];
+            
+            await updatePetInDB(petId, { customBackground: cosmetic.colorClass });
+            
+            const newInventory = user.inventory.filter(i => i.id !== itemId);
+            await updateUser(user.id, { inventory: newInventory });
+
+            showNotification(`Hintergrund von ${pet.name} geändert!`, "success");
+            return;
+        }
+
+        showNotification("Unbekanntes Item.", "error");
+    };
+
+    return { 
+        handleReduceCooldown, addToTeam, removeFromTeam, hatchEgg, startIncubation, breedPets, renamePet, 
+        applyXpItem: applyItem 
+    };
 }

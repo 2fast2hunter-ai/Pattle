@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Clock, Info, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Loader2, Trophy, RefreshCw, Zap, Plus, Timer } from 'lucide-react';
+import React from 'react';
+import { ArrowLeft, Clock, Info, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Loader2, Trophy, RefreshCw, Zap, Plus, Timer, Scissors } from 'lucide-react';
 import { RESOURCES } from '../data/gameData';
 
 const RESOURCE_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-export default function VillageScreen({ user, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime }) { // onAddIdleTime prop
+export default function VillageScreen({ user, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onOpenCosmetics }) {
     
     // Timer State für Countdown
-    const [timeLeftStr, setTimeLeftStr] = useState("00:00:00");
-    const [isActive, setIsActive] = useState(false);
+    const [timeLeftStr, setTimeLeftStr] = React.useState("00:00:00");
+    const [isActive, setIsActive] = React.useState(false);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (!user?.village) return;
 
         const updateTimer = () => {
@@ -120,9 +120,6 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                         const workers = user.village.workers[res.id] || [];
                         const isUnlocked = user.level >= res.unlockLevel;
                         
-                        // Hier können wir die Rate/h nur anzeigen, wenn auch Idle-Zeit da ist?
-                        // Oder wir zeigen die *theoretische* Rate an.
-                        // Für bessere UX: Zeigen wir die theoretische Rate an, aber vllt. ausgegraut wenn inaktiv.
                         const rate = productionRates ? Math.floor(productionRates(res.id, level, workers) * 3600) : 0;
 
                         return (
@@ -149,7 +146,6 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                                 <div className="relative z-10">
                                     {isUnlocked ? (
                                         <div className="space-y-1">
-                                            {/* Wir zeigen hier keine Menge an, weil es viele Sub-Items gibt. Nur Rate. */}
                                             <div className="flex justify-between items-end">
                                                 <span className="text-[10px] text-slate-500 font-bold uppercase">Rate/h</span>
                                                 <span className={`text-xs font-bold ${isActive ? 'text-green-400' : 'text-slate-500'}`}>+{rate}</span>
@@ -165,15 +161,19 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                     })}
                 </div>
 
-                {/* EXTRA KACHELN */}
-                <div className="grid grid-cols-2 gap-4">
-                    <button onClick={onOpenMilestones} className="bg-slate-800 border border-white/5 p-4 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
-                        <Trophy className="w-8 h-8 text-yellow-400" />
-                        <span className="text-xs font-black text-white uppercase">Meilensteine</span>
+                {/* EXTRA KACHELN (3er Grid) */}
+                <div className="grid grid-cols-3 gap-3">
+                    <button onClick={onOpenMilestones} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
+                        <Trophy className="w-6 h-6 text-yellow-400" />
+                        <span className="text-[10px] font-black text-white uppercase">Meilensteine</span>
                     </button>
-                    <button onClick={onOpenTrading} className="bg-slate-800 border border-white/5 p-4 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
-                        <RefreshCw className="w-8 h-8 text-blue-400" />
-                        <span className="text-xs font-black text-white uppercase">Tauschplatz</span>
+                    <button onClick={onOpenTrading} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
+                        <RefreshCw className="w-6 h-6 text-blue-400" />
+                        <span className="text-[10px] font-black text-white uppercase">Tauschplatz</span>
+                    </button>
+                    <button onClick={onOpenCosmetics} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
+                        <Scissors className="w-6 h-6 text-pink-400" />
+                        <span className="text-[10px] font-black text-white uppercase">Schneider</span>
                     </button>
                 </div>
 

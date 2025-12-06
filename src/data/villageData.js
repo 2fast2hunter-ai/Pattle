@@ -72,40 +72,28 @@ export const UPGRADE_COSTS = Array.from({ length: 14 }, (_, i) => {
     return { level, cost, time };
 });
 
-// --- NEU: TAUSCH REZEPTE ---
-// Definierte Tauschwege. Nur diese sind möglich.
-// cost: Wie viel man gibt. receive: Wie viel man bekommt.
 export const TRADE_RECIPES = [
-    // HOLZ (Eiche)
     { offerId: 'wood_mahogany', wantId: 'wood_oak', cost: 1, receive: 7666 },
     { offerId: 'wood_oak', wantId: 'stone_rock', cost: 2, receive: 1 },
     { offerId: 'wood_oak', wantId: 'seafood_shells', cost: 2, receive: 1 },
-    { offerId: 'wood_oak', wantId: 'stardust_hydrogen', cost: 2, receive: 2 }, // Sonderfall 2:2 = 1:1
+    { offerId: 'wood_oak', wantId: 'stardust_hydrogen', cost: 2, receive: 2 }, 
     { offerId: 'wood_oak', wantId: 'comp_cable', cost: 2, receive: 1 },
-
-    // STEIN (Stein)
     { offerId: 'stone_emerald', wantId: 'stone_rock', cost: 1, receive: 11000 },
     { offerId: 'stone_diamond', wantId: 'stone_rock', cost: 1, receive: 3500 },
     { offerId: 'stone_rock', wantId: 'wood_oak', cost: 2, receive: 1 },
     { offerId: 'stone_rock', wantId: 'seafood_shells', cost: 2, receive: 1 },
     { offerId: 'stone_rock', wantId: 'stardust_hydrogen', cost: 2, receive: 1 },
     { offerId: 'stone_rock', wantId: 'comp_cable', cost: 2, receive: 1 },
-
-    // MEERESFRÜCHTE (Muscheln)
     { offerId: 'seafood_pearl', wantId: 'seafood_shells', cost: 1, receive: 1400 },
     { offerId: 'seafood_shells', wantId: 'wood_oak', cost: 2, receive: 1 },
     { offerId: 'seafood_shells', wantId: 'stone_rock', cost: 2, receive: 1 },
     { offerId: 'seafood_shells', wantId: 'stardust_hydrogen', cost: 2, receive: 1 },
     { offerId: 'seafood_shells', wantId: 'comp_cable', cost: 2, receive: 1 },
-
-    // STERNENSTAUB (Wasserstoff)
     { offerId: 'stardust_star', wantId: 'stardust_hydrogen', cost: 1, receive: 14300 },
     { offerId: 'stardust_hydrogen', wantId: 'wood_oak', cost: 2, receive: 1 },
     { offerId: 'stardust_hydrogen', wantId: 'stone_rock', cost: 2, receive: 1 },
     { offerId: 'stardust_hydrogen', wantId: 'seafood_shells', cost: 2, receive: 1 },
     { offerId: 'stardust_hydrogen', wantId: 'comp_cable', cost: 2, receive: 1 },
-
-    // COMPUTER (Kabel)
     { offerId: 'comp_gpu', wantId: 'comp_cable', cost: 1, receive: 6000 },
     { offerId: 'comp_cable', wantId: 'wood_oak', cost: 2, receive: 1 },
     { offerId: 'comp_cable', wantId: 'stone_rock', cost: 2, receive: 1 },
@@ -113,8 +101,27 @@ export const TRADE_RECIPES = [
     { offerId: 'comp_cable', wantId: 'stardust_hydrogen', cost: 2, receive: 1 }
 ];
 
+const RARITY_POTION_MAP = {
+    COMMON: 'XP_POTION_SMALL',
+    UNCOMMON: 'XP_POTION_SMALL',
+    RARE: 'XP_POTION_MEDIUM',
+    EPIC: 'XP_POTION_MEDIUM',
+    LEGENDARY: 'XP_POTION_MEDIUM',
+    MYTHIC: 'XP_POTION_MEDIUM',
+    DIVINE: 'XP_POTION_LARGE',
+    ANCIENT: 'XP_POTION_LARGE',
+    COSMIC: 'XP_POTION_LARGE',
+    TRANSCENDENT: 'XP_POTION_LARGE'
+};
 
-// --- DYNAMISCHE MEILENSTEINE ---
+const REWARD_OVERRIDES = {
+    'wood_beech': { type: 'CONSUMABLE', variant: 'XP_POTION_SMALL', amount: 1 },
+    'seafood_shrimp': { type: 'CONSUMABLE', variant: 'XP_POTION_SMALL', amount: 1 },
+    'seafood_pearl': { type: 'COINS', amount: 10000 },
+    'comp_ram': { type: 'CONSUMABLE', variant: 'XP_POTION_SMALL', amount: 1 },
+    'comp_gpu': { type: 'CONSUMABLE', variant: 'XP_POTION_MEDIUM', amount: 1 }
+};
+
 const generateMilestones = () => {
     const milestones = [];
     Object.entries(RESOURCE_ITEMS).forEach(([resKey, items]) => {
@@ -123,31 +130,54 @@ const generateMilestones = () => {
             const isHighestChance = index === 0;
             let target = 0;
             let reward = {};
-            if (isHighestChance) {
-                target = 1000;
-                reward = { type: 'COINS', amount: 50 };
+            if (REWARD_OVERRIDES[item.id]) {
+                if (isHighestChance) { target = 1000; } else { target = Math.ceil(1000 * (item.chance / 100)); }
+                reward = REWARD_OVERRIDES[item.id];
             } else {
-                target = Math.ceil(1000 * (item.chance / 100));
-                reward = { type: 'GEMS', amount: 5 }; 
+                if (isHighestChance) { target = 1000; reward = { type: 'COINS', amount: 50 }; } 
+                else { target = Math.ceil(1000 * (item.chance / 100)); const potionVariant = RARITY_POTION_MAP[item.rarity] || 'XP_POTION_SMALL'; reward = { type: 'CONSUMABLE', variant: potionVariant, amount: 1 }; }
             }
-            milestones.push({
-                id: `ms_${item.id}`,
-                resourceId: resKey,
-                itemId: item.id,
-                target: target,
-                reward: reward,
-                label: `Sammle ${target}x ${item.label}`
-            });
+            milestones.push({ id: `ms_${item.id}`, resourceId: resKey, itemId: item.id, target: target, reward: reward, label: `Sammle ${target}x ${item.label}` });
         });
     });
-    milestones.push({
-        id: 'ms_time_3h',
-        type: 'TIME',
-        target: 10800, 
-        reward: { type: 'VILLAGE_XP', amount: 15000 },
-        label: 'Verbringe 3 Stunden im Dorf'
-    });
+    milestones.push({ id: 'ms_time_3h', type: 'TIME', target: 10800, reward: { type: 'VILLAGE_XP', amount: 15000 }, label: 'Verbringe 3 Stunden im Dorf' });
     return milestones;
 };
 
 export const MILESTONES = generateMilestones();
+
+// --- NEU: SPEZIAL ANGEBOTE BEIM SCHNEIDER ---
+export const SPECIAL_OFFERS = [
+    {
+        id: 'OFFER_AD_TICKET',
+        label: 'Werbeticket',
+        description: 'Füllt Idle-Zeit auf',
+        costItem: 'special_watch',
+        costAmount: 100,
+        reward: { type: 'AD_TICKET', amount: 1 }
+    },
+    {
+        id: 'OFFER_BREED_TICKET',
+        label: 'Zucht-Ticket',
+        description: 'Erlaubt eine Zucht',
+        costItem: 'special_area',
+        costAmount: 100,
+        reward: { type: 'ITEM', itemType: 'TICKET', itemVariant: 'BREED', amount: 1 }
+    },
+    {
+        id: 'OFFER_XP_LARGE',
+        label: 'Große XP-Flasche',
+        description: '5000 XP für ein Pet',
+        costItem: 'special_plutonium',
+        costAmount: 50,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_LARGE', amount: 1 }
+    },
+    {
+        id: 'OFFER_SHINY',
+        label: 'Shiny-Flasche',
+        description: 'Macht ein Pet Shiny',
+        costItem: 'special_antimatter',
+        costAmount: 1,
+        reward: { type: 'CONSUMABLE', variant: 'SHINY_POTION', amount: 1 }
+    }
+];

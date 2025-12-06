@@ -13,3 +13,5 @@ export * from './battleData';
 export * from './questData';
 export * from './shopData';
 export * from './villageData';
+export * from './consumableData';
+export * from './cosmeticData';

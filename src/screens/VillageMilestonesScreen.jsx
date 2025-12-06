@@ -1,6 +1,6 @@
 import React from 'react';
-import { ArrowLeft, Trophy, CheckCircle, Lock, Coins, Gem, Star, RefreshCw } from 'lucide-react';
-import { MILESTONES, RESOURCES } from '../data/gameData';
+import { ArrowLeft, CheckCircle, Coins, Gem, Star, RefreshCw, FlaskConical } from 'lucide-react';
+import { MILESTONES, RESOURCES, CONSUMABLES } from '../data/gameData';
 
 export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
     const itemStats = user.village.stats?.totalItemsCollected || {};
@@ -16,7 +16,6 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
 
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-4">
                 {MILESTONES.map(milestone => {
-                    // 1. Daten holen
                     const currentLevel = milestoneLevels[milestone.id] || 0;
                     let totalCollected = 0;
                     
@@ -26,19 +25,15 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
                         totalCollected = itemStats[milestone.itemId] || 0;
                     }
 
-                    // 2. Ziele berechnen
                     const previousTarget = milestone.target * currentLevel;
                     const nextTarget = milestone.target * (currentLevel + 1);
                     
-                    // 3. Fortschritt im aktuellen Level (für den Balken)
                     const progressInCurrentLevel = totalCollected - previousTarget;
                     const isCompleted = totalCollected >= nextTarget;
                     
-                    // Cap für Anzeige
                     const displayProgress = Math.min(milestone.target, progressInCurrentLevel);
                     const progressPercent = Math.min(100, (displayProgress / milestone.target) * 100);
 
-                    // Formatierung
                     let displayValue = Math.floor(displayProgress);
                     let displayMax = milestone.target;
                     let labelSuffix = "";
@@ -49,6 +44,9 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
                         labelSuffix = "Std.";
                     }
 
+                    // Consumable Info holen
+                    const rewardItem = milestone.reward.type === 'CONSUMABLE' ? CONSUMABLES[milestone.reward.variant] : null;
+
                     return (
                         <div key={milestone.id} className={`relative p-4 rounded-2xl border ${isCompleted ? 'bg-slate-800 border-yellow-500/30' : 'bg-slate-900 border-white/5'} overflow-hidden shadow-lg`}>
                             
@@ -56,14 +54,12 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
                                 <div>
                                     <h3 className={`font-black text-sm uppercase ${isCompleted ? 'text-yellow-400' : 'text-slate-400'}`}>{milestone.label}</h3>
                                     <div className="flex items-center gap-2 mt-1">
-                                        {/* HIER GEÄNDERT: Statt "Stufe {currentLevel}" nun "{currentLevel}x Erreicht" */}
                                         <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">{currentLevel}x Erreicht</span>
                                     </div>
                                 </div>
                                 <span className="text-xs font-mono text-slate-500 font-bold">{displayValue} / {displayMax} {labelSuffix}</span>
                             </div>
 
-                            {/* Progress Bar */}
                             <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden mb-3 border border-white/10 relative z-10">
                                 <div className={`h-full transition-all duration-500 ${isCompleted ? 'bg-gradient-to-r from-yellow-500 to-amber-500 animate-pulse' : 'bg-gradient-to-r from-blue-600 to-indigo-600'}`} style={{width: `${progressPercent}%`}}></div>
                             </div>
@@ -71,10 +67,24 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
                             <div className="flex justify-between items-center relative z-10">
                                 <div className="flex items-center gap-2 bg-black/30 px-3 py-1.5 rounded-xl border border-white/5">
                                     <span className="text-[10px] text-slate-400 font-bold uppercase">Belohnung:</span>
+                                    
                                     {milestone.reward.type === 'COINS' && <Coins className="w-3.5 h-3.5 text-yellow-400" />}
                                     {milestone.reward.type === 'GEMS' && <Gem className="w-3.5 h-3.5 text-pink-400" />}
                                     {milestone.reward.type === 'VILLAGE_XP' && <Star className="w-3.5 h-3.5 text-indigo-400" />}
-                                    <span className="text-xs font-black text-white">{milestone.reward.amount}</span>
+                                    
+                                    {milestone.reward.type === 'CONSUMABLE' && (
+                                        <div className="flex items-center gap-1.5">
+                                             <FlaskConical className={`w-3.5 h-3.5 ${rewardItem?.color || 'text-white'}`} />
+                                             {/* HIER GEÄNDERT: Voller Name statt S/M/L */}
+                                             <span className={`text-[10px] font-bold ${rewardItem?.color || 'text-white'}`}>
+                                                 {rewardItem ? rewardItem.label : milestone.reward.variant}
+                                             </span>
+                                        </div>
+                                    )}
+
+                                    <span className="text-xs font-black text-white">
+                                        {milestone.reward.type === 'CONSUMABLE' ? '' : milestone.reward.amount}
+                                    </span>
                                 </div>
                                 
                                 <button 
