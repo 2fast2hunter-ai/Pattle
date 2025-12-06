@@ -1,7 +1,7 @@
 import React from 'react';
 import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock } from 'lucide-react';
 
-export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings }) {
+export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage }) { // onVillage prop
   
   const menuItems = [
       { 
@@ -14,12 +14,12 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           icon: Egg, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-900/20',
           onClick: onPetHub
       },
-      // NEU: Das Dorf (Gesperrt)
+      // DORF BUTTON (JETZT AKTIV)
       { 
-          id: 'village', title: 'DORF', subtitle: 'Coming Soon',
-          icon: Home, color: 'from-stone-600 to-stone-700', shadow: 'shadow-stone-900/20',
-          onClick: () => {}, 
-          locked: true
+          id: 'village', title: 'DORF', subtitle: 'Ressourcen',
+          icon: Home, color: 'from-emerald-600 to-green-700', shadow: 'shadow-emerald-900/20',
+          onClick: onVillage, // Action zugewiesen
+          locked: false // Entsperrt
       },
       { 
           id: 'quests', title: 'AUFGABEN', subtitle: 'Missionen',

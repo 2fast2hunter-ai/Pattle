@@ -12,3 +12,4 @@ export * from './petData';
 export * from './battleData';
 export * from './questData';
 export * from './shopData';
+export * from './villageData';

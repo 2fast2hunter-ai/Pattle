@@ -1,4 +1,4 @@
-import { RARITIES, TYPES, QUEST_TYPES } from '../../../data/gameData';
+import { RARITIES, TYPES, QUEST_TYPES, RESOURCES } from '../../../data/gameData'; // RESOURCES importieren für Label
 import { 
     generatePet, 
     getUnlockedHatcherySlots, 
@@ -49,6 +49,17 @@ export function usePetActions(state, showNotification) {
         if (!pet) return;
         if (pet.isEgg) { showNotification("Eier kämpfen nicht!", 'error'); return; }
         
+        // NEU: Check ob Pet im Dorf arbeitet
+        if (user.village && user.village.workers) {
+            for (const [resKey, slots] of Object.entries(user.village.workers)) {
+                if (slots.includes(petId)) {
+                    const resName = RESOURCES[resKey.toUpperCase()]?.label || resKey;
+                    showNotification(`${pet.name} arbeitet gerade im ${resName}!`, 'error');
+                    return;
+                }
+            }
+        }
+
         const currentTeamIds = user.team || [];
         const newPetType = pet.type;
         
@@ -192,34 +203,17 @@ export function usePetActions(state, showNotification) {
         showNotification(`Zucht erfolgreich (+${xpGain} XP)!`, 'success'); 
     };
 
-    // --- NEU: RENAME FUNCTION ---
     const renamePet = async (petId, newName) => {
         if (!user) return false;
-        const COST = 100; // Gems
-
-        if (user.gems < COST) {
-            showNotification(`Nicht genügend Edelsteine! (Benötigt: ${COST})`, 'error');
-            return false;
-        }
-
-        if (!newName || newName.trim().length < 3 || newName.trim().length > 15) {
-             showNotification("Name muss zwischen 3 und 15 Zeichen lang sein.", "error");
-             return false;
-        }
-
+        const COST = 100; 
+        if (user.gems < COST) { showNotification(`Nicht genügend Edelsteine! (Benötigt: ${COST})`, 'error'); return false; }
+        if (!newName || newName.trim().length < 3 || newName.trim().length > 15) { showNotification("Name muss zwischen 3 und 15 Zeichen lang sein.", "error"); return false; }
         try {
-            // Gems abziehen
             await updateUser(user.id, { gems: user.gems - COST });
-            // Name speichern
             await updatePetInDB(petId, { name: newName.trim() });
-            
             showNotification(`Pet umbenannt in "${newName.trim()}"!`, 'success');
             return true;
-        } catch (e) {
-            console.error(e);
-            showNotification("Fehler beim Umbenennen.", "error");
-            return false;
-        }
+        } catch (e) { console.error(e); showNotification("Fehler beim Umbenennen.", "error"); return false; }
     };
 
     return { handleReduceCooldown, addToTeam, removeFromTeam, hatchEgg, startIncubation, breedPets, renamePet };

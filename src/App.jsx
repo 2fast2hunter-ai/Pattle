@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import { useGameLogic } from './hooks/useGameLogic';
 import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
@@ -26,8 +26,15 @@ import LeaderboardScreen from './screens/LeaderboardScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 import MarketplaceScreen from './screens/MarketplaceScreen';
-import InventoryScreen from './screens/InventoryScreen'; 
+import InventoryScreen from './screens/InventoryScreen';
 
+// --- NEUE IMPORTE (WICHTIG!) ---
+import VillageScreen from './screens/VillageScreen'; 
+import ResourceDetailScreen from './screens/ResourceDetailScreen';
+import VillageMilestonesScreen from './screens/VillageMilestonesScreen';
+import VillageTradingScreen from './screens/VillageTradingScreen';
+
+// Error Boundary
 class ErrorBoundary extends React.Component {
     constructor(props) {
       super(props);
@@ -50,6 +57,7 @@ class ErrorBoundary extends React.Component {
     }
 }
 
+// MAIN APP
 export default function App() {
   const gameLogic = useGameLogic();
   
@@ -65,8 +73,46 @@ export default function App() {
     handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
     hatchEgg, startIncubation, breedPets,
     handleAutoBattle, autoBattleRemaining, cancelAutoBattle, startFriendBattle,
-    handleRemoveListing, renamePet // <--- NEU: renamePet importiert
+    handleRemoveListing, renamePet,
+    // Village Actions
+    assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
+    tradeResources, claimMilestone // <--- NEU
   } = gameLogic;
+
+  // Village States
+  const [selectedVillageSlot, setSelectedVillageSlot] = useState(null);
+  const [selectedResource, setSelectedResource] = useState(null);
+
+  // --- VILLAGE HANDLER ---
+  const handleCollectVillage = async () => {
+      const result = await collectVillageResources();
+      if (result && result.items && result.items.length > 0) {
+           const counts = {};
+           result.items.forEach(itemLabel => { counts[itemLabel] = (counts[itemLabel] || 0) + 1; });
+           const rewardsText = Object.entries(counts).map(([name, count]) => `${count}x ${name}`).join(', ');
+           gameLogic.showNotification(`Gesammelt: ${rewardsText} (+${result.xp} XP)`, 'success');
+      } else if (result && result.xp > 0) {
+           gameLogic.showNotification(`Gesammelt: +${result.xp} XP`, 'success');
+      }
+  };
+
+  const handleOpenResource = (resKey) => {
+      setSelectedResource(resKey);
+      setCurrentView('village-detail');
+  };
+
+  const handleOpenVillageSelector = (resourceId, slotIndex) => {
+      setSelectedVillageSlot({ resourceId, slotIndex });
+      setCurrentView('village-select-pet');
+  };
+
+  const handleAssignVillageWorker = (petId) => {
+      if (selectedVillageSlot) {
+          assignWorker(selectedVillageSlot.resourceId, selectedVillageSlot.slotIndex, petId);
+          setSelectedVillageSlot(null);
+          setCurrentView('village-detail'); 
+      }
+  };
 
   if (authLoading) {
       return (
@@ -105,9 +151,64 @@ export default function App() {
               onLeaderboard={() => setCurrentView('leaderboard')} 
               onProfile={() => setCurrentView('profile')}
               onSettings={() => setCurrentView('settings')}
+              onVillage={() => setCurrentView('village')}
             />
           )}
 
+          {/* --- VILLAGE SCREENS --- */}
+          {currentView === 'village' && (
+              <VillageScreen 
+                  user={user}
+                  onBack={() => setCurrentView('menu')}
+                  onCollect={handleCollectVillage}
+                  onSelectResource={handleOpenResource}
+                  productionRates={calculateProductionRate}
+                  onOpenMilestones={() => setCurrentView('village-milestones')}
+                  onOpenTrading={() => setCurrentView('village-trading')}
+              />
+          )}
+
+          {currentView === 'village-detail' && selectedResource && (
+              <ResourceDetailScreen 
+                  resourceId={selectedResource}
+                  user={user}
+                  pets={myPets}
+                  onBack={() => setCurrentView('village')}
+                  onAssignWorker={handleOpenVillageSelector}
+                  onRemoveWorker={removeWorker}
+                  onUpgradeBuilding={upgradeBuilding}
+                  productionRates={calculateProductionRate}
+                  onCollect={handleCollectVillage} 
+              />
+          )}
+
+          {currentView === 'village-select-pet' && (
+            <InventoryScreen 
+              pets={myPets.filter(p => !p.isEgg)} 
+              title="Arbeiter wählen" 
+              onBack={() => setCurrentView('village-detail')} 
+              onSelectPet={handleAssignVillageWorker} 
+              highlightMode={true} 
+            />
+          )}
+
+          {currentView === 'village-milestones' && (
+              <VillageMilestonesScreen 
+                  user={user}
+                  onBack={() => setCurrentView('village')}
+                  onClaim={claimMilestone}
+              />
+          )}
+
+          {currentView === 'village-trading' && (
+              <VillageTradingScreen 
+                  user={user}
+                  onBack={() => setCurrentView('village')}
+                  onTrade={tradeResources}
+              />
+          )}
+
+          {/* ... ANDERE SCREENS ... */}
           {currentView === 'shop' && (
             <ShopScreen 
               onBack={() => setCurrentView('menu')} 
@@ -219,7 +320,7 @@ export default function App() {
             <PetDetailScreen 
               pet={selectedPetDetail} 
               onBack={() => setCurrentView('inventory')}
-              onRenamePet={renamePet} // <--- NEU: Hier übergeben
+              onRenamePet={renamePet}
             />
           )}
 

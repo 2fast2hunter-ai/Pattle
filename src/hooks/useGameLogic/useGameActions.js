@@ -4,6 +4,7 @@ import { usePetActions } from './actions/usePetActions';
 import { useBattleActions } from './actions/useBattleActions';
 import { useMarketActions } from './actions/useMarketActions';
 import { useSocialActions } from './actions/useSocialActions';
+import { useVillageActions } from './actions/useVillageActions'; // <--- NEU
 
 export function useGameActions(state, setUserId) {
     const showNotification = (msg, type = 'error') => {
@@ -18,6 +19,7 @@ export function useGameActions(state, setUserId) {
     const battleActions = useBattleActions(state, showNotification);
     const marketActions = useMarketActions(state, showNotification);
     const socialActions = useSocialActions(state, showNotification);
+    const villageActions = useVillageActions(state, showNotification); // <--- NEU
 
     return {
         showNotification,
@@ -25,7 +27,8 @@ export function useGameActions(state, setUserId) {
         ...shopActions,
         ...petActions,
         ...battleActions,
-        ...marketActions, // Enthält jetzt handleRemoveListing
-        ...socialActions
+        ...marketActions,
+        ...socialActions,
+        ...villageActions // <--- NEU
     };
 }

@@ -1,0 +1,153 @@
+// src/data/villageData.js
+
+export const RESOURCES = {
+    WOOD: { id: 'wood', label: 'Holz', buildingLabel: 'Sägewerk', desc: 'Verarbeitet Holz aus den umliegenden Wäldern.', slots: 5, unlockLevel: 5, color: 'text-amber-700', bg: 'bg-amber-700' },
+    STONE: { id: 'stone', label: 'Stein', buildingLabel: 'Steinbruch', desc: 'Baut wertvolle Mineralien und Gestein ab.', slots: 5, unlockLevel: 5, color: 'text-stone-500', bg: 'bg-stone-500' },
+    SEAFOOD: { id: 'seafood', label: 'Meeresfrüchte', buildingLabel: 'Fischerei', desc: 'Fängt frischen Fisch und sammelt Muscheln.', slots: 5, unlockLevel: 20, color: 'text-blue-400', bg: 'bg-blue-500' },
+    STARDUST: { id: 'stardust', label: 'Sternenstaub', buildingLabel: 'Sternenwarte', desc: 'Sammelt kosmische Energie aus dem All.', slots: 5, unlockLevel: 15, color: 'text-purple-400', bg: 'bg-purple-600' },
+    COMPUTER_PARTS: { id: 'computer_parts', label: 'Computerteile', buildingLabel: 'Tech-Fabrik', desc: 'Produziert hochkomplexe Bauteile.', slots: 5, unlockLevel: 10, color: 'text-cyan-400', bg: 'bg-cyan-700' },
+    SPECIAL: { id: 'special', label: 'Spezial', buildingLabel: 'Alchemielabor', desc: 'Experimentiert mit seltenen Materien.', slots: 5, unlockLevel: 30, color: 'text-pink-500', bg: 'bg-pink-600' }
+};
+
+export const ALLOWED_TYPES = {
+    wood: ['NATURE', 'EARTH', 'MAGIC', 'FIGHTING', 'TIME', 'LIGHT', 'ORDER', 'DRAGON'],
+    stone: ['FIRE', 'EARTH', 'DARK', 'GHOST', 'PSYCHIC', 'METAL', 'ROCK', 'SOUND', 'VOID', 'ORDER'],
+    seafood: ['WATER', 'ICE', 'DARK', 'POISON', 'FAIRY'],
+    stardust: ['NATURE', 'WIND', 'ICE', 'PSYCHIC', 'ROCK', 'DRAGON', 'SOUND', 'SPACE', 'VOID'],
+    computer_parts: ['FIRE', 'WIND', 'ELECTRIC', 'LIGHT', 'MAGIC', 'METAL', 'TECH', 'SPACE'],
+    special: ['WATER', 'ELECTRIC', 'GHOST', 'PSYCHIC', 'FIGHTING', 'POISON', 'FAIRY', 'TECH', 'TIME', 'CHAOS', 'ORDER']
+};
+
+export const RARITY_MULTIPLIERS = {
+    COMMON: 1.0, UNCOMMON: 1.1, RARE: 1.2, EPIC: 1.3, LEGENDARY: 1.4,
+    MYTHIC: 1.5, DIVINE: 1.6, ANCIENT: 1.8, COSMIC: 2.0, TRANSCENDENT: 2.5
+};
+
+export const RESOURCE_ITEMS = {
+    wood: [
+        { id: 'wood_oak', label: 'Eiche', rarity: 'COMMON', chance: 75.0, color: 'text-amber-800' },
+        { id: 'wood_beech', label: 'Buche', rarity: 'RARE', chance: 24.85, color: 'text-green-600' },
+        { id: 'wood_mahogany', label: 'Mahagoni', rarity: 'ANCIENT', chance: 0.15, color: 'text-red-900' }
+    ],
+    stone: [
+        { id: 'stone_rock', label: 'Stein', rarity: 'COMMON', chance: 52.0, color: 'text-stone-400' },
+        { id: 'stone_coal', label: 'Kohle', rarity: 'UNCOMMON', chance: 40.0, color: 'text-slate-800' },
+        { id: 'stone_iron', label: 'Eisen', rarity: 'EPIC', chance: 7.5, color: 'text-slate-500' },
+        { id: 'stone_diamond', label: 'Diamant', rarity: 'MYTHIC', chance: 0.4, color: 'text-cyan-400' },
+        { id: 'stone_emerald', label: 'Smaragd', rarity: 'COSMIC', chance: 0.1, color: 'text-emerald-500' }
+    ],
+    seafood: [
+        { id: 'seafood_shells', label: 'Muscheln', rarity: 'COMMON', chance: 82.5, color: 'text-orange-200' },
+        { id: 'seafood_shrimp', label: 'Garnelen', rarity: 'EPIC', chance: 15.0, color: 'text-red-400' },
+        { id: 'seafood_pearl', label: 'Perlen', rarity: 'LEGENDARY', chance: 2.5, color: 'text-white' }
+    ],
+    stardust: [
+        { id: 'stardust_hydrogen', label: 'Wasserstoff', rarity: 'UNCOMMON', chance: 60.0, color: 'text-blue-200' },
+        { id: 'stardust_crystal', label: 'Kristall', rarity: 'RARE', chance: 39.925, color: 'text-purple-300' },
+        { id: 'stardust_star', label: 'Stern', rarity: 'TRANSCENDENT', chance: 0.075, color: 'text-yellow-100' }
+    ],
+    computer_parts: [
+        { id: 'comp_cable', label: 'Kabel', rarity: 'COMMON', chance: 98.0, color: 'text-gray-400' },
+        { id: 'comp_ram', label: 'RAM-Modul', rarity: 'LEGENDARY', chance: 1.8, color: 'text-green-400' },
+        { id: 'comp_gpu', label: 'Grafikkarte', rarity: 'DIVINE', chance: 0.2, color: 'text-red-500' }
+    ],
+    special: [
+        { id: 'special_watch', label: 'Uhr', rarity: 'UNCOMMON', chance: 55.0, color: 'text-amber-200' },
+        { id: 'special_area', label: 'Fläche m²', rarity: 'RARE', chance: 43.75, color: 'text-green-300' },
+        { id: 'special_plutonium', label: 'Plutonium', rarity: 'MYTHIC', chance: 1.0, color: 'text-green-500' },
+        { id: 'special_antimatter', label: 'Antimaterie', rarity: 'COSMIC', chance: 0.25, color: 'text-purple-600' }
+    ]
+};
+
+export const UPGRADE_COSTS = Array.from({ length: 14 }, (_, i) => {
+    const level = i + 1;
+    let cost = 0;
+    let time = 10;
+    if (level === 1) { cost = 0; time = 10; }
+    else if (level <= 10) { cost = 1000 * Math.pow(10, level - 2); time = 10 - ((level - 1) * 0.05); } 
+    else if (level === 11) { cost = 1e12; time = 9.0; }
+    else if (level === 12) { cost = 1e13; time = 8.5; }
+    else if (level === 13) { cost = 5e13; time = 8.0; }
+    else if (level === 14) { cost = 1e14; time = 7.5; }
+    return { level, cost, time };
+});
+
+// --- NEU: TAUSCH REZEPTE ---
+// Definierte Tauschwege. Nur diese sind möglich.
+// cost: Wie viel man gibt. receive: Wie viel man bekommt.
+export const TRADE_RECIPES = [
+    // HOLZ (Eiche)
+    { offerId: 'wood_mahogany', wantId: 'wood_oak', cost: 1, receive: 7666 },
+    { offerId: 'wood_oak', wantId: 'stone_rock', cost: 2, receive: 1 },
+    { offerId: 'wood_oak', wantId: 'seafood_shells', cost: 2, receive: 1 },
+    { offerId: 'wood_oak', wantId: 'stardust_hydrogen', cost: 2, receive: 2 }, // Sonderfall 2:2 = 1:1
+    { offerId: 'wood_oak', wantId: 'comp_cable', cost: 2, receive: 1 },
+
+    // STEIN (Stein)
+    { offerId: 'stone_emerald', wantId: 'stone_rock', cost: 1, receive: 11000 },
+    { offerId: 'stone_diamond', wantId: 'stone_rock', cost: 1, receive: 3500 },
+    { offerId: 'stone_rock', wantId: 'wood_oak', cost: 2, receive: 1 },
+    { offerId: 'stone_rock', wantId: 'seafood_shells', cost: 2, receive: 1 },
+    { offerId: 'stone_rock', wantId: 'stardust_hydrogen', cost: 2, receive: 1 },
+    { offerId: 'stone_rock', wantId: 'comp_cable', cost: 2, receive: 1 },
+
+    // MEERESFRÜCHTE (Muscheln)
+    { offerId: 'seafood_pearl', wantId: 'seafood_shells', cost: 1, receive: 1400 },
+    { offerId: 'seafood_shells', wantId: 'wood_oak', cost: 2, receive: 1 },
+    { offerId: 'seafood_shells', wantId: 'stone_rock', cost: 2, receive: 1 },
+    { offerId: 'seafood_shells', wantId: 'stardust_hydrogen', cost: 2, receive: 1 },
+    { offerId: 'seafood_shells', wantId: 'comp_cable', cost: 2, receive: 1 },
+
+    // STERNENSTAUB (Wasserstoff)
+    { offerId: 'stardust_star', wantId: 'stardust_hydrogen', cost: 1, receive: 14300 },
+    { offerId: 'stardust_hydrogen', wantId: 'wood_oak', cost: 2, receive: 1 },
+    { offerId: 'stardust_hydrogen', wantId: 'stone_rock', cost: 2, receive: 1 },
+    { offerId: 'stardust_hydrogen', wantId: 'seafood_shells', cost: 2, receive: 1 },
+    { offerId: 'stardust_hydrogen', wantId: 'comp_cable', cost: 2, receive: 1 },
+
+    // COMPUTER (Kabel)
+    { offerId: 'comp_gpu', wantId: 'comp_cable', cost: 1, receive: 6000 },
+    { offerId: 'comp_cable', wantId: 'wood_oak', cost: 2, receive: 1 },
+    { offerId: 'comp_cable', wantId: 'stone_rock', cost: 2, receive: 1 },
+    { offerId: 'comp_cable', wantId: 'seafood_shells', cost: 2, receive: 1 },
+    { offerId: 'comp_cable', wantId: 'stardust_hydrogen', cost: 2, receive: 1 }
+];
+
+
+// --- DYNAMISCHE MEILENSTEINE ---
+const generateMilestones = () => {
+    const milestones = [];
+    Object.entries(RESOURCE_ITEMS).forEach(([resKey, items]) => {
+        const sortedItems = [...items].sort((a, b) => b.chance - a.chance);
+        sortedItems.forEach((item, index) => {
+            const isHighestChance = index === 0;
+            let target = 0;
+            let reward = {};
+            if (isHighestChance) {
+                target = 1000;
+                reward = { type: 'COINS', amount: 50 };
+            } else {
+                target = Math.ceil(1000 * (item.chance / 100));
+                reward = { type: 'GEMS', amount: 5 }; 
+            }
+            milestones.push({
+                id: `ms_${item.id}`,
+                resourceId: resKey,
+                itemId: item.id,
+                target: target,
+                reward: reward,
+                label: `Sammle ${target}x ${item.label}`
+            });
+        });
+    });
+    milestones.push({
+        id: 'ms_time_3h',
+        type: 'TIME',
+        target: 10800, 
+        reward: { type: 'VILLAGE_XP', amount: 15000 },
+        label: 'Verbringe 3 Stunden im Dorf'
+    });
+    return milestones;
+};
+
+export const MILESTONES = generateMilestones();
