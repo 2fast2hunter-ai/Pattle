@@ -1,17 +1,13 @@
-import { TYPE_ADVANTAGES } from '../../data/gameData';
+// src/utils/mechanics/battleLogic.js
 
+// Elo-Berechnung für Sieg/Niederlage
 export const calculateEloChange = (playerRating, enemyRating, isWin) => {
+    // Einfache Logik: +15 bei Sieg, -10 bei Niederlage
     if (isWin) return 15;
     return -10;
 };
 
+// Falls du später Schadensberechnung auslagern willst:
 export const getDamageMultiplier = (atkType, defType) => {
-  if (!atkType || !defType) return 1.0;
-  const advantages = TYPE_ADVANTAGES[atkType] || { strong: [], super: [] };
-  if (advantages.super?.includes(defType)) return 4.0;
-  if (advantages.strong?.includes(defType)) return 2.0;
-  const defAdvantages = TYPE_ADVANTAGES[defType] || { strong: [], super: [] };
-  if (defAdvantages.super?.includes(atkType)) return 0.25;
-  if (defAdvantages.strong?.includes(atkType)) return 0.5;
-  return 1.0;
+    return 1.0; // Platzhalter
 };

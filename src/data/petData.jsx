@@ -53,7 +53,8 @@ export const TYPES = {
 };
 
 // --- BASIS SPEZIES (125) ---
-const BASE_ANIMALS = {
+// HIER WAR DER FEHLER: export hinzugefügt
+export const BASE_ANIMALS = {
   FIRE_LION: { id: 'FIRE_LION', label: 'Feuerlöwe', icon: '🦁', type: 'FIRE' },
   FIRE_DRAGON: { id: 'FIRE_DRAGON', label: 'Glutdrache', icon: '🐲', type: 'FIRE' },
   FIRE_FOX: { id: 'FIRE_FOX', label: 'Fuchsteufel', icon: '🦊', type: 'FIRE' },

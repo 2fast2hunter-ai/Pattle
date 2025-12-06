@@ -1,6 +1,6 @@
 import { updateUser, updatePetInDB, trackQuestProgress } from '../../../utils/db';
-// HIER WURDE SPECIAL_OFFERS HINZUGEFÜGT:
 import { RESOURCES, ALLOWED_TYPES, RARITY_MULTIPLIERS, UPGRADE_COSTS, RESOURCE_ITEMS, TRADE_RECIPES, MILESTONES, COSMETICS, SPECIAL_OFFERS } from '../../../data/gameData';
+import { getLevelUpStats, calculateMaxXp } from '../../../utils/gameMechanics'; // NEU IMPORTIEREN
 
 export function useVillageActions(state, showNotification) {
     const { user, myPets } = state;
@@ -135,16 +135,52 @@ export function useVillageActions(state, showNotification) {
                 xpToNext = Math.floor(xpToNext * 1.5); 
                 showNotification(`Dorf Level Up! Level ${currentLvl}`, 'success');
             }
+
+            // --- PETS LEVEL UP LOGIC (VILLAGE) ---
             Object.entries(petXpUpdates).forEach(([petId, xpAmount]) => {
                 const pet = myPets.find(p => p.id === petId);
                 if (pet) {
                     let pXp = (pet.xp || 0) + xpAmount;
                     let pLevel = pet.level || 1;
-                    let pMaxXp = pet.maxXp || 100;
-                    while (pXp >= pMaxXp) { pLevel++; pXp -= pMaxXp; pMaxXp = Math.floor(pMaxXp * 1.2); }
-                    updatePetInDB(petId, { xp: pXp, level: pLevel, maxXp: pMaxXp });
+                    let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel);
+                    
+                    let leveledUpCount = 0;
+                    let currentStats = { 
+                        maxHp: pet.maxHp, atk: pet.atk, def: pet.def, 
+                        ap: pet.ap, res: pet.res, speed: pet.speed 
+                    };
+
+                    while (pXp >= currentMaxXp) {
+                        pXp -= currentMaxXp;
+                        pLevel++;
+                        currentMaxXp = calculateMaxXp(pLevel);
+                        leveledUpCount++;
+
+                        // Fixe Stats addieren
+                        const growth = getLevelUpStats(pet.rarity);
+                        currentStats.maxHp += growth.hp;
+                        currentStats.atk += growth.atk;
+                        currentStats.def += growth.def;
+                        currentStats.ap += growth.ap;
+                        currentStats.res += growth.res;
+                        currentStats.speed += growth.speed;
+                    }
+
+                    if (leveledUpCount > 0) {
+                        updatePetInDB(petId, { 
+                            ...currentStats, 
+                            level: pLevel, 
+                            xp: pXp, 
+                            maxXp: currentMaxXp,
+                            hp: currentStats.maxHp
+                        });
+                        trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount);
+                    } else {
+                        updatePetInDB(petId, { xp: pXp });
+                    }
                 }
             });
+
             updates["village.level"] = currentLvl;
             updates["village.xp"] = currentXp;
             updates["village.xpToNext"] = xpToNext;
@@ -152,6 +188,7 @@ export function useVillageActions(state, showNotification) {
             updates["village.resources"] = newResourcesBuffer;
             updates["village.storage"] = newStorage;
             updates["village.stats"] = newStats;
+
             await updateUser(user.id, updates);
             return { items: itemsLog, xp: totalXpGained };
         } else {
@@ -237,30 +274,18 @@ export function useVillageActions(state, showNotification) {
         showNotification(`${cosmetic.label} gekauft!`, "success");
     };
 
-    // --- NEU: SPEZIAL ANGEBOTE KAUFEN ---
     const buySpecialOffer = async (offerId) => {
         if (!user) return;
         const offer = SPECIAL_OFFERS.find(o => o.id === offerId);
         if (!offer) return;
-
         const storage = user.village.storage || {};
         const costItem = offer.costItem;
         const costAmount = offer.costAmount;
-
-        if (!storage[costItem] || storage[costItem] < costAmount) {
-            showNotification("Nicht genügend Materialien!", "error");
-            return;
-        }
-
-        // 1. Bezahlen
+        if (!storage[costItem] || storage[costItem] < costAmount) { showNotification("Nicht genügend Materialien!", "error"); return; }
         const newStorage = { ...storage };
         newStorage[costItem] -= costAmount;
         let updates = { "village.storage": newStorage };
-
-        // 2. Belohnung
-        if (offer.reward.type === 'AD_TICKET') {
-            updates['adTickets'] = (user.adTickets || 0) + offer.reward.amount;
-        } 
+        if (offer.reward.type === 'AD_TICKET') { updates['adTickets'] = (user.adTickets || 0) + offer.reward.amount; } 
         else if (offer.reward.type === 'ITEM' || offer.reward.type === 'CONSUMABLE') {
             const newItem = {
                 id: Date.now() + Math.random(),
@@ -270,7 +295,6 @@ export function useVillageActions(state, showNotification) {
             const newInventory = [...(user.inventory || []), newItem];
             updates['inventory'] = newInventory;
         }
-
         await updateUser(user.id, updates);
         showNotification(`${offer.label} gekauft!`, "success");
     };

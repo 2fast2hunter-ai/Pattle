@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Zap, Skull, Trophy, Swords, Shield, Activity, Wind, Timer, Coins, Star, ArrowUp, Repeat, XCircle } from 'lucide-react';
+import { Zap, Skull, Trophy, Swords, Shield, Activity, Wind, Timer, Coins, Star, ArrowUp, Repeat, XCircle, CheckCircle } from 'lucide-react';
 import { ABILITIES, TYPES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
@@ -47,13 +47,17 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
   const [floatingDamage, setFloatingDamage] = useState(null); 
   const [autoProgress, setAutoProgress] = useState(0);
   
+  // NEU: Tracker für ausgeteilten Schaden
+  const [damageDealt, setDamageDealt] = useState({});
+
   const logEndRef = useRef(null);
-  const { myTeam, enemyTeam, myIndex, enemyIndex, turn, log, isOver, round, isFriendly } = battleState; // isFriendly holen
+  const { myTeam, enemyTeam, myIndex, enemyIndex, turn, log, isOver, round, isFriendly } = battleState; 
   const myPet = myTeam[myIndex];
   const enemyPet = enemyTeam[enemyIndex];
 
   useEffect(() => { if (logEndRef.current) logEndRef.current.scrollIntoView({ behavior: "smooth" }); }, [log]);
 
+  // Kampf-Logik Loop
   useEffect(() => {
     if (isOver) return;
     const timer = setTimeout(() => {
@@ -64,8 +68,9 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     return () => clearTimeout(timer);
   }, [turn, isOver, animatingUnit, hitUnit, myPet, enemyPet]);
 
+  // Auto-Battle Timer
   useEffect(() => {
-      if (isOver && isAutoBattle) {
+      if (isOver && isAutoBattle && autoBattleRemaining > 1) {
           const won = enemyTeam[enemyTeam.length - 1].hp === 0;
           const myTeamIds = myTeam.map(p => p.id);
           const rewardCoins = won ? 50 : 5;
@@ -80,7 +85,8 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
               setAutoProgress(pct);
               if (elapsed >= duration) {
                    clearInterval(interval);
-                   if (won) onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds);
+                   // NEU: damageDealt übergeben
+                   if (won) onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds, null, damageDealt);
                    else onLose();
               }
           }, step);
@@ -88,7 +94,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
       } else {
           setAutoProgress(0);
       }
-  }, [isOver, isAutoBattle]);
+  }, [isOver, isAutoBattle, autoBattleRemaining]); 
 
   const executeTurn = async (attacker, defender, who) => {
     setAnimatingUnit(who);
@@ -107,6 +113,16 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     damage = Math.floor(rawDmg * (100 / (100 + defense)));
     if (Math.random() * 100 < attacker.critRate) { isCrit = true; damage = Math.floor(damage * 1.5); }
     damage = Math.max(1, damage);
+    
+    // NEU: Effektiven Schaden tracken (nicht mehr als HP abziehen)
+    const effectiveDamage = Math.min(damage, defender.hp);
+    
+    // Damage Tracker updaten (Nur für Spieler relevant, aber wir tracken alles)
+    setDamageDealt(prev => ({
+        ...prev,
+        [attacker.id]: (prev[attacker.id] || 0) + effectiveDamage
+    }));
+
     const newHp = Math.max(0, defender.hp - damage);
     
     await new Promise(r => setTimeout(r, 200));
@@ -136,9 +152,14 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
   if (isOver) {
     const won = enemyTeam[enemyTeam.length - 1].hp === 0;
     const myTeamIds = myTeam.map(p => p.id);
-    // Rewards (NUR WENN NICHT FREUNDLICH)
-    const rewardCoins = !isFriendly && won ? 50 : (!isFriendly ? 5 : 0);
-    const rewardXp = !isFriendly && won ? 50 : (!isFriendly ? 5 : 0);
+    
+    const rewardCoins = !isFriendly && won ? 150 : (!isFriendly ? 5 : 0);
+    const rewardXp = !isFriendly && won ? 200 : (!isFriendly ? 20 : 0);
+    
+    // XP Anzeige Helper (Optional, da genaue Werte jetzt variieren)
+    const petXpDisplay = !isFriendly && won ? "Variable XP" : (isFriendly ? "0 XP" : "5 XP");
+    
+    const isLastAuto = isAutoBattle && autoBattleRemaining === 1;
 
     return (
         <div className="h-full flex flex-col relative overflow-hidden animate-in zoom-in duration-500 z-50 bg-slate-900">
@@ -148,9 +169,9 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
           <div className="relative z-10 flex flex-col h-full p-6">
               
               {isAutoBattle && (
-                  <div className="absolute top-4 right-4 bg-purple-600/90 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-2 animate-pulse z-50 shadow-lg">
-                      <Repeat className="w-3 h-3" />
-                      Auto: Noch {autoBattleRemaining}
+                  <div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>
+                      {isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}
+                      {isLastAuto ? 'Fertig' : `Auto: Noch ${autoBattleRemaining}`}
                   </div>
               )}
 
@@ -163,25 +184,23 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
                   </h2>
               </div>
               
-              {/* TIMER BAR (NUR AUTO) */}
-              {isAutoBattle && (
+              {isAutoBattle && !isLastAuto && (
                   <div className="w-full max-w-xs mx-auto mb-4">
                        <div className="flex justify-between text-[10px] text-purple-300 font-bold mb-1 uppercase"><span>Nächster Kampf</span><span>{(10 - (autoProgress / 10)).toFixed(1)}s</span></div>
                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-purple-500/30"><div className="h-full bg-purple-500 transition-all duration-100 ease-linear" style={{ width: `${autoProgress}%` }}></div></div>
                   </div>
               )}
               
-              {/* REWARDS ODER FREUNDSCHAFTS-MELDUNG */}
               {!isFriendly ? (
                 <div className="bg-slate-800/60 backdrop-blur-md p-3 sm:p-4 rounded-2xl border border-white/5 mb-4 flex justify-around items-center shadow-lg">
                   <div className="flex flex-col items-center">
                       <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Spieler XP</span>
-                      <div className="flex items-center gap-1.5 text-green-400"><Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /><span className="font-black text-lg sm:text-xl">+{rewardXp}</span></div>
+                      <div className="flex items-center gap-1.5 text-green-400"><Star className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /><span className="font-black text-lg sm:text-xl">~{rewardXp}</span></div>
                   </div>
                   <div className="w-px h-8 bg-white/10"></div>
                   <div className="flex flex-col items-center">
                       <span className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Münzen</span>
-                      <div className="flex items-center gap-1.5 text-yellow-400"><Coins className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /><span className="font-black text-lg sm:text-xl">+{rewardCoins}</span></div>
+                      <div className="flex items-center gap-1.5 text-yellow-400"><Coins className="w-4 h-4 sm:w-5 sm:h-5 fill-current" /><span className="font-black text-lg sm:text-xl">~{rewardCoins}</span></div>
                   </div>
                 </div>
               ) : (
@@ -191,28 +210,72 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
                 </div>
               )}
 
-              {/* PET LISTE (Nur anzeigen wenn KEIN Freundschaftskampf ODER wenn gewonnen, optional) */}
               <div className="flex-1 overflow-y-auto scrollbar-hide mb-4">
                   <div className="space-y-2">
-                      {myTeam.map((pet) => (
-                          <div key={pet.id} className="bg-slate-800/40 border border-white/5 p-2 sm:p-3 rounded-xl flex items-center gap-3 sm:gap-4">
-                              <div className="relative shrink-0"><div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center"><PetAvatar pet={pet} className="w-full h-full drop-shadow-md" /></div></div>
-                              <div className="flex-1 min-w-0">
-                                  <div className="flex justify-between items-end mb-1.5"><span className="font-bold text-xs sm:text-sm text-slate-200 truncate">{pet.name}</span></div>
-                                  <div className="w-full h-2 sm:h-2.5 bg-slate-950 rounded-full overflow-hidden relative border border-white/5">
-                                      <div className="absolute top-0 left-0 h-full bg-indigo-900" style={{width: `${(pet.xp / pet.maxXp) * 100}%`}}></div>
+                      {myTeam.map((pet) => {
+                          // Berechne voraussichtliche XP für die Anzeige
+                          let displayedXp = 0;
+                          if (!isFriendly && won) {
+                              const totalTeamDmg = myTeam.reduce((sum, p) => sum + (damageDealt[p.id] || 0), 0);
+                              const myDmg = damageDealt[pet.id] || 0;
+                              // 50 Basis-XP * 5 Pets im Pool = 250 Total Pool
+                              // Davon 50% fix = 125, 50% dmg = 125.
+                              // 5 Pets -> 25 fix pro Pet.
+                              const teamSize = myTeam.length;
+                              const totalPool = 50 * teamSize;
+                              const fixedPart = Math.floor((totalPool * 0.5) / teamSize);
+                              const dmgPart = totalTeamDmg > 0 ? Math.floor((myDmg / totalTeamDmg) * (totalPool * 0.5)) : 0;
+                              displayedXp = fixedPart + dmgPart;
+                          } else if (!isFriendly && !won) {
+                              displayedXp = 5;
+                          }
+
+                          return (
+                              <div key={pet.id} className="bg-slate-800/40 border border-white/5 p-2 sm:p-3 rounded-xl flex items-center gap-3 sm:gap-4">
+                                  <div className="relative shrink-0"><div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center"><PetAvatar pet={pet} className="w-full h-full drop-shadow-md" /></div></div>
+                                  <div className="flex-1 min-w-0">
+                                      <div className="flex justify-between items-end mb-1.5">
+                                          <span className="font-bold text-xs sm:text-sm text-slate-200 truncate">{pet.name}</span>
+                                          {/* XP ANZEIGE */}
+                                          {!isFriendly && (
+                                              <div className="flex flex-col items-end">
+                                                  <span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-1.5 py-0.5 rounded border border-emerald-400/20">
+                                                      +{displayedXp} XP
+                                                  </span>
+                                                  {won && damageDealt[pet.id] > 0 && <span className="text-[8px] text-slate-500">{damageDealt[pet.id]} Dmg</span>}
+                                              </div>
+                                          )}
+                                      </div>
+                                      <div className="w-full h-2 sm:h-2.5 bg-slate-950 rounded-full overflow-hidden relative border border-white/5">
+                                          <div className="absolute top-0 left-0 h-full bg-indigo-900" style={{width: `${(pet.xp / pet.maxXp) * 100}%`}}></div>
+                                      </div>
                                   </div>
                               </div>
-                          </div>
-                      ))}
+                          );
+                      })}
                   </div>
               </div>
               
               <div className="flex flex-col gap-2">
-                  <button onClick={() => won ? onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds) : onLose()} className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg flex justify-center items-center gap-2 transition-all ${isAutoBattle ? 'bg-purple-600 text-white animate-pulse' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95'}`}>
-                      {isAutoBattle ? (<> <Repeat className="w-5 h-5" /> WEITER ({autoBattleRemaining}) </>) : (isFriendly ? "ZURÜCK" : "WEITER")}
+                  {/* NEU: damageDealt übergeben */}
+                  <button 
+                    onClick={() => won ? onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds, null, damageDealt) : onLose()} 
+                    className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg flex justify-center items-center gap-2 transition-all ${isAutoBattle && !isLastAuto ? 'bg-purple-600 text-white animate-pulse' : (isLastAuto ? 'bg-green-600 text-white hover:scale-[1.02]' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95')}`}
+                  >
+                      {isLastAuto ? (
+                          <> <CheckCircle className="w-5 h-5" /> ABSCHLIESSEN </>
+                      ) : isAutoBattle ? (
+                          <> <Repeat className="w-5 h-5" /> WEITER ({autoBattleRemaining}) </>
+                      ) : (
+                          isFriendly ? "ZURÜCK" : "WEITER"
+                      )}
                   </button>
-                  {isAutoBattle && (<button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><XCircle className="w-4 h-4" /> AUTO-KAMPF ABBRECHEN</button>)}
+                  
+                  {isAutoBattle && !isLastAuto && (
+                      <button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all">
+                          <XCircle className="w-4 h-4" /> AUTO-KAMPF ABBRECHEN
+                      </button>
+                  )}
               </div>
 
           </div>

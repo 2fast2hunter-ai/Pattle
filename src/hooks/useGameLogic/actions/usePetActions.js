@@ -4,7 +4,9 @@ import {
     getUnlockedHatcherySlots, 
     determineRarity, 
     calculateBreedRarity, 
-    generateHybridPet 
+    generateHybridPet,
+    getLevelUpStats, 
+    calculateMaxXp 
 } from '../../../utils/gameMechanics';
 import { 
     updateUser, addPetToDB, updatePetInDB, trackQuestProgress 
@@ -229,12 +231,11 @@ export function usePetActions(state, showNotification) {
         const pet = myPets.find(p => p.id === petId);
         if (!pet) return;
 
-        // 1. SHINY TRANK (WICHTIG: MUSS VOR CONSUMABLES KOMMEN, DA ER AUCH EINER IST)
+        // 1. SHINY TRANK
         if (inventoryItem.variant === 'SHINY_POTION') {
             if (pet.isEgg) { showNotification("Eier können nicht Shiny werden!", "error"); return; }
             if (pet.isShiny) { showNotification("Dieses Pet ist bereits Shiny!", "error"); return; }
 
-            // Stats erhöhen
             const updates = {
                 isShiny: true,
                 atk: (pet.atk || 0) + 1,
@@ -248,7 +249,6 @@ export function usePetActions(state, showNotification) {
 
             await updatePetInDB(petId, updates);
 
-            // Item entfernen
             const newInventory = user.inventory.filter(i => i.id !== itemId);
             await updateUser(user.id, { inventory: newInventory });
 
@@ -256,29 +256,63 @@ export function usePetActions(state, showNotification) {
             return;
         }
 
-        // 2. XP TRANK
+        // 2. XP TRANK (LEVEL UP MIT NEUER FIXER STATS LOGIK)
         if (CONSUMABLES[inventoryItem.variant]) {
             if (pet.isEgg) { showNotification("Eier können keine Erfahrung sammeln!", "error"); return; }
             
             const consumable = CONSUMABLES[inventoryItem.variant];
             let pXp = (pet.xp || 0) + consumable.value;
             let pLevel = pet.level || 1;
-            let pMaxXp = pet.maxXp || 100;
-            let levelUps = 0;
+            let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel);
 
-            while (pXp >= pMaxXp) {
+            let leveledUpCount = 0;
+            
+            // Kopie der aktuellen Stats zum Hochzählen
+            let currentStats = { 
+                maxHp: pet.maxHp, 
+                atk: pet.atk, 
+                def: pet.def, 
+                ap: pet.ap, 
+                res: pet.res, 
+                speed: pet.speed 
+            };
+
+            // Schleife für mehrere Level-Ups gleichzeitig
+            while (pXp >= currentMaxXp) {
+                pXp -= currentMaxXp;
                 pLevel++;
-                pXp -= pMaxXp;
-                pMaxXp = Math.floor(pMaxXp * 1.2);
-                levelUps++;
+                currentMaxXp = calculateMaxXp(pLevel);
+                leveledUpCount++;
+
+                // PRO LEVEL: Fixe Stats addieren basierend auf Seltenheit
+                const growth = getLevelUpStats(pet.rarity);
+                currentStats.maxHp += growth.hp;
+                currentStats.atk += growth.atk;
+                currentStats.def += growth.def;
+                currentStats.ap += growth.ap;
+                currentStats.res += growth.res;
+                currentStats.speed += growth.speed;
             }
 
-            await updatePetInDB(petId, { xp: pXp, level: pLevel, maxXp: pMaxXp });
+            let updates = { xp: pXp };
+            
+            if (leveledUpCount > 0) {
+                updates = { 
+                    ...updates, 
+                    ...currentStats, // Neue Stats übernehmen
+                    level: pLevel, 
+                    maxXp: currentMaxXp,
+                    hp: currentStats.maxHp // Heilung beim Level-Up
+                };
+                trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount);
+            }
+
+            await updatePetInDB(petId, updates);
             
             const newInventory = user.inventory.filter(i => i.id !== itemId);
             await updateUser(user.id, { inventory: newInventory });
 
-            if (levelUps > 0) showNotification(`${pet.name} ist ${levelUps} Level aufgestiegen!`, "success");
+            if (leveledUpCount > 0) showNotification(`${pet.name} ist auf Level ${pLevel} aufgestiegen! (+${leveledUpCount})`, "success");
             else showNotification(`${pet.name} hat ${consumable.value} XP erhalten.`, "success");
             return;
         }
@@ -286,12 +320,9 @@ export function usePetActions(state, showNotification) {
         // 3. KOSMETIK
         if (COSMETICS[inventoryItem.variant]) {
             const cosmetic = COSMETICS[inventoryItem.variant];
-            
             await updatePetInDB(petId, { customBackground: cosmetic.colorClass });
-            
             const newInventory = user.inventory.filter(i => i.id !== itemId);
             await updateUser(user.id, { inventory: newInventory });
-
             showNotification(`Hintergrund von ${pet.name} geändert!`, "success");
             return;
         }

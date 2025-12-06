@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth'; 
-import { auth } from '../firebase'; 
+import { auth } from '../firebase.js'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
-// NEU: checkAndInitVillage importieren
-import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket } from '../utils/db';
+import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle } from '../utils/db';
 
 export function useGameLogic() {
     const [userId, setUserId] = useState(null); 
@@ -15,6 +14,9 @@ export function useGameLogic() {
     const actionsRef = useRef(actions);
     const stateRef = useRef(gameLogicState);
     
+    // Dieser Ref verhindert, dass der Check während des Spielens läuft
+    const initialBattleCheckDone = useRef(false);
+
     useEffect(() => {
         actionsRef.current = actions;
         stateRef.current = gameLogicState;
@@ -22,10 +24,15 @@ export function useGameLogic() {
 
     // --- A. DATENBANK LISTENER ---
     useEffect(() => {
-        if (!userId) return;
+        if (!userId) {
+            // Nur resetten, wenn wir wirklich ausgeloggt sind/keinen User haben
+            initialBattleCheckDone.current = false;
+            return;
+        }
+        
         console.log(">>> START: Datenbank-Verbindung für", userId);
 
-        const unsubUser = listenToUser(userId, (userData) => {
+        const unsubUser = listenToUser(userId, async (userData) => {
             stateRef.current.setUser(userData);
             
             if (stateRef.current.currentView === 'auth' || stateRef.current.authLoading) {
@@ -35,7 +42,28 @@ export function useGameLogic() {
 
             checkAndResetQuests(userData).catch(e => console.error("Quest Error:", e));
             
-            // HIER: Dorf-Daten reparieren/initialisieren falls nötig
+            // --- KAMPF-ABBRUCH CHECK (Nur EINMALIG beim ersten Laden) ---
+            if (!initialBattleCheckDone.current) {
+                initialBattleCheckDone.current = true; // Sofort markieren, damit es nicht nochmal läuft
+
+                // Nur prüfen, wenn laut DB ein Kampf aktiv ist
+                if (userData.isInBattle) {
+                    console.log("[Logic] Prüfe auf Kampfabbruch...");
+                    // Kleine Verzögerung, falls es nur ein kurzer Sync-Fehler ist
+                    setTimeout(async () => {
+                         const resolution = await checkAndResolveInterruptedBattle(userData.id);
+                         if (resolution && resolution.resolved) {
+                             console.log("[Logic] Abbruch bestätigt.");
+                             if (actionsRef.current.showNotification) {
+                                 actionsRef.current.showNotification(`Kampf wurde abgebrochen! Niederlage (-${resolution.ratingLoss} Rating).`, 'error');
+                             }
+                             stateRef.current.setCurrentView('arena-hub'); 
+                         }
+                    }, 500);
+                }
+            }
+            // -------------------------------------------------------------
+
             checkAndInitVillage(userData).catch(e => console.error("Village Init Error:", e));
         });
 

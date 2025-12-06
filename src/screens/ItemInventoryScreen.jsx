@@ -3,12 +3,10 @@ import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package
 import { RARITIES, RESOURCES, RESOURCE_ITEMS, CONSUMABLES, COSMETICS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-// Icons für Materialien
 const RES_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-// --- INVENTORY CARD ---
 const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, onClick, specialIcon, footerButton, ringColor }) => (
     <div 
         onClick={onClick} 
@@ -21,31 +19,19 @@ const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, onClick,
         `}
     >
         <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full ${bgColor} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`}></div>
-
         <div className="w-full flex justify-end relative z-10">
-            <span className="bg-slate-950/80 text-[10px] font-black text-white px-2 py-0.5 rounded-full border border-white/10 shadow-sm backdrop-blur-sm">
-                x{Math.floor(count).toLocaleString()}
-            </span>
+            <span className="bg-slate-950/80 text-[10px] font-black text-white px-2 py-0.5 rounded-full border border-white/10 shadow-sm backdrop-blur-sm">x{Math.floor(count).toLocaleString()}</span>
         </div>
-
         <div className="relative z-10 flex-1 flex items-center justify-center">
-            <div className="relative">
-                <Icon className={`w-12 h-12 ${colorColor} drop-shadow-[0_5px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform`} />
-                {specialIcon}
-            </div>
+            <div className="relative"><Icon className={`w-12 h-12 ${colorColor} drop-shadow-[0_5px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform`} />{specialIcon}</div>
         </div>
-        
         <div className="relative z-10 w-full text-center flex flex-col gap-1.5">
-            {/* Label immer anzeigen */}
-            <div className={`text-[9px] font-black uppercase tracking-wider ${colorColor} ${footerButton ? 'truncate leading-none' : 'bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm w-full leading-tight'}`}>
-                {label}
-            </div>
-            {footerButton}
+            {footerButton && (<div className={`text-[9px] font-black uppercase tracking-wider ${colorColor} truncate leading-none`}>{label}</div>)}
+            {footerButton ? (footerButton) : (<div className={`text-[9px] font-black uppercase tracking-wider ${colorColor} bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm w-full leading-tight`}>{label}</div>)}
         </div>
     </div>
 );
 
-// ... ModernModal (bleibt gleich, nur der Vollständigkeit halber hier gekürzt, bitte Original verwenden!) ...
 const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, actionIcon: ActionIcon, onAction, onClose, colorClass, bgClass, borderClass, specialBadge }) => (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in zoom-in-50 duration-300">
         <div className={`bg-slate-900/90 border border-white/10 w-full max-w-sm rounded-[32px] p-0 relative overflow-hidden flex flex-col shadow-2xl shadow-black/50`}>
@@ -139,10 +125,26 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const finishAnimation = () => { setAnimationStage('idle'); setProcessingBoxId(null); setResultPet(null); };
   const handleTicketRedeem = (id) => onRedeemTicket(id);
   
-  const animStyles = `...`; // Bitte beibehalten!
-
-  // Animation JSX ...
-  if (animationStage !== 'idle') { /* ... Bitte beibehalten! ... */ return (<div>...</div>); }
+  if (animationStage !== 'idle') {
+      return (
+          <div className="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center overflow-hidden">
+              {animationStage === 'shaking' && (<div className="relative flex flex-col items-center justify-center animate-in fade-in duration-300"><div className="absolute inset-0 bg-yellow-500/30 blur-[100px] animate-pulse rounded-full scale-150"></div><div className="absolute -inset-20 bg-gradient-radial from-yellow-400/20 to-transparent animate-spin-slow opacity-70"></div><div className="relative z-10 animate-shake-hard"><Package className="w-48 h-48 text-yellow-400 drop-shadow-[0_10px_30px_rgba(250,204,21,0.5)]" /></div><p className="text-yellow-200 font-black tracking-widest mt-12 text-xl animate-pulse uppercase relative z-10">Wird geöffnet...</p></div>)}
+              {animationStage === 'exploding' && (<div className="fixed inset-0 bg-white z-[110] animate-out fade-out duration-500"></div>)}
+              {animationStage === 'revealed' && resultPet && (
+                  <div className="relative w-full h-full flex flex-col items-center justify-center animate-in fade-in duration-500">
+                       <div className="absolute inset-0 flex items-center justify-center opacity-50"><div className={`w-[200vw] h-[200vw] bg-gradient-conic from-${RARITIES[resultPet.rarity].color.split('-')[1]}-500/0 via-${RARITIES[resultPet.rarity].color.split('-')[1]}-500/20 to-${RARITIES[resultPet.rarity].color.split('-')[1]}-500/0 animate-spin-slow`}></div></div>
+                       <div className="relative z-10 flex flex-col items-center animate-float-up">
+                           <h2 className="text-4xl font-black text-white mb-2 uppercase tracking-wider drop-shadow-lg">GEFUNDEN!</h2>
+                           <p className={`text-lg font-bold mb-8 ${RARITIES[resultPet.rarity].color} uppercase tracking-widest`}>{RARITIES[resultPet.rarity].label}</p>
+                           <div className="relative mb-10 group scale-150"><div className={`absolute inset-0 ${RARITIES[resultPet.rarity].bg} blur-3xl opacity-60 animate-pulse rounded-full`}></div><div className="relative z-10 animate-bounce-slow"><PetAvatar pet={resultPet} className="w-40 h-40 drop-shadow-2xl" /></div><Sparkles className="absolute top-0 right-0 text-yellow-300 w-12 h-12 animate-ping-slow" /></div>
+                           <div className="bg-slate-800/80 backdrop-blur border border-white/10 p-4 rounded-2xl mb-8 text-center"><p className="text-slate-300 text-sm font-bold">{resultPet.isEgg ? 'Ein neues Ei!' : 'Ein neues Pet!'}</p><p className="text-xs text-slate-500 mt-1">{resultPet.isEgg ? 'Ab in die Brutstätte damit.' : 'Es wartet im Pet Hub.'}</p></div>
+                           <button onClick={finishAnimation} className="px-10 py-4 bg-white text-slate-900 font-black text-lg rounded-2xl shadow-xl hover:scale-105 transition-transform active:scale-95 flex items-center gap-3"><ThermometerSun className="w-6 h-6" /> ALLES KLAR</button>
+                       </div>
+                  </div>
+              )}
+          </div>
+      );
+  }
 
   return (
     <div className="h-full flex flex-col animate-in fade-in bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
@@ -150,16 +152,13 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {selectedItem && (<ModernModal title={`${RARITIES[selectedItem.base.rarity].label} Ei`} icon={Egg} count={selectedItem.count} description={<span>Ein Ei der Stufe <span className={`${RARITIES[selectedItem.base.rarity].color} font-bold`}>{RARITIES[selectedItem.base.rarity].label}</span>.</span>} actionLabel="INKUBIEREN" actionIcon={ThermometerSun} onAction={() => { onStartIncubation(selectedItem.ids[0]); setSelectedItem(null); }} onClose={() => setSelectedItem(null)} colorClass={RARITIES[selectedItem.base.rarity].color} bgClass={RARITIES[selectedItem.base.rarity].bg} specialBadge={selectedItem.source === 'BREEDING' && <div className="absolute -bottom-2 -right-2 bg-pink-500 p-2.5 rounded-full border-4 border-slate-900 shadow-lg"><Dna className="w-6 h-6 text-white" /></div>} />)}
       {selectedBox && (<ModernModal title={`${selectedBox.variant} Box`} icon={Package} count={selectedBox.count} description="Eine verschlossene Schatzkiste." actionLabel="ÖFFNEN" actionIcon={BoxSelect} onAction={() => startLootboxSequence(selectedBox.ids[0], 'BOX')} onClose={() => setSelectedBox(null)} colorClass="text-yellow-400" bgClass="bg-yellow-500" borderClass="yellow" />)}
 
-      {/* HEADER */}
       <div className="relative flex items-center justify-between mb-6 pt-2 px-4 shrink-0">
           <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-orange-500 drop-shadow-sm">RUCKSACK</h1>
           <button onClick={onBack} className="p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md"><ArrowLeft className="w-5 h-5" /></button>
       </div>
 
-      {/* CONTENT */}
       <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
       
-      {/* 1. VERBRAUCHSGÜTER */}
       {potionItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><FlaskConical className="w-4 h-4 text-purple-400" /> Verbrauchsgüter</h3>
@@ -192,7 +191,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
           </div>
       )}
 
-      {/* 2. MATERIALIEN */}
       {hasResources && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Pickaxe className="w-4 h-4 text-emerald-400" /> Materialien</h3>
@@ -204,10 +202,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
           </div>
       )}
 
-      {/* ... Restliche Sektionen (TICKETS, BOXEN, EIER) ... */}
-      {/* Bitte aus dem vorherigen Schritt übernehmen (oder einfach die oben definierten Blöcke hier einfügen) */}
-      {/* Ich füge sie hier der Vollständigkeit halber wieder ein: */}
-      
       {ticketItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-150">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Ticket className="w-4 h-4 text-pink-400" /> Spezial-Items</h3>
@@ -237,7 +231,6 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
               })}
           </div>
       </div>
-
       </div>
     </div>
   );

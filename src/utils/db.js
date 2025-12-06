@@ -1,4 +1,4 @@
-import { db } from '../firebase';
+import { db } from '../firebase.js'; 
 import { 
   doc, getDoc, setDoc, updateDoc, collection, addDoc, 
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
@@ -6,314 +6,91 @@ import {
 } from 'firebase/firestore';
 import { generatePet, generateQuests } from './gameMechanics'; 
 
-// --- USER MANAGEMENT ---
-export const initializeUser = async (firebaseUser, username) => {
-  const userRef = doc(db, "users", firebaseUser.uid);
-  const userSnap = await getDoc(userRef);
+// --- BATTLE STATE MANAGEMENT ---
 
-  if (userSnap.exists()) {
-    return { id: userSnap.id, ...userSnap.data() }; 
-  } else {
-    const newUserData = {
-      id: firebaseUser.uid,
-      username: username,
-      level: 1,
-      xp: 0,
-      xpToNextLevel: 100,
-      coins: 500,
-      gems: 10,
-      avatar: '🛡️',
-      rating: 1000,
-      team: [], 
-      inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], 
-      friends: [],
-      stats: { pvpWins: 0, pvpTotal: 0, hatched: 0, bred: 0, marketSpent: 0, marketEarned: 0 },
-      quests: { 
-          daily: generateQuests('DAILY'),
-          weekly: generateQuests('WEEKLY'),
-          monthly: generateQuests('MONTHLY')
-      },
-      redeemedTickets: 0, 
-      adTickets: 0, 
-      buffs: { coinBoostMatches: 0, xpBoostMatches: 0 },
-      
-      // Village Struktur
-      village: {
-          level: 1,
-          xp: 0,
-          xpToNext: 16000,
-          lastCollectionTime: Date.now(),
-          // NEU: Wann läuft die Idle-Zeit ab? (Startet bei 0 = Inaktiv, oder z.B. Date.now() + 600000 für 10 min Startbonus)
-          idleTimeExpiresAt: Date.now(), 
-          
-          resources: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
-          storage: {}, 
-          buildings: { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 },
-          workers: {
-              wood: [null, null, null, null, null],
-              stone: [null, null, null, null, null],
-              seafood: [null, null, null, null, null],
-              stardust: [null, null, null, null, null],
-              computer_parts: [null, null, null, null, null],
-              special: [null, null, null, null, null]
-          },
-          milestones: {}, 
-          stats: {
-             totalCollected: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
-             totalItemsCollected: {}, 
-             totalIdleTime: 0
-          }
-      }
-    };
-    await setDoc(userRef, newUserData);
-    return newUserData;
-  }
+export const setBattleActive = async (userId, isActive) => {
+    if (!userId) return;
+    try {
+        const userRef = doc(db, "users", userId);
+        // Wir nutzen setDoc mit merge, da das robuster ist
+        await setDoc(userRef, { isInBattle: isActive }, { merge: true });
+    } catch (e) {
+        console.error("[DB] Fehler beim Setzen des Kampf-Status:", e);
+    }
 };
 
-// --- LISTENERS ---
-export const listenToUser = (userId, callback) => {
-  return onSnapshot(doc(db, "users", userId), (doc) => {
-    if (doc.exists()) callback({ id: doc.id, ...doc.data() });
-  });
-};
-
-export const listenToPets = (userId, callback) => {
-  const q = query(collection(db, "pets"), where("ownerId", "==", userId));
-  return onSnapshot(q, (snapshot) => {
-    const pets = [];
-    snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() }));
-    callback(pets);
-  });
-};
-
-export const listenToMarket = (callback) => {
-  return onSnapshot(collection(db, "market"), (snapshot) => {
-    const listings = [];
-    snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() }));
-    callback(listings);
-  });
-};
-
-// --- GENERAL ACTIONS ---
-export const updateUser = async (userId, data) => {
-  if (!userId) return;
-  const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, data);
-};
-
-export const addPetToDB = async (pet, ownerId) => {
-  await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId });
-};
-
-export const updatePetInDB = async (petId, data) => {
-  await updateDoc(doc(db, "pets", petId), data);
-};
-
-export const removePetFromDB = async (petId) => {
-    await deleteDoc(doc(db, "pets", petId));
-}
-
-export const createMarketListing = async (listing) => {
-  const docRef = await addDoc(collection(db, "market"), listing);
-  return docRef.id;
-};
-
-export const createResourceListing = async (user, itemId, amount, price) => {
-    if (!user || !user.id) throw new Error("User nicht gefunden.");
-    const userRef = doc(db, "users", user.id);
-    const LISTING_FEE = 100;
+export const checkAndResolveInterruptedBattle = async (userId) => {
+    if (!userId) return null;
+    const userRef = doc(db, "users", userId);
 
     try {
-        await runTransaction(db, async (transaction) => {
+        return await runTransaction(db, async (transaction) => {
             const userDoc = await transaction.get(userRef);
-            if (!userDoc.exists()) throw new Error("User existiert nicht.");
+            if (!userDoc.exists()) return null;
+
             const userData = userDoc.data();
 
-            if (userData.coins < LISTING_FEE) throw new Error("Nicht genügend Gold für die Gebühr (100).");
-            
-            const storage = userData.village?.storage || {};
-            if ((storage[itemId] || 0) < amount) throw new Error("Nicht genügend Ressourcen im Lager.");
+            // Nur wenn explizit TRUE, dann strafen
+            if (userData.isInBattle === true) {
+                // Strafe vorbereiten
+                const newStats = { ...(userData.stats || {}) };
+                newStats.pvpTotal = (newStats.pvpTotal || 0) + 1;
+                const newRating = Math.max(0, (userData.rating || 1000) - 25);
 
-            const newStorage = { ...storage };
-            newStorage[itemId] -= amount;
-            if (newStorage[itemId] <= 0) delete newStorage[itemId];
-            
-            transaction.update(userRef, {
-                coins: userData.coins - LISTING_FEE,
-                "village.storage": newStorage
-            });
-
-            const newListingRef = doc(collection(db, "market"));
-            const listingData = {
-                type: 'RESOURCE',
-                itemId: itemId,
-                amount: amount,
-                price: price,
-                sellerId: user.id,
-                sellerName: user.username,
-                createdAt: Date.now()
-            };
-            transaction.set(newListingRef, listingData);
-        });
-        return { success: true };
-    } catch (e) {
-        console.error("Fehler beim Erstellen des Ressourcen-Angebots:", e);
-        return { success: false, message: e.message };
-    }
-};
-
-export const deleteMarketListing = async (listingId) => {
-  await deleteDoc(doc(db, "market", listingId));
-};
-
-export const buyMarketItem = async (user, listingId) => {
-    const listingRef = doc(db, "market", listingId);
-    const buyerRef = doc(db, "users", user.id);
-
-    try {
-        await runTransaction(db, async (transaction) => {
-            const listingSnap = await transaction.get(listingRef);
-            if (!listingSnap.exists()) throw new Error("Angebot nicht mehr verfügbar.");
-
-            const listing = listingSnap.data();
-            const price = listing.price;
-            const sellerId = listing.sellerId;
-            
-            if (sellerId === user.id) throw new Error("Du kannst dein eigenes Angebot nicht kaufen.");
-
-            const buyerSnap = await transaction.get(buyerRef);
-            if (!buyerSnap.exists()) throw new Error("Käufer Profilfehler.");
-            
-            const currentCoins = buyerSnap.data().coins || 0;
-            if (currentCoins < price) throw new Error("Nicht genug Münzen!");
-
-            const fee = Math.floor(price * 0.05);
-            const payout = price - fee;
-            const sellerRef = doc(db, "users", sellerId);
-
-            transaction.update(buyerRef, {
-                coins: increment(-price),
-                "stats.marketSpent": increment(price)
-            });
-
-            transaction.update(sellerRef, {
-                coins: increment(payout),
-                "stats.marketEarned": increment(payout)
-            });
-
-            if (listing.type === 'RESOURCE') {
-                transaction.update(buyerRef, {
-                    [`village.storage.${listing.itemId}`]: increment(listing.amount)
-                });
-            } else {
-                if (listing.pets && Array.isArray(listing.pets)) {
-                    listing.pets.forEach((p, index) => {
-                        const newId = `${Date.now()}_${index}_${Math.floor(Math.random()*1000)}`;
-                        const newPet = { ...p, id: newId, ownerId: user.id };
-                        const newPetRef = doc(db, "pets", newId);
-                        transaction.set(newPetRef, newPet);
-                    });
-                } else {
-                    const newId = `${Date.now()}_${Math.floor(Math.random()*1000)}`;
-                    const newPet = { ...listing.pet, id: newId, ownerId: user.id };
-                    transaction.set(doc(db, "pets", newId), newPet);
-                }
-            }
-
-            transaction.delete(listingRef);
-        });
-        return { success: true, message: `Kauf erfolgreich!` };
-    } catch (e) {
-        console.error("Marktplatz Fehler:", e);
-        return { success: false, message: e.message };
-    }
-};
-
-export const cancelMarketListing = async (user, listingId) => {
-    const listingRef = doc(db, "market", listingId);
-    try {
-        await runTransaction(db, async (transaction) => {
-            const listingSnap = await transaction.get(listingRef);
-            if (!listingSnap.exists()) throw new Error("Angebot existiert nicht mehr.");
-            const listing = listingSnap.data();
-            if (listing.sellerId !== user.id) throw new Error("Das ist nicht dein Angebot!");
-
-            if (listing.type === 'RESOURCE') {
-                const userRef = doc(db, "users", user.id);
                 transaction.update(userRef, {
-                    [`village.storage.${listing.itemId}`]: increment(listing.amount)
+                    isInBattle: false,
+                    stats: newStats,
+                    rating: newRating
                 });
-            } else {
-                if (listing.pets && Array.isArray(listing.pets)) {
-                    listing.pets.forEach((p) => {
-                        const petRef = doc(db, "pets", p.id);
-                        transaction.set(petRef, { ...p, ownerId: user.id });
-                    });
-                } else if (listing.pet) {
-                    const petRef = doc(db, "pets", listing.pet.id);
-                    transaction.set(petRef, { ...listing.pet, ownerId: user.id });
-                }
+
+                return { resolved: true, ratingLoss: 25 };
             }
-            transaction.delete(listingRef);
+            return { resolved: false };
         });
-        return { success: true, message: "Angebot entfernt. Items sind zurück!" };
     } catch (e) {
-        console.error("Cancel Listing Fehler:", e);
-        return { success: false, message: e.message };
+        // failed-precondition passiert oft bei Race Conditions (z.B. Kampf endet gerade normal)
+        // Das ignorieren wir, da es kein Betrugsversuch ist.
+        if (e.code === 'failed-precondition') {
+            console.warn("[DB] Transaction precondition failed - Kampfstatus hat sich geändert (OK).");
+        } else {
+            console.error("[DB] Fehler beim Check:", e);
+        }
+        return null;
     }
 };
 
+// ... (Restliche Funktionen checkAndInitVillage, initializeUser etc. bleiben unverändert wie zuvor) ...
+// BITTE ALLES ANDERE BEIBEHALTEN!
 export const checkAndInitVillage = async (user) => {
     if (!user || !user.id) return;
-    
-    // Check auf alle neuen Felder
-    const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt;
-
+    const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt || user.isInBattle === undefined;
     if (needsUpdate) {
-        console.log("Repariere User: Dorf-Daten fehlen, werden aktualisiert...");
-        
         const oldVillage = user.village || {};
         const oldStats = oldVillage.stats || {};
         const oldWorkers = oldVillage.workers || {};
-
-        const fillSlots = (arr) => {
-            const newArr = arr ? [...arr] : [];
-            while (newArr.length < 5) newArr.push(null);
-            return newArr;
-        };
-
-        const villageData = {
-            level: oldVillage.level || 1,
-            xp: oldVillage.xp || 0,
-            xpToNext: oldVillage.xpToNext || 16000,
-            lastCollectionTime: oldVillage.lastCollectionTime || Date.now(),
-            // NEU: Idle Time
-            idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), 
-            resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
-            storage: oldVillage.storage || {}, 
-            buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 },
-            workers: {
-                wood: fillSlots(oldWorkers.wood),
-                stone: fillSlots(oldWorkers.stone),
-                seafood: fillSlots(oldWorkers.seafood),
-                stardust: fillSlots(oldWorkers.stardust),
-                computer_parts: fillSlots(oldWorkers.computer_parts),
-                special: fillSlots(oldWorkers.special)
-            },
-            milestones: oldVillage.milestones || {},
-            stats: {
-                totalCollected: oldStats.totalCollected || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
-                totalItemsCollected: oldStats.totalItemsCollected || {}, 
-                totalIdleTime: oldStats.totalIdleTime || 0
-            }
-        };
-        
+        const fillSlots = (arr) => { const newArr = arr ? [...arr] : []; while (newArr.length < 5) newArr.push(null); return newArr; };
+        const villageData = { level: oldVillage.level || 1, xp: oldVillage.xp || 0, xpToNext: oldVillage.xpToNext || 16000, lastCollectionTime: oldVillage.lastCollectionTime || Date.now(), idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, storage: oldVillage.storage || {}, buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 }, workers: { wood: fillSlots(oldWorkers.wood), stone: fillSlots(oldWorkers.stone), seafood: fillSlots(oldWorkers.seafood), stardust: fillSlots(oldWorkers.stardust), computer_parts: fillSlots(oldWorkers.computer_parts), special: fillSlots(oldWorkers.special) }, milestones: oldVillage.milestones || {}, stats: { totalCollected: oldStats.totalCollected || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, totalItemsCollected: oldStats.totalItemsCollected || {}, totalIdleTime: oldStats.totalIdleTime || 0 } };
         const userRef = doc(db, "users", user.id);
-        await updateDoc(userRef, { village: villageData });
+        
+        let updates = { village: villageData };
+        if (user.isInBattle === undefined) updates.isInBattle = false;
+        
+        await updateDoc(userRef, updates);
     }
 };
-
-// ... Restliche Funktionen ...
+export const initializeUser = async (firebaseUser, username) => { const userRef = doc(db, "users", firebaseUser.uid); const userSnap = await getDoc(userRef); if (userSnap.exists()) { return { id: userSnap.id, ...userSnap.data() }; } else { const newUserData = { id: firebaseUser.uid, username: username, level: 1, xp: 0, xpToNextLevel: 100, coins: 500, gems: 10, avatar: '🛡️', rating: 1000, isInBattle: false, team: [], inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], friends: [], stats: { pvpWins: 0, pvpTotal: 0, hatched: 0, bred: 0, marketSpent: 0, marketEarned: 0 }, quests: { daily: generateQuests('DAILY'), weekly: generateQuests('WEEKLY'), monthly: generateQuests('MONTHLY') }, redeemedTickets: 0, adTickets: 0, buffs: { coinBoostMatches: 0, xpBoostMatches: 0 }, village: { level: 1, xp: 0, xpToNext: 16000, lastCollectionTime: Date.now(), idleTimeExpiresAt: Date.now(), resources: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, storage: {}, buildings: { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 }, workers: { wood: [null, null, null, null, null], stone: [null, null, null, null, null], seafood: [null, null, null, null, null], stardust: [null, null, null, null, null], computer_parts: [null, null, null, null, null], special: [null, null, null, null, null] }, milestones: {}, stats: { totalCollected: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, totalItemsCollected: {}, totalIdleTime: 0 } } }; await setDoc(userRef, newUserData); return newUserData; } };
+export const listenToUser = (userId, callback) => { return onSnapshot(doc(db, "users", userId), (doc) => { if (doc.exists()) callback({ id: doc.id, ...doc.data() }); }); };
+export const listenToPets = (userId, callback) => { const q = query(collection(db, "pets"), where("ownerId", "==", userId)); return onSnapshot(q, (snapshot) => { const pets = []; snapshot.forEach((doc) => pets.push({ id: doc.id, ...doc.data() })); callback(pets); }); };
+export const listenToMarket = (callback) => { return onSnapshot(collection(db, "market"), (snapshot) => { const listings = []; snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() })); callback(listings); }); };
+export const updateUser = async (userId, data) => { if (!userId) return; const userRef = doc(db, "users", userId); await updateDoc(userRef, data); };
+export const addPetToDB = async (pet, ownerId) => { await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId }); };
+export const updatePetInDB = async (petId, data) => { await updateDoc(doc(db, "pets", petId), data); };
+export const removePetFromDB = async (petId) => { await deleteDoc(doc(db, "pets", petId)); }
+export const createMarketListing = async (listing) => { const docRef = await addDoc(collection(db, "market"), listing); return docRef.id; };
+export const createResourceListing = async (user, itemId, amount, price) => { if (!user || !user.id) throw new Error("User nicht gefunden."); const userRef = doc(db, "users", user.id); const LISTING_FEE = 100; try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) throw new Error("User existiert nicht."); const userData = userDoc.data(); if (userData.coins < LISTING_FEE) throw new Error("Nicht genügend Gold für die Gebühr (100)."); const storage = userData.village?.storage || {}; if ((storage[itemId] || 0) < amount) throw new Error("Nicht genügend Ressourcen im Lager."); const newStorage = { ...storage }; newStorage[itemId] -= amount; if (newStorage[itemId] <= 0) delete newStorage[itemId]; transaction.update(userRef, { coins: userData.coins - LISTING_FEE, "village.storage": newStorage }); const newListingRef = doc(collection(db, "market")); const listingData = { type: 'RESOURCE', itemId: itemId, amount: amount, price: price, sellerId: user.id, sellerName: user.username, createdAt: Date.now() }; transaction.set(newListingRef, listingData); }); return { success: true }; } catch (e) { console.error("Fehler beim Erstellen des Ressourcen-Angebots:", e); return { success: false, message: e.message }; } };
+export const deleteMarketListing = async (listingId) => { await deleteDoc(doc(db, "market", listingId)); };
+export const buyMarketItem = async (user, listingId) => { const listingRef = doc(db, "market", listingId); const buyerRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Angebot nicht mehr verfügbar."); const listing = listingSnap.data(); const price = listing.price; const sellerId = listing.sellerId; if (sellerId === user.id) throw new Error("Du kannst dein eigenes Angebot nicht kaufen."); const buyerSnap = await transaction.get(buyerRef); if (!buyerSnap.exists()) throw new Error("Käufer Profilfehler."); const currentCoins = buyerSnap.data().coins || 0; if (currentCoins < price) throw new Error("Nicht genug Münzen!"); const fee = Math.floor(price * 0.05); const payout = price - fee; const sellerRef = doc(db, "users", sellerId); transaction.update(buyerRef, { coins: increment(-price), "stats.marketSpent": increment(price) }); transaction.update(sellerRef, { coins: increment(payout), "stats.marketEarned": increment(payout) }); if (listing.type === 'RESOURCE') { transaction.update(buyerRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p, index) => { const newId = `${Date.now()}_${index}_${Math.floor(Math.random()*1000)}`; const newPet = { ...p, id: newId, ownerId: user.id }; const newPetRef = doc(db, "pets", newId); transaction.set(newPetRef, newPet); }); } else { const newId = `${Date.now()}_${Math.floor(Math.random()*1000)}`; const newPet = { ...listing.pet, id: newId, ownerId: user.id }; transaction.set(doc(db, "pets", newId), newPet); } } transaction.delete(listingRef); }); return { success: true, message: `Kauf erfolgreich!` }; } catch (e) { console.error("Marktplatz Fehler:", e); return { success: false, message: e.message }; } };
+export const cancelMarketListing = async (user, listingId) => { const listingRef = doc(db, "market", listingId); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Angebot existiert nicht mehr."); const listing = listingSnap.data(); if (listing.sellerId !== user.id) throw new Error("Das ist nicht dein Angebot!"); if (listing.type === 'RESOURCE') { const userRef = doc(db, "users", user.id); transaction.update(userRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p) => { const petRef = doc(db, "pets", p.id); transaction.set(petRef, { ...p, ownerId: user.id }); }); } else if (listing.pet) { const petRef = doc(db, "pets", listing.pet.id); transaction.set(petRef, { ...listing.pet, ownerId: user.id }); } } transaction.delete(listingRef); }); return { success: true, message: "Angebot entfernt. Items sind zurück!" }; } catch (e) { console.error("Cancel Listing Fehler:", e); return { success: false, message: e.message }; } };
 export const getLeaderboard = async () => { const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(101)); const querySnapshot = await getDocs(q); return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); };
 export const findUserPublic = async (targetId) => { try { const docRef = doc(db, "users", targetId); const docSnap = await getDoc(docRef); if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() }; return null; } catch (e) { return null; } }
 export const checkAndResetQuests = async (user) => { if (!user || !user.id) return; const now = Date.now(); let updates = {}; let hasUpdates = false; const checkCategory = (catKey, catName) => { const current = user.quests?.[catKey]; if (!current || !current.expiresAt || now > current.expiresAt) { const newData = generateQuests(catName); updates[`quests.${catKey}`] = newData; hasUpdates = true; } }; checkCategory('daily', 'DAILY'); checkCategory('weekly', 'WEEKLY'); checkCategory('monthly', 'MONTHLY'); if (hasUpdates) await updateDoc(doc(db, "users", user.id), updates); };
