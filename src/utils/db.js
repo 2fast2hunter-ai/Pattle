@@ -43,6 +43,9 @@ export const initializeUser = async (firebaseUser, username) => {
           xp: 0,
           xpToNext: 16000,
           lastCollectionTime: Date.now(),
+          // NEU: Wann läuft die Idle-Zeit ab? (Startet bei 0 = Inaktiv, oder z.B. Date.now() + 600000 für 10 min Startbonus)
+          idleTimeExpiresAt: Date.now(), 
+          
           resources: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
           storage: {}, 
           buildings: { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 },
@@ -110,15 +113,11 @@ export const removePetFromDB = async (petId) => {
     await deleteDoc(doc(db, "pets", petId));
 }
 
-// --- MARKETPLACE: CREATE LISTINGS ---
-
-// 1. Pet Listing
 export const createMarketListing = async (listing) => {
   const docRef = await addDoc(collection(db, "market"), listing);
   return docRef.id;
 };
 
-// 2. Resource Listing (DIESE FUNKTION FEHLTE)
 export const createResourceListing = async (user, itemId, amount, price) => {
     if (!user || !user.id) throw new Error("User nicht gefunden.");
     const userRef = doc(db, "users", user.id);
@@ -135,11 +134,8 @@ export const createResourceListing = async (user, itemId, amount, price) => {
             const storage = userData.village?.storage || {};
             if ((storage[itemId] || 0) < amount) throw new Error("Nicht genügend Ressourcen im Lager.");
 
-            // 1. Gebühr und Ressourcen abziehen
             const newStorage = { ...storage };
             newStorage[itemId] -= amount;
-            
-            // Wenn leer, key entfernen (optional, aber sauberer)
             if (newStorage[itemId] <= 0) delete newStorage[itemId];
             
             transaction.update(userRef, {
@@ -147,7 +143,6 @@ export const createResourceListing = async (user, itemId, amount, price) => {
                 "village.storage": newStorage
             });
 
-            // 2. Listing erstellen
             const newListingRef = doc(collection(db, "market"));
             const listingData = {
                 type: 'RESOURCE',
@@ -171,9 +166,6 @@ export const deleteMarketListing = async (listingId) => {
   await deleteDoc(doc(db, "market", listingId));
 };
 
-// --- MARKETPLACE: TRANSACTIONS ---
-
-// Kaufen (Pets & Ressourcen)
 export const buyMarketItem = async (user, listingId) => {
     const listingRef = doc(db, "market", listingId);
     const buyerRef = doc(db, "users", user.id);
@@ -199,29 +191,21 @@ export const buyMarketItem = async (user, listingId) => {
             const payout = price - fee;
             const sellerRef = doc(db, "users", sellerId);
 
-            // Käufer zahlt
             transaction.update(buyerRef, {
                 coins: increment(-price),
                 "stats.marketSpent": increment(price)
             });
 
-            // Verkäufer bekommt Geld
             transaction.update(sellerRef, {
                 coins: increment(payout),
                 "stats.marketEarned": increment(payout)
             });
 
-            // WARENÜBERGABE
             if (listing.type === 'RESOURCE') {
-                // Ressource an Käufer
-                // Hinweis: Dot-Notation für dynamische Keys in `update` ist tricky bei verschachtelten Objekten.
-                // Sicherer: Wir lesen das Feld und schreiben es zurück, aber `increment` geht auch mit Pfad.
                 transaction.update(buyerRef, {
                     [`village.storage.${listing.itemId}`]: increment(listing.amount)
                 });
-
             } else {
-                // Pet(s) übergeben
                 if (listing.pets && Array.isArray(listing.pets)) {
                     listing.pets.forEach((p, index) => {
                         const newId = `${Date.now()}_${index}_${Math.floor(Math.random()*1000)}`;
@@ -238,35 +222,28 @@ export const buyMarketItem = async (user, listingId) => {
 
             transaction.delete(listingRef);
         });
-
         return { success: true, message: `Kauf erfolgreich!` };
-
     } catch (e) {
         console.error("Marktplatz Fehler:", e);
         return { success: false, message: e.message };
     }
 };
 
-// Angebot zurückziehen
 export const cancelMarketListing = async (user, listingId) => {
     const listingRef = doc(db, "market", listingId);
-    
     try {
         await runTransaction(db, async (transaction) => {
             const listingSnap = await transaction.get(listingRef);
             if (!listingSnap.exists()) throw new Error("Angebot existiert nicht mehr.");
-            
             const listing = listingSnap.data();
             if (listing.sellerId !== user.id) throw new Error("Das ist nicht dein Angebot!");
 
-            // RÜCKGABE
             if (listing.type === 'RESOURCE') {
                 const userRef = doc(db, "users", user.id);
                 transaction.update(userRef, {
                     [`village.storage.${listing.itemId}`]: increment(listing.amount)
                 });
             } else {
-                // Pets zurück
                 if (listing.pets && Array.isArray(listing.pets)) {
                     listing.pets.forEach((p) => {
                         const petRef = doc(db, "pets", p.id);
@@ -277,37 +254,41 @@ export const cancelMarketListing = async (user, listingId) => {
                     transaction.set(petRef, { ...listing.pet, ownerId: user.id });
                 }
             }
-
             transaction.delete(listingRef);
         });
-
         return { success: true, message: "Angebot entfernt. Items sind zurück!" };
-
     } catch (e) {
         console.error("Cancel Listing Fehler:", e);
         return { success: false, message: e.message };
     }
 };
 
-// --- INIT HELPER ---
 export const checkAndInitVillage = async (user) => {
     if (!user || !user.id) return;
-    const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.stats.totalItemsCollected;
+    
+    // Check auf alle neuen Felder
+    const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt;
+
     if (needsUpdate) {
         console.log("Repariere User: Dorf-Daten fehlen, werden aktualisiert...");
+        
         const oldVillage = user.village || {};
         const oldStats = oldVillage.stats || {};
         const oldWorkers = oldVillage.workers || {};
+
         const fillSlots = (arr) => {
             const newArr = arr ? [...arr] : [];
             while (newArr.length < 5) newArr.push(null);
             return newArr;
         };
+
         const villageData = {
             level: oldVillage.level || 1,
             xp: oldVillage.xp || 0,
             xpToNext: oldVillage.xpToNext || 16000,
             lastCollectionTime: oldVillage.lastCollectionTime || Date.now(),
+            // NEU: Idle Time
+            idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), 
             resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
             storage: oldVillage.storage || {}, 
             buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 },
@@ -326,12 +307,13 @@ export const checkAndInitVillage = async (user) => {
                 totalIdleTime: oldStats.totalIdleTime || 0
             }
         };
+        
         const userRef = doc(db, "users", user.id);
         await updateDoc(userRef, { village: villageData });
     }
 };
 
-// --- RESTLICHE FUNKTIONEN ---
+// ... Restliche Funktionen ...
 export const getLeaderboard = async () => { const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(101)); const querySnapshot = await getDocs(q); return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); };
 export const findUserPublic = async (targetId) => { try { const docRef = doc(db, "users", targetId); const docSnap = await getDoc(docRef); if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() }; return null; } catch (e) { return null; } }
 export const checkAndResetQuests = async (user) => { if (!user || !user.id) return; const now = Date.now(); let updates = {}; let hasUpdates = false; const checkCategory = (catKey, catName) => { const current = user.quests?.[catKey]; if (!current || !current.expiresAt || now > current.expiresAt) { const newData = generateQuests(catName); updates[`quests.${catKey}`] = newData; hasUpdates = true; } }; checkCategory('daily', 'DAILY'); checkCategory('weekly', 'WEEKLY'); checkCategory('monthly', 'MONTHLY'); if (hasUpdates) await updateDoc(doc(db, "users", user.id), updates); };

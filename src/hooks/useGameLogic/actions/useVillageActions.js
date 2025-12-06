@@ -26,20 +26,18 @@ export function useVillageActions(state, showNotification) {
         const pet = myPets.find(p => p.id === petId);
         if (!pet) return;
 
-        // NEU: Check ob Pet im Kampfteam ist
         if (user.team.includes(petId)) {
             showNotification(`${pet.name} ist im Kampfteam und kann nicht arbeiten!`, 'error');
             return;
         }
 
-        // Check: Arbeitet schon woanders?
         for (const [resKey, slots] of Object.entries(user.village.workers)) {
             if (slots.includes(petId)) { showNotification(`${pet.name} arbeitet bereits!`, 'error'); return; }
         }
-        
+
         const allowedTypes = ALLOWED_TYPES[resourceId];
         if (!allowedTypes.includes(pet.type)) { showNotification(`Falscher Typ!`, 'error'); return; }
-        
+
         const currentWorkers = user.village.workers[resourceId];
         for (const workerId of currentWorkers) {
             if (workerId && workerId !== petId) { 
@@ -47,7 +45,7 @@ export function useVillageActions(state, showNotification) {
                 if (worker && worker.type === pet.type) { showNotification(`Ein ${pet.type}-Pet arbeitet hier schon!`, 'error'); return; }
             }
         }
-        
+
         const newWorkers = { ...user.village.workers };
         newWorkers[resourceId][slotIndex] = petId;
         await updateUser(user.id, { "village.workers": newWorkers });
@@ -63,21 +61,62 @@ export function useVillageActions(state, showNotification) {
         showNotification("Arbeiter entfernt.", 'info');
     };
 
+    // --- NEU: IDLE TIME AUFLADEN ---
+    const addIdleTime = async () => {
+        if (!user) return;
+        if ((user.adTickets || 0) < 1) {
+            showNotification("Keine Tickets (Werbung ansehen)!", "error");
+            return;
+        }
+
+        const now = Date.now();
+        // Wenn Zeit abgelaufen war: Start bei 'now'. Wenn noch aktiv: Addieren auf 'expiresAt'
+        const currentExpire = user.village.idleTimeExpiresAt || 0;
+        const newExpire = Math.max(now, currentExpire) + (10 * 60 * 1000); // +10 Minuten
+
+        await updateUser(user.id, {
+            adTickets: user.adTickets - 1,
+            "village.idleTimeExpiresAt": newExpire
+        });
+
+        showNotification("Idle Zeit um 10 Minuten verlängert!", "success");
+    };
+
+    // --- UPDATED: COLLECT LOGIC ---
     const collectVillageResources = async () => {
         if (!user) return;
         const now = Date.now();
         const lastCollection = user.village.lastCollectionTime || now;
-        const elapsedSeconds = (now - lastCollection) / 1000;
+        const idleExpires = user.village.idleTimeExpiresAt || 0;
+        
+        // Produktion nur bis Ablauf der Zeit oder bis Jetzt
+        const productionEnd = Math.min(now, idleExpires);
+        
+        // Wenn die Idle-Zeit schon VOR dem letzten Sammeln abgelaufen war, gab es 0 Produktion
+        let elapsedSeconds = 0;
+        if (productionEnd > lastCollection) {
+            elapsedSeconds = (productionEnd - lastCollection) / 1000;
+        }
 
-        if (elapsedSeconds <= 0) return null; 
+        // Wir updaten lastCollectionTime immer auf 'now', damit wir keine "Lücken" doppelt berechnen
+        // (Auch wenn nichts produziert wurde, gilt die Zeit als vergangen)
+        const nextCollectionTime = now;
+
+        if (elapsedSeconds <= 0) {
+            // Nur Zeit updaten, nichts produziert
+            await updateUser(user.id, { "village.lastCollectionTime": nextCollectionTime });
+            return null; 
+        }
 
         let totalXpGained = 0;
         let updates = {};
         let newStorage = { ...(user.village.storage || {}) };
         let newResourcesBuffer = { ...(user.village.resources || {}) };
-        let newStats = { ...(user.village.stats || { totalCollected: {} }) };
+        
+        let newStats = { ...(user.village.stats || {}) };
         if (!newStats.totalCollected) newStats.totalCollected = {};
         if (!newStats.totalItemsCollected) newStats.totalItemsCollected = {};
+        
         newStats.totalIdleTime = (newStats.totalIdleTime || 0) + elapsedSeconds;
 
         let somethingProduced = false;
@@ -111,7 +150,10 @@ export function useVillageActions(state, showNotification) {
                         for (let i = 0; i < finishedItems; i++) {
                             let roll = Math.random() * 100;
                             let dropped = dropTable[0];
-                            for (const item of dropTable) { if (roll <= item.chance) { dropped = item; break; } roll -= item.chance; }
+                            for (const item of dropTable) {
+                                if (roll <= item.chance) { dropped = item; break; }
+                                roll -= item.chance;
+                            }
                             const itemId = dropped.id;
                             newStorage[itemId] = (newStorage[itemId] || 0) + 1;
                             newStats.totalItemsCollected[itemId] = (newStats.totalItemsCollected[itemId] || 0) + 1;
@@ -142,7 +184,9 @@ export function useVillageActions(state, showNotification) {
                     let pXp = (pet.xp || 0) + xpAmount;
                     let pLevel = pet.level || 1;
                     let pMaxXp = pet.maxXp || 100;
-                    while (pXp >= pMaxXp) { pLevel++; pXp -= pMaxXp; pMaxXp = Math.floor(pMaxXp * 1.2); }
+                    while (pXp >= pMaxXp) {
+                        pLevel++; pXp -= pMaxXp; pMaxXp = Math.floor(pMaxXp * 1.2);
+                    }
                     updatePetInDB(petId, { xp: pXp, level: pLevel, maxXp: pMaxXp });
                 }
             });
@@ -150,15 +194,19 @@ export function useVillageActions(state, showNotification) {
             updates["village.level"] = currentLvl;
             updates["village.xp"] = currentXp;
             updates["village.xpToNext"] = xpToNext;
-            updates["village.lastCollectionTime"] = now;
+            updates["village.lastCollectionTime"] = nextCollectionTime; // UPDATE auf JETZT
             updates["village.resources"] = newResourcesBuffer;
             updates["village.storage"] = newStorage;
-            updates["village.stats"] = newStats; 
+            updates["village.stats"] = newStats;
 
             await updateUser(user.id, updates);
             return { items: itemsLog, xp: totalXpGained };
         } else {
-            await updateUser(user.id, { "village.lastCollectionTime": now, "village.resources": newResourcesBuffer, "village.stats.totalIdleTime": newStats.totalIdleTime });
+            await updateUser(user.id, { 
+                "village.lastCollectionTime": nextCollectionTime, 
+                "village.resources": newResourcesBuffer,
+                "village.stats.totalIdleTime": newStats.totalIdleTime
+            });
             return null;
         }
     };
@@ -195,21 +243,45 @@ export function useVillageActions(state, showNotification) {
         const milestone = MILESTONES.find(m => m.id === milestoneId);
         if (!milestone) return;
         const claimed = user.village.milestones || {};
-        if (claimed[milestoneId]) return; 
-        let current = 0;
-        if (milestone.type === 'TIME') { current = user.village.stats?.totalIdleTime || 0; } else { current = user.village.stats?.totalItemsCollected?.[milestone.itemId] || 0; }
-        if (current < milestone.target) { showNotification("Ziel noch nicht erreicht!", "error"); return; }
-        let updates = { [`village.milestones.${milestoneId}`]: true };
-        if (milestone.reward.type === 'COINS') { updates['coins'] = (user.coins || 0) + milestone.reward.amount; } 
-        else if (milestone.reward.type === 'GEMS') { updates['gems'] = (user.gems || 0) + milestone.reward.amount; } 
-        else if (milestone.reward.type === 'VILLAGE_XP') { 
-            let currentLvl = user.village.level; let currentXp = user.village.xp + milestone.reward.amount; let xpToNext = user.village.xpToNext; 
-            while (currentXp >= xpToNext && currentLvl < 20) { currentLvl++; currentXp -= xpToNext; xpToNext = Math.floor(xpToNext * 1.5); showNotification(`Dorf Level Up! Level ${currentLvl}`, 'success'); } 
-            updates['village.level'] = currentLvl; updates['village.xp'] = currentXp; updates['village.xpToNext'] = xpToNext; 
+        const currentLevel = claimed[milestoneId] || 0;
+        const requiredTotal = milestone.target * (currentLevel + 1);
+
+        let currentStats = 0;
+        if (milestone.type === 'TIME') {
+            currentStats = user.village.stats?.totalIdleTime || 0;
+        } else {
+            currentStats = user.village.stats?.totalItemsCollected?.[milestone.itemId] || 0;
         }
+
+        if (currentStats < requiredTotal) {
+            showNotification("Ziel für die nächste Stufe noch nicht erreicht!", "error");
+            return;
+        }
+
+        let updates = { [`village.milestones.${milestoneId}`]: currentLevel + 1 };
+        
+        if (milestone.reward.type === 'COINS') {
+            updates['coins'] = (user.coins || 0) + milestone.reward.amount;
+        } else if (milestone.reward.type === 'GEMS') {
+            updates['gems'] = (user.gems || 0) + milestone.reward.amount;
+        } else if (milestone.reward.type === 'VILLAGE_XP') {
+            let currentLvl = user.village.level;
+            let currentXp = user.village.xp + milestone.reward.amount;
+            let xpToNext = user.village.xpToNext;
+            while (currentXp >= xpToNext && currentLvl < 20) {
+                currentLvl++;
+                currentXp -= xpToNext;
+                xpToNext = Math.floor(xpToNext * 1.5); 
+                showNotification(`Dorf Level Up! Level ${currentLvl}`, 'success');
+            }
+            updates['village.level'] = currentLvl;
+            updates['village.xp'] = currentXp;
+            updates['village.xpToNext'] = xpToNext;
+        }
+
         await updateUser(user.id, updates);
         showNotification("Meilenstein Belohnung erhalten!", "success");
     };
 
-    return { assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate, tradeResources, claimMilestone };
+    return { assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate, tradeResources, claimMilestone, addIdleTime };
 }

@@ -1,13 +1,42 @@
-import React from 'react';
-import { ArrowLeft, Clock, Info, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Loader2, Trophy, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Clock, Info, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Loader2, Trophy, RefreshCw, Zap, Plus, Timer } from 'lucide-react';
 import { RESOURCES } from '../data/gameData';
 
 const RESOURCE_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-export default function VillageScreen({ user, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading }) { // Neue Props
+export default function VillageScreen({ user, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime }) { // onAddIdleTime prop
     
+    // Timer State für Countdown
+    const [timeLeftStr, setTimeLeftStr] = useState("00:00:00");
+    const [isActive, setIsActive] = useState(false);
+
+    useEffect(() => {
+        if (!user?.village) return;
+
+        const updateTimer = () => {
+            const now = Date.now();
+            const expires = user.village.idleTimeExpiresAt || 0;
+            const diff = expires - now;
+
+            if (diff > 0) {
+                setIsActive(true);
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                setTimeLeftStr(`${h}h ${m}m ${s}s`);
+            } else {
+                setIsActive(false);
+                setTimeLeftStr("Inaktiv");
+            }
+        };
+
+        updateTimer();
+        const interval = setInterval(updateTimer, 1000);
+        return () => clearInterval(interval);
+    }, [user?.village?.idleTimeExpiresAt]);
+
     if (!user || !user.village) {
         return (
             <div className="flex flex-col h-full items-center justify-center bg-slate-900 text-white">
@@ -16,6 +45,8 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
             </div>
         );
     }
+
+    const ticketCount = user.adTickets || 0;
 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
@@ -46,44 +77,95 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
             {/* CONTENT */}
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-4">
                 
+                {/* IDLE TIME BANNER */}
+                <div className={`rounded-2xl p-4 border flex items-center justify-between shadow-lg transition-all ${isActive ? 'bg-indigo-900/40 border-indigo-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2.5 rounded-xl ${isActive ? 'bg-indigo-500 text-white' : 'bg-red-500/20 text-red-500'}`}>
+                            {isActive ? <Zap className="w-5 h-5 animate-pulse" /> : <Timer className="w-5 h-5" />}
+                        </div>
+                        <div>
+                            <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                                {isActive ? 'Produktion läuft' : 'Produktion gestoppt'}
+                            </div>
+                            <div className={`text-lg font-black ${isActive ? 'text-white' : 'text-red-400'}`}>
+                                {timeLeftStr}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button 
+                        onClick={onAddIdleTime}
+                        disabled={ticketCount < 1}
+                        className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl border transition-all active:scale-95 ${ticketCount > 0 ? 'bg-slate-800 border-white/10 hover:bg-slate-700' : 'bg-slate-900 border-slate-800 opacity-50 cursor-not-allowed'}`}
+                    >
+                        <div className="flex items-center gap-1 text-xs font-bold text-white mb-0.5">
+                            <Plus className="w-3 h-3" /> 10m
+                        </div>
+                        <div className="text-[9px] text-slate-500 font-bold uppercase">
+                            {ticketCount} Tickets
+                        </div>
+                    </button>
+                </div>
+
+                {/* XP Bar */}
                 <div className="w-full h-2 bg-slate-900 rounded-full overflow-hidden border border-white/5 mb-2">
                     <div className="h-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)] transition-all duration-500" style={{width: `${Math.min(100, (user.village.xp / user.village.xpToNext) * 100)}%`}}></div>
                 </div>
 
-                {/* RESSOURCEN */}
+                {/* RESSOURCEN GRID */}
                 <div className="grid grid-cols-2 gap-4">
                     {Object.keys(RESOURCES).map(key => {
                         const res = RESOURCES[key];
                         const level = user.village.buildings[res.id] || 1;
                         const workers = user.village.workers[res.id] || [];
                         const isUnlocked = user.level >= res.unlockLevel;
+                        
+                        // Hier können wir die Rate/h nur anzeigen, wenn auch Idle-Zeit da ist?
+                        // Oder wir zeigen die *theoretische* Rate an.
+                        // Für bessere UX: Zeigen wir die theoretische Rate an, aber vllt. ausgegraut wenn inaktiv.
                         const rate = productionRates ? Math.floor(productionRates(res.id, level, workers) * 3600) : 0;
-
-                        // Total Items (neue Logik muss von aussen oder hier calculated werden, aber wir zeigen nur Rate für Overview)
-                        // Für Lagerbestand-Anzeige im Overview bräuchten wir Zugriff auf storage.
-                        // Einfachheitshalber zeigen wir nur Produktion und Level.
 
                         return (
                             <button 
                                 key={res.id}
                                 onClick={() => isUnlocked && onSelectResource(res.id)}
                                 disabled={!isUnlocked}
-                                className={`relative p-4 rounded-3xl border text-left h-40 flex flex-col justify-between overflow-hidden group transition-all ${isUnlocked ? 'bg-slate-800 border-white/5 hover:border-white/20 hover:scale-[1.02] active:scale-95' : 'bg-slate-900/50 border-slate-800 opacity-60 cursor-not-allowed'}`}
+                                className={`
+                                    relative p-4 rounded-3xl border text-left h-40 flex flex-col justify-between overflow-hidden group transition-all
+                                    ${isUnlocked ? 'bg-slate-800 border-white/5 hover:border-white/20 hover:scale-[1.02] active:scale-95' : 'bg-slate-900/50 border-slate-800 opacity-60 cursor-not-allowed'}
+                                `}
                             >
-                                <div className={`absolute -right-4 -top-4 ${res.color} opacity-10 group-hover:opacity-20 transition-opacity`}>{React.createElement(RESOURCE_ICONS[res.id], { className: "w-24 h-24" })}</div>
+                                <div className={`absolute -right-4 -top-4 ${res.color} opacity-10 group-hover:opacity-20 transition-opacity`}>
+                                    {React.createElement(RESOURCE_ICONS[res.id], { className: "w-24 h-24" })}
+                                </div>
+                                
                                 <div className="relative z-10">
-                                    <div className={`w-10 h-10 ${isUnlocked ? res.bg : 'bg-slate-700'} rounded-xl flex items-center justify-center shadow-md mb-3`}>{isUnlocked ? React.createElement(RESOURCE_ICONS[res.id], { className: "w-5 h-5 text-white" }) : <Lock className="w-5 h-5 text-slate-500" />}</div>
+                                    <div className={`w-10 h-10 ${isUnlocked ? res.bg : 'bg-slate-700'} rounded-xl flex items-center justify-center shadow-md mb-3`}>
+                                        {isUnlocked ? React.createElement(RESOURCE_ICONS[res.id], { className: "w-5 h-5 text-white" }) : <Lock className="w-5 h-5 text-slate-500" />}
+                                    </div>
                                     <h3 className={`font-black text-sm leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{res.buildingLabel}</h3>
                                 </div>
+
                                 <div className="relative z-10">
-                                    {isUnlocked ? <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded">Rate: {rate}/h</span> : <span className="text-[9px] font-bold text-red-400 uppercase bg-red-500/10 px-2 py-1 rounded border border-red-500/20">Lvl {res.unlockLevel}</span>}
+                                    {isUnlocked ? (
+                                        <div className="space-y-1">
+                                            {/* Wir zeigen hier keine Menge an, weil es viele Sub-Items gibt. Nur Rate. */}
+                                            <div className="flex justify-between items-end">
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase">Rate/h</span>
+                                                <span className={`text-xs font-bold ${isActive ? 'text-green-400' : 'text-slate-500'}`}>+{rate}</span>
+                                            </div>
+                                            {!isActive && <div className="text-[8px] text-red-400 font-bold uppercase">Pausiert</div>}
+                                        </div>
+                                    ) : (
+                                        <span className="text-[9px] font-bold text-red-400 uppercase bg-red-500/10 px-2 py-1 rounded border border-red-500/20">Lvl {res.unlockLevel}</span>
+                                    )}
                                 </div>
                             </button>
                         );
                     })}
                 </div>
 
-                {/* NEU: EXTRA KACHELN (Meilensteine & Handel) */}
+                {/* EXTRA KACHELN */}
                 <div className="grid grid-cols-2 gap-4">
                     <button onClick={onOpenMilestones} className="bg-slate-800 border border-white/5 p-4 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
                         <Trophy className="w-8 h-8 text-yellow-400" />

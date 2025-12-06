@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowLeft, Lock, Trash2, Plus, Shield, Users } from 'lucide-react';
-import { TYPES } from '../data/gameData';
+import { TYPES, RARITIES } from '../data/gameData'; // RARITIES hinzugefügt
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import PetAvatar from '../components/PetAvatar';
 
@@ -17,7 +17,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
   const teamCount = user.team.filter(Boolean).length;
   
   return (
-    <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative overflow-hidden bg-slate-950">
+    <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
       
       {/* Background FX */}
       <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[40%] bg-indigo-900/20 blur-[100px] rounded-full pointer-events-none"></div>
@@ -103,6 +103,8 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
 
           // FILLED SLOT
           const typeInfo = TYPES[pet.type] || TYPES.FIRE;
+          const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
+
           return (
             <div key={index} className="bg-slate-800/80 border border-white/10 rounded-2xl p-3 flex items-center justify-between shadow-lg relative overflow-hidden group">
                {/* Background Glow based on Type */}
@@ -118,9 +120,10 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                    
                    <div>
                        <div className="font-black text-white text-lg leading-none mb-1">{pet.name}</div>
-                       <div className="flex items-center gap-2">
+                       <div className="flex items-center gap-2 flex-wrap">
                            <span className="text-xs font-bold text-slate-400 bg-slate-950/50 px-1.5 py-0.5 rounded border border-white/5">Lvl {pet.level}</span>
                            <span className={`text-[10px] font-bold uppercase ${typeInfo.color}`}>{typeInfo.label}</span>
+                           <span className={`text-[10px] font-bold uppercase ${rarityInfo.color}`}>• {rarityInfo.label}</span>
                        </div>
                    </div>
                </div>

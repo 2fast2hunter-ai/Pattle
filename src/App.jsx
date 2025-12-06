@@ -27,14 +27,11 @@ import SettingsScreen from './screens/SettingsScreen';
 import FriendProfileScreen from './screens/FriendProfileScreen';
 import MarketplaceScreen from './screens/MarketplaceScreen';
 import InventoryScreen from './screens/InventoryScreen';
-
-// --- NEUE IMPORTE (WICHTIG!) ---
 import VillageScreen from './screens/VillageScreen'; 
 import ResourceDetailScreen from './screens/ResourceDetailScreen';
 import VillageMilestonesScreen from './screens/VillageMilestonesScreen';
 import VillageTradingScreen from './screens/VillageTradingScreen';
 
-// Error Boundary
 class ErrorBoundary extends React.Component {
     constructor(props) {
       super(props);
@@ -57,7 +54,6 @@ class ErrorBoundary extends React.Component {
     }
 }
 
-// MAIN APP
 export default function App() {
   const gameLogic = useGameLogic();
   
@@ -76,10 +72,9 @@ export default function App() {
     handleRemoveListing, renamePet,
     // Village Actions
     assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
-    tradeResources, claimMilestone // <--- NEU
+    tradeResources, claimMilestone, addIdleTime // <--- NEU: addIdleTime ist hier
   } = gameLogic;
 
-  // Village States
   const [selectedVillageSlot, setSelectedVillageSlot] = useState(null);
   const [selectedResource, setSelectedResource] = useState(null);
 
@@ -155,7 +150,6 @@ export default function App() {
             />
           )}
 
-          {/* --- VILLAGE SCREENS --- */}
           {currentView === 'village' && (
               <VillageScreen 
                   user={user}
@@ -165,6 +159,7 @@ export default function App() {
                   productionRates={calculateProductionRate}
                   onOpenMilestones={() => setCurrentView('village-milestones')}
                   onOpenTrading={() => setCurrentView('village-trading')}
+                  onAddIdleTime={addIdleTime} // <--- NEU: Übergeben
               />
           )}
 
@@ -208,7 +203,7 @@ export default function App() {
               />
           )}
 
-          {/* ... ANDERE SCREENS ... */}
+          {/* ... Shop, Market, etc. (bleiben gleich) ... */}
           {currentView === 'shop' && (
             <ShopScreen 
               onBack={() => setCurrentView('menu')} 
@@ -232,9 +227,7 @@ export default function App() {
           )}
 
           {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
-          
           {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
-
           {currentView === 'arena-hub' && (
             <ArenaHub 
               user={user}
@@ -245,7 +238,6 @@ export default function App() {
               onAutoBattle={handleAutoBattle}
             />
           )}
-
           {currentView === 'pet-hub' && (
             <PetHub 
               onBack={() => setCurrentView('menu')} 
@@ -255,7 +247,6 @@ export default function App() {
               onHatchery={() => setCurrentView('hatchery')}
             />
           )}
-
           {currentView === 'hatchery' && (
             <HatcheryScreen 
               pets={myPets} 
@@ -266,7 +257,6 @@ export default function App() {
               onStartIncubation={startIncubation}
             />
           )}
-
           {currentView === 'item-inventory' && (
             <ItemInventoryScreen 
               pets={myPets} 
@@ -276,7 +266,6 @@ export default function App() {
               user={user} 
             />
           )}
-
           {currentView === 'team-edit' && (
             <TeamEditScreen 
               user={user} 
@@ -289,7 +278,6 @@ export default function App() {
               onRemovePet={removeFromTeam}
             />
           )}
-
           {currentView === 'team-select-pet' && (
             <InventoryScreen 
               pets={myPets.filter(p => !user.team.includes(p.id))} 
@@ -300,7 +288,6 @@ export default function App() {
               filterEggs={true} 
             />
           )}
-
           {currentView === 'inventory' && (
             <InventoryScreen 
               pets={myPets} 
@@ -312,10 +299,8 @@ export default function App() {
                 setSelectedPetDetail(p); 
                 setCurrentView('pet-detail'); 
               }} 
-              
             />
           )}
-
           {currentView === 'pet-detail' && selectedPetDetail && (
             <PetDetailScreen 
               pet={selectedPetDetail} 
@@ -323,7 +308,6 @@ export default function App() {
               onRenamePet={renamePet}
             />
           )}
-
           {currentView === 'breeding' && (
             <BreedingScreen 
               pets={myPets} 
@@ -333,7 +317,6 @@ export default function App() {
               user={user}
             />
           )}
-
           {currentView === 'battle' && activeBattle && (
             <BattleScreen 
               battleState={activeBattle} 
@@ -346,7 +329,6 @@ export default function App() {
               onCancelAutoBattle={cancelAutoBattle}
             />
           )}
-
           {currentView === 'profile' && (
             <ProfileScreen 
               user={user} 
@@ -359,7 +341,6 @@ export default function App() {
               onBack={() => setCurrentView('menu')}
             />
           )}
-
           {currentView === 'friend-profile' && selectedFriend && (
             <FriendProfileScreen 
               friend={selectedFriend} 
@@ -367,7 +348,6 @@ export default function App() {
               onStartBattle={startFriendBattle} 
             />
           )}
-
           {currentView === 'settings' && (
             <SettingsScreen 
               settings={settings} 
