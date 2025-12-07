@@ -8,8 +8,10 @@ import {
 // Dies ist nun eine "Barrel File", die alles aus den einzelnen Dateien exportiert.
 // So bleiben bestehende Importe in deiner App gültig.
 
-export * from './petData';
-export * from './battleData';
+export * from './rarities';
+export * from './types';
+export * from './abilities';
+export * from './pets';
 export * from './questData';
 export * from './shopData';
 export * from './villageData';

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Gem, X, Sparkles } from 'lucide-react';
+import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Gem, X, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
+// --- RENAME MODAL ---
 function RenameModal({ currentName, onClose, onConfirm, cost }) {
     const [name, setName] = useState(currentName);
     return (
@@ -20,8 +21,33 @@ function RenameModal({ currentName, onClose, onConfirm, cost }) {
     );
 }
 
-export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
+// --- DELETE MODAL (NEU) ---
+function DeleteModal({ petName, onClose, onConfirm }) {
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-6 animate-in fade-in zoom-in-95">
+            <div className="bg-slate-900 border-2 border-red-500/30 w-full max-w-xs rounded-[32px] p-6 shadow-2xl relative overflow-hidden">
+                <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-red-500/20 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/30 animate-pulse">
+                        <AlertTriangle className="w-8 h-8" />
+                    </div>
+                    <h3 className="text-2xl font-black text-white uppercase leading-none mb-2">Bist du sicher?</h3>
+                    <p className="text-slate-400 text-sm">
+                        Möchtest du <span className="text-white font-bold">{petName}</span> wirklich freilassen? <br/>
+                        <span className="text-red-400 font-bold block mt-2">Das kann nicht rückgängig gemacht werden!</span>
+                    </p>
+                </div>
+                <div className="flex gap-3">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 font-bold text-slate-300 active:scale-95 transition-all">ABBRECHEN</button>
+                    <button onClick={onConfirm} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 font-black text-white active:scale-95 transition-all shadow-lg shadow-red-900/20">JA, WEG DAMIT</button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet }) { // NEU: onReleasePet prop
   const [showRenameModal, setShowRenameModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   
   if (!pet) return null;
 
@@ -49,10 +75,19 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
       if (success) setShowRenameModal(false);
   };
 
+  const handleReleaseSubmit = async () => {
+      const success = await onReleasePet(pet.id);
+      if (success) {
+          setShowDeleteModal(false);
+          onBack(); // Zurück zum Inventar
+      }
+  };
+
   return (
     <div className="h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300 relative bg-slate-950">
         
         {showRenameModal && (<RenameModal currentName={pet.name} cost={100} onClose={() => setShowRenameModal(false)} onConfirm={handleRenameSubmit} />)}
+        {showDeleteModal && (<DeleteModal petName={pet.name} onClose={() => setShowDeleteModal(false)} onConfirm={handleReleaseSubmit} />)}
 
         <div className={`absolute top-0 left-0 w-full h-2/5 ${type.bg} opacity-20 rounded-b-[40px] blur-3xl`}></div>
         
@@ -60,7 +95,6 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
         <div className="relative z-10 flex items-center justify-between p-4">
             <button onClick={onBack} className="p-2 bg-black/20 hover:bg-black/40 backdrop-blur-md text-white rounded-full transition-all active:scale-95 border border-white/10"><ArrowLeft className="w-5 h-5" /></button>
             <div className="flex gap-2">
-                {/* WICHTIG: SHINY BADGE HIER */}
                 {pet.isShiny && (
                     <div className="px-3 py-1 rounded-full bg-gradient-to-r from-pink-500 to-yellow-500 border border-white/20 flex items-center gap-1.5 shadow-lg animate-pulse">
                         <Sparkles className="w-3 h-3 text-white fill-white" />
@@ -85,7 +119,6 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
             </div>
             
             <div className="mt-6 text-center flex items-center gap-2">
-                {/* Name glitzert wenn Shiny */}
                 <h1 className={`text-3xl font-black text-white drop-shadow-lg ${pet.isShiny ? 'text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-white to-cyan-300' : ''}`}>
                     {pet.name}
                 </h1>
@@ -106,7 +139,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
         </div>
 
         {/* STATS CARD */}
-        <div className="flex-1 bg-slate-900/80 backdrop-blur-xl mt-6 rounded-t-[40px] border-t border-white/10 p-6 overflow-y-auto relative">
+        <div className="flex-1 bg-slate-900/80 backdrop-blur-xl mt-6 rounded-t-[40px] border-t border-white/10 p-6 overflow-y-auto relative pb-24">
             <div className="grid grid-cols-2 gap-3 mb-6">
                 {stats.map((stat, i) => (
                     <div key={i} className={`bg-slate-950/50 p-3 rounded-2xl border ${stat.border} flex items-center justify-between group hover:bg-slate-950 transition-colors`}>
@@ -116,7 +149,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
                 ))}
             </div>
 
-            <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 p-5 rounded-3xl border border-indigo-500/20 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 p-5 rounded-3xl border border-indigo-500/20 relative overflow-hidden mb-6">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles className="w-20 h-20 text-indigo-400" /></div>
                 <div className="relative z-10">
                     <div className="flex items-center gap-2 mb-2"><div className="p-1.5 bg-indigo-500 rounded-lg text-white shadow-lg shadow-indigo-500/20"><Zap className="w-3.5 h-3.5 fill-current" /></div><span className="text-xs font-black text-indigo-300 uppercase tracking-widest">Spezialfähigkeit</span></div>
@@ -124,7 +157,14 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet }) {
                     <p className="text-xs text-slate-400 leading-relaxed font-medium">{ability.desc}</p>
                 </div>
             </div>
-            <div className="h-6"></div>
+            
+            {/* NEU: DELETE BUTTON */}
+            <button 
+                onClick={() => setShowDeleteModal(true)} 
+                className="w-full py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all active:scale-95"
+            >
+                <Trash2 className="w-5 h-5" /> Pet freilassen
+            </button>
         </div>
     </div>
   );

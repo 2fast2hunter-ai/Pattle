@@ -1,7 +1,8 @@
 import { buyMarketItem, createMarketListing, createResourceListing, removePetFromDB, updateUser, cancelMarketListing } from '../../../utils/db';
 
 export function useMarketActions(state, showNotification) {
-    const { user } = state;
+    // WICHTIG: marketListings aus dem State holen
+    const { user, marketListings } = state;
 
     const handleBuyMarket = async (listingId) => { 
         if (!user) return; 
@@ -16,6 +17,16 @@ export function useMarketActions(state, showNotification) {
     // SELL PETS
     const handleSellMarket = async (petsToSell, totalPrice) => { 
         if (!user) return; 
+        
+        // --- LIMIT CHECK (NEU) ---
+        // Filtere alle Listings, die mir gehören
+        const myListingsCount = (marketListings || []).filter(l => l.sellerId === user.id).length;
+        if (myListingsCount >= 10) {
+            showNotification("Limit erreicht! Du kannst maximal 10 Angebote gleichzeitig haben.", "error");
+            return;
+        }
+        // -------------------------
+
         const petArray = Array.isArray(petsToSell) ? petsToSell : [petsToSell]; 
         if (petArray.length === 0) return; 
 
@@ -49,12 +60,18 @@ export function useMarketActions(state, showNotification) {
         showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt! (-100G)` : "Angebot erstellt! (-100G)", 'success'); 
     };
 
-    // NEU: SELL RESOURCE
+    // SELL RESOURCE
     const handleSellResource = async (itemId, amount, totalPrice) => {
         if (!user) return;
         
-        // Gebühren Check geschieht in der DB Transaktion createResourceListing,
-        // aber wir können es hier auch grob prüfen für schnelles Feedback.
+        // --- LIMIT CHECK (NEU) ---
+        const myListingsCount = (marketListings || []).filter(l => l.sellerId === user.id).length;
+        if (myListingsCount >= 10) {
+            showNotification("Limit erreicht! Du kannst maximal 10 Angebote gleichzeitig haben.", "error");
+            return;
+        }
+        // -------------------------
+
         if (user.coins < 100) {
             showNotification("Nicht genügend Münzen für die Einstellgebühr (100 Gold)!", "error");
             return;

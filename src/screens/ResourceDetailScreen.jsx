@@ -15,20 +15,86 @@ const FloatingBadge = ({ text }) => (
     </div>
 );
 
-// ... UpgradeModal (unverändert, wie vorher) ...
-function UpgradeModal({ resource, currentLevel, userCoins, onUpgrade, onClose }) {
+// --- MODAL: ZEIGT JETZT BEIDE KOSTEN AN ---
+function UpgradeModal({ resource, currentLevel, storage, onUpgrade, onClose }) {
     const nextLevel = currentLevel + 1;
     const costData = UPGRADE_COSTS.find(u => u.level === nextLevel);
+    
     if (!costData) return null;
-    const cost = costData.cost;
-    const canAfford = userCoins >= cost;
+    
+    const baseCost = costData.baseCost;
+    const specialCost = costData.specialCost;
+
+    // Items ermitteln
+    const drops = RESOURCE_ITEMS[resource.id] || [];
+    const sortedDrops = [...drops].sort((a, b) => b.chance - a.chance);
+    
+    const baseItem = sortedDrops[0]; 
+    const rareItem = sortedDrops[sortedDrops.length - 1];
+
+    // Verfügbarkeit prüfen
+    const haveBase = (storage[baseItem.id] || 0);
+    const haveRare = (storage[rareItem.id] || 0);
+    
+    const enoughBase = haveBase >= baseCost;
+    const enoughSpecial = specialCost === 0 || haveRare >= specialCost;
+    const canAfford = enoughBase && enoughSpecial;
+
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-md p-6 animate-in zoom-in-50">
             <div className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-[32px] p-6 relative overflow-hidden">
-                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white"><X className="w-5 h-5"/></button>
-                <div className="text-center mb-6"><h3 className="text-xl font-black text-white uppercase">{resource.buildingLabel}</h3><p className="text-indigo-400 font-bold text-sm">Auf Stufe {nextLevel} verbessern</p></div>
-                <div className="bg-black/20 rounded-xl p-4 mb-6 space-y-2"><div className="flex justify-between text-sm"><span className="text-slate-400">Zeit:</span><span className="text-white font-bold">{costData.time}s</span></div><div className="flex justify-between text-sm border-t border-white/5 pt-2"><span className="text-slate-400">Kosten:</span><span className={`${canAfford ? 'text-yellow-400' : 'text-red-400'} font-black`}>{cost.toLocaleString()} Gold</span></div></div>
-                <button onClick={() => { if (canAfford) { onUpgrade(resource.id); onClose(); } }} disabled={!canAfford} className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 ${canAfford ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}><ArrowUpCircle className="w-5 h-5" /> VERBESSERN</button>
+                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white">
+                    <X className="w-5 h-5"/>
+                </button>
+                
+                <div className="text-center mb-6">
+                    <h3 className="text-xl font-black text-white uppercase">{resource.buildingLabel}</h3>
+                    <p className="text-indigo-400 font-bold text-sm">Auf Stufe {nextLevel} verbessern</p>
+                </div>
+                
+                <div className="bg-black/20 rounded-xl p-4 mb-6 space-y-3">
+                    <div className="flex justify-between text-sm">
+                        <span className="text-slate-400">Dauer:</span>
+                        <span className="text-white font-bold">{costData.time}s</span>
+                    </div>
+                    
+                    {/* BASIS KOSTEN */}
+                    <div className="border-t border-white/5 pt-2">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-slate-400">Kosten:</span>
+                            <span className={`${enoughBase ? 'text-white' : 'text-red-400'} font-black`}>
+                                {baseCost.toLocaleString()} {baseItem.label}
+                            </span>
+                        </div>
+                        <div className="flex justify-end text-[10px] text-slate-500">
+                            (Du hast: {haveBase.toLocaleString()})
+                        </div>
+                    </div>
+
+                    {/* SPEZIAL KOSTEN (Nur anzeigen wenn > 0) */}
+                    {specialCost > 0 && (
+                        <div className="border-t border-white/5 pt-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-purple-400 font-bold">Spezial:</span>
+                                <span className={`${enoughSpecial ? 'text-white' : 'text-red-400'} font-black`}>
+                                    {specialCost.toLocaleString()} {rareItem.label}
+                                </span>
+                            </div>
+                            <div className="flex justify-end text-[10px] text-slate-500">
+                                (Du hast: {haveRare.toLocaleString()})
+                            </div>
+                        </div>
+                    )}
+                </div>
+                
+                <button 
+                    onClick={() => { if (canAfford) { onUpgrade(resource.id); onClose(); } }} 
+                    disabled={!canAfford} 
+                    className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 
+                        ${canAfford ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+                >
+                    <ArrowUpCircle className="w-5 h-5" /> VERBESSERN
+                </button>
             </div>
         </div>
     );
@@ -43,12 +109,11 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
 
     const resource = RESOURCES[resourceId.toUpperCase()];
     const drops = RESOURCE_ITEMS[resourceId] || [];
-    const storage = user.village.storage || {};
+    const storage = user.village.storage || {}; 
     
     const level = user.village.buildings[resourceId] || 1;
     const workers = user.village.workers[resourceId] || [];
     
-    // Rate (Items/s)
     const rate = productionRates ? productionRates(resourceId, level, workers) : 0;
     const cycleTime = Math.max(1, 10 - ((level - 1) * 0.05));
 
@@ -56,7 +121,6 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
         if (rate > 0) {
             const tickRate = 100; 
             const step = (tickRate / (cycleTime * 1000)) * 100;
-            
             const interval = setInterval(() => {
                 setProgress(old => {
                     const next = old + step;
@@ -77,7 +141,15 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
-            {showUpgrade && <UpgradeModal resource={resource} currentLevel={level} userCoins={user.coins} onUpgrade={onUpgradeBuilding} onClose={() => setShowUpgrade(false)} />}
+            {showUpgrade && (
+                <UpgradeModal 
+                    resource={resource} 
+                    currentLevel={level} 
+                    storage={storage} 
+                    onUpgrade={onUpgradeBuilding} 
+                    onClose={() => setShowUpgrade(false)} 
+                />
+            )}
 
             {/* HEADER */}
             <div className="relative flex items-center justify-between mb-4 pt-2 px-4 shrink-0 z-10">
@@ -105,13 +177,12 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                     <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10 relative">{rate > 0 && (<div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.6)] transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>)}</div>
                 </div>
 
-                {/* --- NEU: DROPS & STORAGE --- */}
+                {/* DROPS & STORAGE */}
                 <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4">
                     <div className="flex items-center gap-2 mb-3 text-slate-400 font-bold text-xs uppercase"><Backpack className="w-4 h-4" /> Mögliche Drops & Lager</div>
                     <div className="space-y-2">
                         {drops.map(item => {
                             const count = storage[item.id] || 0;
-                            // Rarity Color aus gameData abrufen, falls item.color nicht reicht (für border/bg)
                             const rarity = RARITIES[item.rarity] || RARITIES.COMMON;
                             return (
                                 <div key={item.id} className="flex items-center justify-between bg-slate-900/60 p-2 rounded-xl border border-white/5">

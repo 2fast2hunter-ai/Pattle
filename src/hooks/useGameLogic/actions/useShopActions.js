@@ -1,10 +1,10 @@
-import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS } from '../../../data/gameData';
+import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS, TIMED_REWARDS } from '../../../data/gameData';
 import { updateUser, trackQuestProgress } from '../../../utils/db';
 
 export function useShopActions(state, showNotification) {
     const { user } = state;
 
-    const buyLootbox = (boxType, cost, currency) => {
+    const buyLootbox = (boxType, singleCost, currency, quantity = 1) => {
         if (!user) return; 
         
         if (boxType === 'DAILY') {
@@ -19,19 +19,34 @@ export function useShopActions(state, showNotification) {
             return;
         }
 
+        const totalCost = singleCost * quantity;
+
         if (currency === 'COINS') {
-            if (user.coins < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
-            const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
-            updateUser(user.id, { coins: user.coins - cost, inventory: newInv });
-            trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost);
+            if (user.coins < totalCost) { showNotification("Zu wenig Münzen!", 'error'); return; }
+            
+            const newItems = [];
+            for(let i = 0; i < quantity; i++) {
+                newItems.push({ id: Date.now() + Math.random() + i, type: 'LOOTBOX', variant: boxType });
+            }
+
+            const newInv = [...(user.inventory || []), ...newItems];
+            updateUser(user.id, { coins: user.coins - totalCost, inventory: newInv });
+            trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, totalCost);
+
         } else {
-            if (user.gems < cost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
-            const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
-            updateUser(user.id, { gems: user.gems - cost, inventory: newInv });
+            if (user.gems < totalCost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
+            
+            const newItems = [];
+            for(let i = 0; i < quantity; i++) {
+                newItems.push({ id: Date.now() + Math.random() + i, type: 'LOOTBOX', variant: boxType });
+            }
+
+            const newInv = [...(user.inventory || []), ...newItems];
+            updateUser(user.id, { gems: user.gems - totalCost, inventory: newInv });
         }
         
         const boxLabel = LOOTBOXES[boxType] ? LOOTBOXES[boxType].label : boxType;
-        showNotification(`${boxLabel} gekauft!`, 'success');
+        showNotification(`${quantity}x ${boxLabel} gekauft!`, 'success');
     };
 
     const buyTickets = (item) => {
@@ -54,7 +69,6 @@ export function useShopActions(state, showNotification) {
         showNotification(`${item.tickets} Zucht-Tickets gekauft und im Inventar abgelegt!`, 'success');
     };
 
-    // UPDATE: Gibt jetzt zusätzlich 1 Werbe-Ticket
     const watchAdForReward = async (reward) => {
         if (!user || !reward) return;
         
@@ -64,7 +78,6 @@ export function useShopActions(state, showNotification) {
                 ...currentClaims,
                 [reward.id]: Date.now()
             },
-            // NEU: Ticket hinzufügen
             adTickets: (user.adTickets || 0) + 1
         };
         
@@ -85,5 +98,37 @@ export function useShopActions(state, showNotification) {
         showNotification(`${reward.label} + 1 Auto-Kampf Ticket erhalten!`, 'success');
     };
 
-    return { buyLootbox, buyTickets, watchAdForReward };
+    // --- NEU: GRATIS BELOHNUNG ABHOLEN ---
+    const claimTimedReward = async (rewardId) => {
+        if (!user) return;
+        
+        const rewardConfig = TIMED_REWARDS.find(r => r.id === rewardId);
+        if (!rewardConfig) return;
+
+        // Zeit-Check (Sicherheit)
+        const lastClaim = user.timedClaims?.[rewardId] || 0;
+        const now = Date.now();
+        if (now - lastClaim < rewardConfig.cooldown) {
+            showNotification("Noch nicht bereit!", "error");
+            return;
+        }
+
+        // Belohnung geben
+        let updates = {
+            timedClaims: {
+                ...(user.timedClaims || {}),
+                [rewardId]: now
+            }
+        };
+
+        if (rewardConfig.reward.type === 'AD_TICKET') {
+            updates.adTickets = (user.adTickets || 0) + rewardConfig.reward.amount;
+        }
+        // Hier könnte man weitere Reward-Typen hinzufügen (Coins etc.)
+
+        await updateUser(user.id, updates);
+        showNotification(`${rewardConfig.label} eingesammelt!`, "success");
+    };
+
+    return { buyLootbox, buyTickets, watchAdForReward, claimTimedReward };
 }

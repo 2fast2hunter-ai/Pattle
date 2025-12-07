@@ -9,11 +9,50 @@ import {
     calculateMaxXp 
 } from '../../../utils/gameMechanics';
 import { 
-    updateUser, addPetToDB, updatePetInDB, trackQuestProgress 
+    updateUser, addPetToDB, updatePetInDB, removePetFromDB, trackQuestProgress 
 } from '../../../utils/db';
 
 export function usePetActions(state, showNotification) {
     const { user, myPets, setCurrentView, selectedSlotForTeam, setSelectedSlotForTeam } = state;
+
+    // --- PET FREILASSEN (LÖSCHEN) ---
+    const releasePet = async (petId) => {
+        if (!user) return false;
+        const pet = myPets.find(p => p.id === petId);
+        if (!pet) return false;
+
+        // 1. Check: Ist es im Team?
+        if (user.team.includes(petId)) {
+            showNotification("Dieses Pet ist im Kampfteam! Entferne es erst.", "error");
+            return false;
+        }
+
+        // 2. Check: Arbeitet es im Dorf?
+        let isWorking = false;
+        if (user.village && user.village.workers) {
+            Object.values(user.village.workers).forEach(slotArray => {
+                if (Array.isArray(slotArray) && slotArray.includes(petId)) {
+                    isWorking = true;
+                }
+            });
+        }
+        
+        if (isWorking) {
+            showNotification("Dieses Pet arbeitet im Dorf! Entferne es erst.", "error");
+            return false;
+        }
+
+        // 3. Löschen
+        try {
+            await removePetFromDB(petId);
+            showNotification(`${pet.name} wurde in die Freiheit entlassen. Mach's gut! 👋`, "info");
+            return true; // Erfolg
+        } catch (e) {
+            console.error("Fehler beim Freilassen:", e);
+            showNotification("Fehler beim Freilassen.", "error");
+            return false;
+        }
+    };
 
     // --- COOLDOWN REDUZIEREN ---
     const handleReduceCooldown = async (petId, type) => {
@@ -46,13 +85,14 @@ export function usePetActions(state, showNotification) {
         }
     };
 
-    // --- TEAM ---
+    // --- TEAM MANAGEMENT ---
     const addToTeam = (petId) => {
         if (!user || selectedSlotForTeam === null) return;
         const pet = myPets.find(p => p.id === petId);
         if (!pet) return;
         if (pet.isEgg) { showNotification("Eier kämpfen nicht!", 'error'); return; }
         
+        // Check ob Arbeiter
         if (user.village && user.village.workers) {
             for (const [resKey, slots] of Object.entries(user.village.workers)) {
                 if (slots.includes(petId)) {
@@ -66,6 +106,7 @@ export function usePetActions(state, showNotification) {
         const currentTeamIds = user.team || [];
         const newPetType = pet.type;
         
+        // Check ob Typ schon im Team (außer auf dem gewählten Slot)
         for (let i = 0; i < currentTeamIds.length; i++) {
             if (i === selectedSlotForTeam) continue;
             const slotPetId = currentTeamIds[i];
@@ -82,6 +123,7 @@ export function usePetActions(state, showNotification) {
         const newTeam = [...currentTeamIds];
         while(newTeam.length <= selectedSlotForTeam) { newTeam.push(null); }
         
+        // Falls Pet schon woanders im Team war, dort entfernen
         const existingIndex = newTeam.indexOf(petId);
         if (existingIndex !== -1) { newTeam[existingIndex] = null; }
         
@@ -222,17 +264,17 @@ export function usePetActions(state, showNotification) {
     };
 
     // --- ITEMS ANWENDEN ---
-    const applyItem = async (petId, itemId) => {
+    const applyItem = async (petId, itemId, quantity = 1) => {
         if (!user) return;
 
-        const inventoryItem = user.inventory.find(i => i.id === itemId);
-        if (!inventoryItem) { showNotification("Item nicht gefunden!", "error"); return; }
+        const firstItem = user.inventory.find(i => i.id === itemId);
+        if (!firstItem) { showNotification("Item nicht gefunden!", "error"); return; }
 
         const pet = myPets.find(p => p.id === petId);
         if (!pet) return;
 
-        // 1. SHINY TRANK
-        if (inventoryItem.variant === 'SHINY_POTION') {
+        // 1. SHINY TRANK (Nur 1x, ignoriert quantity)
+        if (firstItem.variant === 'SHINY_POTION') {
             if (pet.isEgg) { showNotification("Eier können nicht Shiny werden!", "error"); return; }
             if (pet.isShiny) { showNotification("Dieses Pet ist bereits Shiny!", "error"); return; }
 
@@ -248,7 +290,7 @@ export function usePetActions(state, showNotification) {
             };
 
             await updatePetInDB(petId, updates);
-
+            // Nur 1 entfernen
             const newInventory = user.inventory.filter(i => i.id !== itemId);
             await updateUser(user.id, { inventory: newInventory });
 
@@ -256,35 +298,48 @@ export function usePetActions(state, showNotification) {
             return;
         }
 
-        // 2. XP TRANK (LEVEL UP MIT NEUER FIXER STATS LOGIK)
-        if (CONSUMABLES[inventoryItem.variant]) {
+        // 2. XP TRANK (MIT MENGEN-SUPPORT & FIXEN STATS)
+        if (CONSUMABLES[firstItem.variant]) {
             if (pet.isEgg) { showNotification("Eier können keine Erfahrung sammeln!", "error"); return; }
             
-            const consumable = CONSUMABLES[inventoryItem.variant];
-            let pXp = (pet.xp || 0) + consumable.value;
+            // Verfügbare Menge prüfen
+            const variant = firstItem.variant;
+            const matchingItems = user.inventory.filter(i => i.type === 'CONSUMABLE' && i.variant === variant);
+            
+            if (matchingItems.length < quantity) {
+                showNotification(`Nicht genügend Items! Du hast nur ${matchingItems.length}.`, "error");
+                return;
+            }
+
+            // Items zum Löschen bestimmen
+            const itemsToRemove = matchingItems.slice(0, quantity);
+            const idsToRemove = new Set(itemsToRemove.map(i => i.id));
+
+            // XP berechnen
+            const consumable = CONSUMABLES[variant];
+            const xpPerItem = consumable.value;
+            const totalXpToAdd = xpPerItem * quantity;
+
+            let pXp = (pet.xp || 0) + totalXpToAdd;
             let pLevel = pet.level || 1;
             let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel);
 
             let leveledUpCount = 0;
             
-            // Kopie der aktuellen Stats zum Hochzählen
+            // Aktuelle Stats für Berechnung kopieren
             let currentStats = { 
-                maxHp: pet.maxHp, 
-                atk: pet.atk, 
-                def: pet.def, 
-                ap: pet.ap, 
-                res: pet.res, 
-                speed: pet.speed 
+                maxHp: pet.maxHp, atk: pet.atk, def: pet.def, 
+                ap: pet.ap, res: pet.res, speed: pet.speed 
             };
 
-            // Schleife für mehrere Level-Ups gleichzeitig
+            // Level Up Loop
             while (pXp >= currentMaxXp) {
                 pXp -= currentMaxXp;
                 pLevel++;
                 currentMaxXp = calculateMaxXp(pLevel);
                 leveledUpCount++;
 
-                // PRO LEVEL: Fixe Stats addieren basierend auf Seltenheit
+                // Fixe Stats pro Level addieren
                 const growth = getLevelUpStats(pet.rarity);
                 currentStats.maxHp += growth.hp;
                 currentStats.atk += growth.atk;
@@ -299,27 +354,28 @@ export function usePetActions(state, showNotification) {
             if (leveledUpCount > 0) {
                 updates = { 
                     ...updates, 
-                    ...currentStats, // Neue Stats übernehmen
+                    ...currentStats, 
                     level: pLevel, 
-                    maxXp: currentMaxXp,
-                    hp: currentStats.maxHp // Heilung beim Level-Up
+                    maxXp: currentMaxXp, 
+                    hp: currentStats.maxHp // Heilung bei Level-Up
                 };
                 trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount);
             }
 
             await updatePetInDB(petId, updates);
             
-            const newInventory = user.inventory.filter(i => i.id !== itemId);
+            // Inventar updaten
+            const newInventory = user.inventory.filter(i => !idsToRemove.has(i.id));
             await updateUser(user.id, { inventory: newInventory });
 
-            if (leveledUpCount > 0) showNotification(`${pet.name} ist auf Level ${pLevel} aufgestiegen! (+${leveledUpCount})`, "success");
-            else showNotification(`${pet.name} hat ${consumable.value} XP erhalten.`, "success");
+            if (leveledUpCount > 0) showNotification(`${pet.name} ist ${leveledUpCount}x aufgestiegen!`, "success");
+            else showNotification(`${pet.name} hat ${totalXpToAdd} XP erhalten.`, "success");
             return;
         }
 
         // 3. KOSMETIK
-        if (COSMETICS[inventoryItem.variant]) {
-            const cosmetic = COSMETICS[inventoryItem.variant];
+        if (COSMETICS[firstItem.variant]) {
+            const cosmetic = COSMETICS[firstItem.variant];
             await updatePetInDB(petId, { customBackground: cosmetic.colorClass });
             const newInventory = user.inventory.filter(i => i.id !== itemId);
             await updateUser(user.id, { inventory: newInventory });
@@ -332,6 +388,7 @@ export function usePetActions(state, showNotification) {
 
     return { 
         handleReduceCooldown, addToTeam, removeFromTeam, hatchEgg, startIncubation, breedPets, renamePet, 
-        applyXpItem: applyItem 
+        applyXpItem: applyItem, 
+        releasePet 
     };
 }

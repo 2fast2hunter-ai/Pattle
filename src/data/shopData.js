@@ -65,10 +65,21 @@ export const SHOP_ITEMS = {
    AD_REWARD: { rewardType: 'GEMS', rewardAmount: 5, label: "5 Edelsteine" }
 };
 
-// --- NEU: AD REWARDS DEFINITION ---
+// --- AD REWARDS DEFINITION ---
 export const AD_REWARDS = [
     { id: 'GEMS_5', type: 'GEMS', amount: 5, label: '5 Edelsteine', probability: 25 },
-    { id: 'COINS_500', type: 'COINS', amount: 500, label: '500 Münzen', probability: 25 },
+    { id: 'COINS_250', type: 'COINS', amount: 250, label: '250 Münzen', probability: 25 },
     { id: 'BUFF_COINS', type: 'BUFF', buffType: 'COIN_BOOST', amount: 10, label: '2x Münzen (10 Kämpfe)', probability: 25 },
     { id: 'BUFF_XP', type: 'BUFF', buffType: 'XP_BOOST', amount: 10, label: '2x XP (10 Kämpfe)', probability: 25 }
+];
+
+// --- NEU: ZEITBASIERTE BELOHNUNGEN (OHNE AD) ---
+export const TIMED_REWARDS = [
+    {
+        id: 'FREE_IDLE_TICKET',
+        label: 'Gratis Ticket',
+        description: 'Ein Idle-Ticket geschenkt!',
+        cooldown: 20 * 60 * 1000, // 20 Minuten in Millisekunden
+        reward: { type: 'AD_TICKET', amount: 1 }
+    }
 ];

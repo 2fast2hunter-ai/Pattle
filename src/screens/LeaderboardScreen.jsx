@@ -1,76 +1,129 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Trophy, Loader2, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowLeft, Trophy, Crown, Shield, Medal, TrendingUp, TrendingDown, Minus, Loader2 } from 'lucide-react';
 import { getLeaderboard } from '../utils/db';
+import PetAvatar from '../components/PetAvatar';
 
 export default function LeaderboardScreen({ user, onBack }) {
-    const [players, setPlayers] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const today = new Date().toLocaleDateString();
+  const [leaders, setLeaders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const loadData = async () => {
-            const data = await getLeaderboard();
-            setPlayers(data);
-            setLoading(false);
-        };
-        loadData();
-    }, []);
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const data = await getLeaderboard();
+      setLeaders(data);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
 
-    return (
-        <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-right duration-300 h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-2">
-                <button onClick={onBack} className="p-2 bg-slate-800 rounded-full hover:bg-slate-700"><ArrowLeft className="w-5 h-5" /></button>
-                <h2 className="text-2xl font-black italic text-yellow-400">BESTENLISTE</h2>
-            </div>
+  const getRankStyle = (index) => {
+      if (index === 0) return 'bg-yellow-500 text-yellow-950 border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)]'; // Gold
+      if (index === 1) return 'bg-slate-300 text-slate-800 border-slate-400 shadow-[0_0_10px_rgba(203,213,225,0.5)]'; // Silber
+      if (index === 2) return 'bg-orange-400 text-orange-900 border-orange-500 shadow-[0_0_10px_rgba(251,146,60,0.5)]'; // Bronze
+      return 'bg-slate-800 text-slate-400 border-white/5';
+  };
 
-            <div className="bg-slate-800/50 p-4 rounded-xl border border-white/5 mb-2 text-center">
-                <div className="text-xs text-slate-400 uppercase font-bold">Dein Rang</div>
-                <div className="text-3xl font-black text-white">
-                    {players.findIndex(p => p.id === user.id) !== -1 ? `#${players.findIndex(p => p.id === user.id) + 1}` : '-'}
-                </div>
-                <div className="text-sm text-indigo-400 font-bold">{user.rating} Elo</div>
-            </div>
+  const getRankIcon = (index) => {
+      if (index === 0) return <Crown className="w-5 h-5" />;
+      if (index === 1) return <Medal className="w-5 h-5" />;
+      if (index === 2) return <Medal className="w-5 h-5" />;
+      return <span className="font-black text-sm">{index + 1}</span>;
+  };
 
-            <div className="flex-1 overflow-y-auto pb-20 space-y-2 scrollbar-hide">
-                {loading ? (
-                    <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>
-                ) : (
-                    players.map((player, index) => {
-                        const isMe = player.id === user.id;
-                        
-                        // Daily Elo Logic
-                        // Wenn das Datum nicht heute ist, ist die Änderung 0 (neuer Tag)
-                        const dailyChange = player.lastEloDate === today ? (player.dailyEloChange || 0) : 0;
+  return (
+    <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
+      
+      {/* Background FX */}
+      <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-indigo-900/20 to-transparent pointer-events-none"></div>
 
-                        return (
-                            <div key={player.id} className={`flex items-center justify-between p-3 rounded-xl border ${isMe ? 'bg-indigo-900/40 border-indigo-500' : 'bg-slate-800 border-white/5'}`}>
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-8 h-8 flex items-center justify-center font-black ${index < 3 ? 'text-yellow-400 text-xl' : 'text-slate-500'}`}>{index + 1}</div>
-                                    <div className="w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center text-xl">{player.avatar}</div>
-                                    <div>
-                                        <div className={`font-bold ${isMe ? 'text-indigo-300' : 'text-white'}`}>{player.username} {isMe && '(Du)'}</div>
-                                        <div className="text-xs text-slate-400">Level {player.level}</div>
-                                    </div>
-                                </div>
-                                
-                                <div className="text-right">
-                                    <div className="flex items-center justify-end gap-1 font-mono font-bold text-yellow-500">
-                                        <Trophy className="w-4 h-4" />{player.rating}
-                                    </div>
-                                    
-                                    {/* Daily Change Anzeige */}
-                                    <div className={`text-[10px] font-bold flex items-center justify-end gap-0.5 ${dailyChange > 0 ? 'text-green-400' : (dailyChange < 0 ? 'text-red-400' : 'text-slate-500')}`}>
-                                        {dailyChange > 0 && <TrendingUp className="w-3 h-3" />}
-                                        {dailyChange < 0 && <TrendingDown className="w-3 h-3" />}
-                                        {dailyChange === 0 && <Minus className="w-3 h-3" />}
-                                        {dailyChange > 0 ? '+' : ''}{dailyChange} heute
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })
-                )}
-            </div>
-        </div>
-    );
+      {/* HEADER */}
+      <div className="relative flex items-center justify-between mb-4 pt-2 px-4 shrink-0 z-10">
+          <div className="flex items-center gap-3">
+              <button onClick={onBack} className="p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md">
+                  <ArrowLeft className="w-5 h-5" />
+              </button>
+              <div>
+                  <h2 className="text-2xl font-black italic tracking-wide text-white uppercase">RANGLISTE</h2>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
+                      <Trophy className="w-3.5 h-3.5 text-yellow-500" />
+                      <span>Top 100 Spieler</span>
+                  </div>
+              </div>
+          </div>
+      </div>
+
+      {/* LIST */}
+      <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-3 relative z-10">
+          {loading ? (
+              <div className="flex flex-col items-center justify-center h-64 text-slate-500 gap-3">
+                  <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Lade Daten...</span>
+              </div>
+          ) : (
+              leaders.map((player, index) => {
+                  const isMe = player.id === user.id;
+                  
+                  // --- FIX: ELO BILANZ BERECHNUNG MIT ISO DATUM ---
+                  const today = new Date().toISOString().split('T')[0];
+                  
+                  // 1. Prüfen, ob der gespeicherte Startwert von HEUTE ist
+                  const isDataFromToday = player.lastEloDate === today;
+                  
+                  // 2. Wenn ja: Differenz berechnen. Wenn nein: 0 (da heute noch nicht gespielt)
+                  const startElo = isDataFromToday && player.startEloToday !== undefined 
+                      ? player.startEloToday 
+                      : (player.rating || 1000); 
+                  
+                  const diff = (player.rating || 1000) - startElo;
+                  const isPositive = diff > 0;
+                  const isNeutral = diff === 0;
+                  // ----------------------------------
+
+                  return (
+                      <div 
+                          key={player.id} 
+                          className={`
+                              relative flex items-center gap-3 p-3 rounded-2xl border transition-all
+                              ${isMe ? 'bg-indigo-900/40 border-indigo-500/50 shadow-lg shadow-indigo-900/20' : 'bg-slate-900/60 border-white/5'}
+                          `}
+                      >
+                          {/* RANK BADGE */}
+                          <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center border ${getRankStyle(index)}`}>
+                              {getRankIcon(index)}
+                          </div>
+
+                          {/* AVATAR & NAME */}
+                          <div className="w-10 h-10 shrink-0 bg-slate-800 rounded-full flex items-center justify-center text-xl shadow-inner border border-white/10">
+                              {player.avatar || '🛡️'}
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                  <span className={`font-black text-sm truncate ${isMe ? 'text-indigo-200' : 'text-slate-200'}`}>
+                                      {player.username || 'Unbekannt'} {isMe && '(Du)'}
+                                  </span>
+                                  {player.level && <span className="text-[9px] font-bold text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded border border-white/5">Lvl {player.level}</span>}
+                              </div>
+                              
+                              {/* RATING & DAILY DIFF */}
+                              <div className="flex items-center gap-3 mt-0.5">
+                                  <div className="text-xs font-bold text-yellow-500 flex items-center gap-1">
+                                      <Shield className="w-3 h-3" /> {player.rating || 1000}
+                                  </div>
+                                  
+                                  {/* TAGES-BILANZ */}
+                                  <div className={`text-[10px] font-bold flex items-center gap-0.5 ${isNeutral ? 'text-slate-500' : (isPositive ? 'text-green-400' : 'text-red-400')}`}>
+                                      {isNeutral ? <Minus className="w-3 h-3" /> : (isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />)}
+                                      {!isNeutral && (isPositive ? '+' : '')}{diff} heute
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  );
+              })
+          )}
+      </div>
+    </div>
+  );
 }

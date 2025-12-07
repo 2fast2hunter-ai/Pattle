@@ -3,7 +3,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase.js'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
-import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle } from '../utils/db';
+import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser } from '../utils/db'; 
 
 export function useGameLogic() {
     const [userId, setUserId] = useState(null); 
@@ -13,8 +13,6 @@ export function useGameLogic() {
     
     const actionsRef = useRef(actions);
     const stateRef = useRef(gameLogicState);
-    
-    // Dieser Ref verhindert, dass der Check während des Spielens läuft
     const initialBattleCheckDone = useRef(false);
 
     useEffect(() => {
@@ -25,7 +23,6 @@ export function useGameLogic() {
     // --- A. DATENBANK LISTENER ---
     useEffect(() => {
         if (!userId) {
-            // Nur resetten, wenn wir wirklich ausgeloggt sind/keinen User haben
             initialBattleCheckDone.current = false;
             return;
         }
@@ -35,6 +32,19 @@ export function useGameLogic() {
         const unsubUser = listenToUser(userId, async (userData) => {
             stateRef.current.setUser(userData);
             
+            // --- ELO RESET CHECK (NEUER TAG) ---
+            // FIX: ISO Datum nutzen (YYYY-MM-DD)
+            const today = new Date().toISOString().split('T')[0];
+            
+            if (userData.lastEloDate !== today) {
+                console.log("[Logic] Neuer Tag erkannt! Setze Elo-Startwert zurück.");
+                updateUser(userId, {
+                    lastEloDate: today,
+                    startEloToday: userData.rating || 1000
+                });
+            }
+            // -----------------------------------
+            
             if (stateRef.current.currentView === 'auth' || stateRef.current.authLoading) {
                 stateRef.current.setAuthLoading(false);
                 stateRef.current.setCurrentView('menu');
@@ -42,18 +52,13 @@ export function useGameLogic() {
 
             checkAndResetQuests(userData).catch(e => console.error("Quest Error:", e));
             
-            // --- KAMPF-ABBRUCH CHECK (Nur EINMALIG beim ersten Laden) ---
+            // --- KAMPF-ABBRUCH CHECK ---
             if (!initialBattleCheckDone.current) {
-                initialBattleCheckDone.current = true; // Sofort markieren, damit es nicht nochmal läuft
-
-                // Nur prüfen, wenn laut DB ein Kampf aktiv ist
+                initialBattleCheckDone.current = true; 
                 if (userData.isInBattle) {
-                    console.log("[Logic] Prüfe auf Kampfabbruch...");
-                    // Kleine Verzögerung, falls es nur ein kurzer Sync-Fehler ist
                     setTimeout(async () => {
                          const resolution = await checkAndResolveInterruptedBattle(userData.id);
                          if (resolution && resolution.resolved) {
-                             console.log("[Logic] Abbruch bestätigt.");
                              if (actionsRef.current.showNotification) {
                                  actionsRef.current.showNotification(`Kampf wurde abgebrochen! Niederlage (-${resolution.ratingLoss} Rating).`, 'error');
                              }
@@ -62,7 +67,6 @@ export function useGameLogic() {
                     }, 500);
                 }
             }
-            // -------------------------------------------------------------
 
             checkAndInitVillage(userData).catch(e => console.error("Village Init Error:", e));
         });

@@ -59,17 +59,33 @@ export const RESOURCE_ITEMS = {
     ]
 };
 
-export const UPGRADE_COSTS = Array.from({ length: 14 }, (_, i) => {
+// --- NEUE KOSTEN-STRUKTUR ---
+// Lvl 2: 1000
+// Lvl 3: 10.000
+// ... x10 pro Level
+// Ab Level 11: + Seltenste Ressource (Start 500, +500 pro Level)
+export const UPGRADE_COSTS = Array.from({ length: 15 }, (_, i) => {
     const level = i + 1;
-    let cost = 0;
+    let baseCost = 0;
+    let specialCost = 0;
     let time = 10;
-    if (level === 1) { cost = 0; time = 10; }
-    else if (level <= 10) { cost = 1000 * Math.pow(10, level - 2); time = 10 - ((level - 1) * 0.05); } 
-    else if (level === 11) { cost = 1e12; time = 9.0; }
-    else if (level === 12) { cost = 1e13; time = 8.5; }
-    else if (level === 13) { cost = 5e13; time = 8.0; }
-    else if (level === 14) { cost = 1e14; time = 7.5; }
-    return { level, cost, time };
+    
+    if (level === 1) { 
+        baseCost = 0; 
+        time = 10; 
+    } else {
+        // Basis-Kosten: 1000 * 10^(level-2)
+        baseCost = 1000 * Math.pow(10, level - 2);
+        time = Math.max(1, 10 - ((level - 1) * 0.5));
+    }
+
+    // Spezial-Kosten ab Level 11
+    if (level >= 11) {
+        // L11: 500, L12: 1000, ..., L15: 2500
+        specialCost = 500 * (level - 10);
+    }
+
+    return { level, baseCost, specialCost, time };
 });
 
 export const TRADE_RECIPES = [
@@ -146,7 +162,6 @@ const generateMilestones = () => {
 
 export const MILESTONES = generateMilestones();
 
-// --- NEU: SPEZIAL ANGEBOTE BEIM SCHNEIDER ---
 export const SPECIAL_OFFERS = [
     {
         id: 'OFFER_AD_TICKET',

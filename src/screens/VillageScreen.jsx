@@ -99,7 +99,8 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                         className={`flex flex-col items-center justify-center px-4 py-2 rounded-xl border transition-all active:scale-95 ${ticketCount > 0 ? 'bg-slate-800 border-white/10 hover:bg-slate-700' : 'bg-slate-900 border-slate-800 opacity-50 cursor-not-allowed'}`}
                     >
                         <div className="flex items-center gap-1 text-xs font-bold text-white mb-0.5">
-                            <Plus className="w-3 h-3" /> 10m
+                            {/* HIER GEÄNDERT: Von 10m auf 20m */}
+                            <Plus className="w-3 h-3" /> 20m
                         </div>
                         <div className="text-[9px] text-slate-500 font-bold uppercase">
                             {ticketCount} Tickets
