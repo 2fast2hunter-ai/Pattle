@@ -1,14 +1,112 @@
-import { RARITIES, ABILITIES, TYPES } from '../../../data/gameData';
-import { XP_GAIN } from '../../../data/levelData'; // Neue Konstanten
+import { RARITIES, ABILITIES, TYPES, SPECIES_BY_TYPE, ZODIAC_ANIMALS } from '../../../data/gameData'; // Imports erweitert
+import { XP_GAIN } from '../../../data/levelData';
 import { generatePet, calculateEloChange, getLevelUpStats, calculateMaxXp } from '../../../utils/gameMechanics';
-import { getXpToNextPlayerLevel, calculatePlayerLevel } from '../../../utils/mechanics/progression'; // Neue Player Logik
+import { getXpToNextPlayerLevel, calculatePlayerLevel } from '../../../utils/mechanics/progression';
 import { updateUser, updatePetInDB, trackQuestProgress, setBattleActive } from '../../../utils/db'; 
 
 export function useBattleActions(state, showNotification) {
     const { user, myPets, setActiveBattle, setCurrentView, autoBattleRemaining, setAutoBattleRemaining } = state;
 
-    // ... startBattle und startFriendBattle bleiben unverändert ...
-    const startBattle = async () => { if (!user) return; const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); if (validTeamIds.length === 0) { showNotification("Dein Team ist leer!", 'error'); if (autoBattleRemaining > 0) setAutoBattleRemaining(0); return; } await setBattleActive(user.id, true); const myBattleTeam = validTeamIds.map(id => { const p = myPets.find(pet => pet.id === id); return { ...p, currentCd: 0, hp: p.maxHp }; }); const enemyBattleTeam = []; for (let i = 0; i < myBattleTeam.length; i++) { const playerPet = myBattleTeam[i]; let enemyLevel = 1; if (user.level >= 4) { enemyLevel = playerPet.level; } else { enemyLevel = Math.max(1, user.level); } let enemyRarity = 'COMMON'; const roll = Math.random() * 100; if (user.level >= 30 && roll > 90) enemyRarity = 'EPIC'; else if (user.level >= 20 && roll > 80) enemyRarity = 'RARE'; else if (user.level >= 10 && roll > 70) enemyRarity = 'UNCOMMON'; const enemyPet = generatePet(enemyLevel, null, enemyRarity, null, 'ENEMY'); enemyPet.id = `enemy_${i}_${Date.now()}`; if (user.level >= 4) { const vary = (val) => Math.max(1, val + (Math.floor(Math.random() * 5) - 2)); enemyPet.maxHp = vary(playerPet.maxHp); enemyPet.hp = enemyPet.maxHp; enemyPet.atk = vary(playerPet.atk); enemyPet.ap = vary(playerPet.ap); enemyPet.def = vary(playerPet.def); enemyPet.res = vary(playerPet.res); enemyPet.speed = vary(playerPet.speed); } else { enemyPet.hp = enemyPet.maxHp; } enemyPet.currentCd = 0; enemyBattleTeam.push(enemyPet); } const p1 = myBattleTeam[0]; const e1 = enemyBattleTeam[0]; const playerFirst = p1.speed >= e1.speed; setActiveBattle({ myTeam: myBattleTeam, enemyTeam: enemyBattleTeam, myIndex: 0, enemyIndex: 0, log: [`Kampf gestartet! (Auto: ${autoBattleRemaining > 0 ? autoBattleRemaining : 'Aus'})`], turn: playerFirst ? 'PLAYER' : 'ENEMY', isOver: false, round: 1, isFriendly: false }); setCurrentView('battle'); };
+    // --- BATTLE START (NEUE LOGIK: SPIEGELUNG) ---
+    const startBattle = async () => { 
+        if (!user) return; 
+        
+        // Team Validierung
+        const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); 
+        if (validTeamIds.length === 0) { 
+            showNotification("Dein Team ist leer!", 'error'); 
+            if (autoBattleRemaining > 0) setAutoBattleRemaining(0); 
+            return; 
+        } 
+        
+        await setBattleActive(user.id, true); 
+        
+        // Eigenes Team vorbereiten (HP voll)
+        const myBattleTeam = validTeamIds.map(id => { 
+            const p = myPets.find(pet => pet.id === id); 
+            return { ...p, currentCd: 0, hp: p.maxHp }; 
+        }); 
+        
+        const enemyBattleTeam = []; 
+        const typeKeys = Object.keys(TYPES);
+
+        // Gegner erstellen (Spiegelung mit Variation)
+        for (let i = 0; i < myBattleTeam.length; i++) { 
+            const playerPet = myBattleTeam[i]; 
+            
+            // 1. Stats Multiplier (zwischen 0.75 und 1.0)
+            // Das sorgt dafür, dass der Gegner gleich stark oder bis zu 25% schwächer ist
+            const statMult = 0.75 + (Math.random() * 0.25);
+            
+            // 2. Neuer Typ & Spezies (Anders als das Spieler-Pet)
+            let enemyType = playerPet.type;
+            let safetyCounter = 0;
+            // Versuche einen anderen Typ zu finden
+            while (enemyType === playerPet.type && safetyCounter < 20) {
+                enemyType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
+                safetyCounter++;
+            }
+            
+            // Spezies für den neuen Typ wählen
+            const possibleSpecies = SPECIES_BY_TYPE[enemyType] || [];
+            let enemySpecies = 'UNKNOWN';
+            if (possibleSpecies.length > 0) {
+                enemySpecies = possibleSpecies[Math.floor(Math.random() * possibleSpecies.length)];
+            }
+            
+            // 3. Neue Ability passend zum Typ wählen
+            const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === enemyType);
+            const newAbilityId = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : 'tackle';
+
+            // 4. Enemy Pet Objekt bauen
+            const enemyPet = {
+                ...playerPet, // Basis-Kopie der Spieler-Werte
+                id: `enemy_${i}_${Date.now()}`,
+                source: 'ENEMY',
+                
+                // Neue Identität setzen
+                type: enemyType,
+                species: enemySpecies,
+                name: ZODIAC_ANIMALS[enemySpecies]?.label || 'Wildes Monster',
+                abilityId: newAbilityId,
+                
+                // Angepasste Stats (Multiplikator anwenden)
+                maxHp: Math.floor(playerPet.maxHp * statMult),
+                hp: Math.floor(playerPet.maxHp * statMult),
+                atk: Math.floor(playerPet.atk * statMult),
+                def: Math.floor(playerPet.def * statMult),
+                ap: Math.floor(playerPet.ap * statMult),
+                res: Math.floor(playerPet.res * statMult),
+                speed: Math.floor(playerPet.speed * statMult),
+                
+                currentCd: 0,
+                // Visuelle Dinge zurücksetzen
+                isShiny: false, 
+                customBackground: null
+            };
+            
+            enemyBattleTeam.push(enemyPet); 
+        } 
+        
+        const p1 = myBattleTeam[0]; 
+        const e1 = enemyBattleTeam[0]; 
+        const playerFirst = p1.speed >= e1.speed; 
+        
+        setActiveBattle({ 
+            myTeam: myBattleTeam, 
+            enemyTeam: enemyBattleTeam, 
+            myIndex: 0, 
+            enemyIndex: 0, 
+            log: [`Kampf gestartet! (Auto: ${autoBattleRemaining > 0 ? autoBattleRemaining : 'Aus'})`], 
+            turn: playerFirst ? 'PLAYER' : 'ENEMY', 
+            isOver: false, 
+            round: 1, 
+            isFriendly: false 
+        }); 
+        
+        setCurrentView('battle'); 
+    };
+
     const startFriendBattle = async (friendTeamPets) => { if (!user) return; await setBattleActive(user.id, true); const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); if (validTeamIds.length === 0) { showNotification("Dein Team ist leer!", 'error'); return; } const myBattleTeam = validTeamIds.map(id => { const p = myPets.find(pet => pet.id === id); return { ...p, currentCd: 0, hp: p.maxHp }; }); const enemyBattleTeam = friendTeamPets.map((p, i) => ({ ...p, id: `friend_pet_${i}_${Date.now()}`, currentCd: 0, hp: p.maxHp })); if (enemyBattleTeam.length === 0) { showNotification("Dieser Freund hat kein Team aufgestellt!", "error"); return; } const p1 = myBattleTeam[0]; const e1 = enemyBattleTeam[0]; const playerFirst = p1.speed >= e1.speed; setActiveBattle({ myTeam: myBattleTeam, enemyTeam: enemyBattleTeam, myIndex: 0, enemyIndex: 0, log: [`Freundschaftskampf gestartet!`], turn: playerFirst ? 'PLAYER' : 'ENEMY', isOver: false, round: 1, isFriendly: true }); setCurrentView('battle'); };
 
     // --- WIN LOGIC ---
@@ -25,14 +123,14 @@ export function useBattleActions(state, showNotification) {
         
         // --- NEUE XP WERTE ---
         let xpGain = XP_GAIN.PLAYER_WIN; // 200
-        let coinsGain = reward.coins; // Bleibt dynamisch oder fix, je nachdem was übergeben wird
+        let coinsGain = reward.coins; 
         
         const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
         let newBuffs = { ...currentBuffs };
         if (currentBuffs.coinBoostMatches > 0) { coinsGain *= 2; newBuffs.coinBoostMatches -= 1; showNotification("Doppelte Münzen aktiviert!", "success"); }
         if (currentBuffs.xpBoostMatches > 0) { xpGain *= 2; newBuffs.xpBoostMatches -= 1; showNotification("Doppelte XP aktiviert!", "success"); }
 
-        // --- PLAYER LEVEL UP LOGIC (NEU) ---
+        // --- PLAYER LEVEL UP LOGIC ---
         let currentXp = (user.xp || 0) + xpGain;
         let newLevel = calculatePlayerLevel(currentXp);
         let newXpToNext = getXpToNextPlayerLevel(newLevel);
@@ -40,9 +138,8 @@ export function useBattleActions(state, showNotification) {
         let newCoins = (user.coins || 0) + coinsGain;
         let newGems = user.gems || 0;
 
-        // Level Up Belohnung? (Optional, hier erstmal nur Level Anpassung)
         if (newLevel > user.level) {
-            newCoins += 1000; // Bonus für Level Up
+            newCoins += 1000; 
             newGems += 5;
         }
 
@@ -62,9 +159,8 @@ export function useBattleActions(state, showNotification) {
         if (user.lastEloDate !== today) { updateData.startEloToday = user.rating || 1000; }
         await updateUser(user.id, updateData);
 
-        // --- BATTLE PET LEVEL UP (NEU) ---
+        // --- BATTLE PET LEVEL UP ---
         const idsToLevel = winningTeamIds || (state.activeBattle ? state.activeBattle.myTeam.map(p => p.id) : []);
-        // Pet Base XP: 40
         const petBaseXp = XP_GAIN.PET_WIN_BASE; 
 
         idsToLevel.forEach(petId => {
@@ -73,17 +169,11 @@ export function useBattleActions(state, showNotification) {
                 let pXp = (pet.xp || 0) + petBaseXp; 
                 let pLevel = pet.level || 1; 
                 
-                // Prüfen ob neues Level erreicht
                 let currentMaxXp = calculateMaxXp(pLevel, pet.rarity);
                 let leveledUpCount = 0;
                 let currentStats = { maxHp: pet.maxHp, atk: pet.atk, def: pet.def, ap: pet.ap, res: pet.res, speed: pet.speed };
 
                 while (pXp >= currentMaxXp) { 
-                    // pXp NICHT abziehen, wir nutzen jetzt kumulative XP!
-                    // Moment, die Tabelle sagt 10 = 2000. Das ist kumulativ.
-                    // Aber die Funktion `calculateMaxXp` gibt den Schwellenwert zurück.
-                    // Wenn pXp >= Schwellenwert -> Level Up.
-                    
                     pLevel++;
                     currentMaxXp = calculateMaxXp(pLevel, pet.rarity);
                     leveledUpCount++; 
@@ -123,7 +213,6 @@ export function useBattleActions(state, showNotification) {
         const eloChange = calculateEloChange(user.rating || 1000, targetRating, false);
         const today = new Date().toISOString().split('T')[0];
         
-        // --- NEUE XP WERTE ---
         let xpGain = XP_GAIN.PLAYER_LOSE; // 20
         let coinsGain = 5;
 
@@ -132,7 +221,6 @@ export function useBattleActions(state, showNotification) {
         if (currentBuffs.coinBoostMatches > 0) { coinsGain *= 2; newBuffs.coinBoostMatches -= 1; showNotification("Doppelte Münzen aktiviert!", "success"); }
         if (currentBuffs.xpBoostMatches > 0) { xpGain *= 2; newBuffs.xpBoostMatches -= 1; showNotification("Doppelte XP aktiviert!", "success"); }
 
-        // --- PLAYER LEVEL UP LOGIC (NEU) ---
         let currentXp = (user.xp || 0) + xpGain;
         let newLevel = calculatePlayerLevel(currentXp);
         let newXpToNext = getXpToNextPlayerLevel(newLevel);
@@ -158,9 +246,6 @@ export function useBattleActions(state, showNotification) {
         if (user.lastEloDate !== today) { updateData.startEloToday = user.rating || 1000; }
         await updateUser(user.id, updateData);
         
-        // --- BATTLE PET LEVEL UP (Bei Niederlage gibt es aktuell keine Pet XP laut Plan, oder "sonstige"? Ich lasse es erstmal weg oder minimal) ---
-        // Plan sagt: "Kampf lose +20" (Spieler), Pet sagt "pro win 40", "sonstige 5". 
-        // Ich gebe 5 XP bei Niederlage als Trost.
         const idsToLevel = state.activeBattle ? state.activeBattle.myTeam.map(p => p.id) : [];
         const petXpGain = 5; 
         
