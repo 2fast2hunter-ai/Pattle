@@ -178,17 +178,25 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const startLootboxSequence = async (boxId, boxType) => {
       setSelectedBox(null);
       setProcessingBoxId(boxId);
+      
+      // Sequenz Start
+      setAnimationStage('charging');
+      
+      // Wartezeit für Charging
+      await new Promise(resolve => setTimeout(resolve, 800));
       setAnimationStage('shaking');
-      setResultPet(null);
+
       try {
         const [_, newPet] = await Promise.all([
-            new Promise(resolve => setTimeout(resolve, 2500)),
+            new Promise(resolve => setTimeout(resolve, 2000)), // Shake Dauer
             onStartIncubation(boxId, boxType)
         ]);
         if (newPet) {
             setResultPet(newPet);
             setAnimationStage('exploding');
-            setTimeout(() => setAnimationStage('revealed'), 300);
+            // Kurzer weißer Blitz
+            await new Promise(resolve => setTimeout(resolve, 200));
+            setAnimationStage('revealed');
         } else {
             setAnimationStage('idle');
             setProcessingBoxId(null);
@@ -232,13 +240,81 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   };
 
   if (animationStage !== 'idle') {
+      const rarity = resultPet ? RARITIES[resultPet.rarity] : RARITIES.COMMON;
+      const isEgg = resultPet?.isEgg;
+      
       return (
-          <div className="fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center overflow-hidden">
-             {animationStage === 'shaking' && <div className="animate-shake-hard"><Package className="w-48 h-48 text-yellow-400" /></div>}
+          <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden">
+             
+             {/* HINTERGRUND EFFEKTE */}
+             <div className="absolute inset-0">
+                 {/* Sternenfeld */}
+                 <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
+                 
+                 {/* Wirbelnder Tunnel */}
+                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200vw] h-[200vw] bg-[conic-gradient(from_0deg_at_50%_50%,rgba(79,70,229,0.1)_0deg,transparent_60deg,rgba(79,70,229,0.1)_120deg,transparent_180deg,rgba(79,70,229,0.1)_240deg,transparent_300deg,rgba(79,70,229,0.1)_360deg)] animate-spin-slow opacity-50"></div>
+             </div>
+
+             {/* CHARGING & SHAKING */}
+             {(animationStage === 'charging' || animationStage === 'shaking') && (
+                 <div className="relative z-10 flex flex-col items-center">
+                     {/* Glow hinter der Box */}
+                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-yellow-500 rounded-full blur-[80px] transition-all duration-500 ${animationStage === 'shaking' ? 'scale-150 opacity-60' : 'scale-0 opacity-0'}`}></div>
+                     
+                     {/* Die Box */}
+                     <div className={`relative ${animationStage === 'charging' ? 'animate-bounce' : 'animate-shake-hard'} transition-transform duration-300`}>
+                         <Package className={`w-48 h-48 text-yellow-400 drop-shadow-[0_0_30px_rgba(250,204,21,0.6)] ${animationStage === 'shaking' ? 'brightness-150' : ''}`} />
+                     </div>
+                     
+                     <p className="text-yellow-200 mt-12 font-black text-2xl tracking-[0.3em] animate-pulse">
+                         {animationStage === 'charging' ? 'BEREIT...' : 'ÖFFNE...'}
+                     </p>
+                 </div>
+             )}
+
+             {/* EXPLOSION FLASH */}
+             {animationStage === 'exploding' && (
+                 <div className="absolute inset-0 bg-white z-[110] animate-out fade-out duration-300"></div>
+             )}
+
+             {/* REVEAL */}
              {animationStage === 'revealed' && resultPet && (
-                 <div className="flex flex-col items-center animate-in zoom-in">
-                     <PetAvatar pet={resultPet} className="w-40 h-40" />
-                     <button onClick={finishAnimation} className="mt-8 bg-white text-black px-8 py-3 rounded-xl font-bold">WEITER</button>
+                 <div className="relative z-10 flex flex-col items-center animate-in zoom-in duration-500">
+                     
+                     {/* Rotierende God Rays */}
+                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] z-0 opacity-30 animate-spin-slow pointer-events-none">
+                         <div className={`w-full h-full bg-[conic-gradient(from_0deg_at_50%_50%,${rarity.color.replace('text-', '')}_0deg,transparent_20deg,${rarity.color.replace('text-', '')}_40deg,transparent_60deg,${rarity.color.replace('text-', '')}_80deg,transparent_100deg,${rarity.color.replace('text-', '')}_120deg,transparent_140deg,${rarity.color.replace('text-', '')}_160deg,transparent_180deg,${rarity.color.replace('text-', '')}_200deg,transparent_220deg,${rarity.color.replace('text-', '')}_240deg,transparent_260deg,${rarity.color.replace('text-', '')}_280deg,transparent_300deg,${rarity.color.replace('text-', '')}_320deg,transparent_340deg,${rarity.color.replace('text-', '')}_360deg)]`}></div>
+                     </div>
+
+                     {/* Rarity Glow */}
+                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 ${rarity.bg} blur-[80px] opacity-60 animate-pulse`}></div>
+
+                     {/* Pet Avatar */}
+                     <div className="relative z-10 scale-150 mb-8 drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+                         <PetAvatar pet={resultPet} className="w-48 h-48" />
+                     </div>
+
+                     <div className="text-center relative z-10 space-y-2">
+                         <div className={`text-sm font-black uppercase tracking-[0.2em] ${rarity.color} drop-shadow-md`}>
+                             {isEgg ? 'NEUER FUND' : rarity.label}
+                         </div>
+                         <h2 className="text-4xl font-black text-white drop-shadow-xl">
+                             {/* HIER GEÄNDERT: Bei Eiern wird nur die Seltenheit (oder 'EI') angezeigt, nicht der Tiername */}
+                             {isEgg ? rarity.label : resultPet.name}
+                         </h2>
+                         {!isEgg && (
+                             <div className="text-slate-400 font-bold text-sm bg-black/40 px-4 py-1 rounded-full backdrop-blur-sm mx-auto w-fit border border-white/10 mt-2">
+                                 Lvl {resultPet.level}
+                             </div>
+                         )}
+                     </div>
+
+                     <button 
+                        onClick={finishAnimation} 
+                        className="mt-12 bg-white hover:bg-slate-200 text-black px-10 py-4 rounded-2xl font-black text-lg shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all"
+                     >
+                         EINSAMMELN
+                     </button>
                  </div>
              )}
           </div>

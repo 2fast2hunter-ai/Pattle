@@ -1,23 +1,42 @@
-import { RARITIES } from '../../data/rarities';
+import { PET_RARITY_MULTIPLIERS } from '../../data/levelData';
 
 // --- STATS & XP FORMELN ---
 
-// Formel für einen einzelnen Stat: Basis * (1 + 10% pro Level)
 export const calculateStatValue = (base, level) => {
-    const val = Math.round(base * (1 + (level - 1) * 0.1));
+    // Sicherheitshalber auch hier cappen, falls 'level' roh übergeben wird
+    const effectiveLevel = Math.min(100, level);
+    const val = Math.round(base * (1 + (effectiveLevel - 1) * 0.1));
     return Math.max(1, val); 
 };
 
-// Formel für Max XP
-export const calculateMaxXp = (level) => {
-    return Math.floor(100 * Math.pow(1.5, level - 1));
+// Formel: 20 * Level^2 * RarityMultiplier
+export const calculatePetTotalXpForLevel = (level, rarityKey) => {
+    const multiplier = PET_RARITY_MULTIPLIERS[rarityKey] || 1.0;
+    return Math.floor(20 * Math.pow(level, 2) * multiplier);
 };
 
-// Fixe Stats pro Level (basierend auf Seltenheit)
+// Berechnet das Level basierend auf XP (Umkehrfunktion)
+export const calculatePetLevelFromXp = (currentXp, rarityKey) => {
+    const multiplier = PET_RARITY_MULTIPLIERS[rarityKey] || 1.0;
+    
+    if (currentXp < 20 * multiplier) return 1;
+    
+    const rawLevel = Math.sqrt(currentXp / (20 * multiplier));
+    const level = Math.floor(rawLevel);
+    
+    // WICHTIG: Cap bei 100
+    return Math.min(100, Math.max(1, level));
+};
+
+export const calculateMaxXp = (level, rarityKey = 'COMMON') => {
+    // Wenn Level 100 erreicht ist, gibt es kein nächstes Ziel mehr -> Infinity
+    if (level >= 100) return Infinity;
+    return calculatePetTotalXpForLevel(level + 1, rarityKey);
+};
+
 export const getLevelUpStats = (rarityKey) => {
     let min = 1;
     let max = 2;
-    // Fallback falls rarityKey undefined ist
     const rarityKeySafe = rarityKey || 'COMMON';
 
     switch (rarityKeySafe) {
@@ -42,8 +61,10 @@ export const getLevelUpStats = (rarityKey) => {
     };
 };
 
-// Zentrale Funktion zum Neuberechnen
 export const recalculatePetStats = (pet, newLevel) => {
+    // Cap das neue Level auf 100
+    const cappedLevel = Math.min(100, newLevel);
+
     const currentLvlMult = 1 + (pet.level - 1) * 0.1;
     
     const getBase = (currentVal, bonusIfShiny) => {
@@ -58,22 +79,23 @@ export const recalculatePetStats = (pet, newLevel) => {
     const b_res = pet.b_res || getBase(pet.res, 1);
     const b_speed = pet.b_speed || getBase(pet.speed, 1);
 
-    // Neue Stats berechnen
-    let newMaxHp = calculateStatValue(b_hp, newLevel);
-    let newAtk = calculateStatValue(b_atk, newLevel);
-    let newDef = calculateStatValue(b_def, newLevel);
-    let newAp = calculateStatValue(b_ap, newLevel);
-    let newRes = calculateStatValue(b_res, newLevel);
-    let newSpeed = calculateStatValue(b_speed, newLevel);
+    // Neue Stats berechnen (mit cappedLevel)
+    let newMaxHp = calculateStatValue(b_hp, cappedLevel);
+    let newAtk = calculateStatValue(b_atk, cappedLevel);
+    let newDef = calculateStatValue(b_def, cappedLevel);
+    let newAp = calculateStatValue(b_ap, cappedLevel);
+    let newRes = calculateStatValue(b_res, cappedLevel);
+    let newSpeed = calculateStatValue(b_speed, cappedLevel);
 
-    // Shiny Bonus
     if (pet.isShiny) {
         newMaxHp += 10; newAtk += 1; newDef += 1; newAp += 1; newRes += 1; newSpeed += 1;
     }
 
+    const nextMaxXp = calculateMaxXp(cappedLevel, pet.rarity);
+
     return {
-        level: newLevel,
-        maxXp: calculateMaxXp(newLevel),
+        level: cappedLevel,
+        maxXp: nextMaxXp,
         maxHp: newMaxHp, hp: newMaxHp,
         atk: newAtk, def: newDef, ap: newAp, res: newRes, speed: newSpeed,
         b_hp, b_atk, b_def, b_ap, b_res, b_speed
