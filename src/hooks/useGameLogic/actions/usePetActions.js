@@ -4,7 +4,7 @@ import {
     getUnlockedHatcherySlots, 
     determineRarity, 
     calculateBreedRarity, 
-    generateHybridPet,
+    // generateHybridPet, // <--- NICHT MEHR BENÖTIGT
     getLevelUpStats, 
     calculateMaxXp 
 } from '../../../utils/gameMechanics';
@@ -197,7 +197,7 @@ export function usePetActions(state, showNotification) {
         }
     };
 
-    // --- ZUCHT ---
+    // --- ZUCHT (ANGEPASST: KEINE NEUEN ARTEN) ---
     const breedPets = async (parent1Id, parent2Id) => { 
         if (!user) return; 
         if (myPets.filter(p => p.isEgg && p.hatchAt > 0).length >= getUnlockedHatcherySlots(user.level)) { showNotification("Brutstätte ist voll!", 'error'); return; } 
@@ -219,17 +219,39 @@ export function usePetActions(state, showNotification) {
         await updatePetInDB(p1.id, { bredAt: Date.now() }); 
         await updatePetInDB(p2.id, { bredAt: Date.now() }); 
         
-        let child; 
-        const rollMutation = Math.random() * 100; 
-        if (rollMutation <= 10) { 
-            child = generateHybridPet(p1, p2); 
-        } else { 
-            const childType = Math.random() > 0.5 ? p1.type : p2.type; 
-            child = generatePet(1, childType, calculateBreedRarity(p1.rarity, p2.rarity), null, 'BREEDING'); 
-            const mix = (v1, v2) => Math.floor((v1 + v2) / 2); 
-            child.b_hp = mix(p1.b_hp || 10, p2.b_hp || 10); 
-            child.b_atk = mix(p1.b_atk || 2, p2.b_atk || 2); 
-        } 
+        // ---------------------------------------------------------
+        // NEUE LOGIK: WÄHLE EINE DER BEIDEN ELTERN-SPEZIES
+        // ---------------------------------------------------------
+        
+        // 1. Zufällig einen Elternteil auswählen (50/50 Chance)
+        const primaryParent = Math.random() > 0.5 ? p1 : p2;
+
+        // 2. Stats Mischen (Basis-Werte vererben)
+        const mix = (v1, v2) => Math.floor((v1 + v2) / 2); 
+        const getBase = (pet, stat, fallback) => pet[stat] || fallback;
+
+        // Vererbe die Basiswerte (b_stats), damit gute Zuchtlinien stärker werden
+        const inheritedStats = {
+            hp: mix(getBase(p1, 'b_hp', 10), getBase(p2, 'b_hp', 10)),
+            atk: mix(getBase(p1, 'b_atk', 2), getBase(p2, 'b_atk', 2)),
+            ap: mix(getBase(p1, 'b_ap', 2), getBase(p2, 'b_ap', 2)),
+            def: mix(getBase(p1, 'b_def', 1), getBase(p2, 'b_def', 1)),
+            res: mix(getBase(p1, 'b_res', 1), getBase(p2, 'b_res', 1)),
+            speed: mix(getBase(p1, 'b_speed', 1), getBase(p2, 'b_speed', 1))
+        };
+
+        // 3. Kind generieren mit erzwungener Spezies
+        const child = generatePet(
+            1, 
+            primaryParent.type, // Typ vom gewählten Elternteil
+            calculateBreedRarity(p1.rarity, p2.rarity), 
+            inheritedStats, 
+            'BREEDING', 
+            primaryParent.species // WICHTIG: Spezies vom Elternteil übernehmen
+        );
+
+        // ---------------------------------------------------------
+
         child.isEgg = true; 
         child.hatchAt = Date.now() + RARITIES[child.rarity].hatchDuration; 
         await addPetToDB(child, user.id); 
