@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Package, ChevronsUp, Coins, Gem, BatteryCharging } from 'lucide-react';
+import { Package, ChevronsUp, Coins, Gem } from 'lucide-react'; // BatteryCharging entfernt
 import { RARITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
@@ -24,10 +24,6 @@ export function LevelUpModal({ level, onClose }) {
               <div className="flex flex-col items-center">
                 <Gem className="w-6 h-6 text-pink-500 mb-1" />
                 <span className="font-bold">+5</span>
-              </div>
-              <div className="flex flex-col items-center">
-                <BatteryCharging className="w-6 h-6 text-yellow-400 mb-1" />
-                <span className="font-bold">Energie+</span>
               </div>
             </div>
           </div>

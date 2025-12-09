@@ -29,7 +29,7 @@ export const generateQuests = (category) => {
       count = 10; // Mehr Aufgaben
       multiplier = 5; 
   } else if (category === 'MONTHLY') {
-      count = 20; // Viele Aufgaben
+      count = 15; // Angepasst auf 15 Aufgaben
       multiplier = 20; 
   }
 

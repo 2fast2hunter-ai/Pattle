@@ -34,9 +34,9 @@ export function useBattleActions(state, showNotification) {
         for (let i = 0; i < myBattleTeam.length; i++) { 
             const playerPet = myBattleTeam[i]; 
             
-            // 1. Stats Multiplier (zwischen 0.75 und 1.0)
-            // Das sorgt dafür, dass der Gegner gleich stark oder bis zu 25% schwächer ist
-            const statMult = 0.75 + (Math.random() * 0.25);
+            // 1. Stats Multiplier (zwischen 0.85 und 1.15)
+            // Das sorgt dafür, dass der Gegner +/- 15% Stärke hat
+            const statMult = 0.85 + (Math.random() * 0.30);
             
             // 2. Neuer Typ & Spezies (Anders als das Spieler-Pet)
             let enemyType = playerPet.type;
@@ -196,7 +196,21 @@ export function useBattleActions(state, showNotification) {
             }
         });
 
-        trackQuestProgress(user, 'WIN_PVP', 1); trackQuestProgress(user, 'EARN_XP', xpGain);
+        // --- TRACKING FÜR ELEMENT-SIEGE ---
+        const winningPets = winningTeamIds 
+            ? myPets.filter(p => winningTeamIds.includes(p.id)) 
+            : (state.activeBattle ? state.activeBattle.myTeam : []);
+
+        const uniqueTypes = [...new Set(winningPets.map(p => p.type))];
+        uniqueTypes.forEach(type => {
+            if (type) {
+                trackQuestProgress(user, `WIN_${type}`, 1);
+            }
+        });
+
+        trackQuestProgress(user, 'WIN_PVP', 1); 
+        trackQuestProgress(user, 'EARN_XP', xpGain);
+
         if (autoBattleRemaining > 1) { setAutoBattleRemaining(prev => prev - 1); startBattle(); } 
         else { if (autoBattleRemaining === 1) { setAutoBattleRemaining(0); showNotification("Auto-Kampf Sequenz abgeschlossen!", "success"); } setCurrentView('arena-hub'); }
     };

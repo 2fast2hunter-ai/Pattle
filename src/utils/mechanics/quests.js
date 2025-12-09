@@ -1,8 +1,11 @@
 import { QUEST_TEMPLATES } from '../../data/questData';
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
 export const generateQuests = (category) => {
-    const countMap = { DAILY: 3, WEEKLY: 5, MONTHLY: 7 };
-    const count = countMap[category] || 3;
+    // UPDATED: Counts auf 5, 10, 15 gesetzt
+    const countMap = { DAILY: 5, WEEKLY: 10, MONTHLY: 15 };
+    const count = countMap[category] || 5;
+    
     const quests = [];
     for (let i = 0; i < count; i++) {
         const template = QUEST_TEMPLATES[randomInt(0, QUEST_TEMPLATES.length - 1)];
