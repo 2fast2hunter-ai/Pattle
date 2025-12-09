@@ -207,7 +207,7 @@ export default function App() {
               />
           )}
 
-          {currentView === 'inventory' && <InventoryScreen pets={myPets} title="Deine Sammlung" onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }} />}
+          {currentView === 'inventory' && <InventoryScreen pets={myPets} title="Deine Sammlung" onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }}filterEggs={true} />}
           
           {currentView === 'pet-detail' && activePetDetail && (
               <PetDetailScreen 
