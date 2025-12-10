@@ -1,43 +1,6 @@
+// src/utils/mechanics/petLogic.js
+import { recalculatePetStats, calculateMaxXp } from './petStats';
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, SPECIES_BY_TYPE, FUSION_RECIPES } from '../../data/gameData';
-
-// --- NEUE LOGIK: FIXE WERTE ---
-
-// Berechnet die Zuwächse für ein einzelnes Level-Up basierend auf Seltenheit
-export const getLevelUpStats = (rarityKey) => {
-    let min = 1;
-    let max = 2;
-
-    switch (rarityKey) {
-        case 'COMMON':       min = 1; max = 2; break;
-        case 'UNCOMMON':     min = 2; max = 3; break;
-        case 'RARE':         min = 3; max = 4; break;
-        case 'EPIC':         min = 4; max = 5; break;
-        case 'LEGENDARY':    min = 5; max = 6; break;
-        case 'MYTHIC':       min = 6; max = 7; break;
-        case 'DIVINE':       min = 7; max = 8; break;
-        case 'ANCIENT':      min = 8; max = 9; break;
-        case 'COSMIC':       min = 9; max = 10; break;
-        case 'TRANSCENDENT': min = 10; max = 11; break;
-        default:             min = 1; max = 2;
-    }
-
-    const roll = () => Math.floor(Math.random() * (max - min + 1)) + min;
-
-    return {
-        // HP bekommt Multiplikator 5, damit die Werte verhältnismäßig passen
-        hp: roll() * 5, 
-        atk: roll(),
-        def: roll(),
-        ap: roll(),
-        res: roll(),
-        speed: roll()
-    };
-};
-
-// Formel für Max XP: Start 100, dann exponentiell
-export const calculateMaxXp = (level) => {
-    return Math.floor(100 * Math.pow(1.5, level - 1));
-};
 
 export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
     const rarityKeys = Object.keys(RARITIES);
@@ -105,66 +68,36 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul', 'heart', 'claw'];
   const baseName = speciesData.label + (Math.random() > 0.5 ? '' : ' ' + suffixes[Math.floor(Math.random() * suffixes.length)]);
 
-  // Basis Stats (Level 1)
-  let hp, atk, ap, def, res, speed;
-
-  if (inheritedStats) {
-      hp = inheritedStats.hp; atk = inheritedStats.atk; ap = inheritedStats.ap; def = inheritedStats.def; res = inheritedStats.res; speed = inheritedStats.speed;
-  } else {
-      // Basiswerte für Level 1 (leicht variiert durch Seltenheit)
-      const baseMult = RARITIES[rarity].multi; 
-      hp = Math.floor(100 * baseMult);
-      atk = Math.floor(10 * baseMult);
-      ap = Math.floor(10 * baseMult);
-      def = Math.floor(5 * baseMult);
-      res = Math.floor(5 * baseMult);
-      speed = Math.floor(5 * baseMult);
-  }
-
   // Initiales Pet Objekt
-  const newPet = {
+  let newPet = {
     id: Date.now() + Math.random().toString(),
     name: baseName,
     type: type,
     secondaryType: null,
     species: speciesKey,
     rarity: rarity,
-    level: 1, // Startet intern bei 1
+    level: 1, 
     xp: 0,
-    maxXp: calculateMaxXp(1),
+    maxXp: 100, // Wird in recalculatePetStats korrigiert
     abilityId: abilityKey,
     
-    maxHp: hp, hp: hp,
-    atk: atk, ap: ap,
-    def: def, res: res,
-    speed: speed,
+    maxHp: 0, hp: 0,
+    atk: 0, ap: 0,
+    def: 0, res: 0,
+    speed: 0,
     
-    critRate: 5 + Math.floor(Math.random() * 10),
+    critRate: 5 + Math.floor(Math.random() * 5),
     critDmg: 150,
     currentCd: 0,
     isEgg: false,
     hatchAt: 0,
     source: source,
-    isShiny: false,
+    isShiny: Math.random() < 0.05, 
     price: 0 
   };
 
-  // Wenn das Pet mit einem höheren Level generiert werden soll (z.B. Gegner),
-  // simulieren wir die Level-Ups sofort
-  if (level > 1) {
-      for (let i = 1; i < level; i++) {
-          const growth = getLevelUpStats(rarity);
-          newPet.maxHp += growth.hp;
-          newPet.hp = newPet.maxHp;
-          newPet.atk += growth.atk;
-          newPet.ap += growth.ap;
-          newPet.def += growth.def;
-          newPet.res += growth.res;
-          newPet.speed += growth.speed;
-      }
-      newPet.level = level;
-      newPet.maxXp = calculateMaxXp(level);
-  }
+  // Stats berechnen
+  newPet = recalculatePetStats(newPet, level);
 
   return newPet;
 };
@@ -172,51 +105,39 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
 export const generateHybridPet = (p1, p2) => {
     const types = [p1.type, p2.type].sort();
     const recipeKey = `${types[0]}_${types[1]}`;
-    
     const recipe = FUSION_RECIPES[recipeKey];
 
-    let newLabel, newIcon, newType, isSecretRecipe;
+    let newLabel, newIcon, newType, isSecretRecipe, speciesKey;
 
     if (recipe) {
         newLabel = recipe.label;
         newIcon = recipe.icon;
         newType = recipe.type;
         isSecretRecipe = true;
+        speciesKey = Object.keys(ZODIAC_ANIMALS).find(k => ZODIAC_ANIMALS[k].label === recipe.label) || 'SECRET_CHIMERA_PRIME';
     } else {
         isSecretRecipe = false;
         newType = Math.random() > 0.5 ? p1.type : p2.type;
         const icon1 = ZODIAC_ANIMALS[p1.species]?.icon || '❓';
         const icon2 = ZODIAC_ANIMALS[p2.species]?.icon || '❓';
         newIcon = `${icon1}${icon2}`;
-        const label1 = ZODIAC_ANIMALS[p1.species]?.label || p1.name;
-        const label2 = ZODIAC_ANIMALS[p2.species]?.label || p2.name;
-        const part1 = label1.substring(0, Math.ceil(label1.length / 2));
-        const part2 = label2.substring(Math.ceil(label2.length / 2));
-        newLabel = part1 + part2;
+        newLabel = "Hybrid"; 
+        speciesKey = Math.random() > 0.5 ? p1.species : p2.species; // Hybriden erben eine Basis-Spezies für Stats
     }
 
-    // Vererbung der Stats (Durchschnitt der Eltern)
-    const mix = (v1, v2) => Math.floor((v1 + v2) / 2);
-    const inheritedStats = {
-        hp: mix(p1.maxHp, p2.maxHp),
-        atk: mix(p1.atk, p2.atk),
-        ap: mix(p1.ap, p2.ap),
-        def: mix(p1.def, p2.def),
-        res: mix(p1.res, p2.res),
-        speed: mix(p1.speed, p2.speed)
-    };
-
     const rarityKey = calculateBreedRarity(p1.rarity, p2.rarity);
-    const basePet = generatePet(1, newType, rarityKey, inheritedStats, 'BREEDING');
+    const basePet = generatePet(1, newType, rarityKey, null, 'BREEDING', speciesKey);
     
-    basePet.species = 'CUSTOM'; 
-    basePet.customData = {
-        label: newLabel,
-        icon: newIcon,
-        isSecret: isSecretRecipe,
-        parents: [p1.name, p2.name]
-    };
-    basePet.name = newLabel; 
+    if (!isSecretRecipe) {
+        basePet.name = newLabel;
+        basePet.species = 'CUSTOM'; // Marker für UI, aber Stats kommen von der geerbten Species
+        basePet.customData = {
+            label: newLabel,
+            icon: newIcon,
+            isSecret: false,
+            parents: [p1.name, p2.name]
+        };
+    }
 
     return basePet;
 };
