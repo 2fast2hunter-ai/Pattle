@@ -1,9 +1,11 @@
+// src/hooks/useGameLogic.js
 import React, { useEffect, useState, useRef } from 'react';
 import { onAuthStateChanged } from 'firebase/auth'; 
 import { auth } from '../firebase.js'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
-import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser } from '../utils/db'; 
+import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB } from '../utils/db'; // updatePetInDB hinzugefügt
+import { ABILITIES } from '../data/gameData'; // Import ABILITIES
 
 export function useGameLogic() {
     const [userId, setUserId] = useState(null); 
@@ -20,6 +22,28 @@ export function useGameLogic() {
         stateRef.current = gameLogicState;
     });
 
+    // --- NEU: AUTO-FIX FÜR FÄHIGKEITEN ---
+    // Prüft, ob Pets noch "Tackle" haben und gibt ihnen die richtige Fähigkeit
+    useEffect(() => {
+        const { myPets } = gameLogicState;
+        if (!myPets || myPets.length === 0) return;
+
+        myPets.forEach(pet => {
+            // Wenn Pet Tackle hat ODER gar keine AbilityId
+            if (!pet.abilityId || pet.abilityId === 'tackle') {
+                // Suche passende Fähigkeit basierend auf dem Typ
+                const matchingAbilityKey = Object.keys(ABILITIES).find(key => ABILITIES[key].element === pet.type);
+                
+                // Wenn wir eine bessere Fähigkeit finden, updaten wir das Pet in der DB
+                if (matchingAbilityKey && matchingAbilityKey !== 'tackle') {
+                    console.log(`[AutoFix] Aktualisiere Fähigkeit für ${pet.name} (${pet.type}): Tackle -> ${ABILITIES[matchingAbilityKey].name}`);
+                    updatePetInDB(pet.id, { abilityId: matchingAbilityKey });
+                }
+            }
+        });
+    }, [gameLogicState.myPets]); // Führt dies aus, wenn Pets geladen werden
+    // --------------------------------------
+
     // --- A. DATENBANK LISTENER ---
     useEffect(() => {
         if (!userId) {
@@ -32,8 +56,6 @@ export function useGameLogic() {
         const unsubUser = listenToUser(userId, async (userData) => {
             stateRef.current.setUser(userData);
             
-            // --- ELO RESET CHECK (NEUER TAG) ---
-            // FIX: ISO Datum nutzen (YYYY-MM-DD)
             const today = new Date().toISOString().split('T')[0];
             
             if (userData.lastEloDate !== today) {
@@ -43,7 +65,6 @@ export function useGameLogic() {
                     startEloToday: userData.rating || 1000
                 });
             }
-            // -----------------------------------
             
             if (stateRef.current.currentView === 'auth' || stateRef.current.authLoading) {
                 stateRef.current.setAuthLoading(false);
@@ -52,7 +73,6 @@ export function useGameLogic() {
 
             checkAndResetQuests(userData).catch(e => console.error("Quest Error:", e));
             
-            // --- KAMPF-ABBRUCH CHECK ---
             if (!initialBattleCheckDone.current) {
                 initialBattleCheckDone.current = true; 
                 if (userData.isInBattle) {
