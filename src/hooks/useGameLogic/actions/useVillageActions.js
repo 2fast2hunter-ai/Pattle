@@ -1,3 +1,5 @@
+// src/hooks/useGameLogic/actions/useVillageActions.js
+
 import { updateUser, updatePetInDB, trackQuestProgress } from '../../../utils/db';
 import { 
     RESOURCES, 
@@ -12,8 +14,8 @@ import {
 } from '../../../data/gameData';
 import { 
     recalculatePetStats, 
-    calculateMaxXp, 
-    getLevelUpStats 
+    calculateMaxXp 
+    // getLevelUpStats entfernt, da nicht existent und nicht benötigt
 } from '../../../utils/gameMechanics'; 
 
 export function useVillageActions(state, showNotification) {

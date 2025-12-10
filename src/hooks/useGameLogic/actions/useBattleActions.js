@@ -1,13 +1,27 @@
-import { RARITIES, ABILITIES, TYPES, SPECIES_BY_TYPE, ZODIAC_ANIMALS } from '../../../data/gameData'; // Imports erweitert
+// src/hooks/useGameLogic/actions/useBattleActions.js
+
+import { RARITIES, ABILITIES, TYPES, SPECIES_BY_TYPE, ZODIAC_ANIMALS } from '../../../data/gameData'; 
 import { XP_GAIN } from '../../../data/levelData';
-import { generatePet, calculateEloChange, getLevelUpStats, calculateMaxXp } from '../../../utils/gameMechanics';
+import { generatePet, calculateEloChange, recalculatePetStats, calculateMaxXp } from '../../../utils/gameMechanics';
 import { getXpToNextPlayerLevel, calculatePlayerLevel } from '../../../utils/mechanics/progression';
 import { updateUser, updatePetInDB, trackQuestProgress, setBattleActive } from '../../../utils/db'; 
 
 export function useBattleActions(state, showNotification) {
     const { user, myPets, setActiveBattle, setCurrentView, autoBattleRemaining, setAutoBattleRemaining } = state;
 
-    // --- BATTLE START (NEUE LOGIK: SPIEGELUNG) ---
+    // Hilfsfunktion: Zufällige Seltenheit basierend auf Drop-Chancen wählen
+    const getWeightedRarity = () => {
+        const roll = Math.random() * 100;
+        let total = 0;
+        // Wir iterieren durch die definierten Rarities
+        for (const key of Object.keys(RARITIES)) {
+            total += RARITIES[key].dropChance;
+            if (roll <= total) return key;
+        }
+        return 'COMMON'; // Fallback
+    };
+
+    // --- BATTLE START (NEUE LOGIK: ZUFALLSGEGNER) ---
     const startBattle = async () => { 
         if (!user) return; 
         
@@ -21,73 +35,45 @@ export function useBattleActions(state, showNotification) {
         
         await setBattleActive(user.id, true); 
         
-        // Eigenes Team vorbereiten (HP voll)
+        // Eigenes Team vorbereiten (HP voll für den Kampf simulieren)
         const myBattleTeam = validTeamIds.map(id => { 
             const p = myPets.find(pet => pet.id === id); 
             return { ...p, currentCd: 0, hp: p.maxHp }; 
         }); 
         
         const enemyBattleTeam = []; 
-        const typeKeys = Object.keys(TYPES);
+        const teamSize = myBattleTeam.length; // Gegneranzahl passt sich Spieler-Teamgröße an
 
-        // Gegner erstellen (Spiegelung mit Variation)
-        for (let i = 0; i < myBattleTeam.length; i++) { 
-            const playerPet = myBattleTeam[i]; 
-            
-            // 1. Stats Multiplier (zwischen 0.85 und 1.15)
-            // Das sorgt dafür, dass der Gegner +/- 15% Stärke hat
-            const statMult = 0.85 + (Math.random() * 0.30);
-            
-            // 2. Neuer Typ & Spezies (Anders als das Spieler-Pet)
-            let enemyType = playerPet.type;
-            let safetyCounter = 0;
-            // Versuche einen anderen Typ zu finden
-            while (enemyType === playerPet.type && safetyCounter < 20) {
-                enemyType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
-                safetyCounter++;
-            }
-            
-            // Spezies für den neuen Typ wählen
-            const possibleSpecies = SPECIES_BY_TYPE[enemyType] || [];
-            let enemySpecies = 'UNKNOWN';
-            if (possibleSpecies.length > 0) {
-                enemySpecies = possibleSpecies[Math.floor(Math.random() * possibleSpecies.length)];
-            }
-            
-            // 3. Neue Ability passend zum Typ wählen
-            const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === enemyType);
-            const newAbilityId = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : 'tackle';
+        // Gegner generieren
+        for (let i = 0; i < teamSize; i++) { 
+            // 1. Level anpassen (Spielerlevel +/- 1)
+            const playerLevel = user.level || 1;
+            const levelVariance = Math.floor(Math.random() * 3) - 1; // Ergibt -1, 0 oder 1
+            const enemyLevel = Math.max(1, playerLevel + levelVariance);
 
-            // 4. Enemy Pet Objekt bauen
-            const enemyPet = {
-                ...playerPet, // Basis-Kopie der Spieler-Werte
-                id: `enemy_${i}_${Date.now()}`,
-                source: 'ENEMY',
-                
-                // Neue Identität setzen
-                type: enemyType,
-                species: enemySpecies,
-                name: ZODIAC_ANIMALS[enemySpecies]?.label || 'Wildes Monster',
-                abilityId: newAbilityId,
-                
-                // Angepasste Stats (Multiplikator anwenden)
-                maxHp: Math.floor(playerPet.maxHp * statMult),
-                hp: Math.floor(playerPet.maxHp * statMult),
-                atk: Math.floor(playerPet.atk * statMult),
-                def: Math.floor(playerPet.def * statMult),
-                ap: Math.floor(playerPet.ap * statMult),
-                res: Math.floor(playerPet.res * statMult),
-                speed: Math.floor(playerPet.speed * statMult),
-                
-                currentCd: 0,
-                // Visuelle Dinge zurücksetzen
-                isShiny: false, 
-                customBackground: null
-            };
-            
+            // 2. Zufällige Seltenheit bestimmen
+            const enemyRarity = getWeightedRarity();
+
+            // 3. Pet generieren (Typ & Spezies sind zufällig, da wir null übergeben)
+            // generatePet berechnet automatisch die korrekten Stats (atk, def, hp...)
+            const enemyPet = generatePet(
+                enemyLevel, 
+                null,           // Zufälliger Typ
+                enemyRarity,    // Zufällige (gewichtete) Seltenheit
+                null,           // Keine vererbten Stats
+                'ENEMY'         // Quelle
+            );
+
+            // 4. Für den Kampf anpassen
+            enemyPet.id = `enemy_${i}_${Date.now()}`; // Einzigartige ID für React Keys
+            enemyPet.currentCd = 0;
+            // Name anpassen, damit es wild wirkt
+            enemyPet.name = `Wildes ${enemyPet.name}`;
+
             enemyBattleTeam.push(enemyPet); 
         } 
         
+        // Initiative bestimmen (Wer fängt an?)
         const p1 = myBattleTeam[0]; 
         const e1 = enemyBattleTeam[0]; 
         const playerFirst = p1.speed >= e1.speed; 
@@ -107,7 +93,43 @@ export function useBattleActions(state, showNotification) {
         setCurrentView('battle'); 
     };
 
-    const startFriendBattle = async (friendTeamPets) => { if (!user) return; await setBattleActive(user.id, true); const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); if (validTeamIds.length === 0) { showNotification("Dein Team ist leer!", 'error'); return; } const myBattleTeam = validTeamIds.map(id => { const p = myPets.find(pet => pet.id === id); return { ...p, currentCd: 0, hp: p.maxHp }; }); const enemyBattleTeam = friendTeamPets.map((p, i) => ({ ...p, id: `friend_pet_${i}_${Date.now()}`, currentCd: 0, hp: p.maxHp })); if (enemyBattleTeam.length === 0) { showNotification("Dieser Freund hat kein Team aufgestellt!", "error"); return; } const p1 = myBattleTeam[0]; const e1 = enemyBattleTeam[0]; const playerFirst = p1.speed >= e1.speed; setActiveBattle({ myTeam: myBattleTeam, enemyTeam: enemyBattleTeam, myIndex: 0, enemyIndex: 0, log: [`Freundschaftskampf gestartet!`], turn: playerFirst ? 'PLAYER' : 'ENEMY', isOver: false, round: 1, isFriendly: true }); setCurrentView('battle'); };
+    const startFriendBattle = async (friendTeamPets) => { 
+        if (!user) return; 
+        await setBattleActive(user.id, true); 
+        const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); 
+        if (validTeamIds.length === 0) { showNotification("Dein Team ist leer!", 'error'); return; } 
+        
+        const myBattleTeam = validTeamIds.map(id => { 
+            const p = myPets.find(pet => pet.id === id); 
+            return { ...p, currentCd: 0, hp: p.maxHp }; 
+        }); 
+        
+        const enemyBattleTeam = friendTeamPets.map((p, i) => ({ 
+            ...p, 
+            id: `friend_pet_${i}_${Date.now()}`, 
+            currentCd: 0, 
+            hp: p.maxHp 
+        })); 
+        
+        if (enemyBattleTeam.length === 0) { showNotification("Dieser Freund hat kein Team aufgestellt!", "error"); return; } 
+        
+        const p1 = myBattleTeam[0]; 
+        const e1 = enemyBattleTeam[0]; 
+        const playerFirst = p1.speed >= e1.speed; 
+        
+        setActiveBattle({ 
+            myTeam: myBattleTeam, 
+            enemyTeam: enemyBattleTeam, 
+            myIndex: 0, 
+            enemyIndex: 0, 
+            log: [`Freundschaftskampf gestartet!`], 
+            turn: playerFirst ? 'PLAYER' : 'ENEMY', 
+            isOver: false, 
+            round: 1, 
+            isFriendly: true 
+        }); 
+        setCurrentView('battle'); 
+    };
 
     // --- WIN LOGIC ---
     const handleWin = async (reward, winningTeamIds, enemyRating, damageReport = {}) => {
@@ -122,7 +144,7 @@ export function useBattleActions(state, showNotification) {
         const today = new Date().toISOString().split('T')[0];
         
         // --- NEUE XP WERTE ---
-        let xpGain = XP_GAIN.PLAYER_WIN; // 200
+        let xpGain = XP_GAIN.PLAYER_WIN; 
         let coinsGain = reward.coins; 
         
         const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
@@ -169,26 +191,22 @@ export function useBattleActions(state, showNotification) {
                 let pXp = (pet.xp || 0) + petBaseXp; 
                 let pLevel = pet.level || 1; 
                 
-                let currentMaxXp = calculateMaxXp(pLevel, pet.rarity);
+                let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel, pet.rarity);
                 let leveledUpCount = 0;
-                let currentStats = { maxHp: pet.maxHp, atk: pet.atk, def: pet.def, ap: pet.ap, res: pet.res, speed: pet.speed };
 
                 while (pXp >= currentMaxXp) { 
                     pLevel++;
                     currentMaxXp = calculateMaxXp(pLevel, pet.rarity);
                     leveledUpCount++; 
-                    
-                    const growth = getLevelUpStats(pet.rarity); 
-                    currentStats.maxHp += growth.hp; 
-                    currentStats.atk += growth.atk; 
-                    currentStats.def += growth.def; 
-                    currentStats.ap += growth.ap; 
-                    currentStats.res += growth.res; 
-                    currentStats.speed += growth.speed; 
                 }
                 
                 if (leveledUpCount > 0) { 
-                    updatePetInDB(petId, { ...currentStats, level: pLevel, xp: pXp, maxXp: currentMaxXp, hp: currentStats.maxHp }); 
+                    const newStats = recalculatePetStats({ ...pet, level: pLevel }, pLevel);
+                    updatePetInDB(petId, { 
+                        ...newStats, 
+                        xp: pXp, 
+                        hp: newStats.maxHp 
+                    }); 
                     trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount); 
                 } else { 
                     updatePetInDB(petId, { xp: pXp }); 
@@ -227,7 +245,7 @@ export function useBattleActions(state, showNotification) {
         const eloChange = calculateEloChange(user.rating || 1000, targetRating, false);
         const today = new Date().toISOString().split('T')[0];
         
-        let xpGain = XP_GAIN.PLAYER_LOSE; // 20
+        let xpGain = XP_GAIN.PLAYER_LOSE; 
         let coinsGain = 5;
 
         const currentBuffs = user.buffs || { coinBoostMatches: 0, xpBoostMatches: 0 };
@@ -268,20 +286,26 @@ export function useBattleActions(state, showNotification) {
             if(pet) {
                 let pXp = (pet.xp || 0) + petXpGain; 
                 let pLevel = pet.level || 1; 
-                let currentMaxXp = calculateMaxXp(pLevel, pet.rarity); 
+                let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel, pet.rarity); 
                 let leveledUpCount = 0; 
-                let currentStats = { maxHp: pet.maxHp, atk: pet.atk, def: pet.def, ap: pet.ap, res: pet.res, speed: pet.speed };
                 
                 while (pXp >= currentMaxXp) { 
                     pLevel++; 
                     currentMaxXp = calculateMaxXp(pLevel, pet.rarity); 
                     leveledUpCount++; 
-                    const growth = getLevelUpStats(pet.rarity); 
-                    currentStats.maxHp += growth.hp; currentStats.atk += growth.atk; currentStats.def += growth.def; currentStats.ap += growth.ap; currentStats.res += growth.res; currentStats.speed += growth.speed; 
                 }
                 
-                if (leveledUpCount > 0) { updatePetInDB(petId, { ...currentStats, level: pLevel, xp: pXp, maxXp: currentMaxXp, hp: currentStats.maxHp }); trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount); } 
-                else { updatePetInDB(petId, { xp: pXp }); }
+                if (leveledUpCount > 0) { 
+                    const newStats = recalculatePetStats({ ...pet, level: pLevel }, pLevel);
+                    updatePetInDB(petId, { 
+                        ...newStats, 
+                        xp: pXp, 
+                        hp: newStats.maxHp 
+                    }); 
+                    trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount); 
+                } else { 
+                    updatePetInDB(petId, { xp: pXp }); 
+                }
             }
         });
 
@@ -289,7 +313,18 @@ export function useBattleActions(state, showNotification) {
         else { if (autoBattleRemaining === 1) { setAutoBattleRemaining(0); showNotification("Auto-Kampf Sequenz abgeschlossen!", "success"); } setCurrentView('arena-hub'); }
     };
 
-    const handleAutoBattle = async (ticketsToUse = 1) => { if (!user) return; if ((user.adTickets || 0) < ticketsToUse) { showNotification("Nicht genügend Tickets!", "error"); return; } const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); if (validTeamIds.length === 0) { showNotification("Team ist leer!", "error"); return; } await updateUser(user.id, { adTickets: user.adTickets - ticketsToUse }); const totalBattles = ticketsToUse * 10; setAutoBattleRemaining(totalBattles); showNotification(`Starte ${totalBattles} Auto-Kämpfe...`, "success"); startBattle(); };
+    const handleAutoBattle = async (ticketsToUse = 1) => { 
+        if (!user) return; 
+        if ((user.adTickets || 0) < ticketsToUse) { showNotification("Nicht genügend Tickets!", "error"); return; } 
+        const validTeamIds = user.team.filter(id => id && myPets.find(p => p.id === id)); 
+        if (validTeamIds.length === 0) { showNotification("Team ist leer!", "error"); return; } 
+        await updateUser(user.id, { adTickets: user.adTickets - ticketsToUse }); 
+        const totalBattles = ticketsToUse * 10; 
+        setAutoBattleRemaining(totalBattles); 
+        showNotification(`Starte ${totalBattles} Auto-Kämpfe...`, "success"); 
+        startBattle(); 
+    };
+    
     const cancelAutoBattle = () => { setAutoBattleRemaining(0); showNotification("Auto-Kampf Sequenz abgebrochen.", "info"); };
 
     return { startBattle, handleWin, handleLose, handleAutoBattle, cancelAutoBattle, startFriendBattle };

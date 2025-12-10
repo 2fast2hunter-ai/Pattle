@@ -5,7 +5,7 @@ import {
     determineRarity, 
     calculateBreedRarity, 
     // generateHybridPet, // <--- NICHT MEHR BENÖTIGT
-    getLevelUpStats, 
+    recalculatePetStats, // <--- NEU: Statt getLevelUpStats nutzen wir die echte Berechnung
     calculateMaxXp 
 } from '../../../utils/gameMechanics';
 import { 
@@ -344,42 +344,28 @@ export function usePetActions(state, showNotification) {
 
             let pXp = (pet.xp || 0) + totalXpToAdd;
             let pLevel = pet.level || 1;
-            let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel);
+            // WICHTIG: Rarity übergeben, sonst falsche XP-Grenzen
+            let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel, pet.rarity);
 
             let leveledUpCount = 0;
             
-            // Aktuelle Stats für Berechnung kopieren
-            let currentStats = { 
-                maxHp: pet.maxHp, atk: pet.atk, def: pet.def, 
-                ap: pet.ap, res: pet.res, speed: pet.speed 
-            };
-
-            // Level Up Loop
+            // Level Up Loop (Wir berechnen hier nur das Level, nicht die Stats)
             while (pXp >= currentMaxXp) {
                 pXp -= currentMaxXp;
                 pLevel++;
-                currentMaxXp = calculateMaxXp(pLevel);
+                currentMaxXp = calculateMaxXp(pLevel, pet.rarity);
                 leveledUpCount++;
-
-                // Fixe Stats pro Level addieren
-                const growth = getLevelUpStats(pet.rarity);
-                currentStats.maxHp += growth.hp;
-                currentStats.atk += growth.atk;
-                currentStats.def += growth.def;
-                currentStats.ap += growth.ap;
-                currentStats.res += growth.res;
-                currentStats.speed += growth.speed;
             }
 
             let updates = { xp: pXp };
             
             if (leveledUpCount > 0) {
+                // Hier nutzen wir recalculatePetStats für korrekte Werte
+                const newStats = recalculatePetStats({ ...pet, level: pLevel }, pLevel);
                 updates = { 
                     ...updates, 
-                    ...currentStats, 
-                    level: pLevel, 
-                    maxXp: currentMaxXp, 
-                    hp: currentStats.maxHp // Heilung bei Level-Up
+                    ...newStats, // Übernimmt maxHp, atk, def, etc.
+                    hp: newStats.maxHp // Heilung bei Level-Up
                 };
                 trackQuestProgress(user, 'LEVEL_UP_PET', leveledUpCount);
             }
