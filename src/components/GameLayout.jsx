@@ -1,10 +1,11 @@
 import React from 'react';
 import { Coins, Gem, Ticket } from 'lucide-react';
+import { getPlayerLevelProgress } from '../utils/mechanics/progression'; 
 
 export function HeaderHUD({ user }) {
-  const xpPercent = Math.min(100, (user.xp / user.xpToNextLevel) * 100);
+  // Berechnung für relativen Fortschritt (Level-basiert)
+  const { current: levelXp, max: levelMaxXp, percent: xpPercent } = getPlayerLevelProgress(user.xp, user.level);
   
-  // ÄNDERUNG: Zählt Tickets direkt aus dem Inventar
   const ticketCount = user?.inventory?.filter(i => i.type === 'TICKET').length || 0;
 
   return (
@@ -39,7 +40,7 @@ export function HeaderHUD({ user }) {
                         
                         {/* Detaillierte XP Anzeige */}
                         <span className="text-[10px] font-bold text-slate-400 mb-0.5">
-                            <span className="text-emerald-400">{user.xp}</span> / {user.xpToNextLevel} XP
+                            <span className="text-emerald-400">{levelXp}</span> / {levelMaxXp} XP
                         </span>
                     </div>
                     

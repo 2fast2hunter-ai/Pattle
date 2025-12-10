@@ -4,7 +4,6 @@ import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES, RESOURCE_ITEMS } from '../d
 import PetAvatar from '../components/PetAvatar';
 
 // --- HELPER: Flatten Resource List ---
-// Erstellt eine einfache Liste aller Item-Definitionen aus villageData
 const ALL_RESOURCE_ITEMS = (() => {
     const list = [];
     Object.values(RESOURCE_ITEMS).forEach(items => list.push(...items));
@@ -64,8 +63,8 @@ function MarketDetailModal({ pet, onClose, price, onBuy, isOwner, onRemove }) {
 }
 
 export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, onSellResource, onRemoveListing, myPets }) {
-    const [activeTab, setActiveTab] = useState('buy'); // 'buy' | 'sell'
-    const [subTab, setSubTab] = useState('pets'); // 'pets' | 'items'
+    const [activeTab, setActiveTab] = useState('buy'); 
+    const [subTab, setSubTab] = useState('pets'); 
     
     const [sellPrice, setSellPrice] = useState('');
     const [sellQuantity, setSellQuantity] = useState(1); 
@@ -82,15 +81,17 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         
         // Für Pets
         if (item.type || item.isEgg) {
+            const displayName = item.isEgg ? 'Ei' : item.name;
             if (searchTerm) {
                 const term = searchTerm.toLowerCase();
-                const matchesName = item.name && item.name.toLowerCase().includes(term);
+                // Suche auch bei Eiern im verschleierten Namen
+                const matchesName = displayName && displayName.toLowerCase().includes(term);
                 if (!matchesName) return false;
             }
             if (filterRarity !== 'ALL' && item.rarity !== filterRarity) return false;
         }
         // Für Ressourcen
-        else if (item.id) { // Resource item struct
+        else if (item.id) { 
             if (searchTerm && !item.label.toLowerCase().includes(searchTerm.toLowerCase())) return false;
         }
 
@@ -108,7 +109,6 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                 return false;
             })
             .sort((a, b) => {
-                // Eigene zuerst
                 const isMyA = a.sellerId === user.id;
                 const isMyB = b.sellerId === user.id;
                 if (isMyA && !isMyB) return -1;
@@ -123,7 +123,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         const eggStacks = {};
         
         myPets.forEach(p => {
-            if (user.team.includes(p.id)) return; // Im Team
+            if (user.team.includes(p.id)) return; 
             if (!checkFilters(p)) return;
 
             if (p.isEgg) {
@@ -160,15 +160,12 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         const price = parseInt(sellPrice);
 
         if (selectedForSale.isResource) {
-             // RESSOURCE VERKAUFEN
              const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
              const totalPrice = price * qty;
-             // onSellResource muss von App.jsx -> useMarketActions kommen
              if (onSellResource) {
                  onSellResource(selectedForSale.id, qty, totalPrice);
              }
         } else {
-            // PET VERKAUFEN
             if (selectedForSale.isStack) {
                 const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
                 const petsToSell = selectedForSale.pets.slice(0, qty);
@@ -201,8 +198,10 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
             const pet = listing.pet;
             const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
             const isEgg = pet.isEgg;
-            const type = isEgg ? null : (TYPES[pet.type] || TYPES.FIRE);
             const displayCount = listing.quantity || 1;
+            
+            // ÄNDERUNG: Name verschleiern auch im "Kaufen" Tab
+            const displayName = isEgg ? `${rarity.label} Ei` : pet.name;
 
             return (
                 <div className="bg-slate-800 rounded-2xl border border-white/5 p-3 flex items-center gap-4">
@@ -211,7 +210,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                          {displayCount > 1 && <div className="absolute -top-1 -right-1 bg-white text-black font-bold text-xs px-1.5 rounded">x{displayCount}</div>}
                      </div>
                      <div className="flex-1">
-                         <div className={`font-black text-sm ${rarity.color}`}>{isEgg ? 'Ei' : pet.name}</div>
+                         <div className={`font-black text-sm ${rarity.color}`}>{displayName}</div>
                          <div className="text-xs text-slate-500">{isOwner ? "Dein Angebot" : listing.sellerName}</div>
                      </div>
                      {isOwner ? (
@@ -225,12 +224,11 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         
         // RESOURCE CARD
         const resInfo = getResourceInfo(listing.itemId);
-        if (!resInfo) return null; // Fallback
+        if (!resInfo) return null; 
 
         return (
             <div className="bg-slate-800 rounded-2xl border border-white/5 p-3 flex items-center gap-4">
                  <div className={`w-16 h-16 rounded-xl bg-slate-900 flex items-center justify-center ${resInfo.color} font-bold text-lg border border-white/10`}>
-                     ? {/* Placeholder Icon, da wir die Icons hier nicht importiert haben, oder nimm Box */}
                      <Box className="w-8 h-8" />
                  </div>
                  <div className="flex-1">
@@ -264,11 +262,15 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         }
         // PET
         const rarity = RARITIES[item.rarity];
+        
+        // ÄNDERUNG: Name verschleiern beim Verkauf
+        const displayName = item.isEgg ? `${rarity.label} Ei` : (item.name || rarity.label);
+
         return (
             <div onClick={() => toggleSaleSelection(item)} className={`bg-slate-800 p-3 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${isSelected ? 'border-green-500' : 'border-white/5'}`}>
                 {item.isEgg ? <Egg className={`w-12 h-12 ${rarity.color}`}/> : <PetAvatar pet={item} className="w-12 h-12"/>}
                 <div className="flex-1">
-                    <div className={`font-bold ${rarity.color}`}>{item.name || rarity.label}</div>
+                    <div className={`font-bold ${rarity.color}`}>{displayName}</div>
                     <div className="text-xs text-slate-400">{item.isStack ? `x${item.count}` : `Lvl ${item.level}`}</div>
                 </div>
                 {isSelected && <div className="bg-green-500 text-black p-1 rounded-full"><DollarSign className="w-4 h-4"/></div>}
@@ -318,24 +320,72 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                         {subTab === 'pets' && sellPetsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} />)}
                         {subTab === 'items' && sellItemsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} />)}
 
-                        {/* INPUT PANEL (Fixed Bottom wenn ausgewählt) */}
+                        {/* INPUT PANEL */}
                         {selectedForSale && (
-                            <div className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-white/10 p-4 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                            <div className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-white/10 p-4 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-300">
                                 <div className="flex flex-col gap-3 max-w-md mx-auto">
-                                    <div className="flex justify-between text-sm font-bold text-white">
-                                        <span>Verkaufe: {selectedForSale.name || selectedForSale.label}</span>
-                                        {/* Quantity Selector nur wenn Stack/Resource */}
+                                    <div className="flex justify-between text-sm font-bold text-white items-center">
+                                        <span>Verkaufe: <span className={selectedForSale.color || 'text-white'}>
+                                            {selectedForSale.isResource 
+                                                ? selectedForSale.label 
+                                                : (selectedForSale.isEgg 
+                                                    ? `${RARITIES[selectedForSale.rarity].label} Ei` 
+                                                    : (selectedForSale.name || selectedForSale.label))
+                                            }
+                                        </span></span>
+                                        
                                         {(selectedForSale.isStack || selectedForSale.isResource) && (
-                                            <div className="flex items-center gap-3">
-                                                <button onClick={() => setSellQuantity(Math.max(1, sellQuantity - 1))}><Minus className="w-4 h-4"/></button>
-                                                <span>{sellQuantity}</span>
-                                                <button onClick={() => setSellQuantity(Math.min(selectedForSale.count, sellQuantity + 1))}><Plus className="w-4 h-4"/></button>
+                                            <div className="flex items-center gap-2 bg-slate-800 rounded-xl p-1 border border-white/10">
+                                                <button 
+                                                    onClick={() => setSellQuantity(Math.max(1, (parseInt(sellQuantity) || 0) - 1))} 
+                                                    className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white"
+                                                >
+                                                    <Minus className="w-4 h-4"/>
+                                                </button>
+                                                
+                                                <input
+                                                    type="number"
+                                                    value={sellQuantity}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        if (val === '') {
+                                                            setSellQuantity('');
+                                                        } else {
+                                                            const num = parseInt(val);
+                                                            if (!isNaN(num)) setSellQuantity(num);
+                                                        }
+                                                    }}
+                                                    onBlur={() => {
+                                                        let val = parseInt(sellQuantity);
+                                                        if (isNaN(val) || val < 1) val = 1;
+                                                        if (val > selectedForSale.count) val = selectedForSale.count;
+                                                        setSellQuantity(val);
+                                                    }}
+                                                    className="w-12 bg-transparent text-center font-bold text-white outline-none appearance-none"
+                                                />
+
+                                                <button 
+                                                    onClick={() => setSellQuantity(Math.min(selectedForSale.count, (parseInt(sellQuantity) || 0) + 1))} 
+                                                    className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white"
+                                                >
+                                                    <Plus className="w-4 h-4"/>
+                                                </button>
                                             </div>
                                         )}
                                     </div>
                                     <div className="flex gap-2">
-                                        <input type="number" placeholder="Preis (Gesamt)" value={sellPrice} onChange={(e) => setSellPrice(e.target.value)} className="bg-slate-800 border border-white/10 rounded-xl p-3 text-white font-bold w-full" autoFocus />
-                                        <button onClick={handleSellSubmit} className="bg-green-600 text-white font-black px-6 rounded-xl">OK</button>
+                                        <div className="relative flex-1">
+                                            <input 
+                                                type="number" 
+                                                placeholder="Preis (Gesamt)" 
+                                                value={sellPrice} 
+                                                onChange={(e) => setSellPrice(e.target.value)} 
+                                                className="bg-slate-800 border border-white/10 rounded-xl p-3 pl-4 text-white font-bold w-full outline-none focus:border-green-500 transition-colors" 
+                                                autoFocus 
+                                            />
+                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">GOLD</span>
+                                        </div>
+                                        <button onClick={handleSellSubmit} className="bg-green-600 hover:bg-green-500 text-white font-black px-6 rounded-xl shadow-lg active:scale-95 transition-all">OK</button>
                                     </div>
                                 </div>
                             </div>

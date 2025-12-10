@@ -33,33 +33,30 @@ export const TYPES = {
   ORDER:     { label: 'Ordnung',    color: 'text-white',      bg: 'bg-slate-400',  bgLight: 'bg-slate-400/20',  icon: <Gavel /> },
 };
 
-export const TYPE_ADVANTAGES = {
-    FIRE: { super: ['NATURE', 'ICE', 'METAL', 'WIND'], strong: ['DARK', 'GHOST', 'POISON'] },
-    WATER: { super: ['FIRE', 'EARTH', 'ROCK'], strong: ['METAL', 'TECH', 'ACID'] },
-    NATURE: { super: ['WATER', 'EARTH', 'ROCK', 'LIGHT'], strong: ['WIND', 'SOUND'] },
-    WIND: { super: ['FIGHTING', 'NATURE', 'SOUND'], strong: ['FIRE', 'ELECTRIC'] },
-    EARTH: { super: ['FIRE', 'ELECTRIC', 'POISON', 'ROCK', 'METAL'], strong: ['WATER'] },
-    ELECTRIC: { super: ['WATER', 'WIND', 'TECH'], strong: ['METAL', 'LIGHT'] },
-    ICE: { super: ['NATURE', 'EARTH', 'DRAGON', 'WIND'], strong: ['WATER', 'POISON'] },
-    FIGHTING: { super: ['NORMAL', 'ICE', 'ROCK', 'DARK', 'METAL'], strong: ['TECH'] },
-    POISON: { super: ['NATURE', 'FAIRY'], strong: ['FIGHTING', 'WATER'] },
-    GROUND: { super: ['FIRE', 'ELECTRIC', 'POISON', 'ROCK', 'METAL'], strong: [] },
-    FLYING: { super: ['NATURE', 'FIGHTING', 'BUG'], strong: [] },
-    PSYCHIC: { super: ['FIGHTING', 'POISON'], strong: ['MAGIC'] },
-    BUG: { super: ['NATURE', 'PSYCHIC', 'DARK'], strong: [] },
-    ROCK: { super: ['FIRE', 'ICE', 'FLYING', 'BUG'], strong: ['ELECTRIC'] },
-    GHOST: { super: ['PSYCHIC', 'GHOST'], strong: ['DARK', 'MAGIC'] },
-    DRAGON: { super: ['DRAGON'], strong: ['FIRE', 'WATER', 'ELECTRIC', 'NATURE'] },
-    METAL: { super: ['ICE', 'ROCK', 'FAIRY'], strong: ['NORMAL', 'NATURE', 'PSYCHIC', 'BUG', 'DRAGON'] },
-    DARK: { super: ['PSYCHIC', 'GHOST', 'LIGHT'], strong: ['VOID'] },
-    FAIRY: { super: ['FIGHTING', 'DRAGON', 'DARK'], strong: ['MAGIC'] },
-    LIGHT: { super: ['DARK', 'GHOST', 'CHAOS'], strong: ['FIRE', 'ELECTRIC'] },
-    MAGIC: { super: ['FIGHTING', 'POISON', 'PHYSICAL'], strong: ['PSYCHIC', 'ELEMENTAL'] },
-    TECH: { super: ['WATER', 'WIND', 'TIME'], strong: ['METAL', 'ELECTRIC'] },
-    SOUND: { super: ['WATER', 'ICE', 'GLASS'], strong: ['PSYCHIC'] },
-    TIME: { super: ['SPACE', 'CHAOS'], strong: ['TECH', 'VOID'] },
-    SPACE: { super: ['TIME', 'ORDER'], strong: ['MAGIC', 'TECH'] },
-    VOID: { super: ['LIGHT', 'MATTER', 'LIFE'], strong: ['SPACE', 'TIME'] },
-    CHAOS: { super: ['ORDER', 'STRUCTURE'], strong: ['VOID', 'MAGIC'] },
-    ORDER: { super: ['CHAOS', 'ENTROPY'], strong: ['LIGHT', 'TECH'] }
-};
+// Generiere die Effektivitäts-Tabelle basierend auf dem Kreislauf-Muster:
+// Stark (2x) gegen die 4 VORHERIGEN Typen.
+// Schwach (0.5x) gegen die 4 NÄCHSTEN Typen.
+const typeKeys = Object.keys(TYPES);
+const ADVANTAGES = {};
+
+typeKeys.forEach((type, index) => {
+    const superEffective = [];
+    const weakAgainst = [];
+
+    // 4 Vorherige Typen (Wrap-around)
+    for (let i = 1; i <= 4; i++) {
+        let targetIndex = index - i;
+        if (targetIndex < 0) targetIndex += typeKeys.length;
+        superEffective.push(typeKeys[targetIndex]);
+    }
+
+    // 4 Nächste Typen (Wrap-around)
+    for (let i = 1; i <= 4; i++) {
+        let targetIndex = (index + i) % typeKeys.length;
+        weakAgainst.push(typeKeys[targetIndex]);
+    }
+
+    ADVANTAGES[type] = { super: superEffective, weak: weakAgainst };
+});
+
+export const TYPE_ADVANTAGES = ADVANTAGES;

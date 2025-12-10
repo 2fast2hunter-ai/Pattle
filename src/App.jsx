@@ -66,14 +66,14 @@ export default function App() {
     selectedFriend, setSelectedFriend, settings, setSettings,
     buyLootbox, buyTickets, handleRedeemTicket, handleReduceCooldown, watchAdForReward,
     startBattle, handleWin, handleLose, handleAddFriend,
-    handleBuyMarket, handleSellMarket, addToTeam, removeFromTeam,
+    handleBuyMarket, handleSellMarket, handleSellResource, addToTeam, removeFromTeam, // <--- HIER HINZUGEFÜGT
     hatchEgg, startIncubation, breedPets,
     handleAutoBattle, autoBattleRemaining, cancelAutoBattle, startFriendBattle,
     handleRemoveListing, renamePet,
     assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
     tradeResources, claimMilestone, addIdleTime, 
     buyCosmetic, buySpecialOffer, applyXpItem,
-    releasePet,claimTimedReward 
+    releasePet, claimTimedReward 
   } = gameLogic;
 
   const [selectedVillageSlot, setSelectedVillageSlot] = useState(null);
@@ -187,7 +187,9 @@ export default function App() {
           {currentView === 'item-use-select-pet' && (<InventoryScreen pets={myPets.filter(p => !p.isEgg)} title="Wähle ein Pet" onBack={() => setCurrentView('item-inventory')} onSelectPet={handleApplyItemToPet} highlightMode={true} />)}
 
           {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} onBuyTickets={buyTickets} onWatchAd={watchAdForReward} user={user} onClaimTimedReward={claimTimedReward} />}
-          {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} onRemoveListing={handleRemoveListing} myPets={myPets} />}
+          {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} onSellResource={handleSellResource} onRemoveListing={handleRemoveListing} myPets={myPets} />}
+          {/* HIER HINZUGEFÜGT: onSellResource={handleSellResource} */}
+          
           {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
           {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
           {currentView === 'arena-hub' && <ArenaHub user={user} onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')} onLeaderboard={() => setCurrentView('leaderboard')} onAutoBattle={handleAutoBattle} />}

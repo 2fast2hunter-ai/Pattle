@@ -10,7 +10,6 @@ const getRarityIndex = (rarityKey) => {
 };
 
 // Formel: Value = Base + (Level - 1) * Growth
-// Growth = (Base - 1) + ScalingFactor
 const calculateStat = (baseValue, scalingFactor, level) => {
     const growth = (baseValue - 1) + scalingFactor;
     const val = baseValue + (level - 1) * growth;
@@ -89,4 +88,32 @@ export const calculatePetLevelFromXp = (currentXp, rarityKey) => {
 export const calculateMaxXp = (level, rarityKey) => {
     if (level >= 100) return Infinity;
     return calculatePetTotalXpForLevel(level + 1, rarityKey);
+};
+
+// --- NEU: Helfer für XP-Balken (Relativer Fortschritt) ---
+export const getPetLevelProgress = (pet) => {
+    const level = pet.level || 1;
+    const currentXp = pet.xp || 0;
+    const rarity = pet.rarity || 'COMMON';
+
+    if (level >= 100) return { current: 100, max: 100, percent: 100 };
+
+    // Start XP dieses Levels (Level 1 startet bei 0, Level 2 bei z.B. 80)
+    let startXp = 0;
+    if (level > 1) {
+        startXp = calculatePetTotalXpForLevel(level, rarity);
+    }
+
+    // Ziel XP für das nächste Level
+    const nextLevelXp = calculatePetTotalXpForLevel(level + 1, rarity);
+
+    // Berechne Fortschritt innerhalb dieses Levels
+    const xpInLevel = Math.max(0, currentXp - startXp);
+    const xpNeededForLevel = Math.max(1, nextLevelXp - startXp);
+
+    return {
+        current: Math.floor(xpInLevel),
+        max: Math.floor(xpNeededForLevel),
+        percent: Math.min(100, Math.max(0, (xpInLevel / xpNeededForLevel) * 100))
+    };
 };

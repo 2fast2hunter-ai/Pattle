@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Gem, X, Sparkles, Trash2, AlertTriangle } from 'lucide-react';
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
+import { getPetLevelProgress } from '../utils/mechanics/petStats'; // IMPORT HINZUGEFÜGT
 import PetAvatar from '../components/PetAvatar';
 
 // --- RENAME MODAL ---
@@ -21,7 +22,7 @@ function RenameModal({ currentName, onClose, onConfirm, cost }) {
     );
 }
 
-// --- DELETE MODAL (NEU) ---
+// --- DELETE MODAL ---
 function DeleteModal({ petName, onClose, onConfirm }) {
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-6 animate-in fade-in zoom-in-95">
@@ -45,7 +46,7 @@ function DeleteModal({ petName, onClose, onConfirm }) {
     );
 }
 
-export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet }) { // NEU: onReleasePet prop
+export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet }) {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
@@ -56,9 +57,9 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
   const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
   const species = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt' };
   
-  const xp = pet.xp || 0;
-  const maxXp = pet.maxXp || 100;
-  const xpPercent = Math.min(100, (xp / maxXp) * 100);
+  // --- NEU: Benutze die Helper-Funktion für korrekten Balken ---
+  const { current: levelXp, max: levelMaxXp, percent: xpPercent } = getPetLevelProgress(pet);
+  // ------------------------------------------------------------
 
   const stats = [
       { icon: Swords, label: 'ANGRIFF', value: pet.atk, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
@@ -79,7 +80,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
       const success = await onReleasePet(pet.id);
       if (success) {
           setShowDeleteModal(false);
-          onBack(); // Zurück zum Inventar
+          onBack();
       }
   };
 
@@ -131,10 +132,15 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
                 <div className={`flex items-center gap-1 ${type.color} text-[10px] font-black uppercase`}>{type.icon} {type.label}</div>
             </div>
 
-            {/* XP BAR */}
+            {/* XP BAR (ANGEPASST) */}
             <div className="w-64 px-4 py-2 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg">
-                <div className="flex justify-between items-center mb-1"><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Erfahrung</span><span className="text-[10px] font-mono font-bold text-white">{xp} / {maxXp}</span></div>
-                <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5"><div className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: `${xpPercent}%` }}></div></div>
+                <div className="flex justify-between items-center mb-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Erfahrung</span>
+                    <span className="text-[10px] font-mono font-bold text-white">{levelXp} / {levelMaxXp}</span>
+                </div>
+                <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5">
+                    <div className="h-full bg-gradient-to-r from-blue-600 to-indigo-500 transition-all duration-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" style={{ width: `${xpPercent}%` }}></div>
+                </div>
             </div>
         </div>
 
@@ -158,7 +164,6 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
                 </div>
             </div>
             
-            {/* NEU: DELETE BUTTON */}
             <button 
                 onClick={() => setShowDeleteModal(true)} 
                 className="w-full py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all active:scale-95"
