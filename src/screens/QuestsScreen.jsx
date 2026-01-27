@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw, Coins, Gem, Sparkles, Egg, Trophy, Info } from 'lucide-react';
+import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw, Coins, Gem, Sparkles, Egg, Trophy, Info, Package } from 'lucide-react';
 import { claimQuestReward, claimCompositeReward } from '../utils/db';
-import { RARITIES, TYPES } from '../data/gameData';
+import { RARITIES, TYPES, COMPOSITE_QUEST_REWARDS } from '../data/gameData';
 
 // Hilfskomponente für schöne Belohnungs-Badges
-const RewardBadge = ({ type, amount }) => {
+const RewardBadge = ({ type, amount, label: customLabel }) => {
     let Icon = Sparkles;
     let color = 'text-slate-400';
     let bg = 'bg-slate-800';
@@ -32,6 +32,11 @@ const RewardBadge = ({ type, amount }) => {
         color = rarity.color;
         bg = `bg-slate-800 border ${rarity.border}`;
         label = `${rarity.label} Ei`;
+    } else if (type === 'LOOTBOX') {
+        Icon = Package;
+        color = 'text-amber-400';
+        bg = 'bg-amber-500/10 border border-amber-500/20';
+        label = customLabel || 'Truhe';
     }
 
     return (
@@ -76,7 +81,15 @@ export default function QuestsScreen({ user, onBack }) {
     const claimedComposite = currentQuestData?.claimedComposite || false;
     const progressPercent = Math.min(100, (completedCount / totalQuests) * 100);
     const isCompositeReady = completedCount >= totalQuests && !claimedComposite;
-    const compositeReward = currentQuestData?.reward;
+    
+    // --- VISUAL OVERRIDE: Neue Belohnungen sofort anzeigen ---
+    // Wir nutzen die neuen Definitionen aus COMPOSITE_QUEST_REWARDS basierend auf dem Tab
+    const compositeReward = COMPOSITE_QUEST_REWARDS[activeTab.toUpperCase()];
+    
+    // Fixe XP Werte für die Anzeige
+    const fixedXpRewards = { daily: 500, weekly: 1000, monthly: 5000 };
+    const displayXp = fixedXpRewards[activeTab];
+    // ---------------------------------------------------------
 
     const handleClaim = async (questId) => {
         setClaiming(questId);
@@ -192,7 +205,7 @@ export default function QuestsScreen({ user, onBack }) {
                                     </p>
                                 </div>
                                 <div className="scale-90 origin-right">
-                                    <RewardBadge type={compositeReward.rewardType} amount={compositeReward.rewardAmount} />
+                                    <RewardBadge type={compositeReward.rewardType} amount={compositeReward.rewardAmount} label={compositeReward.rewardType === 'LOOTBOX' ? 'Elementar-Truhe' : null} />
                                 </div>
                             </div>
 
@@ -267,7 +280,7 @@ export default function QuestsScreen({ user, onBack }) {
 
                                         {/* Belohnung (Rechts) */}
                                         <div className="shrink-0">
-                                            <RewardBadge type={quest.rewardType} amount={quest.rewardAmount} />
+                                            <RewardBadge type="XP" amount={displayXp} />
                                         </div>
                                     </div>
 

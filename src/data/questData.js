@@ -113,7 +113,7 @@ export const QUEST_TEMPLATES = [
 ];
 
 export const COMPOSITE_QUEST_REWARDS = {
-    DAILY: { rewardType: 'GEMS', rewardAmount: 5, label: "Tages-Bonus" },
-    WEEKLY: { rewardType: 'EGG_EPIC', rewardAmount: 1, label: "Wochen-Truhe" },
-    MONTHLY: { rewardType: 'COINS', rewardAmount: 10000, label: "Monats-Schatz" }
+    DAILY: { rewardType: 'GEMS', rewardAmount: 10, label: "Tages-Bonus" },
+    WEEKLY: { rewardType: 'COINS', rewardAmount: 7500, label: "Wochen-Bonus" },
+    MONTHLY: { rewardType: 'LOOTBOX', rewardAmount: 1, variant: 'TYPE_DAILY', label: "Monats-Truhe" }
 };

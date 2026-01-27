@@ -12,24 +12,27 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
         className={`
             group relative w-full p-0.5 rounded-3xl shadow-lg shadow-black/20
             bg-gradient-to-br ${colorFrom} ${colorTo}
-            transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left animate-in slide-in-from-right-8 fade-in fill-mode-backwards
+            transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left animate-in slide-in-from-right-8 fade-in fill-mode-backwards overflow-hidden
         `}
     >
         {/* Innerer Container (Glas-Effekt) */}
-        <div className="bg-slate-900/80 backdrop-blur-md rounded-[22px] p-5 h-full flex items-center justify-between border border-white/10 relative overflow-hidden">
+        <div className="bg-slate-900/80 backdrop-blur-md rounded-[22px] p-5 h-full flex items-center justify-between border border-white/10 relative overflow-hidden group-hover:bg-slate-900/70 transition-colors">
             
             {/* Hintergrund Glanz */}
             <div className="absolute top-0 left-0 w-full h-1/2 bg-white/5 pointer-events-none"></div>
             
+            {/* Shimmer */}
+            <div className="absolute inset-0 bg-shimmer opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none"></div>
+            
             <div className="flex items-center gap-5 relative z-10">
                 {/* Icon Container */}
-                <div className={`w-14 h-14 bg-black/30 rounded-2xl flex items-center justify-center shadow-inner border border-white/10 group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-14 h-14 bg-black/30 rounded-2xl flex items-center justify-center shadow-inner border border-white/10 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300`}>
                     <Icon className={`w-7 h-7 ${iconColor} drop-shadow-md`} />
                 </div>
                 
                 {/* Text */}
                 <div>
-                    <h3 className="text-xl font-black italic text-white tracking-wide leading-none mb-1 drop-shadow-sm">{title}</h3>
+                    <h3 className="text-xl font-black italic text-white tracking-wide leading-none mb-1 drop-shadow-md group-hover:text-glow transition-all">{title}</h3>
                     <p className="text-slate-300 text-xs font-bold uppercase tracking-wider opacity-80">{subtitle}</p>
                 </div>
             </div>
@@ -60,7 +63,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
       </div>
 
       {/* --- LISTE --- */}
-      <div className="flex-1 overflow-y-auto space-y-4 p-1 pb-20 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-1 pb-20 scrollbar-hide grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 content-start">
 
         {/* 1. PET SAMMLUNG (Blau) */}
         <HubCard 

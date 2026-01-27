@@ -57,7 +57,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade }) {
                 {/* OFFER SECTION (Was ich gebe) */}
                 <div>
                     <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 pl-1">Dein Angebot (aus Lager)</h3>
-                    <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1">
                         {allItems.map(item => {
                             const count = storage[item.id] || 0;
                             // Nur anzeigen, wenn man es besitzt UND es Rezepte dafür gibt
@@ -84,7 +84,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade }) {
                 <div>
                     <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 pl-1">Du erhältst</h3>
                     {availableTargets.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1">
                             {availableTargets.map(item => {
                                 // Unlock Check
                                 const resConfig = RESOURCES[item.category.toUpperCase()];

@@ -85,7 +85,7 @@ export default function InventoryScreen({ pets, title = "Inventar", onBack, onSe
                         <p className="text-sm font-bold">Keine Pets gefunden.</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
                         {filteredPets.map(pet => {
                             const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
                             const typeInfo = TYPES[pet.type] || TYPES.FIRE;

@@ -73,7 +73,7 @@ export default function App() {
     assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
     tradeResources, claimMilestone, addIdleTime, 
     buyCosmetic, buySpecialOffer, applyXpItem,
-    releasePet, claimTimedReward 
+    releasePet, claimTimedReward, openLootbox
   } = gameLogic;
 
   const [selectedVillageSlot, setSelectedVillageSlot] = useState(null);
@@ -140,15 +140,18 @@ export default function App() {
   if (currentView === 'auth' || !user) return <AuthScreen onLogin={handleLogin} />;
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-900 font-sans text-white sm:max-w-md mx-auto shadow-2xl overflow-hidden sm:border-x border-slate-800 relative">
+    <div className="flex flex-col h-full w-full bg-slate-900 font-sans text-white overflow-hidden relative">
       {notification && <Notification notification={notification} />}
       {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} />}
       {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
-      {currentView !== 'battle' && <HeaderHUD user={user} />}
+      
+      {currentView !== 'battle' && (
+        <div className="w-full max-w-6xl mx-auto"><HeaderHUD user={user} /></div>
+      )}
       
       <main className="flex-1 relative overflow-hidden bg-slate-900">
         <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-900/40 via-slate-900 to-slate-900 -z-10"></div>
-        <div className="h-full overflow-y-auto p-4 scrollbar-hide pb-10">
+        <div className="h-full overflow-y-auto p-4 scrollbar-hide pb-10 w-full max-w-6xl mx-auto">
           
           {currentView === 'menu' && (<MainMenu user={user} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} />)}
           
@@ -183,7 +186,7 @@ export default function App() {
           {currentView === 'village-trading' && (<VillageTradingScreen user={user} onBack={() => setCurrentView('village')} onTrade={tradeResources} />)}
           {currentView === 'village-cosmetics' && (<VillageCosmeticsScreen user={user} onBack={() => setCurrentView('village')} onBuy={buyCosmetic} onBuySpecial={buySpecialOffer} />)}
 
-          {currentView === 'item-inventory' && (<ItemInventoryScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onRedeemTicket={handleRedeemTicket} onStartIncubation={startIncubation} user={user} onUseConsumable={handleUseItemRequest} />)}
+          {currentView === 'item-inventory' && (<ItemInventoryScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onRedeemTicket={handleRedeemTicket} onStartIncubation={startIncubation} user={user} onUseConsumable={handleUseItemRequest} onOpenLootbox={openLootbox} />)}
           {currentView === 'item-use-select-pet' && (<InventoryScreen pets={myPets.filter(p => !p.isEgg)} title="Wähle ein Pet" onBack={() => setCurrentView('item-inventory')} onSelectPet={handleApplyItemToPet} highlightMode={true} />)}
 
           {currentView === 'shop' && <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} onBuyTickets={buyTickets} onWatchAd={watchAdForReward} user={user} onClaimTimedReward={claimTimedReward} />}

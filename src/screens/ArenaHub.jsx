@@ -31,16 +31,19 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
           className={`
               relative group w-full p-0.5 rounded-[24px] shadow-lg
               bg-gradient-to-br ${colorFrom} ${colorTo}
-              transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left h-32 sm:h-36 animate-in slide-in-from-bottom-8 fade-in fill-mode-backwards
+              transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left h-32 sm:h-36 animate-in slide-in-from-bottom-8 fade-in fill-mode-backwards overflow-hidden
           `}
       >
-          <div className="bg-slate-900/80 backdrop-blur-xl rounded-[22px] p-4 sm:p-5 h-full flex flex-col justify-between relative overflow-hidden">
-              <div className={`absolute -right-4 -bottom-4 text-${iconColor.split('-')[1]}-500/10 group-hover:text-${iconColor.split('-')[1]}-500/20 transition-colors`}>
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-[22px] p-4 sm:p-5 h-full flex flex-col justify-between relative overflow-hidden group-hover:bg-slate-900/70 transition-colors">
+              
+              <div className="absolute inset-0 bg-shimmer opacity-0 group-hover:opacity-10 transition-opacity pointer-events-none"></div>
+
+              <div className={`absolute -right-4 -bottom-4 text-${iconColor.split('-')[1]}-500/10 group-hover:text-${iconColor.split('-')[1]}-500/20 transition-colors group-hover:scale-110 duration-500`}>
                   <Icon className="w-20 h-20 sm:w-24 sm:h-24" />
               </div>
 
               <div className="flex justify-between items-start relative z-10">
-                  <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-${iconColor.split('-')[1]}-500/20 rounded-2xl flex items-center justify-center ${iconColor} shadow-inner border border-white/5`}>
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-${iconColor.split('-')[1]}-500/20 rounded-2xl flex items-center justify-center ${iconColor} shadow-inner border border-white/5 group-hover:scale-110 transition-transform`}>
                       <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                   </div>
                   
@@ -96,13 +99,13 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
             <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-orange-700"></div>
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
             
-            <div className="absolute -right-8 -bottom-8 text-red-900/30 group-hover:text-white/10 transition-colors rotate-12 duration-500 group-hover:rotate-6 group-hover:scale-110">
+            <div className="absolute -right-8 -bottom-8 text-red-900/30 group-hover:text-white/10 transition-colors rotate-12 duration-500 group-hover:rotate-0 group-hover:scale-110">
                 <Swords className="w-64 h-64 sm:w-72 sm:h-72" />
             </div>
             
             <div className="absolute inset-0 flex flex-col justify-between p-5 sm:p-6">
                 <div className="flex justify-between items-start">
-                    <div className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 shadow-lg">
+                    <div className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 shadow-lg animate-pulse-slow">
                         <span className="text-[9px] sm:text-[10px] font-bold text-red-100 uppercase tracking-widest flex items-center gap-1.5">
                             <Flame className="w-3 h-3 fill-current animate-pulse" /> PvP Zone
                         </span>
@@ -110,17 +113,19 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                 </div>
                 
                 <div>
-                    <h3 className="text-4xl sm:text-5xl font-black italic text-white mb-2 drop-shadow-xl uppercase tracking-tighter">Kämpfen</h3>
+                    <h3 className="text-4xl sm:text-5xl font-black italic text-white mb-2 drop-shadow-xl uppercase tracking-tighter group-hover:text-glow transition-all">Kämpfen</h3>
                     <p className="text-red-100/90 text-xs sm:text-sm font-bold max-w-[200px] leading-tight">Fordere Gegner heraus und erklimme die Rangliste!</p>
                 </div>
             </div>
           </button>
           
           {/* NEU: AUTO BATTLE CONFIG CARD */}
-          <div className="bg-slate-800 border border-slate-700 rounded-3xl p-4 flex flex-col gap-3 shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards">
+          <div className="bg-slate-800/80 backdrop-blur-md border border-slate-700 rounded-3xl p-4 flex flex-col gap-3 shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+              
               <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400">
+                      <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400 shadow-inner border border-purple-500/20">
                           <Zap className="w-6 h-6" />
                       </div>
                       <div className="text-left">
@@ -177,7 +182,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
               </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               <HubTile 
                   title="Team" 
                   subtitle="Verwalten" 

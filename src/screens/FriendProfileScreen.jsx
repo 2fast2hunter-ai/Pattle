@@ -113,7 +113,7 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
                     </div>
                 </div>
                 {loading ? (<div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>) : (
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                         {categories.map((cat) => (
                             <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} className="bg-slate-800 p-4 rounded-2xl border border-white/5 flex flex-col justify-between h-32 hover:bg-slate-750 transition-all active:scale-95 group relative overflow-hidden">
                                 <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${cat.color} opacity-10 blur-2xl rounded-full group-hover:opacity-20 transition-opacity`}></div>

@@ -78,7 +78,8 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-4">
                 
                 {/* IDLE TIME BANNER */}
-                <div className={`rounded-2xl p-4 border flex items-center justify-between shadow-lg transition-all ${isActive ? 'bg-indigo-900/40 border-indigo-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                <div className={`rounded-2xl p-4 border flex items-center justify-between shadow-lg transition-all relative overflow-hidden ${isActive ? 'bg-indigo-900/40 border-indigo-500/30' : 'bg-red-900/20 border-red-500/30'}`}>
+                    {isActive && <div className="absolute inset-0 bg-indigo-500/5 animate-pulse-slow pointer-events-none"></div>}
                     <div className="flex items-center gap-3">
                         <div className={`p-2.5 rounded-xl ${isActive ? 'bg-indigo-500 text-white' : 'bg-red-500/20 text-red-500'}`}>
                             {isActive ? <Zap className="w-5 h-5 animate-pulse" /> : <Timer className="w-5 h-5" />}
@@ -114,7 +115,7 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                 </div>
 
                 {/* RESSOURCEN GRID */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                     {Object.keys(RESOURCES).map(key => {
                         const res = RESOURCES[key];
                         const level = user.village.buildings[res.id] || 1;
@@ -133,12 +134,12 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                                     ${isUnlocked ? 'bg-slate-800 border-white/5 hover:border-white/20 hover:scale-[1.02] active:scale-95' : 'bg-slate-900/50 border-slate-800 opacity-60 cursor-not-allowed'}
                                 `}
                             >
-                                <div className={`absolute -right-4 -top-4 ${res.color} opacity-10 group-hover:opacity-20 transition-opacity`}>
+                                <div className={`absolute -right-4 -top-4 ${res.color} opacity-10 group-hover:opacity-20 transition-opacity group-hover:scale-110 duration-700`}>
                                     {React.createElement(RESOURCE_ICONS[res.id], { className: "w-24 h-24" })}
                                 </div>
                                 
                                 <div className="relative z-10">
-                                    <div className={`w-10 h-10 ${isUnlocked ? res.bg : 'bg-slate-700'} rounded-xl flex items-center justify-center shadow-md mb-3`}>
+                                    <div className={`w-10 h-10 ${isUnlocked ? res.bg : 'bg-slate-700'} rounded-xl flex items-center justify-center shadow-md mb-3 group-hover:scale-110 transition-transform`}>
                                         {isUnlocked ? React.createElement(RESOURCE_ICONS[res.id], { className: "w-5 h-5 text-white" }) : <Lock className="w-5 h-5 text-slate-500" />}
                                     </div>
                                     <h3 className={`font-black text-sm leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{res.buildingLabel}</h3>
@@ -163,7 +164,7 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                 </div>
 
                 {/* EXTRA KACHELN (3er Grid) */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                     <button onClick={onOpenMilestones} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
                         <Trophy className="w-6 h-6 text-yellow-400" />
                         <span className="text-[10px] font-black text-white uppercase">Meilensteine</span>

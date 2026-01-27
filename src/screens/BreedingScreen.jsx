@@ -288,7 +288,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
           {filteredPets.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-40 text-slate-500 opacity-50"><Ghost className="w-12 h-12 mb-2"/><p className="text-xs font-bold">Keine passenden Pets.</p></div>
           ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {filteredPets.map(pet => {
                       const rarity = RARITIES[pet.rarity];
                       const type = TYPES[pet.type];

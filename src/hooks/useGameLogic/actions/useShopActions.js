@@ -1,5 +1,7 @@
 import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS, TIMED_REWARDS } from '../../../data/gameData';
-import { updateUser, trackQuestProgress } from '../../../utils/db';
+import { updateUser, trackQuestProgress, addPetToDB } from '../../../utils/db';
+import { determineRarity } from '../../../utils/mechanics/lootLogic';
+import { generatePet } from '../../../utils/mechanics/petGeneration';
 
 export function useShopActions(state, showNotification) {
     const { user } = state;
@@ -133,5 +135,51 @@ export function useShopActions(state, showNotification) {
         showNotification(`${rewardConfig.label} eingesammelt!`, "success");
     };
 
-    return { buyLootbox, buyTickets, watchAdForReward, claimTimedReward };
+    const openLootbox = async (boxId, boxVariant) => {
+        if (!user) return null;
+
+        const inventory = user.inventory || [];
+        const boxIndex = inventory.findIndex(i => i.id === boxId);
+        
+        if (boxIndex === -1) {
+            showNotification("Box nicht gefunden!", "error");
+            return null;
+        }
+
+        // Determine Rarity
+        let dropConfigKey = boxVariant;
+        if (boxVariant === 'TYPE_DAILY' || boxVariant.startsWith('ELEMENTAL_')) {
+            dropConfigKey = 'MASTER'; 
+        } else if (!LOOTBOXES[boxVariant]) {
+             dropConfigKey = 'DAILY'; 
+        }
+
+        const rarity = determineRarity(dropConfigKey);
+        
+        // Determine Type
+        let type = null;
+        if (boxVariant.startsWith('ELEMENTAL_')) {
+            type = boxVariant.split('_')[1];
+        }
+        
+        const newPet = generatePet(1, type, rarity, null, 'LOOTBOX');
+        newPet.ownerId = user.id;
+        newPet.isEgg = true;
+        newPet.hatchAt = 0;
+
+        const newInventory = [...inventory];
+        newInventory.splice(boxIndex, 1);
+
+        try {
+            await updateUser(user.id, { inventory: newInventory });
+            await addPetToDB(newPet, user.id);
+            return newPet;
+        } catch (error) {
+            console.error("Lootbox Error:", error);
+            showNotification("Fehler beim Öffnen.", "error");
+            return null;
+        }
+    };
+
+    return { buyLootbox, buyTickets, watchAdForReward, claimTimedReward, openLootbox };
 }

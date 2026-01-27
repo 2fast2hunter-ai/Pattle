@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package, Ticket, Gift, Sparkles, TreePine, Pickaxe, Fish, Star, Cpu, FlaskConical, Zap, Palette, Minus, Plus } from 'lucide-react';
 import { RARITIES, RESOURCE_ITEMS, CONSUMABLES, COSMETICS, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
@@ -105,7 +105,7 @@ const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, a
 };
 
 
-export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable }) { 
+export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable, onOpenLootbox }) { 
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
   const [selectedPotion, setSelectedPotion] = useState(null); 
@@ -114,6 +114,8 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const [animationStage, setAnimationStage] = useState('idle'); 
   const [processingBoxId, setProcessingBoxId] = useState(null);
   const [resultPet, setResultPet] = useState(null); 
+  const [cycleRarity, setCycleRarity] = useState(RARITIES.COMMON);
+  const [canCollect, setCanCollect] = useState(false);
 
   // --- RESSOURCEN ---
   const villageStorage = user?.village?.storage || {};
@@ -177,6 +179,44 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const ticketItems = Object.values(ticketStacks); 
   const potionItems = Object.values(potionStacks);
 
+  // --- CYCLING EFFECT ---
+  useEffect(() => {
+      if (animationStage === 'cycling' && resultPet) {
+          const sortedRarities = Object.values(RARITIES).sort((a, b) => a.id - b.id);
+          const targetRarity = RARITIES[resultPet.rarity] || RARITIES.COMMON;
+
+          let currentIndex = 0;
+          let delay = 50;
+          let timeoutId;
+
+          const loop = () => {
+              const currentRarity = sortedRarities[currentIndex];
+              setCycleRarity(currentRarity);
+
+              if (delay >= 400 && currentRarity.id === targetRarity.id) {
+                  setAnimationStage('revealed');
+              } else {
+                  currentIndex = (currentIndex + 1) % sortedRarities.length;
+                  delay = Math.floor(delay * 1.15);
+                  timeoutId = setTimeout(loop, delay);
+              }
+          };
+          loop();
+          return () => clearTimeout(timeoutId);
+      }
+  }, [animationStage, resultPet]);
+
+  // Button Delay
+  useEffect(() => {
+      if (animationStage === 'revealed') {
+          setCanCollect(false);
+          const timer = setTimeout(() => setCanCollect(true), 1000);
+          return () => clearTimeout(timer);
+      } else {
+          setCanCollect(false);
+      }
+  }, [animationStage]);
+
   // --- HANDLERS ---
   const startLootboxSequence = async (boxId, boxType) => {
       setSelectedBox(null);
@@ -192,14 +232,12 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       try {
         const [_, newPet] = await Promise.all([
             new Promise(resolve => setTimeout(resolve, 2000)), // Shake Dauer
-            onStartIncubation(boxId, boxType)
+            onOpenLootbox(boxId, boxType)
         ]);
         if (newPet) {
             setResultPet(newPet);
-            setAnimationStage('exploding');
-            // Kurzer weißer Blitz
-            await new Promise(resolve => setTimeout(resolve, 200));
-            setAnimationStage('revealed');
+            setAnimationStage('cycling');
+            // Kein fester Timeout mehr hier, useEffect übernimmt den Übergang zu 'revealed'
         } else {
             setAnimationStage('idle');
             setProcessingBoxId(null);
@@ -250,7 +288,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
           <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden">
              
              {/* HINTERGRUND EFFEKTE */}
-             <div className="absolute inset-0">
+             <div className="absolute inset-0 pointer-events-none">
                  {/* Sternenfeld */}
                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
                  
@@ -275,50 +313,35 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                  </div>
              )}
 
-             {/* EXPLOSION FLASH */}
-             {animationStage === 'exploding' && (
-                 <div className="absolute inset-0 bg-white z-[110] animate-out fade-out duration-300"></div>
-             )}
-
-             {/* REVEAL */}
-             {animationStage === 'revealed' && resultPet && (
-                 <div className="relative z-10 flex flex-col items-center animate-in zoom-in duration-500">
+             {/* CYCLING & REVEAL */}
+             {(animationStage === 'cycling' || animationStage === 'revealed') && (
+                 <div className="relative z-10 flex flex-col items-center justify-center animate-in zoom-in duration-200">
+                     {/* Background Flash based on current cycle rarity */}
+                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 ${cycleRarity.bg} blur-[100px] opacity-80 transition-colors duration-75 pointer-events-none`}></div>
                      
-                     {/* Rotierende God Rays */}
-                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] z-0 opacity-30 animate-spin-slow pointer-events-none">
-                         <div className={`w-full h-full bg-[conic-gradient(from_0deg_at_50%_50%,${rarity.color.replace('text-', '')}_0deg,transparent_20deg,${rarity.color.replace('text-', '')}_40deg,transparent_60deg,${rarity.color.replace('text-', '')}_80deg,transparent_100deg,${rarity.color.replace('text-', '')}_120deg,transparent_140deg,${rarity.color.replace('text-', '')}_160deg,transparent_180deg,${rarity.color.replace('text-', '')}_200deg,transparent_220deg,${rarity.color.replace('text-', '')}_240deg,transparent_260deg,${rarity.color.replace('text-', '')}_280deg,transparent_300deg,${rarity.color.replace('text-', '')}_320deg,transparent_340deg,${rarity.color.replace('text-', '')}_360deg)]`}></div>
+                     <div className="scale-150 mb-8">
+                        <Sparkles className={`w-32 h-32 ${cycleRarity.color} ${animationStage === 'cycling' ? 'animate-spin-slow' : 'animate-pulse'}`} />
                      </div>
 
-                     {/* Rarity Glow */}
-                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 ${rarity.bg} blur-[80px] opacity-60 animate-pulse`}></div>
-
-                     {/* Pet Avatar */}
-                     <div className="relative z-10 scale-150 mb-8 drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
-                         <PetAvatar pet={resultPet} className="w-48 h-48" />
-                     </div>
-
-                     <div className="text-center relative z-10 space-y-2">
-                         <div className={`text-sm font-black uppercase tracking-[0.2em] ${rarity.color} drop-shadow-md`}>
-                             {isEgg ? 'NEUER FUND' : rarity.label}
-                         </div>
-                         <h2 className="text-4xl font-black text-white drop-shadow-xl">
-                             {/* HIER GEÄNDERT: Bei Eiern wird nur die Seltenheit (oder 'EI') angezeigt, nicht der Tiername */}
-                             {isEgg ? rarity.label : resultPet.name}
+                     <div className="text-center">
+                         <h2 className={`text-4xl font-black uppercase tracking-widest ${cycleRarity.color} drop-shadow-lg transition-colors duration-75`}>
+                             {cycleRarity.label}
                          </h2>
-                         {!isEgg && (
-                             <div className="text-slate-400 font-bold text-sm bg-black/40 px-4 py-1 rounded-full backdrop-blur-sm mx-auto w-fit border border-white/10 mt-2">
-                                 Lvl {resultPet.level}
-                             </div>
-                         )}
+                         <p className="text-white/50 text-sm font-bold uppercase tracking-[0.5em] mt-2">
+                             {animationStage === 'cycling' ? "Bestimme Seltenheit..." : "GEFUNDEN!"}
+                         </p>
                      </div>
 
-                     <button 
-                        onClick={finishAnimation} 
-                        className="mt-12 bg-white hover:bg-slate-200 text-black px-10 py-4 rounded-2xl font-black text-lg shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all"
-                     >
-                         EINSAMMELN
-                     </button>
-                 </div>
+                     {/* Button */}
+                     {animationStage === 'revealed' && canCollect && (
+                         <button 
+                            onClick={finishAnimation} 
+                            className="mt-12 bg-white hover:bg-slate-200 text-black px-10 py-4 rounded-2xl font-black text-lg shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all animate-in fade-in zoom-in duration-300 relative z-20"
+                         >
+                             EINSAMMELN
+                         </button>
+                     )}
+                </div>
              )}
           </div>
       );
@@ -414,7 +437,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {potionItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><FlaskConical className="w-4 h-4 text-purple-400" /> Verbrauchsgüter</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {potionItems.map((potion, idx) => {
                       const isCosmetic = !!COSMETICS[potion.variant];
                       return (
@@ -438,7 +461,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {hasResources && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Pickaxe className="w-4 h-4 text-emerald-400" /> Materialien</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {materialItems.map((item) => (
                       <InventoryCard 
                           key={item.id}
@@ -458,7 +481,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {ticketItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-150">
               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Ticket className="w-4 h-4 text-pink-400" /> Spezial-Items</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {ticketItems.map((ticket, idx) => (
                       <InventoryCard 
                           key={idx}
@@ -486,7 +509,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {boxItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-200">
                <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Package className="w-4 h-4 text-yellow-400" /> Schatzkisten</h3>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {boxItems.map((box, idx) => (
                       <InventoryCard 
                           key={idx}
@@ -505,7 +528,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* 5. EIER */}
       <div className="animate-in slide-in-from-bottom-4 duration-500 delay-300">
           <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Egg className="w-4 h-4 text-indigo-400" /> Monster-Eier</h3>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {inventoryItems.map((item, idx) => { 
                   const rarity = RARITIES[item.base.rarity]; 
                   return (

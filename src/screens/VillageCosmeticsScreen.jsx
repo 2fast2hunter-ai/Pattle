@@ -39,7 +39,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                         <p className="text-slate-400 text-xs font-bold uppercase">Exklusive Hintergründe</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                         {Object.values(COSMETICS).map(cosmetic => {
                             const canAfford = (storage[cosmetic.costItem] || 0) >= cosmetic.costAmount;
                             return (
@@ -70,7 +70,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                         <p className="text-slate-400 text-xs font-bold uppercase">Seltene Waren</p>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {SPECIAL_OFFERS.map(offer => {
                             const canAfford = (storage[offer.costItem] || 0) >= offer.costAmount;
                             const variant = offer.reward.variant || offer.reward.itemVariant;

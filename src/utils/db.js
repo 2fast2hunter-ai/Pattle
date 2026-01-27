@@ -56,6 +56,58 @@ const checkAndMigratePet = async (pet) => {
     }
 };
 
+// --- HELPER: QUEST PATCHING (Für UI Anzeige) ---
+const getFixedQuestReward = (category) => {
+    if (category === 'DAILY') return { xp: 500, composite: { rewardType: 'GEMS', rewardAmount: 10, label: '10 Edelsteine' } };
+    if (category === 'WEEKLY') return { xp: 1000, composite: { rewardType: 'COINS', rewardAmount: 7500, label: '7.500 Münzen' } };
+    if (category === 'MONTHLY') return { xp: 5000, composite: { rewardType: 'LOOTBOX', variant: 'ELEMENTAL_RANDOM', label: 'Elementar-Truhe' } };
+    return { xp: 0, composite: null };
+};
+
+const generatePatchedQuests = (catName) => {
+    const data = generateQuests(catName);
+    if (!data) return data;
+    const config = getFixedQuestReward(catName);
+    
+    if (data.quests) {
+        data.quests = data.quests.map(q => ({ ...q, rewardType: 'XP', rewardAmount: config.xp }));
+    }
+    if (config.composite) {
+        data.reward = config.composite;
+    }
+    return data;
+};
+
+const checkAndMigrateQuests = async (userData) => {
+    if (!userData || !userData.quests) return;
+    let updates = {};
+    let hasUpdates = false;
+
+    ['daily', 'weekly', 'monthly'].forEach(catKey => {
+        const catName = catKey.toUpperCase();
+        const config = getFixedQuestReward(catName);
+        const categoryData = userData.quests[catKey];
+
+        if (categoryData && categoryData.quests) {
+            const firstQuest = categoryData.quests[0];
+            // Prüfen ob Anzeige-Update nötig ist (wenn XP nicht stimmt oder Belohnung falsch)
+            const needsUpdate = firstQuest && (firstQuest.rewardType !== 'XP' || firstQuest.rewardAmount !== config.xp);
+            
+            if (needsUpdate) {
+                const newQuests = categoryData.quests.map(q => ({ ...q, rewardType: 'XP', rewardAmount: config.xp }));
+                updates[`quests.${catKey}.quests`] = newQuests;
+                updates[`quests.${catKey}.reward`] = config.composite;
+                hasUpdates = true;
+            }
+        }
+    });
+
+    if (hasUpdates) {
+        console.log("[DB] Migriere Quest-Anzeige auf neue Werte...");
+        try { await updateDoc(doc(db, "users", userData.id), updates); } catch(e) { console.error(e); }
+    }
+};
+
 // ... (Restlicher Code identisch - initializeUser, listenToUser etc. nutzen die Helfer oben) ...
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
@@ -84,9 +136,9 @@ export const initializeUser = async (firebaseUser, username) => {
       friends: [],
       stats: { pvpWins: 0, pvpTotal: 0, hatched: 0, bred: 0, marketSpent: 0, marketEarned: 0 },
       quests: { 
-          daily: generateQuests('DAILY'),
-          weekly: generateQuests('WEEKLY'),
-          monthly: generateQuests('MONTHLY')
+          daily: generatePatchedQuests('DAILY'),
+          weekly: generatePatchedQuests('WEEKLY'),
+          monthly: generatePatchedQuests('MONTHLY')
       },
       redeemedTickets: 0, 
       adTickets: 0, 
@@ -126,6 +178,7 @@ export const listenToUser = (userId, callback) => {
         if (docSnap.exists()) {
             const userData = { id: docSnap.id, ...docSnap.data() };
             checkAndMigrateLevel(userData);
+            checkAndMigrateQuests(userData); // Automatische Korrektur der Quest-Anzeige
             callback(userData); 
         }
     }); 
@@ -157,7 +210,7 @@ export const cancelMarketListing = async (user, listingId) => { const listingRef
 export const checkAndInitVillage = async (user) => { if (!user || !user.id) return; const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt; if (needsUpdate) { const oldVillage = user.village || {}; const oldStats = oldVillage.stats || {}; const oldWorkers = oldVillage.workers || {}; const fillSlots = (arr) => { const newArr = arr ? [...arr] : []; while (newArr.length < 5) newArr.push(null); return newArr; }; const villageData = { level: oldVillage.level || 1, xp: oldVillage.xp || 0, xpToNext: oldVillage.xpToNext || 16000, lastCollectionTime: oldVillage.lastCollectionTime || Date.now(), idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, storage: oldVillage.storage || {}, buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 }, workers: { wood: fillSlots(oldWorkers.wood), stone: fillSlots(oldWorkers.stone), seafood: fillSlots(oldWorkers.seafood), stardust: fillSlots(oldWorkers.stardust), computer_parts: fillSlots(oldWorkers.computer_parts), special: fillSlots(oldWorkers.special) }, milestones: oldVillage.milestones || {}, stats: { totalCollected: oldStats.totalCollected || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, totalItemsCollected: oldStats.totalItemsCollected || {}, totalIdleTime: oldStats.totalIdleTime || 0 } }; const userRef = doc(db, "users", user.id); await updateDoc(userRef, { village: villageData }); } };
 export const getLeaderboard = async () => { const q = query(collection(db, "users"), orderBy("rating", "desc"), limit(101)); const querySnapshot = await getDocs(q); return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); };
 export const findUserPublic = async (targetId) => { try { const docRef = doc(db, "users", targetId); const docSnap = await getDoc(docRef); if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() }; return null; } catch (e) { return null; } }
-export const checkAndResetQuests = async (user) => { if (!user || !user.id) return; const now = Date.now(); let updates = {}; let hasUpdates = false; const checkCategory = (catKey, catName) => { const current = user.quests?.[catKey]; if (!current || !current.expiresAt || now > current.expiresAt) { const newData = generateQuests(catName); updates[`quests.${catKey}`] = newData; hasUpdates = true; } }; checkCategory('daily', 'DAILY'); checkCategory('weekly', 'WEEKLY'); checkCategory('monthly', 'MONTHLY'); if (hasUpdates) await updateDoc(doc(db, "users", user.id), updates); };
+export const checkAndResetQuests = async (user) => { if (!user || !user.id) return; const now = Date.now(); let updates = {}; let hasUpdates = false; const checkCategory = (catKey, catName) => { const current = user.quests?.[catKey]; if (!current || !current.expiresAt || now > current.expiresAt) { const newData = generatePatchedQuests(catName); updates[`quests.${catKey}`] = newData; hasUpdates = true; } }; checkCategory('daily', 'DAILY'); checkCategory('weekly', 'WEEKLY'); checkCategory('monthly', 'MONTHLY'); if (hasUpdates) await updateDoc(doc(db, "users", user.id), updates); };
 export const trackQuestProgress = async (user, actionType, amount = 1, subTypes = []) => { if (!user || !user.id || amount === 0) return; const userRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return; const userData = userDoc.data(); if (!userData.quests) return; let updates = {}; let hasUpdates = false; ['daily', 'weekly', 'monthly'].forEach(catKey => { const categoryData = userData.quests[catKey]; if (!categoryData || !categoryData.quests) return; let categoryChanged = false; const updatedList = categoryData.quests.map(quest => { const isMatch = (quest.type === actionType) || (subTypes && subTypes.includes(quest.type)); if (isMatch && !quest.claimed && quest.progress < quest.target) { const newProgress = Math.min(quest.target, quest.progress + amount); if (newProgress !== quest.progress) { categoryChanged = true; return { ...quest, progress: newProgress }; } } return quest; }); if (categoryChanged) { updates[`quests.${catKey}.quests`] = updatedList; hasUpdates = true; } }); if (hasUpdates) { transaction.update(userRef, updates); } }); } catch (e) { console.error("Fehler beim Quest-Tracking:", e); } };
 export const claimQuestReward = async (user, catKey, questId) => {
     const userRef = doc(db, "users", user.id);
@@ -176,10 +229,15 @@ export const claimQuestReward = async (user, catKey, questId) => {
             const newCompletedCount = (categoryData.completedCount || 0) + 1;
             let updates = { [`quests.${catKey}.quests`]: updatedList, [`quests.${catKey}.completedCount`]: newCompletedCount };
             let xpGain = 0; let newCoins = userData.coins; let newGems = userData.gems;
-            if (quest.rewardType === 'COINS') { newCoins += quest.rewardAmount; rewardMessage = `+${quest.rewardAmount} Münzen`; } 
-            else if (quest.rewardType === 'GEMS') { newGems += quest.rewardAmount; rewardMessage = `+${quest.rewardAmount} Edelsteine`; } 
-            else if (quest.rewardType === 'XP') { xpGain = quest.rewardAmount; rewardMessage = `+${quest.rewardAmount} XP`; }
-            else if (quest.rewardType.startsWith('EGG')) { const rarity = quest.rewardType.split('_')[1]; const newEgg = generatePet(1, null, rarity, null, 'QUEST'); newEgg.isEgg = true; newEgg.hatchAt = 0; transaction.set(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: userData.id }); rewardMessage = `Ei (${rarity}) erhalten!`; }
+            
+            // --- NEUE LOGIK: Fixe XP basierend auf Kategorie ---
+            if (catKey === 'daily') xpGain = 500;
+            else if (catKey === 'weekly') xpGain = 1000;
+            else if (catKey === 'monthly') xpGain = 5000;
+            
+            rewardMessage = `+${xpGain} XP`;
+            // ---------------------------------------------------
+
             let newXp = (userData.xp || 0) + xpGain;
             let newLevel = calculatePlayerLevel(newXp);
             let newXpToNext = getXpToNextPlayerLevel(newLevel);
@@ -200,14 +258,29 @@ export const claimCompositeReward = async (user, catKey) => {
             const userData = userDoc.data(); 
             const categoryData = userData.quests[catKey]; 
             if (!categoryData || categoryData.completedCount < categoryData.totalQuests || categoryData.claimedComposite) return; 
-            const reward = categoryData.reward; 
+            
             let updates = { [`quests.${catKey}.claimedComposite`]: true }; 
             let xpGain = 0; let newCoins = userData.coins; let newGems = userData.gems; 
-            rewardMessage = `Bonus: ${reward.label}. `; 
-            if (reward.rewardType === 'COINS') { newCoins += reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} Münzen`; } 
-            else if (reward.rewardType === 'GEMS') { newGems += reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} Edelsteine`; } 
-            else if (reward.rewardType.startsWith('EGG')) { const rarity = reward.rewardType.split('_')[1]; const newEgg = generatePet(1, null, rarity, null, 'QUEST_COMPOSITE'); newEgg.isEgg = true; newEgg.hatchAt = 0; transaction.set(doc(db, "pets", newEgg.id), { ...newEgg, ownerId: userData.id }); rewardMessage += `Ei (${rarity}) erhalten!`; } 
-            else if (reward.rewardType === 'XP') { xpGain = reward.rewardAmount; rewardMessage += `+${reward.rewardAmount} XP`; } 
+            let newInventory = userData.inventory || [];
+
+            // --- NEUE LOGIK: Spezifische Belohnungen ---
+            if (catKey === 'daily') {
+                newGems += 10;
+                rewardMessage = "Bonus: 10 Edelsteine";
+            } else if (catKey === 'weekly') {
+                newCoins += 7500;
+                rewardMessage = "Bonus: 7.500 Münzen";
+            } else if (catKey === 'monthly') {
+                // Zufällige Elementar-Truhe
+                const elements = ['FIRE', 'WATER', 'EARTH', 'WIND'];
+                const randomElement = elements[Math.floor(Math.random() * elements.length)];
+                const newBox = { id: Date.now(), type: 'LOOTBOX', variant: `ELEMENTAL_${randomElement}`, obtainedAt: new Date().toISOString() };
+                newInventory = [...newInventory, newBox];
+                updates['inventory'] = newInventory;
+                rewardMessage = `Bonus: Elementar-Truhe (${randomElement})`;
+            }
+            // -------------------------------------------
+
             let newXp = (userData.xp || 0) + xpGain;
             let newLevel = calculatePlayerLevel(newXp);
             let newXpToNext = getXpToNextPlayerLevel(newLevel);
@@ -218,7 +291,7 @@ export const claimCompositeReward = async (user, catKey) => {
         return { message: rewardMessage }; 
     } catch (e) { console.error("Fehler beim Abholen der Gesamt-Belohnung:", e); return { message: null }; } 
 };
-export const adminResetQuests = async (userId) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await updateDoc(userRef, { quests: { daily: generateQuests('DAILY'), weekly: generateQuests('WEEKLY'), monthly: generateQuests('MONTHLY') } }); console.log("Quests wurden zurückgesetzt!"); return true; } catch (e) { console.error("Fehler beim Quest-Reset:", e); return false; } };
+export const adminResetQuests = async (userId) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await updateDoc(userRef, { quests: { daily: generatePatchedQuests('DAILY'), weekly: generatePatchedQuests('WEEKLY'), monthly: generatePatchedQuests('MONTHLY') } }); console.log("Quests wurden zurückgesetzt!"); return true; } catch (e) { console.error("Fehler beim Quest-Reset:", e); return false; } };
 export const clearMarketplace = async () => { try { const q = query(collection(db, "market")); const snapshot = await getDocs(q); const deletePromises = []; snapshot.forEach((doc) => { deletePromises.push(deleteDoc(doc.ref)); }); await Promise.all(deletePromises); return true; } catch (e) { return false; } };
 export const setBattleActive = async (userId, isActive) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await setDoc(userRef, { isInBattle: isActive }, { merge: true }); } catch (e) { console.error("[DB] Fehler beim Setzen des Kampf-Status:", e); } };
 export const checkAndResolveInterruptedBattle = async (userId) => { if (!userId) return null; const userRef = doc(db, "users", userId); try { return await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return null; const userData = userDoc.data(); if (userData.isInBattle === true) { const newStats = { ...(userData.stats || {}) }; newStats.pvpTotal = (newStats.pvpTotal || 0) + 1; const newRating = Math.max(0, (userData.rating || 1000) - 25); transaction.update(userRef, { isInBattle: false, stats: newStats, rating: newRating }); return { resolved: true, ratingLoss: 25 }; } return { resolved: false }; }); } catch (e) { if (e.code === 'failed-precondition') { console.warn("[DB] Transaction precondition failed - Kampfstatus hat sich geändert (OK)."); } else { console.error("[DB] Fehler beim Check:", e); } return null; } };

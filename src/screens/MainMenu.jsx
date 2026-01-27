@@ -33,7 +33,7 @@ const MenuTile = ({ item, index, onClick }) => {
             style={{ animationDelay: `${index * 50}ms` }}
             className={`
                 group relative w-full aspect-square p-0.5 rounded-[24px] shadow-lg ${item.shadow}
-                bg-gradient-to-br ${item.color}
+                bg-gradient-to-br ${item.color} bg-[length:200%_200%] animate-gradient-xy
                 transform transition-all duration-300 animate-in zoom-in-50 fade-in fill-mode-backwards overflow-hidden
                 ${item.locked ? 'opacity-80 cursor-not-allowed grayscale-[0.3]' : 'hover:scale-[1.02] active:scale-95'}
             `}
@@ -54,7 +54,10 @@ const MenuTile = ({ item, index, onClick }) => {
                 />
             ))}
 
-            <div className="bg-slate-900/80 backdrop-blur-md rounded-[22px] p-4 h-full flex flex-col items-center justify-center text-center border border-white/10 gap-3 relative overflow-hidden z-10 pointer-events-none">
+            <div className="bg-slate-900/80 backdrop-blur-md rounded-[22px] p-4 h-full flex flex-col items-center justify-center text-center border border-white/10 gap-3 relative overflow-hidden z-10 pointer-events-none group-hover:bg-slate-900/70 transition-colors">
+                
+                {/* Shimmer Effect */}
+                <div className="absolute inset-0 bg-shimmer opacity-0 group-hover:opacity-20 transition-opacity pointer-events-none"></div>
                 
                 {item.locked && (
                     <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
@@ -62,12 +65,12 @@ const MenuTile = ({ item, index, onClick }) => {
                     </div>
                 )}
 
-                <div className={`w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner border border-white/20 ${!item.locked && 'group-hover:scale-110 transition-transform duration-300'}`}>
-                    <item.icon className="w-7 h-7 text-white drop-shadow-md" />
+                <div className={`w-14 h-14 bg-white/10 rounded-2xl flex items-center justify-center shadow-inner border border-white/20 ${!item.locked && 'group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300'} group-hover:bg-white/20`}>
+                    <item.icon className="w-7 h-7 text-white drop-shadow-lg" />
                 </div>
                 
                 <div>
-                    <h3 className="text-lg font-black italic text-white leading-none drop-shadow-sm mb-1">{item.title}</h3>
+                    <h3 className="text-lg font-black italic text-white leading-none drop-shadow-md mb-1 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-slate-300 transition-all">{item.title}</h3>
                     <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">{item.subtitle}</p>
                 </div>
             </div>
@@ -134,10 +137,17 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
                 opacity: 0;
             }
         }
+        @keyframes gradient-xy {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .animate-gradient-xy {
+            animation: gradient-xy 6s ease infinite;
+        }
       `}</style>
       
       {/* --- GRID LAYOUT (Kacheln) --- */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {menuItems.map((item, index) => (
               <MenuTile key={item.id} item={item} index={index} onClick={item.onClick} />
           ))}

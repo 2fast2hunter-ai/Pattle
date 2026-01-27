@@ -63,6 +63,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
       
       {/* --- SLOTS LIST --- */}
       <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-3 z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {Array.from({ length: maxSlots }).map((_, index) => {
           const isUnlocked = index < unlockedSlots;
           const petId = user.team[index];
@@ -137,6 +138,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );

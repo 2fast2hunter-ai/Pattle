@@ -18,6 +18,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const [showDevAdModal, setShowDevAdModal] = useState(false);
     const [buyAmount, setBuyAmount] = useState(1);
     const [pendingReward, setPendingReward] = useState(null);
+    const [isBuying, setIsBuying] = useState(false); // NEU: Schutz vor Mehrfachklicks
 
     const AD_COOLDOWN_MS = 10 * 60 * 1000;
     const [adTimers, setAdTimers] = useState({}); 
@@ -108,10 +109,13 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     };
 
     const handleBuy = (boxKey) => {
+        if (isBuying) return; // Blockiere wenn bereits gekauft wird
+        setIsBuying(true);
         const cost = boxKey === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[boxKey].cost;
         const currency = boxKey === 'TYPE_DAILY' ? 'COINS' : LOOTBOXES[boxKey].currency;
         onBuyBox(boxKey, cost, currency, buyAmount);
         setViewingBox(null); 
+        setTimeout(() => setIsBuying(false), 500); // Kurze Verzögerung zum Reset
     };
 
     const isDailyAvailable = () => {
@@ -197,7 +201,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                     <button onClick={increment} className="p-3 rounded-xl bg-slate-800 border border-white/10 hover:bg-slate-700 active:scale-95 transition-all"><Plus className="w-4 h-4 text-white" /></button>
                                 </div>
                             )}
-                            <button onClick={() => handleBuy(viewingBox)} disabled={viewingBox === 'DAILY' && !isDailyAvailable()} className={`w-full py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg ${viewingBox === 'DAILY' ? (isDailyAvailable() ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed') : 'bg-white text-slate-900 hover:bg-slate-200'}`}>{viewingBox === 'DAILY' ? (isDailyAvailable() ? 'GRATIS ABHOLEN' : 'SCHON ABGEHOLT') : (<><Coins className="w-4 h-4 text-amber-500 fill-amber-500" /> {((viewingBox === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[viewingBox].cost) * buyAmount).toLocaleString()} KAUFEN</>)}</button>
+                            <button onClick={() => handleBuy(viewingBox)} disabled={(viewingBox === 'DAILY' && !isDailyAvailable()) || isBuying} className={`w-full py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg ${viewingBox === 'DAILY' ? (isDailyAvailable() ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed') : (isBuying ? 'bg-slate-500 text-slate-300 cursor-wait' : 'bg-white text-slate-900 hover:bg-slate-200')}`}>{viewingBox === 'DAILY' ? (isDailyAvailable() ? 'GRATIS ABHOLEN' : 'SCHON ABGEHOLT') : (<><Coins className="w-4 h-4 text-amber-500 fill-amber-500" /> {((viewingBox === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[viewingBox].cost) * buyAmount).toLocaleString()} KAUFEN</>)}</button>
                         </div>
                     </div>
                 </div>
@@ -218,7 +222,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                         <h3 className="text-xs font-black uppercase tracking-widest">Gratis & Boosts</h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                         
                         {/* NEU: TIME BASED REWARDS (GRATIS TICKET) */}
                         {TIMED_REWARDS.map(reward => {
@@ -231,12 +235,13 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                     onClick={() => isReady && onClaimTimedReward(reward.id)} // Hier muss die Funktion übergeben werden!
                                     disabled={!isReady}
                                     className={`
-                                        col-span-2 bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-indigo-500/30 rounded-2xl p-3 flex items-center justify-between relative overflow-hidden group transition-all
+                                        col-span-2 sm:col-span-1 bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-indigo-500/30 rounded-2xl p-3 flex items-center justify-between relative overflow-hidden group transition-all shadow-lg
                                         ${isReady ? 'hover:border-indigo-400 cursor-pointer active:scale-95' : 'opacity-75 cursor-not-allowed'}
                                     `}
                                 >
+                                    {isReady && <div className="absolute inset-0 bg-shimmer opacity-20 pointer-events-none"></div>}
                                     <div className="flex items-center gap-4">
-                                        <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30">
+                                        <div className="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center border border-indigo-500/30 shadow-inner">
                                             <Gift className={`w-6 h-6 ${isReady ? 'text-indigo-300 animate-bounce' : 'text-slate-500'}`} />
                                         </div>
                                         <div className="text-left">
@@ -276,28 +281,28 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                 {/* LOOTBOXEN */}
                 <div>
                     <div className="flex items-center gap-2 mb-3 text-yellow-500 px-1"><Package className="w-4 h-4" /><h3 className="text-xs font-black uppercase tracking-widest">Lootboxen</h3></div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {/* DAILY BOX */}
-                        <div onClick={() => setViewingBox('DAILY')} className={`col-span-2 bg-slate-800 border-2 ${isDailyAvailable() ? 'border-sky-500 shadow-sky-900/20' : 'border-slate-700 opacity-80'} rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards`}>
+                        <div onClick={() => setViewingBox('DAILY')} className={`col-span-2 sm:col-span-1 bg-slate-800 border-2 ${isDailyAvailable() ? 'border-sky-500 shadow-sky-900/20 animate-pulse-slow' : 'border-slate-700 opacity-80'} rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards`}>
                             <div className="flex items-center gap-4 relative z-10">
-                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 ${isDailyAvailable() ? 'shadow-lg shadow-sky-500/20' : ''}`}>{isDailyAvailable() ? <Box className="w-8 h-8 text-sky-400" /> : <Lock className="w-6 h-6 text-slate-600" />}</div>
+                                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 ${isDailyAvailable() ? 'shadow-lg shadow-sky-500/20' : ''}`}>{isDailyAvailable() ? <Box className="w-8 h-8 text-sky-400 animate-float-gentle" /> : <Lock className="w-6 h-6 text-slate-600" />}</div>
                                 <div className="flex-1"><h4 className="font-black text-white text-lg italic uppercase">{LOOTBOXES.DAILY.label}</h4><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Täglich ein Geschenk</p><span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${isDailyAvailable() ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-500'}`}>{isDailyAvailable() ? 'GRATIS' : 'Abgeholt'}</span></div>
                             </div>
                         </div>
                         {/* PREMIUM & MASTER */}
-                        <div onClick={() => setViewingBox('PREMIUM')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-purple-400 transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards">
-                            <div className="absolute inset-0 bg-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div><Star className="w-10 h-10 text-purple-400 mb-2 drop-shadow-md group-hover:scale-110 transition-transform" /><h4 className="font-black text-white text-sm uppercase mb-1">{LOOTBOXES.PREMIUM.label}</h4><div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{LOOTBOXES.PREMIUM.cost}</span></div>
+                        <div onClick={() => setViewingBox('PREMIUM')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-purple-400 transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards hover:shadow-purple-500/20">
+                            <div className="absolute inset-0 bg-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div><Star className="w-10 h-10 text-purple-400 mb-2 drop-shadow-md group-hover:scale-110 transition-transform animate-float-gentle" /><h4 className="font-black text-white text-sm uppercase mb-1">{LOOTBOXES.PREMIUM.label}</h4><div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{LOOTBOXES.PREMIUM.cost}</span></div>
                         </div>
-                        <div onClick={() => setViewingBox('MASTER')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-amber-400 transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards">
-                            <div className="absolute inset-0 bg-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div><Crown className="w-10 h-10 text-amber-400 mb-2 drop-shadow-md group-hover:scale-110 transition-transform" /><h4 className="font-black text-white text-sm uppercase mb-1">{LOOTBOXES.MASTER.label}</h4><div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{LOOTBOXES.MASTER.cost}</span></div>
+                        <div onClick={() => setViewingBox('MASTER')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-amber-400 transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards hover:shadow-amber-500/20">
+                            <div className="absolute inset-0 bg-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div><Crown className="w-10 h-10 text-amber-400 mb-2 drop-shadow-md group-hover:scale-110 transition-transform animate-float-gentle" /><h4 className="font-black text-white text-sm uppercase mb-1">{LOOTBOXES.MASTER.label}</h4><div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{LOOTBOXES.MASTER.cost}</span></div>
                         </div>
                         
                         {/* SINGLE TYPE SPECIFIC BOX */}
-                        <div onClick={() => setViewingBox('TYPE_DAILY')} className="col-span-2 bg-gradient-to-r from-slate-800 to-slate-900 border-2 border-indigo-500/50 rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards">
+                        <div onClick={() => setViewingBox('TYPE_DAILY')} className="col-span-2 sm:col-span-1 bg-gradient-to-r from-slate-800 to-slate-900 border-2 border-indigo-500/50 rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards hover:shadow-indigo-500/20">
                             <div className="absolute inset-0 bg-indigo-600/5 opacity-5 group-hover:opacity-10 transition-opacity"></div>
                             <div className="flex items-center gap-4 relative z-10">
-                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 shadow-lg">
-                                    <Zap className="w-8 h-8 text-indigo-400 scale-110" />
+                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 shadow-lg group-hover:scale-105 transition-transform">
+                                    <Zap className="w-8 h-8 text-indigo-400 scale-110 animate-pulse" />
                                 </div>
                                 <div className="flex-1">
                                     <h4 className="font-black text-lg italic uppercase text-indigo-300">Elementar-Truhe</h4>
@@ -319,7 +324,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                 {/* TICKETS */}
                 <div>
                     <div className="flex items-center gap-2 mb-3 text-pink-400 px-1"><Ticket className="w-4 h-4" /><h3 className="text-xs font-black uppercase tracking-widest">Zucht-Tickets</h3></div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                         <div className="bg-slate-800 p-4 rounded-2xl border border-white/5 flex flex-col items-center text-center hover:bg-slate-750 transition-colors group"><div className="w-10 h-10 bg-pink-500/10 rounded-full flex items-center justify-center mb-2"><Ticket className="w-5 h-5 text-pink-500" /></div><div className="mb-2"><div className="font-bold text-white text-xs">Einzelticket</div></div><button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_COINS)} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform"><Coins className="w-3 h-3 fill-black/20" /> {SHOP_ITEMS.TICKET_BUNDLE_COINS.costAmount}</button></div>
                         <div className="bg-slate-800 p-4 rounded-2xl border border-pink-500/20 flex flex-col items-center text-center relative overflow-hidden group"><div className="absolute top-0 right-0 bg-pink-600 text-white text-[8px] font-black px-2 py-1 rounded-bl-lg">DEAL</div><div className="w-10 h-10 bg-pink-500/20 rounded-full flex items-center justify-center mb-2 border border-pink-500/30"><Ticket className="w-5 h-5 text-pink-400" /></div><div className="mb-2"><div className="font-bold text-white text-xs">5er Pack</div></div><button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_GEMS)} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-lg"><Gem className="w-3 h-3 fill-white/20" /> {SHOP_ITEMS.TICKET_BUNDLE_GEMS.costAmount}</button></div>
                     </div>

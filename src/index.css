@@ -67,3 +67,41 @@ body {
   to { transform: translateY(0); opacity:1;} 
 }
 .animate-float-up { animation: float-up 1s ease-out forwards; }
+
+/* --- NEUE GRAFIK EFFEKTE --- */
+
+/* Sanftes Schweben für UI Elemente */
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.animate-float-gentle { animation: float-gentle 4s ease-in-out infinite; }
+
+/* Schimmer-Effekt für Karten */
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.bg-shimmer {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite linear;
+}
+
+/* Pulsierender Glow */
+@keyframes glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(255,255,255,0.2)); }
+  50% { filter: drop-shadow(0 0 15px rgba(255,255,255,0.5)); }
+}
+.animate-glow { animation: glow-pulse 3s infinite; }
+
+/* Hintergrund Drift */
+.bg-drift {
+  background-size: 400% 400%;
+  animation: cosmic-drift 20s ease infinite;
+}
+@keyframes cosmic-drift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
