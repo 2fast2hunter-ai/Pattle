@@ -17,8 +17,9 @@ export default function PetAvatar({ pet, className = "w-16 h-16" }) {
   // --- 1. EI ANSICHT ---
   if (pet.isEgg) {
     const rarity = RARITIES[pet.rarity] || RARITIES.COMMON; 
+    const tooltip = pet.customData?.parentsNames ? `Eltern: ${pet.customData.parentsNames}` : 'Ei';
     return (
-      <div className={`${className} flex items-center justify-center rounded-2xl border-4 ${rarity.border} ${rarity.bg} shadow-inner relative overflow-hidden`}>
+      <div title={tooltip} className={`${className} flex items-center justify-center rounded-2xl border-4 ${rarity.border} ${rarity.bg} shadow-inner relative overflow-hidden`}>
         <div className="absolute inset-0 bg-black/10"></div>
         {pet.customData && (
             <div className="absolute top-1 right-1 bg-pink-500 p-1 rounded-full z-10 border border-white/20">

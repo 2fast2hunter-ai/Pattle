@@ -1,5 +1,79 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock } from 'lucide-react';
+import { PageBackground } from '../components/GameLayout';
+
+// --- RIPPLE BUTTON COMPONENT ---
+const MenuTile = ({ item, index, onClick }) => {
+    const [ripples, setRipples] = useState([]);
+
+    const handleClick = (e) => {
+        if (item.locked) return;
+        
+        // Ripple Position berechnen
+        const rect = e.currentTarget.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        const newRipple = { x, y, size, id: Date.now() };
+        setRipples(prev => [...prev, newRipple]);
+        
+        // Ripple nach Animation entfernen
+        setTimeout(() => {
+            setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+        }, 600);
+
+        if (onClick) onClick();
+    };
+
+    return (
+        <button 
+            onClick={handleClick} 
+            disabled={item.locked}
+            style={{ animationDelay: `${index * 50}ms` }}
+            className={`
+                group relative w-full aspect-square p-0.5 rounded-[24px] shadow-lg ${item.shadow}
+                bg-gradient-to-br ${item.color}
+                transform transition-all duration-300 animate-in zoom-in-50 fade-in fill-mode-backwards overflow-hidden
+                ${item.locked ? 'opacity-80 cursor-not-allowed grayscale-[0.3]' : 'hover:scale-[1.02] active:scale-95'}
+            `}
+        >
+            {/* RIPPLES */}
+            {ripples.map(r => (
+                <span 
+                    key={r.id}
+                    className="absolute bg-white/30 rounded-full pointer-events-none"
+                    style={{
+                        top: r.y,
+                        left: r.x,
+                        width: r.size,
+                        height: r.size,
+                        animation: 'ripple 0.6s linear',
+                        transform: 'scale(0)',
+                    }}
+                />
+            ))}
+
+            <div className="bg-slate-900/80 backdrop-blur-md rounded-[22px] p-4 h-full flex flex-col items-center justify-center text-center border border-white/10 gap-3 relative overflow-hidden z-10 pointer-events-none">
+                
+                {item.locked && (
+                    <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
+                        <Lock className="w-8 h-8 text-white/50" />
+                    </div>
+                )}
+
+                <div className={`w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner border border-white/20 ${!item.locked && 'group-hover:scale-110 transition-transform duration-300'}`}>
+                    <item.icon className="w-7 h-7 text-white drop-shadow-md" />
+                </div>
+                
+                <div>
+                    <h3 className="text-lg font-black italic text-white leading-none drop-shadow-sm mb-1">{item.title}</h3>
+                    <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">{item.subtitle}</p>
+                </div>
+            </div>
+        </button>
+    );
+};
 
 export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage }) { // onVillage prop
   
@@ -49,44 +123,23 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
   ];
 
   return (
-    <div className="pt-4 pb-24 px-4 space-y-4 h-full overflow-y-auto scrollbar-hide">
+    <div className="pt-4 pb-24 px-4 space-y-4 h-full overflow-y-auto scrollbar-hide relative">
+      <PageBackground />
+      
+      {/* Ripple Animation Keyframes */}
+      <style>{`
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+      `}</style>
       
       {/* --- GRID LAYOUT (Kacheln) --- */}
       <div className="grid grid-cols-2 gap-4">
-          {menuItems.map((item) => (
-              <button 
-                key={item.id}
-                onClick={item.locked ? null : item.onClick} 
-                disabled={item.locked}
-                className={`
-                    group relative w-full aspect-square p-0.5 rounded-[24px] shadow-lg ${item.shadow}
-                    bg-gradient-to-br ${item.color}
-                    transform transition-all duration-200 
-                    ${item.locked ? 'opacity-80 cursor-not-allowed grayscale-[0.3]' : 'hover:scale-[1.02] active:scale-95'}
-                `}
-              >
-                  <div className="bg-slate-900/40 backdrop-blur-sm rounded-[22px] p-4 h-full flex flex-col items-center justify-center text-center border border-white/10 gap-3 relative overflow-hidden">
-                      
-                      {/* Lock Overlay bei gesperrten Items */}
-                      {item.locked && (
-                          <div className="absolute inset-0 bg-black/40 z-10 flex items-center justify-center backdrop-blur-[1px]">
-                              <Lock className="w-8 h-8 text-white/50" />
-                          </div>
-                      )}
-
-                      {/* Icon Container */}
-                      <div className={`w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center shadow-inner border border-white/20 ${!item.locked && 'group-hover:scale-110 transition-transform duration-300'}`}>
-                          <item.icon className="w-7 h-7 text-white drop-shadow-md" />
-                      </div>
-                      
-                      {/* Text */}
-                      <div>
-                          <h3 className="text-lg font-black italic text-white leading-none drop-shadow-sm mb-1">{item.title}</h3>
-                          <p className="text-white/70 text-[10px] font-bold uppercase tracking-wider">{item.subtitle}</p>
-                      </div>
-
-                  </div>
-              </button>
+          {menuItems.map((item, index) => (
+              <MenuTile key={item.id} item={item} index={index} onClick={item.onClick} />
           ))}
       </div>
     </div>

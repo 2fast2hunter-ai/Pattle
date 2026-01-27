@@ -66,8 +66,9 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   }
 
   const speciesData = ZODIAC_ANIMALS[speciesKey];
-  const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul', 'heart', 'claw'];
-  const baseName = speciesData.label + (Math.random() > 0.5 ? '' : ' ' + suffixes[Math.floor(Math.random() * suffixes.length)]);
+  
+  // ÄNDERUNG: Keine zufälligen Suffixe mehr, nur der Name der Art
+  const baseName = speciesData.label;
 
   let b_hp, b_atk, b_ap, b_def, b_res, b_speed;
 

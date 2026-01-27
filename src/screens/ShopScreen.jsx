@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift } from 'lucide-react';
-import { SHOP_ITEMS, LOOTBOXES, RARITIES, AD_REWARDS, TIMED_REWARDS } from '../data/gameData'; 
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift, Zap } from 'lucide-react';
+import { SHOP_ITEMS, LOOTBOXES, RARITIES, AD_REWARDS, TIMED_REWARDS, TYPES } from '../data/gameData'; 
 import AdModal from '../components/ui/AdModal';
 import { showRewardedAd } from '../utils/adManager';
 import { useShopActions } from '../hooks/useGameLogic/actions/useShopActions'; // Optional falls nicht als Prop
@@ -68,22 +68,49 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    // --- TYPE SPECIFIC BOX LOGIC ---
+    const typeKeys = Object.keys(TYPES);
+    const dayIndex = new Date().getDay(); 
+    
+    // Verteilung der 24 Typen auf die Woche
+    const schedule = {
+        1: { start: 0, count: 3 }, // Mo: 3 Typen
+        2: { start: 3, count: 3 }, // Di: 3 Typen
+        3: { start: 6, count: 3 }, // Mi: 3 Typen
+        4: { start: 9, count: 3 }, // Do: 3 Typen
+        5: { start: 12, count: 4 }, // Fr: 4 Typen
+        6: { start: 16, count: 4 }, // Sa: 4 Typen
+        0: { start: 20, count: 4 }  // So: 4 Typen
+    };
+    
+    const { start, count } = schedule[dayIndex];
+    const dailyTypes = typeKeys.slice(start, start + count);
+    
+    const TYPE_BOX_COST = (LOOTBOXES.MASTER?.cost || 10000) + 5000;
+
     // ... (boxConfig, getDropList bleiben gleich) ...
     const boxConfig = {
         'DAILY': { color: 'text-sky-300', bg: 'bg-sky-600', icon: Box, border: 'border-sky-400', glow: 'shadow-sky-500/20' },
         'PREMIUM': { color: 'text-purple-300', bg: 'bg-purple-600', icon: Star, border: 'border-purple-400', glow: 'shadow-purple-500/20' },
         'MASTER': { color: 'text-amber-300', bg: 'bg-amber-600', icon: Crown, border: 'border-amber-400', glow: 'shadow-amber-500/20' },
-        'DIVINE': { color: 'text-emerald-300', bg: 'bg-emerald-600', icon: Sparkles, border: 'border-emerald-400', glow: 'shadow-emerald-500/20' },
+        'TYPE_DAILY': { color: 'text-indigo-300', bg: 'bg-indigo-600', icon: Zap, border: 'border-indigo-400', glow: 'shadow-indigo-500/20', label: 'Elementar-Truhe' },
     };
 
     const getDropList = (boxKey) => {
+        if (boxKey === 'TYPE_DAILY') {
+            // Nutzt die Drop-Raten der Master Box
+            const masterDrops = LOOTBOXES.MASTER?.drops || {};
+            return Object.entries(masterDrops).map(([rarityKey, chance]) => ({ ...RARITIES[rarityKey], chance })).sort((a, b) => b.id - a.id);
+        }
         const box = LOOTBOXES[boxKey];
         if (!box) return [];
         return Object.entries(box.drops).map(([rarityKey, chance]) => ({ ...RARITIES[rarityKey], chance })).sort((a, b) => b.id - a.id); 
     };
 
     const handleBuy = (boxKey) => {
-        onBuyBox(boxKey, LOOTBOXES[boxKey].cost, LOOTBOXES[boxKey].currency, buyAmount);
+        const cost = boxKey === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[boxKey].cost;
+        const currency = boxKey === 'TYPE_DAILY' ? 'COINS' : LOOTBOXES[boxKey].currency;
+        onBuyBox(boxKey, cost, currency, buyAmount);
         setViewingBox(null); 
     };
 
@@ -105,6 +132,8 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const increment = () => setBuyAmount(prev => Math.min(prev + 1, 50));
     const decrement = () => setBuyAmount(prev => Math.max(prev - 1, 1));
 
+    const currentConfig = boxConfig[viewingBox] || boxConfig['DAILY'];
+
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
             
@@ -118,14 +147,45 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
             {/* Modal für Lootboxen */}
             {viewingBox && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-6 animate-in zoom-in-50">
-                    <div className={`bg-slate-900 border-2 ${boxConfig[viewingBox].border} w-full max-w-md rounded-[32px] p-0 relative overflow-hidden flex flex-col max-h-[85vh] shadow-2xl`}>
+                    <div className={`bg-slate-900 border-2 ${currentConfig.border} w-full max-w-md rounded-[32px] p-0 relative overflow-hidden flex flex-col max-h-[85vh] shadow-2xl`}>
                         <div className="relative h-40 bg-gradient-to-b from-slate-800 to-slate-900 flex items-center justify-center overflow-hidden shrink-0">
-                            <div className={`absolute inset-0 ${boxConfig[viewingBox].bg} opacity-20 blur-[60px] animate-pulse`}></div>
-                            {React.createElement(boxConfig[viewingBox].icon, { className: `w-24 h-24 ${boxConfig[viewingBox].color} drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative z-10` })}
+                            <div className={`absolute inset-0 ${currentConfig.bg} opacity-20 blur-[60px] animate-pulse`}></div>
+                            {React.createElement(currentConfig.icon, { className: `w-24 h-24 ${currentConfig.color} drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] relative z-10` })}
                             <button onClick={() => setViewingBox(null)} className="absolute top-4 right-4 p-2 bg-black/40 text-white rounded-full hover:bg-white/20 transition-colors z-20 backdrop-blur-md border border-white/10"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="p-6 flex-1 overflow-y-auto scrollbar-hide">
-                            <h2 className={`text-2xl font-black ${boxConfig[viewingBox].color} mb-1 uppercase text-center tracking-wide`}>{LOOTBOXES[viewingBox].label}</h2>
+                            <h2 className={`text-2xl font-black ${currentConfig.color} mb-1 uppercase text-center tracking-wide`}>{viewingBox === 'TYPE_DAILY' ? 'Elementar-Truhe' : LOOTBOXES[viewingBox]?.label}</h2>
+                            
+                            {/* WOCHENPLAN FÜR ELEMENTAR-TRUHE */}
+                            {viewingBox === 'TYPE_DAILY' && (
+                                <div className="mb-6 mt-4 bg-slate-950/40 rounded-xl p-3 border border-white/5">
+                                    <div className="flex items-center justify-center gap-2 mb-3">
+                                        <Clock className="w-3 h-3 text-indigo-400" />
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Wochenplan</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-1.5">
+                                        {[1, 2, 3, 4, 5, 6, 0].map(dIndex => {
+                                            const dayName = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][dIndex];
+                                            const { start, count } = schedule[dIndex];
+                                            const typesForDay = typeKeys.slice(start, start + count);
+                                            const isToday = dIndex === dayIndex;
+                                            return (
+                                                <div key={dIndex} className={`flex items-center gap-3 p-1.5 rounded-lg ${isToday ? 'bg-indigo-500/10 border border-indigo-500/30' : ''}`}>
+                                                    <span className={`text-[10px] font-black w-6 text-center ${isToday ? 'text-indigo-300' : 'text-slate-500'}`}>{dayName}</span>
+                                                    <div className="flex gap-1.5 flex-1 flex-wrap">
+                                                        {typesForDay.map(tKey => (
+                                                            <div key={tKey} className={`w-5 h-5 rounded-md flex items-center justify-center ${TYPES[tKey].bg} shadow-sm`} title={TYPES[tKey].label}>
+                                                                {React.cloneElement(TYPES[tKey].icon, { size: 12, className: "text-white" })}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex justify-center mb-6"><div className="bg-slate-950/50 px-3 py-1 rounded-full border border-white/5 flex items-center gap-2"><Percent className="w-3 h-3 text-slate-400" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Wahrscheinlichkeiten</span></div></div>
                             <div className="space-y-1.5">{getDropList(viewingBox).map((rate) => (<div key={rate.id} className="flex justify-between items-center px-3 py-2 bg-slate-800/50 rounded-xl border border-white/5"><span className={`text-xs font-black ${rate.color} uppercase tracking-wider`}>{rate.label}</span><span className="text-xs font-mono font-bold text-white">{rate.chance.toFixed(2)}%</span></div>))}</div>
                         </div>
@@ -137,7 +197,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                     <button onClick={increment} className="p-3 rounded-xl bg-slate-800 border border-white/10 hover:bg-slate-700 active:scale-95 transition-all"><Plus className="w-4 h-4 text-white" /></button>
                                 </div>
                             )}
-                            <button onClick={() => handleBuy(viewingBox)} disabled={viewingBox === 'DAILY' && !isDailyAvailable()} className={`w-full py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg ${viewingBox === 'DAILY' ? (isDailyAvailable() ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed') : 'bg-white text-slate-900 hover:bg-slate-200'}`}>{viewingBox === 'DAILY' ? (isDailyAvailable() ? 'GRATIS ABHOLEN' : 'SCHON ABGEHOLT') : (<><Coins className="w-4 h-4 text-amber-500 fill-amber-500" /> {(LOOTBOXES[viewingBox].cost * buyAmount).toLocaleString()} KAUFEN</>)}</button>
+                            <button onClick={() => handleBuy(viewingBox)} disabled={viewingBox === 'DAILY' && !isDailyAvailable()} className={`w-full py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg ${viewingBox === 'DAILY' ? (isDailyAvailable() ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed') : 'bg-white text-slate-900 hover:bg-slate-200'}`}>{viewingBox === 'DAILY' ? (isDailyAvailable() ? 'GRATIS ABHOLEN' : 'SCHON ABGEHOLT') : (<><Coins className="w-4 h-4 text-amber-500 fill-amber-500" /> {((viewingBox === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[viewingBox].cost) * buyAmount).toLocaleString()} KAUFEN</>)}</button>
                         </div>
                     </div>
                 </div>
@@ -218,23 +278,41 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                     <div className="flex items-center gap-2 mb-3 text-yellow-500 px-1"><Package className="w-4 h-4" /><h3 className="text-xs font-black uppercase tracking-widest">Lootboxen</h3></div>
                     <div className="grid grid-cols-2 gap-4">
                         {/* DAILY BOX */}
-                        <div onClick={() => setViewingBox('DAILY')} className={`col-span-2 bg-slate-800 border-2 ${isDailyAvailable() ? 'border-sky-500 shadow-sky-900/20' : 'border-slate-700 opacity-80'} rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg`}>
+                        <div onClick={() => setViewingBox('DAILY')} className={`col-span-2 bg-slate-800 border-2 ${isDailyAvailable() ? 'border-sky-500 shadow-sky-900/20' : 'border-slate-700 opacity-80'} rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards`}>
                             <div className="flex items-center gap-4 relative z-10">
                                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 ${isDailyAvailable() ? 'shadow-lg shadow-sky-500/20' : ''}`}>{isDailyAvailable() ? <Box className="w-8 h-8 text-sky-400" /> : <Lock className="w-6 h-6 text-slate-600" />}</div>
                                 <div className="flex-1"><h4 className="font-black text-white text-lg italic uppercase">{LOOTBOXES.DAILY.label}</h4><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Täglich ein Geschenk</p><span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${isDailyAvailable() ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-500'}`}>{isDailyAvailable() ? 'GRATIS' : 'Abgeholt'}</span></div>
                             </div>
                         </div>
                         {/* PREMIUM & MASTER */}
-                        <div onClick={() => setViewingBox('PREMIUM')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-purple-400 transition-all shadow-lg active:scale-95">
+                        <div onClick={() => setViewingBox('PREMIUM')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-purple-400 transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards">
                             <div className="absolute inset-0 bg-purple-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div><Star className="w-10 h-10 text-purple-400 mb-2 drop-shadow-md group-hover:scale-110 transition-transform" /><h4 className="font-black text-white text-sm uppercase mb-1">{LOOTBOXES.PREMIUM.label}</h4><div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{LOOTBOXES.PREMIUM.cost}</span></div>
                         </div>
-                        <div onClick={() => setViewingBox('MASTER')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-amber-400 transition-all shadow-lg active:scale-95">
+                        <div onClick={() => setViewingBox('MASTER')} className="bg-gradient-to-br from-slate-800 to-slate-900 border border-amber-500/50 rounded-[24px] p-4 flex flex-col items-center text-center relative overflow-hidden group cursor-pointer hover:border-amber-400 transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-bottom-4 delay-200 fill-mode-backwards">
                             <div className="absolute inset-0 bg-amber-600/5 opacity-0 group-hover:opacity-100 transition-opacity"></div><Crown className="w-10 h-10 text-amber-400 mb-2 drop-shadow-md group-hover:scale-110 transition-transform" /><h4 className="font-black text-white text-sm uppercase mb-1">{LOOTBOXES.MASTER.label}</h4><div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{LOOTBOXES.MASTER.cost}</span></div>
                         </div>
-                        {/* DIVINE */}
-                        <div onClick={() => setViewingBox('DIVINE')} className="col-span-2 bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/60 rounded-[24px] p-1 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg shadow-emerald-900/20">
-                            <div className="absolute inset-0 bg-emerald-500/10 blur-xl animate-pulse"></div><div className="bg-slate-900/80 backdrop-blur-md rounded-[20px] p-4 flex items-center justify-between relative z-10"><div className="flex items-center gap-4"><div className="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center border border-emerald-500/30"><Sparkles className="w-7 h-7 text-emerald-300" /></div><div><h4 className="font-black text-white text-lg italic uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-teal-400">{LOOTBOXES.DIVINE.label}</h4><p className="text-[10px] text-emerald-400/80 font-bold uppercase tracking-wider">Höchste Chance auf Mythics!</p></div></div><div className="bg-slate-950 px-4 py-2 rounded-xl border border-emerald-500/30 flex flex-col items-end"><span className="text-[10px] text-slate-500 font-bold uppercase mb-0.5">Preis</span><div className="flex items-center gap-1.5"><Coins className="w-3.5 h-3.5 text-amber-400" /><span className="text-sm font-black text-white">{LOOTBOXES.DIVINE.cost.toLocaleString()}</span></div></div></div>
+                        
+                        {/* SINGLE TYPE SPECIFIC BOX */}
+                        <div onClick={() => setViewingBox('TYPE_DAILY')} className="col-span-2 bg-gradient-to-r from-slate-800 to-slate-900 border-2 border-indigo-500/50 rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-300 fill-mode-backwards">
+                            <div className="absolute inset-0 bg-indigo-600/5 opacity-5 group-hover:opacity-10 transition-opacity"></div>
+                            <div className="flex items-center gap-4 relative z-10">
+                                <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 shadow-lg">
+                                    <Zap className="w-8 h-8 text-indigo-400 scale-110" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="font-black text-lg italic uppercase text-indigo-300">Elementar-Truhe</h4>
+                                    <div className="flex gap-1 mb-2 mt-1">
+                                        {dailyTypes.map(tKey => (
+                                            <div key={tKey} className={`w-5 h-5 rounded bg-slate-950 flex items-center justify-center border border-white/10 ${TYPES[tKey].color}`} title={TYPES[tKey].label}>
+                                                {React.cloneElement(TYPES[tKey].icon, { size: 12 })}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="bg-slate-950/60 px-3 py-1.5 rounded-lg flex items-center gap-1.5 border border-white/5 w-fit"><Coins className="w-3 h-3 text-amber-400" /><span className="text-xs font-black text-white">{TYPE_BOX_COST.toLocaleString()}</span></div>
+                                </div>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 

@@ -1,20 +1,22 @@
 import React from 'react';
 import { LayoutGrid, Backpack, ThermometerSun, Heart, X, ChevronRight } from 'lucide-react';
+import { PageBackground } from '../components/GameLayout';
 
 export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory }) {
   
   // Helper Komponente für die modernen Kacheln
-  const HubCard = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick }) => (
+  const HubCard = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, delay }) => (
     <button 
         onClick={onClick} 
+        style={{ animationDelay: `${delay}ms` }}
         className={`
             group relative w-full p-0.5 rounded-3xl shadow-lg shadow-black/20
             bg-gradient-to-br ${colorFrom} ${colorTo}
-            transform transition-all duration-200 hover:scale-[1.02] active:scale-95 text-left
+            transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left animate-in slide-in-from-right-8 fade-in fill-mode-backwards
         `}
     >
         {/* Innerer Container (Glas-Effekt) */}
-        <div className="bg-slate-900/40 backdrop-blur-md rounded-[22px] p-5 h-full flex items-center justify-between border border-white/10 relative overflow-hidden">
+        <div className="bg-slate-900/80 backdrop-blur-md rounded-[22px] p-5 h-full flex items-center justify-between border border-white/10 relative overflow-hidden">
             
             {/* Hintergrund Glanz */}
             <div className="absolute top-0 left-0 w-full h-1/2 bg-white/5 pointer-events-none"></div>
@@ -41,7 +43,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
   );
 
   return (
-    <div className="h-full flex flex-col animate-in fade-in">
+    <div className="h-full flex flex-col animate-in fade-in relative">
+      <PageBackground />
       
       {/* --- HEADER --- */}
       <div className="relative flex items-center justify-center mb-6 pt-2">
@@ -68,6 +71,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
             colorTo="to-indigo-600" 
             iconColor="text-blue-400"
             onClick={onInventory}
+            delay={0}
         />
 
         {/* 2. ITEM INVENTAR (Amber/Orange) */}
@@ -79,6 +83,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
             colorTo="to-orange-600" 
             iconColor="text-amber-400"
             onClick={onItemInventory}
+            delay={100}
         />
 
         {/* 3. ZUCHT LABOR (Pink/Rose) - Jetzt VOR der Brutstätte */}
@@ -90,6 +95,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
             colorTo="to-rose-600" 
             iconColor="text-pink-400 fill-pink-400/20"
             onClick={onBreed}
+            delay={200}
         />
 
         {/* 4. BRUTSTÄTTE (Emerald/Teal) */}
@@ -101,6 +107,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
             colorTo="to-teal-600" 
             iconColor="text-emerald-400"
             onClick={onHatchery}
+            delay={300}
         />
 
       </div>

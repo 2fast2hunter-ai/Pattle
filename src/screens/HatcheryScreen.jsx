@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles, Ticket, FastForward, Plus, Backpack } from 'lucide-react';
+import { ArrowLeft, Lock, Hourglass, Edit3, Egg, ThermometerSun, Check, X, Sparkles, Ticket, FastForward, Plus, Backpack, Dna } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
 import { getUnlockedHatcherySlots } from '../utils/gameMechanics';
 import PetAvatar from '../components/PetAvatar';
@@ -11,11 +11,19 @@ function EggSelectionModal({ eggs, onSelect, onClose }) {
         const stacks = {};
         
         eggs.forEach(egg => {
-            // Wir gruppieren nach Seltenheit (und Quelle, falls gewünscht, hier simpel nach Rarity)
-            const key = egg.rarity; 
+            // Unterscheidung: Zucht oder Normal
+            // Wir prüfen auf customData.isBreeding oder ob Eltern eingetragen sind
+            const isBreeding = !!(egg.customData?.isBreeding || (egg.parents && egg.parents.length > 0));
+            const typeKey = isBreeding ? 'BREED' : 'NORMAL';
+            
+            // Key kombiniert Rarity und Typ, damit sie getrennt gestapelt werden
+            const key = `${egg.rarity}_${typeKey}`; 
+
             if (!stacks[key]) {
                 stacks[key] = { 
+                    id: key, // Eindeutige ID für React Key
                     rarity: egg.rarity, 
+                    isBreeding: isBreeding,
                     count: 0, 
                     egg: egg, // Ein Referenz-Ei für die Anzeige
                     ids: []   // Alle IDs in diesem Stack
@@ -25,11 +33,12 @@ function EggSelectionModal({ eggs, onSelect, onClose }) {
             stacks[key].ids.push(egg.id);
         });
 
-        // In Array umwandeln und sortieren (Höchste Seltenheit zuerst)
+        // In Array umwandeln und sortieren (Höchste Seltenheit zuerst, dann Zucht vor Normal)
         return Object.values(stacks).sort((a, b) => {
             const rA = RARITIES[a.rarity]?.id || 0;
             const rB = RARITIES[b.rarity]?.id || 0;
-            return rB - rA; 
+            if (rA !== rB) return rB - rA;
+            return (a.isBreeding === b.isBreeding) ? 0 : (a.isBreeding ? -1 : 1);
         });
     }, [eggs]);
 
@@ -67,7 +76,7 @@ function EggSelectionModal({ eggs, onSelect, onClose }) {
                                 const rarity = RARITIES[stack.rarity];
                                 return (
                                     <button 
-                                        key={stack.rarity}
+                                        key={stack.id}
                                         onClick={() => onSelect(stack.ids[0])} // Nimm das erste Ei vom Stapel
                                         className="relative group bg-slate-800 border border-white/5 hover:border-white/20 rounded-2xl p-3 transition-all active:scale-95 flex flex-col items-center text-center overflow-hidden"
                                     >
@@ -78,13 +87,22 @@ function EggSelectionModal({ eggs, onSelect, onClose }) {
                                             x{stack.count}
                                         </div>
 
+                                        {/* DNA Icon für Zucht-Eier */}
+                                        {stack.isBreeding && (
+                                            <div className="absolute top-2 left-2 bg-pink-500/20 p-1 rounded-full border border-pink-500/50 z-10">
+                                                <Dna className="w-3 h-3 text-pink-400" />
+                                            </div>
+                                        )}
+
                                         <div className="mb-2 relative z-10 transform group-hover:scale-110 transition-transform duration-300">
                                             <Egg className={`w-12 h-12 ${rarity.color} drop-shadow-md`} />
                                         </div>
                                         
                                         <div className="relative z-10">
                                             <div className={`text-xs font-black ${rarity.color} uppercase mb-0.5`}>{rarity.label}</div>
-                                            <div className="text-[9px] text-slate-500 font-bold">Bereit zum Ausbrüten</div>
+                                            <div className="text-[9px] text-slate-500 font-bold">
+                                                {stack.isBreeding ? 'Zucht-Ei' : 'Bereit zum Ausbrüten'}
+                                            </div>
                                         </div>
                                     </button>
                                 );

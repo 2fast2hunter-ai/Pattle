@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package, Ticket, Gift, Sparkles, TreePine, Pickaxe, Fish, Star, Cpu, FlaskConical, Zap, Palette, Minus, Plus } from 'lucide-react';
-import { RARITIES, RESOURCE_ITEMS, CONSUMABLES, COSMETICS } from '../data/gameData';
+import { RARITIES, RESOURCE_ITEMS, CONSUMABLES, COSMETICS, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
 // Icons für Materialien
@@ -74,7 +74,7 @@ const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, a
 
                 <div className="p-6 text-center">
                     <h2 className={`text-2xl font-black ${colorClass} mb-3 uppercase tracking-wide drop-shadow-sm`}>{title}</h2>
-                    <p className="text-sm text-slate-300 leading-relaxed mb-6">{description}</p>
+                    <div className="text-sm text-slate-300 leading-relaxed mb-6">{description}</div>
                     
                     {/* MENGENAUSWAHL */}
                     {showQuantitySelector && count > 1 && (
@@ -133,8 +133,10 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const stacks = {};
   pets.forEach(pet => {
       if (pet.isEgg && pet.hatchAt === 0) {
-          const key = `${pet.rarity}-${pet.source || 'SHOP'}`;
-          if (!stacks[key]) { stacks[key] = { base: pet, count: 0, ids: [], rarity: pet.rarity, source: pet.source || 'SHOP' }; }
+          const isBreeding = !!(pet.customData?.isBreeding || (pet.parents && pet.parents.length > 0) || pet.source === 'BREEDING');
+          const sourceKey = isBreeding ? 'BREEDING' : (pet.source || 'SHOP');
+          const key = `${pet.rarity}-${sourceKey}`;
+          if (!stacks[key]) { stacks[key] = { base: pet, count: 0, ids: [], rarity: pet.rarity, source: sourceKey, isBreeding: isBreeding }; }
           stacks[key].count++;
           stacks[key].ids.push(pet.id);
       }
@@ -143,7 +145,8 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
   const inventoryItems = Object.values(stacks).sort((a, b) => {
       const rA = RARITIES[a.base.rarity]?.id || 0;
       const rB = RARITIES[b.base.rarity]?.id || 0;
-      return rB - rA;
+      if (rA !== rB) return rB - rA;
+      return (a.isBreeding === b.isBreeding) ? 0 : (a.isBreeding ? -1 : 1);
   });
 
   const boxStacks = {};
@@ -330,7 +333,46 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
             title={`${RARITIES[selectedItem.base.rarity].label} Ei`}
             icon={Egg}
             count={selectedItem.count}
-            description={<span>Ein {selectedItem.source === 'BREEDING' ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei.</span>}
+            description={
+                <div className="flex flex-col items-center gap-1">
+                    <span className="mb-2">Ein {selectedItem.isBreeding ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei.</span>
+                    
+                    {/* NEU: Detaillierte Eltern-Anzeige */}
+                    {selectedItem.base.parents && selectedItem.base.parents.length > 0 ? (
+                        <div className="w-full bg-slate-950/40 rounded-xl p-3 border border-white/5">
+                            <div className="text-[10px] text-slate-500 font-bold uppercase text-center mb-2 flex items-center justify-center gap-1">
+                                <Dna className="w-3 h-3 text-pink-400" /> Eltern-Genetik
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                {selectedItem.base.parents.map((p, i) => {
+                                    const pType = TYPES[p.type] || TYPES.FIRE;
+                                    const pSpecies = ZODIAC_ANIMALS[p.species] || { label: 'Unbekannt' };
+                                    return (
+                                        <div key={i} className="bg-slate-900 rounded-lg p-2 flex flex-col items-center border border-white/5 shadow-sm">
+                                            <div className="font-bold text-xs text-white mb-0.5 truncate w-full text-center">{p.name}</div>
+                                            <div className="text-[9px] text-slate-400 mb-1.5">{pSpecies.label}</div>
+                                            <div className={`flex items-center gap-1 px-2 py-0.5 rounded-md ${pType.bg} bg-opacity-20 border border-white/10`}>
+                                                <div className="scale-75 text-white">{pType.icon}</div>
+                                                <span className="text-[8px] font-black text-white uppercase">{pType.label}</span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ) : (
+                        /* Fallback für alte Eier */
+                        selectedItem.base.customData?.parentsNames && (
+                        <div className="mt-1 flex items-center gap-2 bg-pink-500/20 px-3 py-1.5 rounded-lg border border-pink-500/30">
+                            <Dna className="w-3.5 h-3.5 text-pink-400" />
+                            <span className="text-pink-200 font-bold text-xs">
+                                Eltern: {selectedItem.base.customData.parentsNames}
+                            </span>
+                        </div>
+                        )
+                    )}
+                </div>
+            }
             actionLabel="INKUBIEREN"
             actionIcon={ThermometerSun}
             onAction={() => { onStartIncubation(selectedItem.ids[0]); setSelectedItem(null); }}
@@ -341,7 +383,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       )}
       {selectedBox && (
         <ModernModal 
-            title={`${selectedBox.variant} Box`}
+            title={`${selectedBox.variant === 'TYPE_DAILY' ? 'Elementar' : selectedBox.variant} Box`}
             icon={Package}
             count={selectedBox.count}
             description="Eine verschlossene Schatzkiste."
@@ -451,7 +493,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                           onClick={() => setSelectedBox(box)}
                           icon={Package}
                           count={box.count}
-                          label={box.variant}
+                          label={box.variant === 'TYPE_DAILY' ? 'Elementar-Truhe' : box.variant}
                           colorColor="text-yellow-400"
                           bgColor="bg-yellow-500"
                       />
@@ -475,9 +517,9 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                         label={rarity.label}
                         colorColor={rarity.color}
                         bgColor={rarity.bg}
-                        ringColor={item.source === 'BREEDING' ? 'ring-pink-500/50' : null}
+                        ringColor={item.isBreeding ? 'ring-pink-500/50' : null}
                         specialIcon={
-                            item.source === 'BREEDING' && <div className="absolute -bottom-2 -right-2 bg-pink-500 p-1.5 rounded-full border-2 border-slate-900 shadow-sm z-20"><Dna className="w-3.5 h-3.5 text-white" /></div>
+                            item.isBreeding && <div className="absolute -bottom-2 -right-2 bg-pink-500 p-1.5 rounded-full border-2 border-slate-900 shadow-sm z-20"><Dna className="w-3.5 h-3.5 text-white" /></div>
                         }
                     />
                   ); 

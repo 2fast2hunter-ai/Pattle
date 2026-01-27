@@ -112,7 +112,7 @@ export const BASE_ANIMALS = {
 
   TECH_ROBOT: { id: 'TECH_ROBOT', label: 'Androide', icon: '🤖', type: 'TECH' },
   TECH_DRONE: { id: 'TECH_DRONE', label: 'Drohne', icon: '🚁', type: 'TECH' },
-  TECH_GOOSE: { id: 'TECH_DOG', label: 'Robo-Dog', icon: '🐕', type: 'TECH' },
+  TECH_DOG: { id: 'TECH_DOG', label: 'Robo-Dog', icon: '🐕', type: 'TECH' },
   TECH_MOUSE: { id: 'TECH_MOUSE', label: 'Cyber-Maus', icon: '🖱️', type: 'TECH' },
   TECH_ANT: { id: 'TECH_ANT', label: 'Nano-Bot', icon: '🐜', type: 'TECH' },
 

@@ -12,7 +12,7 @@ export const getUnlockedTeamSlots = (level) => {
     return Math.min(maxSlots, slots);
 };
 
-// --- NEUE LEVEL LOGIK (PLAYER) ---
+// --- LEVEL LOGIK (PLAYER) ---
 
 export const getPlayerMaxXpForLevel = (level) => {
     if (level <= 0) return 0;
@@ -46,14 +46,11 @@ export const getPlayerLevelProgress = (totalXp, currentLevel) => {
     let startXp = 0;
     
     // Ab Level 2: Start ist der Schwellenwert des vorherigen Levels
-    // Beispiel: Level 2 Start = PLAYER_XP_TABLE[0] (800)
     if (currentLevel > 1) {
         startXp = PLAYER_XP_TABLE[currentLevel - 2] || 0;
     }
 
     // Ziel für dieses Level (kumulativ)
-    // Beispiel: Level 1 Ziel = PLAYER_XP_TABLE[0] (800)
-    // Level 2 Ziel = PLAYER_XP_TABLE[1] (3200)
     let endXp = PLAYER_XP_TABLE[currentLevel - 1];
     
     if (!endXp) return { current: 100, max: 100, percent: 100 }; // Max Level Fallback

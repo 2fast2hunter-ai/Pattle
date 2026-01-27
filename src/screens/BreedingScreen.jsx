@@ -44,12 +44,22 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
       if (getCooldownStatus(pet)) return; 
       if (pet.level < getLevelReq(pet)) return; // Check Level
 
+      // NEU: Check Rarity Match
+      if (selected.length === 1) {
+          const first = pets.find(p => p.id === selected[0]);
+          if (first && first.rarity !== pet.rarity && !selected.includes(id)) {
+              return; // Blockiere Auswahl unterschiedlicher Seltenheit
+          }
+      }
+
       if (selected.includes(id)) {
           setSelected(selected.filter(pid => pid !== id));
       } else {
           if (selected.length < 2) setSelected([...selected, id]);
           else {
-              const newSel = [selected[0], id];
+              const first = pets.find(p => p.id === selected[0]);
+              if (first && first.rarity !== pet.rarity) return; // Sicherheitscheck
+              const newSel = [selected[0], id]; // Ersetze das zweite Pet
               setSelected(newSel);
           }
       }
@@ -94,6 +104,32 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
   const p2 = selected.length > 1 ? pets.find(p => p.id === selected[1]) : null;
   // UPDATE: Ticket Zwang entfernt, nur Pets nötig
   const canBreed = p1 && p2;
+
+  // --- NEU: Wahrscheinlichkeits-Berechnung für Vorschau ---
+  let rarityProbabilities = [];
+  if (canBreed) {
+      const r1 = RARITIES[p1.rarity];
+      const r2 = RARITIES[p2.rarity];
+      
+      if (r1 && r2) {
+          const sortedKeys = Object.keys(RARITIES).sort((a, b) => RARITIES[a].id - RARITIES[b].id);
+          
+          // Gleiche Seltenheit: 10% Chance auf Upgrade
+          const idx = sortedKeys.indexOf(p1.rarity);
+          const nextRarityKey = (idx !== -1 && idx < sortedKeys.length - 1) ? sortedKeys[idx + 1] : null;
+          
+          if (nextRarityKey) {
+              rarityProbabilities = [
+                  { key: nextRarityKey, chance: 10 },
+                  { key: p1.rarity, chance: 90 }
+              ];
+          } else {
+              rarityProbabilities = [{ key: p1.rarity, chance: 100 }];
+          }
+          // Filtern und Sortieren (Höchste Seltenheit oben)
+          rarityProbabilities = rarityProbabilities.filter(p => p.chance > 0).sort((a, b) => RARITIES[b.key].id - RARITIES[a.key].id);
+      }
+  }
 
   return (
     <div className="h-full flex flex-col animate-in fade-in relative">
@@ -179,6 +215,56 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                 </div>
             </div>
             
+            {/* VORSCHAU DER MÖGLICHEN KINDER */}
+            {canBreed && (
+                <div className="mt-4 bg-slate-900/60 rounded-2xl p-3 border border-white/10 animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex items-center justify-center gap-2 mb-3">
+                        <Dna className="w-3 h-3 text-pink-400" />
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Genetik Vorschau</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                        {/* TYPES */}
+                        <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
+                            <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">Element</span>
+                            <div className="flex items-center justify-center gap-2 w-full">
+                                {p1.type === p2.type ? (
+                                    <div className={`flex items-center gap-1 ${TYPES[p1.type].color}`}>
+                                        {TYPES[p1.type].icon} <span className="font-bold text-xs">100%</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className={`flex items-center gap-1 ${TYPES[p1.type].color}`}>
+                                            {TYPES[p1.type].icon} <span className="font-bold text-xs">50%</span>
+                                        </div>
+                                        <div className="w-px h-3 bg-white/10"></div>
+                                        <div className={`flex items-center gap-1 ${TYPES[p2.type].color}`}>
+                                            {TYPES[p2.type].icon} <span className="font-bold text-xs">50%</span>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* RARITY */}
+                        <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
+                            <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">Seltenheit</span>
+                            <div className="flex flex-col w-full px-1 gap-0.5">
+                                {rarityProbabilities.map(prob => {
+                                    const r = RARITIES[prob.key];
+                                    return (
+                                    <div key={prob.key} className="flex justify-between items-center w-full">
+                                        <span className={`text-[9px] font-bold ${r.color}`}>{r.label}</span>
+                                        <span className="text-[9px] font-mono text-slate-400">{prob.chance}%</span>
+                                    </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <button 
                 onClick={() => canBreed && onBreed(p1.id, p2.id)}
                 disabled={!canBreed}
@@ -210,15 +296,19 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                       const cooldown = getCooldownStatus(pet);
                       const minLevel = getLevelReq(pet);
                       const isLevelLow = pet.level < minLevel;
+                      
+                      // NEU: Prüfen ob Seltenheit passt (wenn schon eins gewählt ist)
+                      const firstSelected = selected.length > 0 ? pets.find(p => p.id === selected[0]) : null;
+                      const isRarityMismatch = firstSelected && !isSelected && firstSelected.rarity !== pet.rarity;
 
                       return (
                         <div 
                             key={pet.id} 
-                            onClick={() => !cooldown && !isLevelLow && toggleSelect(pet.id)} // Klick nur wenn kein CD und Level OK
+                            onClick={() => !cooldown && !isLevelLow && !isRarityMismatch && toggleSelect(pet.id)} 
                             className={`
                                 relative overflow-hidden rounded-2xl p-2 transition-all
                                 bg-slate-800 border-2 
-                                ${isSelected ? 'border-pink-500 ring-2 ring-pink-500/30 scale-[0.98]' : (cooldown || isLevelLow ? 'border-slate-700 opacity-80 cursor-not-allowed' : `${rarity.border} cursor-pointer active:scale-95`)}
+                                ${isSelected ? 'border-pink-500 ring-2 ring-pink-500/30 scale-[0.98]' : (cooldown || isLevelLow || isRarityMismatch ? 'border-slate-700 opacity-50 cursor-not-allowed' : `${rarity.border} cursor-pointer active:scale-95`)}
                             `}
                         >
                             {isSelected && <div className="absolute top-2 right-2 w-4 h-4 bg-pink-500 rounded-full border-2 border-white z-20 shadow-lg"></div>}
@@ -232,8 +322,15 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                                 </div>
                             )}
 
+                            {/* Rarity Mismatch Overlay */}
+                            {isRarityMismatch && (
+                                <div className="absolute inset-0 bg-black/60 z-30 flex flex-col items-center justify-center backdrop-blur-[1px] p-2 text-center animate-in fade-in">
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase">Falsche Seltenheit</span>
+                                </div>
+                            )}
+
                             {/* Cooldown Overlay */}
-                            {!isLevelLow && cooldown && (
+                            {!isLevelLow && !isRarityMismatch && cooldown && (
                                 <div className="absolute inset-0 bg-black/80 z-30 flex flex-col items-center justify-center backdrop-blur-[2px] p-2 text-center animate-in fade-in">
                                     <Clock className="w-5 h-5 text-red-400 mb-1" />
                                     <span className="text-xs font-black text-red-200 mb-2">{cooldown}</span>

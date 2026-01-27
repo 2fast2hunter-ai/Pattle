@@ -45,7 +45,10 @@ export function useShopActions(state, showNotification) {
             updateUser(user.id, { gems: user.gems - totalCost, inventory: newInv });
         }
         
-        const boxLabel = LOOTBOXES[boxType] ? LOOTBOXES[boxType].label : boxType;
+        let boxLabel = boxType;
+        if (LOOTBOXES[boxType]) boxLabel = LOOTBOXES[boxType].label;
+        else if (boxType === 'TYPE_DAILY') boxLabel = 'Elementar-Truhe';
+        
         showNotification(`${quantity}x ${boxLabel} gekauft!`, 'success');
     };
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Swords, Users, Trophy, Crown, Shield, Flame, ChevronRight, X, Zap, Minus, Plus, Play } from 'lucide-react';
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
+import { PageBackground } from '../components/GameLayout';
 
 export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle }) {
   
@@ -23,16 +24,17 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
   };
 
   // Helper für moderne Kacheln
-  const HubTile = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, extraInfo }) => (
+  const HubTile = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, extraInfo, delay }) => (
       <button 
           onClick={onClick} 
+          style={{ animationDelay: `${delay}ms` }}
           className={`
               relative group w-full p-0.5 rounded-[24px] shadow-lg
               bg-gradient-to-br ${colorFrom} ${colorTo}
-              transform transition-all duration-200 hover:scale-[1.02] active:scale-95 text-left h-32 sm:h-36
+              transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left h-32 sm:h-36 animate-in slide-in-from-bottom-8 fade-in fill-mode-backwards
           `}
       >
-          <div className="bg-slate-900/90 backdrop-blur-xl rounded-[22px] p-4 sm:p-5 h-full flex flex-col justify-between relative overflow-hidden">
+          <div className="bg-slate-900/80 backdrop-blur-xl rounded-[22px] p-4 sm:p-5 h-full flex flex-col justify-between relative overflow-hidden">
               <div className={`absolute -right-4 -bottom-4 text-${iconColor.split('-')[1]}-500/10 group-hover:text-${iconColor.split('-')[1]}-500/20 transition-colors`}>
                   <Icon className="w-20 h-20 sm:w-24 sm:h-24" />
               </div>
@@ -63,10 +65,8 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
   );
 
   return (
-    <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative overflow-hidden bg-slate-950">
-      
-      <div className="absolute top-[-20%] right-[-20%] w-[80%] h-[50%] bg-red-900/20 blur-[100px] rounded-full pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[40%] bg-orange-900/20 blur-[80px] rounded-full pointer-events-none"></div>
+    <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative overflow-hidden">
+      <PageBackground />
 
       <div className="relative flex items-center justify-between mb-4 sm:mb-6 pt-2 px-4 shrink-0 z-10">
           <div className="flex flex-col">
@@ -91,7 +91,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
 
           <button 
               onClick={onBattle} 
-              className="w-full relative h-56 sm:h-64 rounded-[32px] overflow-hidden group shadow-2xl shadow-red-900/20 transition-transform hover:scale-[1.02] active:scale-95 border border-white/5"
+              className="w-full relative h-56 sm:h-64 rounded-[32px] overflow-hidden group shadow-2xl shadow-red-900/20 transition-all duration-300 hover:scale-[1.02] active:scale-95 border border-white/5 animate-in fade-in zoom-in-95"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-orange-700"></div>
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
@@ -117,7 +117,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
           </button>
           
           {/* NEU: AUTO BATTLE CONFIG CARD */}
-          <div className="bg-slate-800 border border-slate-700 rounded-3xl p-4 flex flex-col gap-3 shadow-lg">
+          <div className="bg-slate-800 border border-slate-700 rounded-3xl p-4 flex flex-col gap-3 shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-100 fill-mode-backwards">
               <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-purple-500/20 rounded-2xl flex items-center justify-center text-purple-400">
@@ -187,6 +187,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                   iconColor="text-indigo-400"
                   onClick={onTeam}
                   extraInfo={`${teamCount} / ${unlockedSlots}`}
+                  delay={200}
               />
 
               <HubTile 
@@ -197,6 +198,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                   colorTo="to-slate-800" 
                   iconColor="text-yellow-400"
                   onClick={onLeaderboard}
+                  delay={300}
               />
           </div>
       </div>
