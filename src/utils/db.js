@@ -7,7 +7,7 @@ import {
 } from 'firebase/firestore';
 import { generatePet, generateQuests } from './gameMechanics'; 
 import { calculatePlayerLevel, getXpToNextPlayerLevel } from './mechanics/progression'; 
-import { calculatePetLevelFromXp, recalculatePetStats, calculateMaxXp } from './mechanics/petStats'; 
+import { recalculatePetStats, calculateMaxXp } from './mechanics/petStats'; 
 
 // --- HELPER: MIGRATIONEN ---
 
@@ -32,16 +32,15 @@ const checkAndMigrateLevel = async (userData) => {
 const checkAndMigratePet = async (pet) => {
     if (pet.isEgg) return; 
 
-    // 1. Level Check
-    const correctLevel = calculatePetLevelFromXp(pet.xp || 0, pet.rarity);
-    const correctMaxXp = calculateMaxXp(correctLevel, pet.rarity);
+    // 1. Level Check (Vertraue dem gespeicherten Level, da XP relativ ist)
+    const currentLevel = pet.level || 1;
+    const correctMaxXp = calculateMaxXp(currentLevel, pet.rarity);
     
     // 2. Stats Check (Idealwerte)
-    const idealStats = recalculatePetStats(pet, correctLevel);
+    const idealStats = recalculatePetStats(pet, currentLevel);
     
     // Prüfen auf Fehler: Falsches Level, fehlende Basiswerte oder NaN-Stats
     const needsUpdate = 
-        pet.level !== correctLevel || 
         pet.maxXp !== correctMaxXp ||
         !pet.b_hp || 
         isNaN(pet.maxHp) || // WICHTIG: NaN Check
@@ -49,9 +48,13 @@ const checkAndMigratePet = async (pet) => {
         Math.abs(pet.maxHp - idealStats.maxHp) > 5;
 
     if (needsUpdate) {
-        console.log(`[DB] Repariere Pet ${pet.name} (Lvl ${pet.level}->${correctLevel}, Stats fixed)`);
+        console.log(`[DB] Repariere Pet ${pet.name} (Lvl ${currentLevel}, Stats/MaxXP fixed)`);
         try {
-            await updateDoc(doc(db, "pets", pet.id), idealStats);
+            await updateDoc(doc(db, "pets", pet.id), {
+                ...idealStats,
+                maxXp: correctMaxXp,
+                level: currentLevel
+            });
         } catch (e) { console.error("Fehler bei Pet Migration:", e); }
     }
 };
@@ -144,6 +147,8 @@ export const initializeUser = async (firebaseUser, username) => {
       rating: 1000,
       startEloToday: 1000,
       lastEloDate: today, 
+      lastLoginDate: '', 
+      loginStreak: 0,
       team: [], 
       inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], 
       friends: [],
@@ -316,4 +321,58 @@ export const calculateEloChange = (ratingA, ratingB, isWin) => {
     const expected = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
     const actual = isWin ? 1 : 0;
     return Math.round(K * (actual - expected));
+};
+
+// --- DAILY LOGIN LOGIC ---
+export const claimDailyLoginReward = async (user) => {
+    const userRef = doc(db, "users", user.id);
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    // Check ob schon abgeholt
+    if (user.lastLoginDate === today) return null;
+
+    // Check Streak (Gestern oder Heute erlaubt, sonst Reset)
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+    let currentStreak = user.loginStreak || 0;
+    if (user.lastLoginDate !== yesterdayStr && user.lastLoginDate !== today && user.lastLoginDate) {
+        currentStreak = 0; // Reset wenn Tag verpasst
+    }
+
+    const nextStreak = currentStreak + 1;
+    const dayIndex = (currentStreak) % 7; // 0-6 Index für 7 Tage Zyklus
+
+    const rewards = [
+        { type: 'COINS', amount: 250, label: '250 Münzen' },
+        { type: 'COINS', amount: 500, label: '500 Münzen' },
+        { type: 'GEMS', amount: 5, label: '5 Edelsteine' },
+        { type: 'COINS', amount: 1000, label: '1.000 Münzen' },
+        { type: 'GEMS', amount: 10, label: '10 Edelsteine' },
+        { type: 'ITEM', variant: 'XP_POTION_M', amount: 2, label: '2x XP Trank (M)' },
+        { type: 'LOOTBOX', variant: 'PREMIUM', amount: 1, label: 'Premium Box' }
+    ];
+    
+    const reward = rewards[dayIndex];
+    
+    let updates = {
+        lastLoginDate: today,
+        loginStreak: nextStreak
+    };
+
+    if (reward.type === 'COINS') updates.coins = (user.coins || 0) + reward.amount;
+    if (reward.type === 'GEMS') updates.gems = (user.gems || 0) + reward.amount;
+    
+    if (reward.type === 'ITEM' || reward.type === 'LOOTBOX') {
+        const inventory = user.inventory || [];
+        const newItems = Array.from({length: reward.amount}, (_, i) => ({
+            id: Date.now() + i, type: reward.type === 'LOOTBOX' ? 'LOOTBOX' : 'CONSUMABLE', variant: reward.variant
+        }));
+        updates.inventory = [...inventory, ...newItems];
+    }
+
+    await updateDoc(userRef, updates);
+    return { ...reward, streak: nextStreak };
 };

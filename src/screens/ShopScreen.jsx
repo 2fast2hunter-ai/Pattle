@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift, Zap, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift, Zap, ShoppingBag, Calendar } from 'lucide-react';
 import { SHOP_ITEMS, LOOTBOXES, RARITIES, AD_REWARDS, TIMED_REWARDS, TYPES } from '../data/gameData'; 
 import AdModal from '../components/ui/AdModal';
 import { PageBackground } from '../components/GameLayout';
 import { showRewardedAd } from '../utils/adManager';
+import DailyLoginModal from '../components/modals/DailyLoginModal';
+import { claimDailyLoginReward } from '../utils/db';
 import { useShopActions } from '../hooks/useGameLogic/actions/useShopActions'; // Optional falls nicht als Prop
 
 export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, user, onClaimTimedReward }) { 
@@ -20,6 +22,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const [buyAmount, setBuyAmount] = useState(1);
     const [pendingReward, setPendingReward] = useState(null);
     const [isBuying, setIsBuying] = useState(false); // NEU: Schutz vor Mehrfachklicks
+    const [showDailyLogin, setShowDailyLogin] = useState(false);
 
     const AD_COOLDOWN_MS = 10 * 60 * 1000;
     const [adTimers, setAdTimers] = useState({}); 
@@ -139,6 +142,11 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
 
     const currentConfig = boxConfig[viewingBox] || boxConfig['DAILY'];
 
+    const handleClaimDaily = async () => {
+        await claimDailyLoginReward(user);
+        setShowDailyLogin(false);
+    };
+
     return (
         <div className="h-full flex flex-col animate-in fade-in relative overflow-hidden bg-slate-950">
             <PageBackground />
@@ -154,6 +162,14 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                 }
             `}</style>
             
+            {showDailyLogin && (
+                <DailyLoginModal 
+                    user={user} 
+                    onClaim={handleClaimDaily} 
+                    onClose={() => setShowDailyLogin(false)} 
+                />
+            )}
+
             {showDevAdModal && (
                 <AdModal 
                     onClose={() => setShowDevAdModal(false)} 
@@ -236,6 +252,22 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                        
+                        {/* DAILY LOGIN BUTTON */}
+                        <button 
+                            onClick={() => setShowDailyLogin(true)}
+                            className="col-span-2 sm:col-span-1 bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-3 flex items-center justify-between relative overflow-hidden group transition-all shadow-lg hover:scale-[1.02] active:scale-95 border border-white/10"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center border border-white/20 shadow-inner">
+                                    <Calendar className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="font-bold text-white text-sm">Täglicher Bonus</div>
+                                    <div className="text-[10px] text-indigo-100">Jeden Tag Belohnungen!</div>
+                                </div>
+                            </div>
+                        </button>
                         
                         {/* NEU: TIME BASED REWARDS (GRATIS TICKET) */}
                         {TIMED_REWARDS.map(reward => {

@@ -10,7 +10,13 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
     if (!stageConfig) return;
 
     // Team Validierung
-    const myTeam = user.team.map(id => myPets.find(p => p.id === id)).filter(Boolean);
+    const myTeam = user.team.map(id => {
+        const pet = myPets.find(p => p.id === id);
+        if (!pet) return null;
+        // WICHTIG: Pet klonen und Kampf-Werte initialisieren (hp = maxHp)
+        return { ...pet, hp: pet.maxHp, currentCd: 0 };
+    }).filter(Boolean);
+
     if (myTeam.length === 0) {
         showNotification("Dein Team ist leer!", "error");
         return;
@@ -24,7 +30,7 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
         const randomType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
         // Level entspricht der Stufe
         const enemy = generatePet(stageConfig.enemyLevel, randomType, stageConfig.enemyRarity, null, 'TOWER_ENEMY');
-        enemy.currentHp = enemy.maxHp;
+        enemy.hp = enemy.maxHp; // hp statt currentHp für Konsistenz mit BattleScreen
         enemy.currentCd = 0;
         enemyTeam.push(enemy);
     }

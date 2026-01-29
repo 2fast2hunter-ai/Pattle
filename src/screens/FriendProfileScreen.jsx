@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
     ArrowLeft, Trophy, LayoutGrid, Dna, 
-    PieChart, Swords, Loader2, Copy
+    PieChart, Swords, Loader2, Copy, ArrowUpRight
 } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import { findUserPublic, listenToPets } from '../utils/db';

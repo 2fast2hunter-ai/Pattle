@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
+import DailyLoginModal from '../components/modals/DailyLoginModal';
+import { claimDailyLoginReward } from '../utils/db';
 
 // --- RIPPLE BUTTON COMPONENT ---
 const MenuTile = ({ item, index, onClick }) => {
@@ -80,6 +82,25 @@ const MenuTile = ({ item, index, onClick }) => {
 
 export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage }) { // onVillage prop
   
+  const [showDailyLogin, setShowDailyLogin] = useState(false);
+
+  // Check Daily Login beim Laden
+  useEffect(() => {
+      if (user) {
+          const today = new Date().toISOString().split('T')[0];
+          if (user.lastLoginDate !== today) {
+              // Verzögerung für sanfteres Einblenden
+              const timer = setTimeout(() => setShowDailyLogin(true), 800);
+              return () => clearTimeout(timer);
+          }
+      }
+  }, [user?.lastLoginDate]);
+
+  const handleClaimDaily = async () => {
+      await claimDailyLoginReward(user);
+      setShowDailyLogin(false);
+  };
+
   const menuItems = [
       { 
           id: 'arena', title: 'ARENA', subtitle: 'Kämpfe',
@@ -127,6 +148,15 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
 
   return (
     <div className="pt-4 pb-24 px-4 space-y-4 h-full overflow-y-auto scrollbar-hide relative">
+      
+      {showDailyLogin && (
+        <DailyLoginModal 
+            user={user} 
+            onClaim={handleClaimDaily} 
+            onClose={() => setShowDailyLogin(false)} 
+        />
+      )}
+
       <PageBackground />
       
       {/* Ripple Animation Keyframes */}
