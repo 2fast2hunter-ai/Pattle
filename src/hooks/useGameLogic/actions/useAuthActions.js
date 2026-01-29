@@ -1,5 +1,5 @@
 import { auth } from '../../../firebase'; 
-import { initializeUser } from '../../../utils/db';
+import { initializeUser, updateUser } from '../../../utils/db';
 
 export function useAuthActions(state, showNotification) {
     const { setUserId, setAuthLoading, setUser, setMyPets, setCurrentView } = state;
@@ -22,5 +22,11 @@ export function useAuthActions(state, showNotification) {
         setCurrentView('auth'); 
     };
 
-    return { handleLogin, handleLogout };
+    const handleUpdateProfile = async (data) => {
+        if (!state.user) return;
+        await updateUser(state.user.id, data);
+        showNotification("Profil aktualisiert!", "success");
+    };
+
+    return { handleLogin, handleLogout, handleUpdateProfile };
 }

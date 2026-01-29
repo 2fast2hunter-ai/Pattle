@@ -10,7 +10,8 @@ import {
     TRADE_RECIPES, 
     MILESTONES, 
     COSMETICS, 
-    SPECIAL_OFFERS 
+    SPECIAL_OFFERS,
+    PROFILE_ICONS
 } from '../../../data/gameData';
 import { 
     recalculatePetStats, 
@@ -437,7 +438,7 @@ export function useVillageActions(state, showNotification) {
     // --- KOSMETIK KAUFEN ---
     const buyCosmetic = async (cosmeticId) => {
         if (!user) return;
-        const cosmetic = COSMETICS[cosmeticId];
+        const cosmetic = COSMETICS[cosmeticId] || PROFILE_ICONS[cosmeticId];
         if (!cosmetic) return;
 
         const storage = user.village.storage || {};

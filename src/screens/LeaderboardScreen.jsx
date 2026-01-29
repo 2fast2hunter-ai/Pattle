@@ -3,7 +3,7 @@ import { ArrowLeft, Trophy, Crown, Shield, Medal, TrendingUp, TrendingDown, Minu
 import { getLeaderboard } from '../utils/db';
 import PetAvatar from '../components/PetAvatar';
 
-export default function LeaderboardScreen({ user, onBack }) {
+export default function LeaderboardScreen({ user, onBack, onViewPlayer }) {
   const [leaders, setLeaders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -83,9 +83,10 @@ export default function LeaderboardScreen({ user, onBack }) {
                   return (
                       <div 
                           key={player.id} 
+                          onClick={() => onViewPlayer(player)}
                           className={`
-                              relative flex items-center gap-3 p-3 rounded-2xl border transition-all
-                              ${isMe ? 'bg-indigo-900/40 border-indigo-500/50 shadow-lg shadow-indigo-900/20' : 'bg-slate-900/60 border-white/5'}
+                              relative flex items-center gap-3 p-3 rounded-2xl border transition-all cursor-pointer active:scale-[0.98]
+                              ${isMe ? 'bg-indigo-900/40 border-indigo-500/50 shadow-lg shadow-indigo-900/20' : 'bg-slate-900/60 border-white/5 hover:bg-slate-800'}
                           `}
                       >
                           {/* RANK BADGE */}

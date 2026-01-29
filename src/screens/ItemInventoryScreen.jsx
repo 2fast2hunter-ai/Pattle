@@ -1,109 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, X, Egg, Dna, ShoppingBag, ThermometerSun, BoxSelect, Package, Ticket, Gift, Sparkles, TreePine, Pickaxe, Fish, Star, Cpu, FlaskConical, Zap, Palette, Minus, Plus } from 'lucide-react';
+import { ArrowLeft, Egg, Dna, ThermometerSun, BoxSelect, Package, Ticket, Gift, Sparkles, TreePine, Pickaxe, Fish, Star, Cpu, FlaskConical, Zap, Palette } from 'lucide-react';
 import { RARITIES, RESOURCE_ITEMS, CONSUMABLES, COSMETICS, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
-import PetAvatar from '../components/PetAvatar';
+import InventoryCard from '../components/inventory/InventoryCard';
+import ItemActionModal from '../components/inventory/ItemActionModal';
 
-// Icons für Materialien
 const RES_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
-
-// --- INVENTORY CARD ---
-const InventoryCard = ({ icon: Icon, count, label, colorColor, bgColor, onClick, specialIcon, footerButton, ringColor }) => (
-    <div 
-        onClick={onClick} 
-        className={`
-            relative group aspect-square rounded-[24px] p-3 cursor-pointer overflow-hidden transition-all duration-300
-            bg-slate-900/40 backdrop-blur-md border border-white/10 shadow-lg
-            hover:scale-[1.02] hover:shadow-2xl hover:border-white/30 active:scale-95
-            ${ringColor ? `ring-2 ${ringColor} ring-offset-2 ring-offset-slate-950` : ''}
-            flex flex-col items-center justify-between
-        `}
-    >
-        <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full ${bgColor} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`}></div>
-
-        <div className="w-full flex justify-end relative z-10">
-            <span className="bg-slate-950/80 text-[10px] font-black text-white px-2 py-0.5 rounded-full border border-white/10 shadow-sm backdrop-blur-sm">
-                x{Math.floor(count).toLocaleString()}
-            </span>
-        </div>
-
-        <div className="relative z-10 flex-1 flex items-center justify-center">
-            <div className="relative">
-                <Icon className={`w-12 h-12 ${colorColor} drop-shadow-[0_5px_10px_rgba(0,0,0,0.5)] group-hover:scale-110 transition-transform`} />
-                {specialIcon}
-            </div>
-        </div>
-        
-        <div className="relative z-10 w-full text-center flex flex-col gap-1.5">
-            <div className={`text-[9px] font-black uppercase tracking-wider ${colorColor} ${footerButton ? 'truncate leading-none' : 'bg-black/40 px-2 py-1 rounded-lg backdrop-blur-sm w-full leading-tight'}`}>
-                {label}
-            </div>
-            {footerButton}
-        </div>
-    </div>
-);
-
-// --- MODERNES MODAL MIT MENGENAUSWAHL ---
-const ModernModal = ({ title, icon: MainIcon, count, description, actionLabel, actionIcon: ActionIcon, onAction, onClose, colorClass, bgClass, borderClass, specialBadge, showQuantitySelector }) => {
-    const [quantity, setQuantity] = useState(1);
-
-    const increment = () => setQuantity(q => Math.min(q + 1, count));
-    const decrement = () => setQuantity(q => Math.max(q - 1, 1));
-
-    return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in zoom-in-50 duration-300">
-            <div className={`bg-slate-900/90 border border-white/10 w-full max-w-sm rounded-[32px] p-0 relative overflow-hidden flex flex-col shadow-2xl shadow-black/50`}>
-                
-                <div className="relative h-44 flex items-center justify-center overflow-hidden shrink-0 bg-gradient-to-b from-slate-800/50 to-slate-900/50">
-                    <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 ${bgClass} blur-[60px] opacity-30 animate-pulse`}></div>
-                    
-                    <div className="relative z-10 scale-150 drop-shadow-[0_15px_30px_rgba(0,0,0,0.5)]">
-                        <MainIcon className={`w-28 h-28 ${colorClass}`} />
-                        {specialBadge}
-                    </div>
-                    
-                    <div className="absolute bottom-4 bg-slate-950/80 text-white text-sm font-black px-4 py-1.5 rounded-full border border-white/10 backdrop-blur-md shadow-lg z-20 flex items-center gap-1">
-                        <span className="text-slate-400">Besitz:</span> x{Math.floor(count)}
-                    </div>
-
-                    <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-black/20 text-white rounded-full hover:bg-white/20 transition-colors z-20 backdrop-blur-md border border-white/10">
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
-
-                <div className="p-6 text-center">
-                    <h2 className={`text-2xl font-black ${colorClass} mb-3 uppercase tracking-wide drop-shadow-sm`}>{title}</h2>
-                    <div className="text-sm text-slate-300 leading-relaxed mb-6">{description}</div>
-                    
-                    {/* MENGENAUSWAHL */}
-                    {showQuantitySelector && count > 1 && (
-                        <div className="flex justify-center items-center gap-4 mb-6 bg-slate-800/50 p-2 rounded-2xl border border-white/5 w-fit mx-auto">
-                            <button onClick={decrement} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all border border-white/10"><Minus className="w-4 h-4 text-white" /></button>
-                            <div className="text-center w-12">
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Menge</span>
-                                <span className="block text-xl font-black text-white">{quantity}</span>
-                            </div>
-                            <button onClick={increment} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all border border-white/10"><Plus className="w-4 h-4 text-white" /></button>
-                            <button onClick={() => setQuantity(count)} className="text-[10px] font-bold text-indigo-400 uppercase ml-2 hover:text-white transition-colors">Max</button>
-                        </div>
-                    )}
-
-                    {onAction && (
-                        <button 
-                            onClick={() => onAction(quantity)} 
-                            className={`w-full py-4 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all font-black text-white
-                            bg-gradient-to-r ${borderClass === 'pink' ? 'from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 shadow-pink-500/30' : (borderClass === 'yellow' ? 'from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 shadow-yellow-500/30' : 'from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 shadow-indigo-500/30')}`}
-                        >
-                            <ActionIcon className="w-5 h-5" /> {actionLabel} {showQuantitySelector && quantity > 1 ? `(${quantity}x)` : ''}
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-};
-
 
 export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable, onOpenLootbox }) { 
   const [selectedItem, setSelectedItem] = useState(null);
@@ -264,7 +167,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       const Icon = isCosmetic ? Palette : FlaskConical;
       
       return (
-          <ModernModal 
+          <ItemActionModal 
               title={selectedPotion.config.label}
               icon={Icon}
               count={selectedPotion.count}
@@ -352,7 +255,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       
       {/* MODALS */}
       {selectedItem && (
-        <ModernModal 
+        <ItemActionModal 
             title={`${RARITIES[selectedItem.base.rarity].label} Ei`}
             icon={Egg}
             count={selectedItem.count}
@@ -405,7 +308,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
         />
       )}
       {selectedBox && (
-        <ModernModal 
+        <ItemActionModal 
             title={`${selectedBox.variant === 'TYPE_DAILY' ? 'Elementar' : selectedBox.variant} Box`}
             icon={Package}
             count={selectedBox.count}

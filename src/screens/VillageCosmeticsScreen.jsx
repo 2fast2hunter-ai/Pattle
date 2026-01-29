@@ -1,6 +1,6 @@
 import React from 'react';
-import { ArrowLeft, Scissors, Lock, CheckCircle2, Ticket, Sparkles, Zap, Dna } from 'lucide-react';
-import { COSMETICS, RESOURCE_ITEMS, SPECIAL_OFFERS } from '../data/gameData';
+import { ArrowLeft, Scissors, Lock, CheckCircle2, Ticket, Sparkles, Zap, Dna, Smile } from 'lucide-react';
+import { COSMETICS, RESOURCE_ITEMS, SPECIAL_OFFERS, PROFILE_ICONS } from '../data/gameData';
 
 const getItemLabel = (id) => {
     for (const list of Object.values(RESOURCE_ITEMS)) {
@@ -32,7 +32,39 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
 
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
                 
-                {/* 1. HINTERGRÜNDE */}
+                {/* 1. PROFILBILDER (NEU) */}
+                <div>
+                    <div className="bg-slate-900/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3 mb-3">
+                        <Smile className="w-5 h-5 text-yellow-400" />
+                        <p className="text-slate-400 text-xs font-bold uppercase">Profilbilder</p>
+                    </div>
+
+                    <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+                        {Object.values(PROFILE_ICONS).filter(icon => icon.costAmount > 0).map(icon => {
+                            const canAfford = (storage[icon.costItem] || 0) >= icon.costAmount;
+                            return (
+                                <div key={icon.id} className="bg-slate-800 rounded-2xl border border-white/5 p-3 flex flex-col items-center gap-2 group">
+                                    <div className="text-4xl drop-shadow-md transform group-hover:scale-110 transition-transform">{icon.icon}</div>
+                                    <div className="text-center w-full">
+                                        <div className="text-[10px] font-bold text-white truncate">{icon.label}</div>
+                                        <div className="text-[9px] text-slate-400 flex justify-center items-center gap-1 mb-2">
+                                            <span className={canAfford ? 'text-green-400' : 'text-red-400'}>{icon.costAmount}x {getItemLabel(icon.costItem)}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => onBuy(icon.id)} 
+                                            disabled={!canAfford} 
+                                            className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase transition-all active:scale-95 ${canAfford ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
+                                        >
+                                            Kaufen
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* 2. HINTERGRÜNDE */}
                 <div>
                     <div className="bg-slate-900/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3 mb-3">
                         <Scissors className="w-5 h-5 text-pink-400" />

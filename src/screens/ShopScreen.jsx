@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift, Zap } from 'lucide-react';
+import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift, Zap, ShoppingBag } from 'lucide-react';
 import { SHOP_ITEMS, LOOTBOXES, RARITIES, AD_REWARDS, TIMED_REWARDS, TYPES } from '../data/gameData'; 
 import AdModal from '../components/ui/AdModal';
+import { PageBackground } from '../components/GameLayout';
 import { showRewardedAd } from '../utils/adManager';
 import { useShopActions } from '../hooks/useGameLogic/actions/useShopActions'; // Optional falls nicht als Prop
 
@@ -139,7 +140,19 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const currentConfig = boxConfig[viewingBox] || boxConfig['DAILY'];
 
     return (
-        <div className="h-full flex flex-col animate-in fade-in relative">
+        <div className="h-full flex flex-col animate-in fade-in relative overflow-hidden bg-slate-950">
+            <PageBackground />
+            
+            <style>{`
+                @keyframes gradient-xy {
+                    0%, 100% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                }
+                .animate-gradient-xy {
+                    background-size: 200% 200%;
+                    animation: gradient-xy 6s ease infinite;
+                }
+            `}</style>
             
             {showDevAdModal && (
                 <AdModal 
@@ -322,11 +335,34 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                 </div>
 
                 {/* TICKETS */}
-                <div>
-                    <div className="flex items-center gap-2 mb-3 text-pink-400 px-1"><Ticket className="w-4 h-4" /><h3 className="text-xs font-black uppercase tracking-widest">Zucht-Tickets</h3></div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                        <div className="bg-slate-800 p-4 rounded-2xl border border-white/5 flex flex-col items-center text-center hover:bg-slate-750 transition-colors group"><div className="w-10 h-10 bg-pink-500/10 rounded-full flex items-center justify-center mb-2"><Ticket className="w-5 h-5 text-pink-500" /></div><div className="mb-2"><div className="font-bold text-white text-xs">Einzelticket</div></div><button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_COINS)} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform"><Coins className="w-3 h-3 fill-black/20" /> {SHOP_ITEMS.TICKET_BUNDLE_COINS.costAmount}</button></div>
-                        <div className="bg-slate-800 p-4 rounded-2xl border border-pink-500/20 flex flex-col items-center text-center relative overflow-hidden group"><div className="absolute top-0 right-0 bg-pink-600 text-white text-[8px] font-black px-2 py-1 rounded-bl-lg">DEAL</div><div className="w-10 h-10 bg-pink-500/20 rounded-full flex items-center justify-center mb-2 border border-pink-500/30"><Ticket className="w-5 h-5 text-pink-400" /></div><div className="mb-2"><div className="font-bold text-white text-xs">5er Pack</div></div><button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_GEMS)} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-1.5 rounded-lg text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-lg"><Gem className="w-3 h-3 fill-white/20" /> {SHOP_ITEMS.TICKET_BUNDLE_GEMS.costAmount}</button></div>
+                <div className="space-y-3">
+                    <div className="flex items-center gap-2 px-1">
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent"></div>
+                        <span className="text-xs font-black text-pink-400 uppercase tracking-widest bg-slate-900/50 px-3 py-1 rounded-full border border-pink-500/20 backdrop-blur-sm">Zucht-Tickets</span>
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent"></div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-slate-800 rounded-3xl p-4 border border-white/5 flex flex-col items-center text-center relative overflow-hidden group hover:bg-slate-800/80 transition-colors">
+                            <div className="w-12 h-12 bg-pink-500/10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                                <Ticket className="w-6 h-6 text-pink-500" />
+                            </div>
+                            <div className="font-bold text-white text-xs mb-3">Einzelticket</div>
+                            <button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_COINS)} className="w-full bg-slate-900 hover:bg-slate-950 text-white font-bold py-2 rounded-xl text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform border border-white/10">
+                                <Coins className="w-3 h-3 text-amber-400" /> {SHOP_ITEMS.TICKET_BUNDLE_COINS.costAmount}
+                            </button>
+                        </div>
+
+                        <div className="bg-gradient-to-br from-pink-900/40 to-rose-900/40 rounded-3xl p-4 border border-pink-500/30 flex flex-col items-center text-center relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 bg-pink-600 text-white text-[8px] font-black px-2 py-1 rounded-bl-xl shadow-lg">DEAL</div>
+                            <div className="w-12 h-12 bg-pink-500/20 rounded-full flex items-center justify-center mb-3 border border-pink-500/30 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(236,72,153,0.3)]">
+                                <Ticket className="w-6 h-6 text-pink-400" />
+                            </div>
+                            <div className="font-bold text-white text-xs mb-3">5er Pack</div>
+                            <button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_GEMS)} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded-xl text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-lg">
+                                <Gem className="w-3 h-3 fill-white/20" /> {SHOP_ITEMS.TICKET_BUNDLE_GEMS.costAmount}
+                            </button>
+                        </div>
                     </div>
                 </div>
 

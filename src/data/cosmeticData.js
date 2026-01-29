@@ -27,3 +27,36 @@ export const COSMETICS = {
     BG_STONE: { id: 'BG_STONE', label: 'Hintergrund: Stein', colorClass: 'bg-stone-600', costItem: 'comp_ram', costAmount: 100, rarity: 'LEGENDARY' },
     BG_WHITE: { id: 'BG_WHITE', label: 'Hintergrund: Weiß', colorClass: 'bg-slate-100', costItem: 'comp_ram', costAmount: 100, rarity: 'LEGENDARY' }
 };
+
+export const PROFILE_ICONS = {
+    // --- DEFAULTS (Kostenlos) ---
+    ICON_DEF_1: { id: 'ICON_DEF_1', label: 'Schild', icon: '🛡️', costItem: null, costAmount: 0, rarity: 'COMMON' },
+    ICON_DEF_2: { id: 'ICON_DEF_2', label: 'Schwerter', icon: '⚔️', costItem: null, costAmount: 0, rarity: 'COMMON' },
+    ICON_DEF_3: { id: 'ICON_DEF_3', label: 'Bogen', icon: '🏹', costItem: null, costAmount: 0, rarity: 'COMMON' },
+
+    // --- TIERWELT (Holz) ---
+    ICON_BEAR: { id: 'ICON_BEAR', label: 'Bär', icon: '🐻', costItem: 'wood_oak', costAmount: 50, rarity: 'COMMON' },
+    ICON_WOLF: { id: 'ICON_WOLF', label: 'Wolf', icon: '🐺', costItem: 'wood_oak', costAmount: 50, rarity: 'COMMON' },
+    ICON_LION: { id: 'ICON_LION', label: 'Löwe', icon: '🦁', costItem: 'wood_oak', costAmount: 50, rarity: 'COMMON' },
+    ICON_TIGER: { id: 'ICON_TIGER', label: 'Tiger', icon: '🐯', costItem: 'wood_oak', costAmount: 50, rarity: 'COMMON' },
+    ICON_EAGLE: { id: 'ICON_EAGLE', label: 'Adler', icon: '🦅', costItem: 'wood_oak', costAmount: 50, rarity: 'COMMON' },
+
+    // --- MONSTER & ROBOTER (Stein) ---
+    ICON_SKULL: { id: 'ICON_SKULL', label: 'Totenkopf', icon: '💀', costItem: 'stone_rock', costAmount: 50, rarity: 'COMMON' },
+    ICON_GHOST: { id: 'ICON_GHOST', label: 'Geist', icon: '👻', costItem: 'stone_rock', costAmount: 50, rarity: 'COMMON' },
+    ICON_ROBOT: { id: 'ICON_ROBOT', label: 'Roboter', icon: '🤖', costItem: 'stone_rock', costAmount: 50, rarity: 'COMMON' },
+    ICON_ALIEN: { id: 'ICON_ALIEN', label: 'Alien', icon: '👽', costItem: 'stone_rock', costAmount: 50, rarity: 'COMMON' },
+    ICON_DEMON: { id: 'ICON_DEMON', label: 'Dämon', icon: '👹', costItem: 'stone_rock', costAmount: 50, rarity: 'COMMON' },
+
+    // --- MEERESBEWOHNER (Muscheln) ---
+    ICON_SHARK: { id: 'ICON_SHARK', label: 'Hai', icon: '🦈', costItem: 'seafood_shells', costAmount: 50, rarity: 'COMMON' },
+    ICON_OCTOPUS: { id: 'ICON_OCTOPUS', label: 'Krake', icon: '🐙', costItem: 'seafood_shells', costAmount: 50, rarity: 'COMMON' },
+    ICON_TURTLE: { id: 'ICON_TURTLE', label: 'Schildkröte', icon: '🐢', costItem: 'seafood_shells', costAmount: 50, rarity: 'COMMON' },
+
+    // --- MAGISCH & SELTEN (Sternenstaub & Seltenes) ---
+    ICON_WIZARD: { id: 'ICON_WIZARD', label: 'Magier', icon: '🧙‍♂️', costItem: 'stardust_hydrogen', costAmount: 50, rarity: 'UNCOMMON' },
+    ICON_UNICORN: { id: 'ICON_UNICORN', label: 'Einhorn', icon: '🦄', costItem: 'stardust_hydrogen', costAmount: 50, rarity: 'UNCOMMON' },
+    ICON_DRAGON: { id: 'ICON_DRAGON', label: 'Drache', icon: '🐉', costItem: 'wood_beech', costAmount: 25, rarity: 'RARE' },
+    ICON_CROWN: { id: 'ICON_CROWN', label: 'Krone', icon: '👑', costItem: 'stone_iron', costAmount: 10, rarity: 'EPIC' },
+    ICON_DIAMOND: { id: 'ICON_DIAMOND', label: 'Diamant', icon: '💎', costItem: 'comp_ram', costAmount: 5, rarity: 'LEGENDARY' }
+};

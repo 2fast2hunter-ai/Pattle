@@ -1,26 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-    ArrowLeft, Trophy, LayoutGrid, Dna, ThermometerSun, 
-    PieChart, Swords, X, Wallet, 
-    ArrowUpRight, ArrowDownRight, Crown, Loader2, Copy
+    ArrowLeft, Trophy, LayoutGrid, Dna, 
+    PieChart, Swords, Loader2, Copy
 } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import { findUserPublic, listenToPets } from '../utils/db';
-
-function StatDetailModal({ category, data, onClose }) {
-    if (!category) return null;
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in zoom-in-50">
-            <div className="bg-slate-900 border border-white/10 w-full max-w-sm rounded-[32px] flex flex-col shadow-2xl relative overflow-hidden p-6">
-                <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-black text-white uppercase">{category.label}</h2>
-                    <button onClick={onClose}><X className="w-5 h-5 text-white" /></button>
-                </div>
-                <div className="text-slate-400 text-center text-sm">Details werden geladen...</div>
-            </div>
-        </div>
-    );
-}
+import StatDetailModal from '../components/modals/StatDetailModal';
 
 export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
     const [fullProfile, setFullProfile] = useState(null);
@@ -51,14 +36,42 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
 
     const statsData = useMemo(() => {
         const safePets = friendPets || [];
+        
+        // 1. Battle
         const totalBattles = displayUser.stats?.pvpTotal || 0;
         const wins = displayUser.stats?.pvpWins || 0;
         const winRate = totalBattles > 0 ? Math.round((wins / totalBattles) * 100) : 0;
+
+        // 2. Collection Analysis
+        const rarityCounts = {};
+        let maxLvl = 0;
+        safePets.forEach(p => {
+            if (!p.isEgg) {
+                const r = p.rarity;
+                rarityCounts[r] = (rarityCounts[r] || 0) + 1;
+                if (p.level > maxLvl) maxLvl = p.level;
+            }
+        });
+
+        const rarityStats = Object.values(RARITIES).map(r => ({
+            label: r.label,
+            count: rarityCounts[Object.keys(RARITIES).find(k => RARITIES[k].id === r.id)] || 0,
+            color: r.color,
+            bg: r.bg.replace('bg-', 'bg-') 
+        })).sort((a,b) => b.count - a.count);
+
         return { 
             battle: { wins, losses: totalBattles - wins, winRate, rating: displayUser.rating },
-            collection: { totalPets: safePets.length },
+            collection: { 
+                totalPets: safePets.length,
+                highestLevel: maxLvl,
+                rarityStats
+            },
             economy: { coins: displayUser.coins },
-            breeding: { hatched: displayUser.stats?.hatched || 0 }
+            breeding: { 
+                hatched: displayUser.stats?.hatched || 0,
+                bred: displayUser.stats?.bred || 0
+            }
         };
     }, [displayUser, friendPets]);
 

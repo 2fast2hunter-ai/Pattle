@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import { useGameLogic } from './hooks/useGameLogic';
-import { AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { HeaderHUD } from "./components/GameLayout"; 
 import Notification from "./components/ui/Notification";
 import GameModals from "./components/GameModals";
@@ -31,28 +31,9 @@ import ResourceDetailScreen from './screens/ResourceDetailScreen';
 import VillageMilestonesScreen from './screens/VillageMilestonesScreen';
 import VillageTradingScreen from './screens/VillageTradingScreen';
 import VillageCosmeticsScreen from './screens/VillageCosmeticsScreen';
+import TowerScreen from './screens/TowerScreen'; // NEU
 
-class ErrorBoundary extends React.Component {
-    constructor(props) {
-      super(props);
-      this.state = { hasError: false, error: null };
-    }
-    static getDerivedStateFromError(error) { return { hasError: true, error }; }
-    componentDidCatch(error, errorInfo) { console.error("Uncaught error:", error, errorInfo); }
-    render() {
-      if (this.state.hasError) {
-        return (
-          <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white p-6 text-center">
-            <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Ups, ein Fehler ist aufgetreten!</h1>
-            <p className="text-slate-400 mb-6 text-sm">{this.state.error?.toString()}</p>
-            <button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2"><RefreshCw className="w-5 h-5"/> Spiel neu laden</button>
-          </div>
-        );
-      }
-      return this.props.children; 
-    }
-}
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
   const gameLogic = useGameLogic();
@@ -66,14 +47,14 @@ export default function App() {
     selectedFriend, setSelectedFriend, settings, setSettings,
     buyLootbox, buyTickets, handleRedeemTicket, handleReduceCooldown, watchAdForReward,
     startBattle, handleWin, handleLose, handleAddFriend,
-    handleBuyMarket, handleSellMarket, handleSellResource, addToTeam, removeFromTeam, // <--- HIER HINZUGEFÜGT
+    handleBuyMarket, handleSellMarket, handleSellResource, addToTeam, removeFromTeam, startTowerBattle,
     hatchEgg, startIncubation, breedPets,
     handleAutoBattle, autoBattleRemaining, cancelAutoBattle, startFriendBattle,
     handleRemoveListing, renamePet,
     assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
     tradeResources, claimMilestone, addIdleTime, 
     buyCosmetic, buySpecialOffer, applyXpItem,
-    releasePet, claimTimedReward, openLootbox
+    releasePet, claimTimedReward, openLootbox, handleUpdateProfile
   } = gameLogic;
 
   const [selectedVillageSlot, setSelectedVillageSlot] = useState(null);
@@ -193,9 +174,33 @@ export default function App() {
           {currentView === 'marketplace' && <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} onSellResource={handleSellResource} onRemoveListing={handleRemoveListing} myPets={myPets} />}
           {/* HIER HINZUGEFÜGT: onSellResource={handleSellResource} */}
           
-          {currentView === 'leaderboard' && <LeaderboardScreen user={user} onBack={() => setCurrentView('menu')} />}
+          {currentView === 'leaderboard' && (
+            <LeaderboardScreen 
+                user={user} 
+                onBack={() => setCurrentView('menu')} 
+                onViewPlayer={(player) => {
+                    if (player.id === user.id) {
+                        setCurrentView('profile');
+                    } else {
+                        setSelectedFriend(player);
+                        setCurrentView('leaderboard-player-profile');
+                    }
+                }} 
+            />
+          )}
+          
+          {/* Profilansicht für Spieler aus der Rangliste (Zurück -> Rangliste) */}
+          {currentView === 'leaderboard-player-profile' && selectedFriend && (
+            <FriendProfileScreen 
+                friend={selectedFriend} 
+                onBack={() => setCurrentView('leaderboard')} 
+                onStartBattle={startFriendBattle} 
+            />
+          )}
+
           {currentView === 'quests' && <QuestsScreen user={user} onBack={() => setCurrentView('menu')} />}
-          {currentView === 'arena-hub' && <ArenaHub user={user} onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')} onLeaderboard={() => setCurrentView('leaderboard')} onAutoBattle={handleAutoBattle} />}
+          {currentView === 'arena-hub' && <ArenaHub user={user} onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')} onLeaderboard={() => setCurrentView('leaderboard')} onAutoBattle={handleAutoBattle} onTower={() => setCurrentView('tower')} />}
+          {currentView === 'tower' && <TowerScreen user={user} onBack={() => setCurrentView('arena-hub')} onStartStage={startTowerBattle} />}
           {currentView === 'pet-hub' && <PetHub onBack={() => setCurrentView('menu')} onInventory={() => setCurrentView('inventory')} onItemInventory={() => setCurrentView('item-inventory')} onBreed={() => setCurrentView('breeding')} onHatchery={() => setCurrentView('hatchery')} />}
           {currentView === 'hatchery' && <HatcheryScreen pets={myPets} user={user} onBack={() => setCurrentView('pet-hub')} onHatchEgg={hatchEgg} onReduceCooldown={handleReduceCooldown} onStartIncubation={startIncubation} />}
           
@@ -225,7 +230,7 @@ export default function App() {
           
           {currentView === 'breeding' && <BreedingScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onBreed={breedPets} onReduceCooldown={handleReduceCooldown} user={user} />}
           {currentView === 'battle' && activeBattle && <BattleScreen battleState={activeBattle} setBattleState={setActiveBattle} user={user} onWin={handleWin} onLose={handleLose} isAutoBattle={autoBattleRemaining > 0} autoBattleRemaining={autoBattleRemaining} onCancelAutoBattle={cancelAutoBattle} />}
-          {currentView === 'profile' && <ProfileScreen user={user} pets={myPets} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={handleAddFriend} onBack={() => setCurrentView('menu')} />}
+          {currentView === 'profile' && <ProfileScreen user={user} pets={myPets} onViewFriend={(friend) => { setSelectedFriend(friend); setCurrentView('friend-profile'); }} onAddFriend={handleAddFriend} onBack={() => setCurrentView('menu')} onUpdateProfile={handleUpdateProfile} />}
           {currentView === 'friend-profile' && selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('profile')} onStartBattle={startFriendBattle} />}
           {currentView === 'settings' && <SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout} onBack={() => setCurrentView('menu')} />}
 

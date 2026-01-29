@@ -1,0 +1,23 @@
+import { updatePetInDB, updateUser } from '../../../utils/db';
+
+export const handleReduceCooldown = async (state, showNotification, petId, type) => {
+    const { user, myPets } = state;
+    if (!user || user.adTickets < 1) {
+        showNotification("Keine Tickets!", "error");
+        return;
+    }
+
+    const pet = myPets.find(p => p.id === petId);
+    if (!pet) return;
+
+    let updates = {};
+    if (type === 'HATCHING') {
+        updates.hatchAt = Math.max(Date.now(), pet.hatchAt - (5 * 60 * 1000)); // -5 Min
+    } else if (type === 'BREEDING') {
+        updates.breedingCooldown = Math.max(Date.now(), pet.breedingCooldown - (30 * 60 * 1000)); // -30 Min
+    }
+
+    await updatePetInDB(petId, updates);
+    await updateUser(user.id, { adTickets: user.adTickets - 1 });
+    showNotification("Zeit verkürzt!", "success");
+};

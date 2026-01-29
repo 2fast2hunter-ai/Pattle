@@ -1,10 +1,10 @@
-import { releasePet } from '../../../../releasePet';
-import { handleReduceCooldown } from '../../../../handleReduceCooldown';
-import { addToTeam } from '../../../../addToTeam';
-import { removeFromTeam } from '../../../../removeFromTeam';
-import { breedPets } from '../../../../breedPets';
-import { renamePet } from '../../../../renamePet';
-import { applyItem } from '../../../../applyItem';
+import { releasePet } from './releasePet';
+import { handleReduceCooldown } from './handleReduceCooldown';
+import { addToTeam } from './addToTeam';
+import { removeFromTeam } from './removeFromTeam';
+import { breedPets } from './breedPets';
+import { renamePet } from './renamePet';
+import { applyItem } from './applyItem';
 import { updatePetInDB, trackQuestProgress, updateUser } from '../../../utils/db';
 import { RARITIES } from '../../../data/gameData';
 import { getUnlockedHatcherySlots } from '../../../utils/mechanics/progression';

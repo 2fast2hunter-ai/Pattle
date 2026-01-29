@@ -108,6 +108,18 @@ const checkAndMigrateQuests = async (userData) => {
     }
 };
 
+// --- HELPER: TOWER RESET ---
+const checkAndResetTower = async (userData) => {
+    if (!userData) return;
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`; // z.B. "2025-0" für Januar
+    
+    if (userData.towerResetDate !== currentMonthKey) {
+        console.log("[DB] Neuer Monat! Resette Battle Tower.");
+        try { await updateDoc(doc(db, "users", userData.id), { towerProgress: 1, towerResetDate: currentMonthKey }); } catch(e) { console.error(e); }
+    }
+};
+
 // ... (Restlicher Code identisch - initializeUser, listenToUser etc. nutzen die Helfer oben) ...
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
@@ -116,6 +128,7 @@ export const initializeUser = async (firebaseUser, username) => {
   if (userSnap.exists()) {
     const userData = { id: userSnap.id, ...userSnap.data() };
     checkAndMigrateLevel(userData);
+    checkAndResetTower(userData);
     return userData; 
   } else {
     const today = new Date().toISOString().split('T')[0];
@@ -165,7 +178,9 @@ export const initializeUser = async (firebaseUser, username) => {
              totalCollected: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
              totalItemsCollected: {}, 
              totalIdleTime: 0
-          }
+          },
+      towerProgress: 1,
+      towerResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`
       }
     };
     await setDoc(userRef, newUserData);
@@ -179,6 +194,7 @@ export const listenToUser = (userId, callback) => {
             const userData = { id: docSnap.id, ...docSnap.data() };
             checkAndMigrateLevel(userData);
             checkAndMigrateQuests(userData); // Automatische Korrektur der Quest-Anzeige
+            checkAndResetTower(userData);
             callback(userData); 
         }
     }); 
@@ -295,3 +311,9 @@ export const adminResetQuests = async (userId) => { if (!userId) return; try { c
 export const clearMarketplace = async () => { try { const q = query(collection(db, "market")); const snapshot = await getDocs(q); const deletePromises = []; snapshot.forEach((doc) => { deletePromises.push(deleteDoc(doc.ref)); }); await Promise.all(deletePromises); return true; } catch (e) { return false; } };
 export const setBattleActive = async (userId, isActive) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await setDoc(userRef, { isInBattle: isActive }, { merge: true }); } catch (e) { console.error("[DB] Fehler beim Setzen des Kampf-Status:", e); } };
 export const checkAndResolveInterruptedBattle = async (userId) => { if (!userId) return null; const userRef = doc(db, "users", userId); try { return await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return null; const userData = userDoc.data(); if (userData.isInBattle === true) { const newStats = { ...(userData.stats || {}) }; newStats.pvpTotal = (newStats.pvpTotal || 0) + 1; const newRating = Math.max(0, (userData.rating || 1000) - 25); transaction.update(userRef, { isInBattle: false, stats: newStats, rating: newRating }); return { resolved: true, ratingLoss: 25 }; } return { resolved: false }; }); } catch (e) { if (e.code === 'failed-precondition') { console.warn("[DB] Transaction precondition failed - Kampfstatus hat sich geändert (OK)."); } else { console.error("[DB] Fehler beim Check:", e); } return null; } };
+export const calculateEloChange = (ratingA, ratingB, isWin) => {
+    const K = 32;
+    const expected = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+    const actual = isWin ? 1 : 0;
+    return Math.round(K * (actual - expected));
+};

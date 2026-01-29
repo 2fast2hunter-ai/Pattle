@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Swords, Users, Trophy, Crown, Shield, Flame, ChevronRight, X, Zap, Minus, Plus, Play } from 'lucide-react';
+import { ArrowLeft, Swords, Users, Trophy, Crown, Shield, Flame, ChevronRight, X, Zap, Minus, Plus, Play, Castle } from 'lucide-react';
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import { PageBackground } from '../components/GameLayout';
 
-export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle }) {
+export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower }) {
   
   const rank = user?.rating || 1000;
   const teamCount = user?.team?.filter(Boolean).length || 0;
@@ -183,6 +183,18 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+              <HubTile 
+                  title="Battle Tower" 
+                  subtitle="PvE Herausforderung" 
+                  icon={Castle} 
+                  colorFrom="from-indigo-700" 
+                  colorTo="to-purple-800" 
+                  iconColor="text-indigo-300"
+                  onClick={onTower}
+                  extraInfo={`Stufe ${user?.towerProgress || 1}`}
+                  delay={100}
+              />
+
               <HubTile 
                   title="Team" 
                   subtitle="Verwalten" 
