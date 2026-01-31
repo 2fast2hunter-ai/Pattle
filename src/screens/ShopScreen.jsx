@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Package, Coins, Star, Gem, Ticket, X, Percent, Crown, Sparkles, Box, Lock, PlayCircle, Clock, ArrowUp, Plus, Minus, Gift, Zap, ShoppingBag, Calendar } from 'lucide-react';
 import { SHOP_ITEMS, LOOTBOXES, RARITIES, AD_REWARDS, TIMED_REWARDS, TYPES } from '../data/gameData'; 
 import AdModal from '../components/ui/AdModal';
@@ -7,8 +7,9 @@ import { showRewardedAd } from '../utils/adManager';
 import DailyLoginModal from '../components/modals/DailyLoginModal';
 import { claimDailyLoginReward } from '../utils/db';
 import { useShopActions } from '../hooks/useGameLogic/actions/useShopActions'; // Optional falls nicht als Prop
+import { playSound } from '../utils/soundManager';
 
-export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, user, onClaimTimedReward }) { 
+export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, user, onClaimTimedReward, showNotification, t }) { 
     // Falls onClaimTimedReward nicht als Prop kommt (weil wir useGameLogic nicht angepasst haben im Parent),
     // könnten wir hier useShopActions nutzen, aber besser ist es, das Prop-Drilling in App.jsx zu machen.
     // Ich gehe davon aus, dass du App.jsx anpasst, um die Funktion durchzureichen,
@@ -27,6 +28,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const AD_COOLDOWN_MS = 10 * 60 * 1000;
     const [adTimers, setAdTimers] = useState({}); 
     const [timedRewardTimers, setTimedRewardTimers] = useState({}); // NEU
+    const lastTimersRef = useRef({}); // Zum Speichern des vorherigen Timer-Status
 
     useEffect(() => {
         const updateTimers = () => {
@@ -50,18 +52,29 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
             TIMED_REWARDS.forEach(reward => {
                 const lastClaim = user?.timedClaims?.[reward.id] || 0;
                 const diff = now - lastClaim;
-                if (diff < reward.cooldown) {
-                    newTimedTimers[reward.id] = reward.cooldown - diff;
-                } else {
-                    newTimedTimers[reward.id] = 0;
+                
+                // Cooldown auf 1 Stunde (3600000 ms) setzen
+                const cooldownDuration = 60 * 60 * 1000;
+
+                let remaining = 0;
+                if (diff < cooldownDuration) {
+                    remaining = cooldownDuration - diff;
                 }
+                newTimedTimers[reward.id] = remaining;
+
+                // Benachrichtigung, wenn Timer abläuft (Übergang von >0 zu 0)
+                const prev = lastTimersRef.current[reward.id];
+                if (prev > 0 && remaining <= 0) {
+                    showNotification && showNotification(`${reward.label} ist wieder verfügbar!`, 'success');
+                }
+                lastTimersRef.current[reward.id] = remaining;
             });
             setTimedRewardTimers(newTimedTimers);
         };
-        updateTimers(); 
+        updateTimers();
         const interval = setInterval(updateTimers, 1000);
         return () => clearInterval(interval);
-    }, [user?.adClaims, user?.timedClaims]);
+    }, [user?.adClaims, user?.timedClaims, showNotification]);
 
     useEffect(() => {
         if (viewingBox) setBuyAmount(1);
@@ -118,6 +131,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
         const cost = boxKey === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[boxKey].cost;
         const currency = boxKey === 'TYPE_DAILY' ? 'COINS' : LOOTBOXES[boxKey].currency;
         onBuyBox(boxKey, cost, currency, buyAmount);
+        playSound('kaching');
         setViewingBox(null); 
         setTimeout(() => setIsBuying(false), 500); // Kurze Verzögerung zum Reset
     };
@@ -145,6 +159,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
     const handleClaimDaily = async () => {
         await claimDailyLoginReward(user);
         setShowDailyLogin(false);
+        playSound('success');
     };
 
     return (
@@ -187,14 +202,14 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                             <button onClick={() => setViewingBox(null)} className="absolute top-4 right-4 p-2 bg-black/40 text-white rounded-full hover:bg-white/20 transition-colors z-20 backdrop-blur-md border border-white/10"><X className="w-5 h-5" /></button>
                         </div>
                         <div className="p-6 flex-1 overflow-y-auto scrollbar-hide">
-                            <h2 className={`text-2xl font-black ${currentConfig.color} mb-1 uppercase text-center tracking-wide`}>{viewingBox === 'TYPE_DAILY' ? 'Elementar-Truhe' : LOOTBOXES[viewingBox]?.label}</h2>
+                            <h2 className={`text-2xl font-black ${currentConfig.color} mb-1 uppercase text-center tracking-wide`}>{viewingBox === 'TYPE_DAILY' ? (t ? t('shop_elemental_chest') : 'Elementar-Truhe') : LOOTBOXES[viewingBox]?.label}</h2>
                             
                             {/* WOCHENPLAN FÜR ELEMENTAR-TRUHE */}
                             {viewingBox === 'TYPE_DAILY' && (
                                 <div className="mb-6 mt-4 bg-slate-950/40 rounded-xl p-3 border border-white/5">
                                     <div className="flex items-center justify-center gap-2 mb-3">
                                         <Clock className="w-3 h-3 text-indigo-400" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Wochenplan</span>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t ? t('shop_weekly_schedule') : 'Wochenplan'}</span>
                                     </div>
                                     <div className="grid grid-cols-1 gap-1.5">
                                         {[1, 2, 3, 4, 5, 6, 0].map(dIndex => {
@@ -219,18 +234,18 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                 </div>
                             )}
 
-                            <div className="flex justify-center mb-6"><div className="bg-slate-950/50 px-3 py-1 rounded-full border border-white/5 flex items-center gap-2"><Percent className="w-3 h-3 text-slate-400" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Wahrscheinlichkeiten</span></div></div>
+                            <div className="flex justify-center mb-6"><div className="bg-slate-950/50 px-3 py-1 rounded-full border border-white/5 flex items-center gap-2"><Percent className="w-3 h-3 text-slate-400" /><span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t ? t('shop_probabilities') : 'Wahrscheinlichkeiten'}</span></div></div>
                             <div className="space-y-1.5">{getDropList(viewingBox).map((rate) => (<div key={rate.id} className="flex justify-between items-center px-3 py-2 bg-slate-800/50 rounded-xl border border-white/5"><span className={`text-xs font-black ${rate.color} uppercase tracking-wider`}>{rate.label}</span><span className="text-xs font-mono font-bold text-white">{rate.chance.toFixed(2)}%</span></div>))}</div>
                         </div>
                         <div className="p-4 bg-slate-900 border-t border-white/10 shrink-0 space-y-4">
                             {viewingBox !== 'DAILY' && (
                                 <div className="flex justify-center items-center gap-4">
                                     <button onClick={decrement} className="p-3 rounded-xl bg-slate-800 border border-white/10 hover:bg-slate-700 active:scale-95 transition-all"><Minus className="w-4 h-4 text-white" /></button>
-                                    <div className="text-center w-12"><span className="block text-xs text-slate-400 font-bold uppercase">Menge</span><span className="block text-xl font-black text-white">{buyAmount}</span></div>
+                                    <div className="text-center w-12"><span className="block text-xs text-slate-400 font-bold uppercase">{t ? t('shop_amount') : 'Menge'}</span><span className="block text-xl font-black text-white">{buyAmount}</span></div>
                                     <button onClick={increment} className="p-3 rounded-xl bg-slate-800 border border-white/10 hover:bg-slate-700 active:scale-95 transition-all"><Plus className="w-4 h-4 text-white" /></button>
                                 </div>
                             )}
-                            <button onClick={() => handleBuy(viewingBox)} disabled={(viewingBox === 'DAILY' && !isDailyAvailable()) || isBuying} className={`w-full py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg ${viewingBox === 'DAILY' ? (isDailyAvailable() ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed') : (isBuying ? 'bg-slate-500 text-slate-300 cursor-wait' : 'bg-white text-slate-900 hover:bg-slate-200')}`}>{viewingBox === 'DAILY' ? (isDailyAvailable() ? 'GRATIS ABHOLEN' : 'SCHON ABGEHOLT') : (<><Coins className="w-4 h-4 text-amber-500 fill-amber-500" /> {((viewingBox === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[viewingBox].cost) * buyAmount).toLocaleString()} KAUFEN</>)}</button>
+                            <button onClick={() => handleBuy(viewingBox)} disabled={(viewingBox === 'DAILY' && !isDailyAvailable()) || isBuying} className={`w-full py-4 rounded-2xl font-black text-sm flex justify-center items-center gap-2 transition-all active:scale-95 shadow-lg ${viewingBox === 'DAILY' ? (isDailyAvailable() ? 'bg-gradient-to-r from-sky-500 to-blue-600 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed') : (isBuying ? 'bg-slate-500 text-slate-300 cursor-wait' : 'bg-white text-slate-900 hover:bg-slate-200')}`}>{viewingBox === 'DAILY' ? (isDailyAvailable() ? (t ? t('shop_claim_free') : 'GRATIS ABHOLEN') : (t ? t('shop_already_claimed') : 'SCHON ABGEHOLT')) : (<><Coins className="w-4 h-4 text-amber-500 fill-amber-500" /> {((viewingBox === 'TYPE_DAILY' ? TYPE_BOX_COST : LOOTBOXES[viewingBox].cost) * buyAmount).toLocaleString()} {t ? t('shop_buy') : 'KAUFEN'}</>)}</button>
                         </div>
                     </div>
                 </div>
@@ -238,7 +253,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
 
             {/* HEADER */}
             <div className="relative flex items-center justify-center mb-6 pt-2 px-4">
-                <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600">ITEM SHOP</h1>
+                <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600">{t ? t('shop_title') : 'ITEM SHOP'}</h1>
                 <button onClick={onBack} className="absolute right-4 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"><X className="w-5 h-5" /></button>
             </div>
 
@@ -248,7 +263,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                <div>
                     <div className="flex items-center gap-2 mb-3 text-indigo-300 px-1">
                         <PlayCircle className="w-4 h-4" />
-                        <h3 className="text-xs font-black uppercase tracking-widest">Gratis & Boosts</h3>
+                        <h3 className="text-xs font-black uppercase tracking-widest">{t ? t('shop_free_section') : 'Gratis & Boosts'}</h3>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -263,8 +278,8 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                     <Calendar className="w-6 h-6 text-white" />
                                 </div>
                                 <div className="text-left">
-                                    <div className="font-bold text-white text-sm">Täglicher Bonus</div>
-                                    <div className="text-[10px] text-indigo-100">Jeden Tag Belohnungen!</div>
+                                    <div className="font-bold text-white text-sm">{t ? t('shop_daily_bonus') : 'Täglicher Bonus'}</div>
+                                    <div className="text-[10px] text-indigo-100">{t ? t('shop_daily_bonus_desc') : 'Jeden Tag Belohnungen!'}</div>
                                 </div>
                             </div>
                         </button>
@@ -277,7 +292,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                             return (
                                 <button 
                                     key={reward.id}
-                                    onClick={() => isReady && onClaimTimedReward(reward.id)} // Hier muss die Funktion übergeben werden!
+                                    onClick={() => { if(isReady) { onClaimTimedReward(reward.id); playSound('success'); } }} 
                                     disabled={!isReady}
                                     className={`
                                         col-span-2 sm:col-span-1 bg-gradient-to-r from-indigo-900/60 to-purple-900/60 border border-indigo-500/30 rounded-2xl p-3 flex items-center justify-between relative overflow-hidden group transition-all shadow-lg
@@ -296,7 +311,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                     </div>
                                     
                                     <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase ${isReady ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-900 text-slate-500 border border-white/5'}`}>
-                                        {isReady ? 'ABHOLEN' : formatTime(cooldown)}
+                                        {isReady ? (t ? t('shop_claim') : 'ABHOLEN') : formatTime(cooldown)}
                                     </div>
                                 </button>
                             );
@@ -316,7 +331,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                         {reward.type === 'BUFF' && reward.buffType === 'XP_BOOST' && <div className="relative"><Star className="w-5 h-5 text-green-400" /><ArrowUp className="w-3 h-3 text-white absolute -top-1 -right-1 bg-black/50 rounded-full" /></div>}
                                     </div>
                                     <div className="relative z-10"><div className="text-[10px] font-bold text-slate-400 uppercase mb-0.5 leading-tight">{reward.label}</div></div>
-                                    <div className={`mt-2 w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 relative z-10 ${isReady ? 'bg-white text-indigo-900' : 'bg-slate-900 text-slate-500 border border-white/5'}`}>{isReady ? (<><PlayCircle className="w-3 h-3" /> Video</>) : (<><Clock className="w-3 h-3" /> {formatTime(cooldown)}</>)}</div>
+                                    <div className={`mt-2 w-full py-1.5 rounded-lg text-[9px] font-black uppercase flex items-center justify-center gap-1 relative z-10 ${isReady ? 'bg-white text-indigo-900' : 'bg-slate-900 text-slate-500 border border-white/5'}`}>{isReady ? (<><PlayCircle className="w-3 h-3" /> {t ? t('shop_video') : 'Video'}</>) : (<><Clock className="w-3 h-3" /> {formatTime(cooldown)}</>)}</div>
                                 </button>
                             );
                         })}
@@ -325,13 +340,13 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
 
                 {/* LOOTBOXEN */}
                 <div>
-                    <div className="flex items-center gap-2 mb-3 text-yellow-500 px-1"><Package className="w-4 h-4" /><h3 className="text-xs font-black uppercase tracking-widest">Lootboxen</h3></div>
+                    <div className="flex items-center gap-2 mb-3 text-yellow-500 px-1"><Package className="w-4 h-4" /><h3 className="text-xs font-black uppercase tracking-widest">{t ? t('shop_lootboxes') : 'Lootboxen'}</h3></div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                         {/* DAILY BOX */}
                         <div onClick={() => setViewingBox('DAILY')} className={`col-span-2 sm:col-span-1 bg-slate-800 border-2 ${isDailyAvailable() ? 'border-sky-500 shadow-sky-900/20 animate-pulse-slow' : 'border-slate-700 opacity-80'} rounded-[24px] p-4 relative overflow-hidden group cursor-pointer active:scale-95 transition-all shadow-lg animate-in fade-in slide-in-from-bottom-4 delay-0 fill-mode-backwards`}>
                             <div className="flex items-center gap-4 relative z-10">
                                 <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-900 border border-white/10 ${isDailyAvailable() ? 'shadow-lg shadow-sky-500/20' : ''}`}>{isDailyAvailable() ? <Box className="w-8 h-8 text-sky-400 animate-float-gentle" /> : <Lock className="w-6 h-6 text-slate-600" />}</div>
-                                <div className="flex-1"><h4 className="font-black text-white text-lg italic uppercase">{LOOTBOXES.DAILY.label}</h4><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">Täglich ein Geschenk</p><span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${isDailyAvailable() ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-500'}`}>{isDailyAvailable() ? 'GRATIS' : 'Abgeholt'}</span></div>
+                                <div className="flex-1"><h4 className="font-black text-white text-lg italic uppercase">{LOOTBOXES.DAILY.label}</h4><p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">{t ? t('shop_daily_gift') : 'Täglich ein Geschenk'}</p><span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase ${isDailyAvailable() ? 'bg-sky-500 text-white' : 'bg-slate-700 text-slate-500'}`}>{isDailyAvailable() ? (t ? t('shop_free') : 'GRATIS') : (t ? t('shop_claimed') : 'Abgeholt')}</span></div>
                             </div>
                         </div>
                         {/* PREMIUM & MASTER */}
@@ -350,7 +365,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                                     <Zap className="w-8 h-8 text-indigo-400 scale-110 animate-pulse" />
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="font-black text-lg italic uppercase text-indigo-300">Elementar-Truhe</h4>
+                                    <h4 className="font-black text-lg italic uppercase text-indigo-300">{t ? t('shop_elemental_chest') : 'Elementar-Truhe'}</h4>
                                     <div className="flex gap-1 mb-2 mt-1">
                                         {dailyTypes.map(tKey => (
                                             <div key={tKey} className={`w-5 h-5 rounded bg-slate-950 flex items-center justify-center border border-white/10 ${TYPES[tKey].color}`} title={TYPES[tKey].label}>
@@ -363,38 +378,6 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
                             </div>
                         </div>
 
-                    </div>
-                </div>
-
-                {/* TICKETS */}
-                <div className="space-y-3">
-                    <div className="flex items-center gap-2 px-1">
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent"></div>
-                        <span className="text-xs font-black text-pink-400 uppercase tracking-widest bg-slate-900/50 px-3 py-1 rounded-full border border-pink-500/20 backdrop-blur-sm">Zucht-Tickets</span>
-                        <div className="h-px flex-1 bg-gradient-to-r from-transparent via-pink-500/50 to-transparent"></div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-slate-800 rounded-3xl p-4 border border-white/5 flex flex-col items-center text-center relative overflow-hidden group hover:bg-slate-800/80 transition-colors">
-                            <div className="w-12 h-12 bg-pink-500/10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                                <Ticket className="w-6 h-6 text-pink-500" />
-                            </div>
-                            <div className="font-bold text-white text-xs mb-3">Einzelticket</div>
-                            <button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_COINS)} className="w-full bg-slate-900 hover:bg-slate-950 text-white font-bold py-2 rounded-xl text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform border border-white/10">
-                                <Coins className="w-3 h-3 text-amber-400" /> {SHOP_ITEMS.TICKET_BUNDLE_COINS.costAmount}
-                            </button>
-                        </div>
-
-                        <div className="bg-gradient-to-br from-pink-900/40 to-rose-900/40 rounded-3xl p-4 border border-pink-500/30 flex flex-col items-center text-center relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 bg-pink-600 text-white text-[8px] font-black px-2 py-1 rounded-bl-xl shadow-lg">DEAL</div>
-                            <div className="w-12 h-12 bg-pink-500/20 rounded-full flex items-center justify-center mb-3 border border-pink-500/30 group-hover:scale-110 transition-transform shadow-[0_0_15px_rgba(236,72,153,0.3)]">
-                                <Ticket className="w-6 h-6 text-pink-400" />
-                            </div>
-                            <div className="font-bold text-white text-xs mb-3">5er Pack</div>
-                            <button onClick={() => onBuyTickets(SHOP_ITEMS.TICKET_BUNDLE_GEMS)} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded-xl text-[10px] flex items-center justify-center gap-1 active:scale-95 transition-transform shadow-lg">
-                                <Gem className="w-3 h-3 fill-white/20" /> {SHOP_ITEMS.TICKET_BUNDLE_GEMS.costAmount}
-                            </button>
-                        </div>
                     </div>
                 </div>
 

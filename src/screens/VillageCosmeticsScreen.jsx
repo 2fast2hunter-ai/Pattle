@@ -2,10 +2,10 @@ import React from 'react';
 import { ArrowLeft, Scissors, Lock, CheckCircle2, Ticket, Sparkles, Zap, Dna, Smile } from 'lucide-react';
 import { COSMETICS, RESOURCE_ITEMS, SPECIAL_OFFERS, PROFILE_ICONS } from '../data/gameData';
 
-const getItemLabel = (id) => {
+const getItemLabel = (id, t) => {
     for (const list of Object.values(RESOURCE_ITEMS)) {
         const found = list.find(i => i.id === id);
-        if (found) return found.label;
+        if (found) return t ? t('item_' + found.id) : found.label;
     }
     return id;
 };
@@ -19,7 +19,7 @@ const getSpecialIcon = (rewardType, variant) => {
     return <Sparkles className="w-8 h-8 text-white" />;
 };
 
-export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpecial }) { // onBuySpecial prop
+export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpecial, t }) { // onBuySpecial prop, t prop added
     const storage = user.village.storage || {};
 
     return (
@@ -48,7 +48,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                                     <div className="text-center w-full">
                                         <div className="text-[10px] font-bold text-white truncate">{icon.label}</div>
                                         <div className="text-[9px] text-slate-400 flex justify-center items-center gap-1 mb-2">
-                                            <span className={canAfford ? 'text-green-400' : 'text-red-400'}>{icon.costAmount}x {getItemLabel(icon.costItem)}</span>
+                                            <span className={canAfford ? 'text-green-400' : 'text-red-400'}>{icon.costAmount}x {getItemLabel(icon.costItem, t)}</span>
                                         </div>
                                         <button 
                                             onClick={() => onBuy(icon.id)} 
@@ -84,7 +84,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                                             <h3 className="text-xs font-bold text-white mb-1 truncate">{cosmetic.label.replace('Hintergrund: ', '')}</h3>
                                             <div className="text-[9px] text-slate-400 flex items-center gap-1 mb-2">
                                                 <span>Kosten:</span>
-                                                <span className={canAfford ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>{cosmetic.costAmount}x {getItemLabel(cosmetic.costItem)}</span>
+                                                <span className={canAfford ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>{cosmetic.costAmount}x {getItemLabel(cosmetic.costItem, t)}</span>
                                             </div>
                                         </div>
                                         <button onClick={() => onBuy(cosmetic.id)} disabled={!canAfford} className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase transition-all active:scale-95 ${canAfford ? 'bg-pink-600 text-white hover:bg-pink-500 shadow-lg' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>Kaufen</button>
@@ -119,7 +119,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                                         <div className="text-[10px] font-mono font-bold flex items-center gap-1">
                                             <span className="text-slate-400">Preis:</span>
                                             <span className={canAfford ? 'text-green-400' : 'text-red-400'}>
-                                                {offer.costAmount}x {getItemLabel(offer.costItem)}
+                                                {offer.costAmount}x {getItemLabel(offer.costItem, t)}
                                             </span>
                                         </div>
                                     </div>

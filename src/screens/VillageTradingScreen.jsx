@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ArrowLeft, RefreshCw, ArrowRight } from 'lucide-react';
 import { RESOURCE_ITEMS, TRADE_RECIPES, RESOURCES } from '../data/gameData';
 
-export default function VillageTradingScreen({ user, onBack, onTrade }) {
+export default function VillageTradingScreen({ user, onBack, onTrade, t }) { // t prop added
     const [selectedOffer, setSelectedOffer] = useState(null); // Item ID
     const [selectedWant, setSelectedWant] = useState(null); // Item ID
     const [tradesCount, setTradesCount] = useState(1); // Wie oft das Rezept ausführen?
@@ -71,7 +71,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade }) {
                                     className={`p-2 rounded-xl border text-center flex flex-col items-center gap-1 transition-all ${selectedOffer === item.id ? 'bg-indigo-600 border-indigo-400' : 'bg-slate-800 border-white/5 hover:bg-slate-700'}`}
                                 >
                                     <div className={`w-6 h-6 rounded bg-slate-900 flex items-center justify-center ${item.color} font-bold text-xs`}>?</div>
-                                    <div className="text-[9px] font-bold text-white truncate w-full">{item.label}</div>
+                                    <div className="text-[9px] font-bold text-white truncate w-full">{t ? t('item_' + item.id) : item.label}</div>
                                     <div className="text-[8px] text-slate-400">x{count}</div>
                                 </button>
                             );
@@ -97,7 +97,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade }) {
                                         className={`p-2 rounded-xl border text-center flex flex-col items-center gap-1 transition-all ${selectedWant === item.id ? 'bg-green-600 border-green-400' : 'bg-slate-800 border-white/5 hover:bg-slate-700'}`}
                                     >
                                         <div className={`w-6 h-6 rounded bg-slate-900 flex items-center justify-center ${item.color} font-bold text-xs`}>?</div>
-                                        <div className="text-[9px] font-bold text-white truncate w-full">{item.label}</div>
+                                        <div className="text-[9px] font-bold text-white truncate w-full">{t ? t('item_' + item.id) : item.label}</div>
                                     </button>
                                 );
                             })}

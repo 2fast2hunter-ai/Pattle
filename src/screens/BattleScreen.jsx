@@ -7,7 +7,7 @@ import ArenaBackground from '../components/battle/ArenaBackground';
 import BattleUnit from '../components/battle/BattleUnit';
 import TeamDots from '../components/battle/TeamDots';
 
-export default function BattleScreen({ battleState, setBattleState, onWin, onLose, isAutoBattle, autoBattleRemaining, onCancelAutoBattle }) {
+export default function BattleScreen({ battleState, setBattleState, onWin, onLose, isAutoBattle, autoBattleRemaining, onCancelAutoBattle, t }) { // t prop added
   const [animatingUnit, setAnimatingUnit] = useState(null); // { side: 'PLAYER'|'ENEMY', type: 'PHYSICAL'|'SPECIAL' }
   const [hitUnit, setHitUnit] = useState(null); 
   const [floatingDamage, setFloatingDamage] = useState(null); 
@@ -81,8 +81,8 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
 
     // --- ANIMATION START ---
     setAnimatingUnit({ side: who, type: abilityToUse.type });
-    if (shouldUseAbility) newLog.push(`${attacker.name} nutzt ${abilityToUse.name}!`);
-    else newLog.push(`${attacker.name} greift an.`);
+    if (shouldUseAbility) newLog.push(t ? t('battle_log_uses', { attacker: attacker.name, ability: abilityToUse.name }) : `${attacker.name} nutzt ${abilityToUse.name}!`);
+    else newLog.push(t ? t('battle_log_attacks', { attacker: attacker.name }) : `${attacker.name} greift an.`);
 
     // Warte auf Angriffs-Animation
     await new Promise(r => setTimeout(r, 400));
@@ -90,8 +90,8 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     // 2. Schaden berechnen
     const { damage, isCrit, effectiveness } = calculateDamage(attacker, defender, abilityToUse);
     
-    if (effectiveness > 1) newLog.push("⚡ Sehr effektiv!");
-    else if (effectiveness < 1) newLog.push("🛡️ Nicht sehr effektiv...");
+    if (effectiveness > 1) newLog.push(t ? t('battle_log_effective') : "⚡ Sehr effektiv!");
+    else if (effectiveness < 1) newLog.push(t ? t('battle_log_not_effective') : "🛡️ Nicht sehr effektiv...");
 
     const effectiveDamage = Math.min(damage, defender.hp);
     setDamageDealt(prev => ({ ...prev, [attacker.id]: (prev[attacker.id] || 0) + effectiveDamage }));
@@ -108,7 +108,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
     else if (effectiveness < 1) floatCol = 'text-slate-400';
     else if (abilityToUse.type === 'SPECIAL' && !shouldUseAbility) floatCol = 'text-purple-300';
 
-    const displayVal = isCrit ? `KRIT! ${damage}` : `${damage}`;
+    const displayVal = isCrit ? (t ? t('battle_log_crit', { damage }) : `KRIT! ${damage}`) : `${damage}`;
     setFloatingDamage({ val: displayVal, col: floatCol, target: targetSide });
     
     // Warte auf Hit-Animation
@@ -136,14 +136,14 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
 
     if (newHp > 0 && hasDoubleSpeed && !extraTurnTaken) {
         nextTurn = who; // Angreifer bleibt dran
-        newLog.push(`⚡ ${attacker.name} ist so schnell! Extra Angriff!`);
+        newLog.push(t ? t('battle_log_extra_turn', { attacker: attacker.name }) : `⚡ ${attacker.name} ist so schnell! Extra Angriff!`);
         var nextExtraTurnState = true; 
     } else {
         var nextExtraTurnState = false;
     }
 
     if (newHp === 0) {
-        newLog.push(`💀 ${updatedDefender.name} besiegt!`);
+        newLog.push(t ? t('battle_log_defeated', { defender: updatedDefender.name }) : `💀 ${updatedDefender.name} besiegt!`);
         if (who === 'PLAYER') { 
             if (enemyIndex + 1 < enemyTeam.length) {
                 nextEnemyIndex++;
@@ -195,20 +195,20 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
           <ArenaBackground enemyType={won ? 'LIGHT' : 'DARK'} />
           
           <div className="relative z-10 flex flex-col h-full p-6 items-center justify-center">
-              {isAutoBattle && (<div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>{isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}{isLastAuto ? 'Fertig' : `Auto: Noch ${autoBattleRemaining}`}</div>)}
+              {isAutoBattle && (<div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>{isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}{isLastAuto ? (t ? t('battle_auto_done') : 'Fertig') : `${t ? t('battle_auto_remaining') : 'Auto: Noch'} ${autoBattleRemaining}`}</div>)}
               
               <div className="flex flex-col items-center mb-8">
                   <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-[0_0_60px_rgba(0,0,0,0.6)] border-4 border-white/20 ${won ? 'bg-gradient-to-br from-yellow-400 to-amber-600 animate-bounce' : 'bg-gradient-to-br from-red-500 to-red-900'}`}>
                       {won ? <Trophy className="w-12 h-12 text-white drop-shadow-md" /> : <Skull className="w-12 h-12 text-white drop-shadow-md" />}
                   </div>
                   <h2 className="text-5xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300 drop-shadow-2xl">
-                      {won ? 'SIEG!' : 'NIEDERLAGE'}
+                      {won ? (t ? t('battle_win') : 'SIEG!') : (t ? t('battle_loss') : 'NIEDERLAGE')}
                   </h2>
               </div>
 
               {isAutoBattle && !isLastAuto && (
                   <div className="w-full max-w-xs mx-auto mb-8">
-                      <div className="flex justify-between text-[10px] text-purple-300 font-bold mb-1 uppercase"><span>Nächster Kampf</span><span>{(3 - (autoProgress / 33.3)).toFixed(1)}s</span></div>
+                      <div className="flex justify-between text-[10px] text-purple-300 font-bold mb-1 uppercase"><span>{t ? t('battle_next_fight') : 'Nächster Kampf'}</span><span>{(3 - (autoProgress / 33.3)).toFixed(1)}s</span></div>
                       <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-purple-500/30"><div className="h-full bg-purple-500 transition-all duration-100 ease-linear" style={{ width: `${autoProgress}%` }}></div></div>
                   </div>
               )}
@@ -216,27 +216,27 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
               {!isFriendly ? (
                   <div className="bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-white/10 mb-8 flex justify-around items-center shadow-2xl w-full max-w-sm">
                       <div className="flex flex-col items-center">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">XP</span>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t ? t('reward_xp') : 'XP'}</span>
                           <div className="flex items-center gap-2 text-green-400"><Star className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{rewardXp}</span></div>
                       </div>
                       <div className="w-px h-12 bg-white/10"></div>
                       <div className="flex flex-col items-center">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Münzen</span>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t ? t('reward_coins') : 'Münzen'}</span>
                           <div className="flex items-center gap-2 text-yellow-400"><Coins className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{rewardCoins}</span></div>
                       </div>
                   </div>
               ) : (
                   <div className="bg-blue-900/40 backdrop-blur-md p-4 rounded-2xl border border-blue-500/30 mb-8 text-center w-full max-w-sm">
-                      <p className="text-blue-200 font-black text-sm">FREUNDSCHAFTSKAMPF</p>
-                      <p className="text-blue-300/70 text-xs">Keine Belohnungen erhalten</p>
+                      <p className="text-blue-200 font-black text-sm">{t ? t('battle_friendly_title') : 'FREUNDSCHAFTSKAMPF'}</p>
+                      <p className="text-blue-300/70 text-xs">{t ? t('battle_friendly_desc') : 'Keine Belohnungen erhalten'}</p>
                   </div>
               )}
 
               <div className="flex flex-col gap-3 w-full max-w-sm">
                   <button onClick={() => won ? onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds, null, damageDealt) : onLose()} className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl flex justify-center items-center gap-2 transition-all ${isAutoBattle && !isLastAuto ? 'bg-purple-600 text-white animate-pulse' : (isLastAuto ? 'bg-green-600 text-white hover:scale-[1.02]' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95')}`}>
-                      {isLastAuto ? <><CheckCircle className="w-5 h-5" /> ABSCHLIESSEN</> : isAutoBattle ? <><Repeat className="w-5 h-5" /> WEITER ({autoBattleRemaining})</> : (isFriendly ? "ZURÜCK" : "WEITER")}
+                      {isLastAuto ? <><CheckCircle className="w-5 h-5" /> {t ? t('battle_finish') : 'ABSCHLIESSEN'}</> : isAutoBattle ? <><Repeat className="w-5 h-5" /> {t ? t('battle_continue') : 'WEITER'} ({autoBattleRemaining})</> : (isFriendly ? (t ? t('battle_back') : "ZURÜCK") : (t ? t('battle_continue') : "WEITER"))}
                   </button>
-                  {isAutoBattle && !isLastAuto && (<button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><XCircle className="w-4 h-4" /> AUTO-KAMPF ABBRECHEN</button>)}
+                  {isAutoBattle && !isLastAuto && (<button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><XCircle className="w-4 h-4" /> {t ? t('battle_cancel_auto') : 'AUTO-KAMPF ABBRECHEN'}</button>)}
               </div>
           </div>
         </div>
@@ -248,12 +248,12 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
       <BattleStyles />
       <ArenaBackground enemyType={enemyPet?.type} />
 
-      {isAutoBattle && (<div className="absolute top-14 right-4 z-20 bg-purple-600/80 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg"><Repeat className="w-3 h-3 animate-spin-slow" />Auto: {autoBattleRemaining}</div>)}
+      {isAutoBattle && (<div className="absolute top-14 right-4 z-20 bg-purple-600/80 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg"><Repeat className="w-3 h-3 animate-spin-slow" />{t ? t('battle_auto_remaining') : 'Auto'}: {autoBattleRemaining}</div>)}
       
       {/* ROUND INDICATOR */}
       <div className="absolute top-4 left-0 w-full flex justify-center z-10">
           <div className="bg-black/60 backdrop-blur-md px-6 py-1.5 rounded-full border border-white/10 shadow-lg">
-              <span className="text-xs font-black text-white uppercase tracking-[0.2em]">Runde {round}</span>
+              <span className="text-xs font-black text-white uppercase tracking-[0.2em]">{t ? t('battle_round') : 'Runde'} {round}</span>
           </div>
       </div>
 
@@ -261,7 +261,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
       <div className="flex-1 flex flex-col md:flex-row relative z-10 p-4 md:items-center md:justify-center">
           {/* VS WATERMARK */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 pointer-events-none select-none mix-blend-overlay">
-              <span className="text-[12rem] font-black italic text-white">VS</span>
+              <span className="text-[12rem] font-black italic text-white">{t ? t('battle_vs') : 'VS'}</span>
           </div>
 
           {/* ENEMY SIDE */}
@@ -273,6 +273,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
                   attackState={animatingUnit?.side === 'ENEMY' ? animatingUnit : null} 
                   isHit={hitUnit === 'ENEMY'} 
                   damageText={hitUnit === 'ENEMY' ? floatingDamage : null} 
+                  t={t}
               />
           </div>
 
@@ -284,6 +285,7 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
                   attackState={animatingUnit?.side === 'PLAYER' ? animatingUnit : null} 
                   isHit={hitUnit === 'PLAYER'} 
                   damageText={hitUnit === 'PLAYER' ? floatingDamage : null} 
+                  t={t}
               />
               <div className="mt-4">
                   <TeamDots team={myTeam} currentIndex={myIndex} isEnemy={false} />

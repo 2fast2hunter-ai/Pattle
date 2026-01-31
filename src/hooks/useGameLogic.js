@@ -4,7 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../firebase.js'; 
 import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
 import { useGameActions } from './useGameLogic/useGameActions'; 
-import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB } from '../utils/db'; // updatePetInDB hinzugefügt
+import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB, deleteField } from '../utils/db'; // updatePetInDB hinzugefügt
 import { ABILITIES } from '../data/gameData'; // Import ABILITIES
 
 export function useGameLogic() {
@@ -16,6 +16,8 @@ export function useGameLogic() {
     const actionsRef = useRef(actions);
     const stateRef = useRef(gameLogicState);
     const initialBattleCheckDone = useRef(false);
+    const isCollectingRef = useRef(false); // Schutz gegen überlappende Aufrufe
+    const lastIdleNotificationRef = useRef(0); // Schutz gegen Spam bei abgelaufener Zeit
 
     useEffect(() => {
         actionsRef.current = actions;
@@ -64,6 +66,12 @@ export function useGameLogic() {
                     lastEloDate: today,
                     startEloToday: userData.rating || 1000
                 });
+            }
+
+            // Saison Belohnung anzeigen
+            if (userData.seasonRewardMessage) {
+                actionsRef.current.showNotification(userData.seasonRewardMessage, 'success');
+                updateUser(userId, { seasonRewardMessage: deleteField() });
             }
             
             if (stateRef.current.currentView === 'auth' || stateRef.current.authLoading) {
@@ -119,6 +127,44 @@ export function useGameLogic() {
         });
         return () => unsubscribe();
     }, []); 
+
+    // --- D. AUTO COLLECT VILLAGE (HINTERGRUND) ---
+    useEffect(() => {
+        if (!userId) return;
+
+        const intervalId = setInterval(async () => {
+            if (isCollectingRef.current) return; // Nicht starten, wenn noch ein Request läuft
+
+            const currentUser = stateRef.current.user;
+            const actions = actionsRef.current;
+            const now = Date.now();
+
+            // Prüfen: User da, Dorf da
+            if (currentUser?.village?.idleTimeExpiresAt) {
+                const expiresAt = currentUser.village.idleTimeExpiresAt;
+
+                if (now < expiresAt) {
+                    // Idle Zeit läuft noch -> Sammeln
+                    if (actions?.collectVillageResources) {
+                        isCollectingRef.current = true;
+                        // Silent Collect: Sammelt Ressourcen & XP. Level-Ups zeigen Benachrichtigungen (in useVillageActions).
+                        await actions.collectVillageResources().catch(e => console.error("[AutoCollect] Fehler:", e));
+                        isCollectingRef.current = false;
+                    }
+                } else {
+                    // Idle Zeit abgelaufen -> Benachrichtigen (nur einmal pro Ablaufzeit)
+                    if (lastIdleNotificationRef.current !== expiresAt) {
+                        if (actions?.showNotification) {
+                            actions.showNotification("Dorf-Produktion gestoppt! Idle-Zeit abgelaufen.", "error");
+                        }
+                        lastIdleNotificationRef.current = expiresAt;
+                    }
+                }
+            }
+        }, 5000); // Alle 5 Sekunden prüfen
+
+        return () => clearInterval(intervalId);
+    }, [userId]);
 
     // --- C. LEVEL UP CHECK ---
     useEffect(() => {

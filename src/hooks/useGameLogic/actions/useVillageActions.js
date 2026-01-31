@@ -18,15 +18,34 @@ import {
     calculateMaxXp 
     // getLevelUpStats entfernt, da nicht existent und nicht benötigt
 } from '../../../utils/gameMechanics'; 
+import { playSound } from '../../../utils/soundManager';
+import { TRANSLATIONS } from '../../../data/translations';
 
 export function useVillageActions(state, showNotification) {
-    const { user, myPets } = state;
+    const { user, myPets, settings } = state;
+
+    // Lokaler Übersetzungs-Helper
+    const t = (key, params = {}) => {
+        const lang = settings?.language || 'de';
+        let text = TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de'][key] || key;
+        Object.entries(params).forEach(([k, v]) => {
+            text = text.replace(`{${k}}`, v);
+        });
+        return text;
+    };
 
     // --- PRODUKTIONSRATE BERECHNEN ---
     const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds) => {
         let cycleTime = 10 - ((buildingLevel - 1) * 0.05);
         if (cycleTime < 1) cycleTime = 1; 
         
+        // FIX: Training hat feste Geschwindigkeit (1 Zyklus), unabhängig von Seltenheit oder Anzahl
+        if (resourceId === 'training') {
+            const hasWorkers = assignedPetIds.some(id => id);
+            if (!hasWorkers) return 0;
+            return 1 / cycleTime;
+        }
+
         let totalMultiplier = 0;
         assignedPetIds.forEach(petId => {
             if (!petId) return;
@@ -48,7 +67,7 @@ export function useVillageActions(state, showNotification) {
         await collectVillageResources(); 
         
         if (slotIndex >= user.village.level) {
-            showNotification(`Dorf Level ${slotIndex + 1} benötigt!`, 'error');
+            showNotification(t('notif_needs_village_lvl') + ` ${slotIndex + 1}`, 'error'); // Fallback string concatenation if key missing
             return;
         }
         
@@ -58,41 +77,50 @@ export function useVillageActions(state, showNotification) {
         // Prüfen ob Pet schon woanders arbeitet
         for (const [resKey, slots] of Object.entries(user.village.workers)) {
             if (slots.includes(petId)) {
-                showNotification(`${pet.name} arbeitet bereits!`, 'error');
+                showNotification(t('notif_worker_busy', { name: pet.name }), 'error');
                 return;
             }
         }
 
         // Prüfen ob im Team
         if (user.team.includes(petId)) {
-            showNotification(`${pet.name} ist im Kampfteam!`, 'error');
+            showNotification(t('notif_worker_in_team', { name: pet.name }), 'error');
             return;
         }
 
         // Typ Check
         const allowedTypes = ALLOWED_TYPES[resourceId];
         if (!allowedTypes.includes(pet.type)) {
-            showNotification(`Falscher Typ!`, 'error');
+            showNotification(t('notif_wrong_type'), 'error');
             return;
         }
 
         // Duplikate Check (optional: kein Typ doppelt pro Gebäude)
-        const currentWorkers = user.village.workers[resourceId];
+        const currentWorkers = user.village.workers[resourceId] || [];
         for (const workerId of currentWorkers) {
             if (workerId && workerId !== petId) { 
                 const worker = myPets.find(p => p.id === workerId);
                 if (worker && worker.type === pet.type) {
-                    showNotification(`Ein ${pet.type}-Pet arbeitet hier schon!`, 'error');
+                    showNotification(t('notif_duplicate_type', { type: pet.type }), 'error');
                     return;
                 }
             }
         }
 
         const newWorkers = { ...user.village.workers };
+        
+        // Array initialisieren falls nicht vorhanden (z.B. bei neuen Gebäuden)
+        if (!newWorkers[resourceId]) {
+            newWorkers[resourceId] = [null, null, null, null, null];
+        } else {
+            newWorkers[resourceId] = [...newWorkers[resourceId]];
+        }
+        
         newWorkers[resourceId][slotIndex] = petId;
 
         await updateUser(user.id, { "village.workers": newWorkers });
-        showNotification(`${pet.name} zugewiesen!`, 'success');
+        showNotification(t('notif_worker_assigned', { name: pet.name }), 'success');
+        playSound('assign');
     };
 
     // --- ARBEITER ENTFERNEN ---
@@ -104,14 +132,14 @@ export function useVillageActions(state, showNotification) {
         newWorkers[resourceId][slotIndex] = null;
         
         await updateUser(user.id, { "village.workers": newWorkers });
-        showNotification("Arbeiter entfernt.", 'info');
+        showNotification(t('notif_worker_removed'), 'info');
     };
 
     // --- IDLE ZEIT VERLÄNGERN (WERBUNG / TICKET) ---
     const addIdleTime = async () => {
         if (!user) return;
         if ((user.adTickets || 0) < 1) {
-            showNotification("Keine Tickets!", "error");
+            showNotification(t('notif_no_tickets'), "error");
             return;
         }
 
@@ -126,32 +154,24 @@ export function useVillageActions(state, showNotification) {
             "village.idleTimeExpiresAt": newExpire
         });
 
-        showNotification("Idle Zeit um 20 Min verlängert!", "success");
+        showNotification(t('notif_idle_extended'), "success");
     };
 
     // --- RESSOURCEN SAMMELN (HAUPTSCHLEIFE) ---
-    const collectVillageResources = async () => {
+    const collectVillageResources = async (specificResourceId = null) => {
         if (!user) return;
 
         const now = Date.now();
-        const lastCollection = user.village.lastCollectionTime || now;
         const idleExpires = user.village.idleTimeExpiresAt || 0;
-        
-        // Produktion nur bis zum Ablauf der Idle-Zeit
-        const productionEnd = Math.min(now, idleExpires);
-        
-        let elapsedSeconds = 0;
-        if (productionEnd > lastCollection) {
-            elapsedSeconds = (productionEnd - lastCollection) / 1000;
-        }
+        const globalLastCollection = user.village.lastCollectionTime || now;
 
-        const nextCollectionTime = now;
-
-        // Wenn keine Zeit vergangen ist (oder Idle abgelaufen war), nur Zeit updaten
-        if (elapsedSeconds <= 0) {
-            await updateUser(user.id, { "village.lastCollectionTime": nextCollectionTime });
-            return null; 
-        }
+        // Migration & Init collectionTimes: Falls noch nicht vorhanden, von globaler Zeit erben
+        let collectionTimes = { ...(user.village.collectionTimes || {}) };
+        Object.values(RESOURCES).forEach(r => {
+            if (!collectionTimes[r.id]) {
+                collectionTimes[r.id] = globalLastCollection;
+            }
+        });
 
         let totalXpGained = 0;
         let updates = {};
@@ -163,17 +183,41 @@ export function useVillageActions(state, showNotification) {
         if (!newStats.totalCollected) newStats.totalCollected = {};
         if (!newStats.totalItemsCollected) newStats.totalItemsCollected = {};
         
-        newStats.totalIdleTime = (newStats.totalIdleTime || 0) + elapsedSeconds;
+        // Globale Statistik nur bei vollständigem Sammeln aktualisieren
+        if (!specificResourceId) {
+            const productionEnd = Math.min(now, idleExpires);
+            if (productionEnd > globalLastCollection) {
+                const globalElapsed = (productionEnd - globalLastCollection) / 1000;
+                if (globalElapsed > 0) {
+                    newStats.totalIdleTime = (newStats.totalIdleTime || 0) + globalElapsed;
+                }
+            }
+        }
 
         let somethingProduced = false;
         let itemsLog = []; 
         let petXpUpdates = {};
 
         // Für jedes Gebäude berechnen
-        for (const resKey of Object.keys(newResourcesBuffer)) {
-            const buildingLvl = user.village.buildings[resKey] || 1;
+        // FIX: Über alle definierten Ressourcen iterieren, damit auch neue (wie Training) erfasst werden
+        for (const resKey of Object.values(RESOURCES).map(r => r.id)) {
+            // Filter: Wenn eine spezifische Ressource angefordert wurde, andere überspringen
+            if (specificResourceId && resKey !== specificResourceId) continue;
+
+            const buildingLvl = (user.village.buildings && user.village.buildings[resKey]) || 1;
             const workerIds = user.village.workers[resKey] || [];
             
+            // Zeitberechnung PRO Ressource
+            const lastCollection = collectionTimes[resKey];
+            const productionEnd = Math.min(now, idleExpires);
+            let elapsedSeconds = 0;
+            if (productionEnd > lastCollection) {
+                elapsedSeconds = (productionEnd - lastCollection) / 1000;
+            }
+
+            // Zeitstempel aktualisieren (auch wenn nichts produziert wurde, um Zeit vorzuspulen)
+            collectionTimes[resKey] = now;
+
             const ratePerSecond = calculateProductionRate(resKey, buildingLvl, workerIds);
             
             if (ratePerSecond > 0) {
@@ -193,7 +237,8 @@ export function useVillageActions(state, showNotification) {
                     // XP für Arbeiter merken
                     workerIds.forEach(petId => {
                         if (petId) {
-                            petXpUpdates[petId] = (petXpUpdates[petId] || 0) + finishedItems;
+                            const xpMult = resKey === 'training' ? 10 : 1; // 10x XP im Übungsplatz
+                            petXpUpdates[petId] = (petXpUpdates[petId] || 0) + (finishedItems * xpMult);
                         }
                     });
 
@@ -218,9 +263,8 @@ export function useVillageActions(state, showNotification) {
                             
                             totalXpGained += 10; // XP für den Spieler
 
-                            if (itemsLog.length < 5) itemsLog.push(dropped.label);
+                            itemsLog.push(dropped.id);
                         }
-                        if (finishedItems > 5 && !itemsLog.includes('...')) itemsLog.push(`...`);
                     }
                 }
             }
@@ -236,7 +280,8 @@ export function useVillageActions(state, showNotification) {
                 currentLvl++;
                 currentXp -= xpToNext;
                 xpToNext = Math.floor(xpToNext * 1.5); 
-                showNotification(`Dorf Level Up! Level ${currentLvl}`, 'success');
+                showNotification(t('notif_village_levelup', { level: currentLvl }), 'success');
+                playSound('levelup');
             }
 
             // --- PETS LEVEL UP LOGIC (VILLAGE) ---
@@ -266,6 +311,8 @@ export function useVillageActions(state, showNotification) {
                         
                         // Quest Fortschritt (Anzahl der Level)
                         trackQuestProgress(user, 'LEVEL_UP_PET', pLevel - startLevel);
+                        showNotification(t('notif_pet_levelup', { name: pet.name, level: pLevel }), 'success');
+                        playSound('levelup');
                     } else {
                         // Nur XP updaten
                         updatePetInDB(petId, { xp: pXp });
@@ -277,7 +324,8 @@ export function useVillageActions(state, showNotification) {
             updates["village.level"] = currentLvl;
             updates["village.xp"] = currentXp;
             updates["village.xpToNext"] = xpToNext;
-            updates["village.lastCollectionTime"] = nextCollectionTime;
+            updates["village.lastCollectionTime"] = now; // Fallback/Global
+            updates["village.collectionTimes"] = collectionTimes; // NEU: Pro Ressource
             updates["village.resources"] = newResourcesBuffer;
             updates["village.storage"] = newStorage;
             updates["village.stats"] = newStats;
@@ -287,7 +335,8 @@ export function useVillageActions(state, showNotification) {
             return { items: itemsLog, xp: totalXpGained };
         } else {
             await updateUser(user.id, { 
-                "village.lastCollectionTime": nextCollectionTime, 
+                "village.lastCollectionTime": now, 
+                "village.collectionTimes": collectionTimes,
                 "village.resources": newResourcesBuffer, 
                 "village.stats.totalIdleTime": newStats.totalIdleTime 
             });
@@ -303,21 +352,28 @@ export function useVillageActions(state, showNotification) {
         // 1. Nächstes Level Daten holen
         const nextLvlData = UPGRADE_COSTS.find(u => u.level === currentLvl + 1);
         if (!nextLvlData) { 
-            showNotification("Maximales Level!", 'error'); 
+            showNotification(t('notif_max_level'), 'error'); 
             return; 
         }
         
         const baseCost = nextLvlData.baseCost; 
         const specialCost = nextLvlData.specialCost;
 
-        // 2. Benötigte Items identifizieren (Basis & Seltenste)
-        const categoryItems = RESOURCE_ITEMS[resourceId];
-        if (!categoryItems) { showNotification("Fehler: Ressource nicht gefunden.", 'error'); return; }
-        
-        // Sortieren nach Chance (Höchste zuerst)
-        const sortedItems = [...categoryItems].sort((a, b) => b.chance - a.chance);
-        const baseItem = sortedItems[0]; // Häufigste
-        const rareItem = sortedItems[sortedItems.length - 1]; // Seltenste
+        let baseItem, rareItem;
+
+        if (resourceId === 'training') {
+            // Sonderfall: Übungsplatz kostet Holz und Stein
+            baseItem = { id: 'wood_oak', label: 'Eiche' };
+            rareItem = { id: 'stone_rock', label: 'Stein' };
+        } else {
+            // 2. Benötigte Items identifizieren (Basis & Seltenste)
+            const categoryItems = RESOURCE_ITEMS[resourceId];
+            if (!categoryItems) { showNotification("Fehler: Ressource nicht gefunden.", 'error'); return; }
+            
+            const sortedItems = [...categoryItems].sort((a, b) => b.chance - a.chance);
+            baseItem = sortedItems[0]; // Häufigste
+            rareItem = sortedItems[sortedItems.length - 1]; // Seltenste
+        }
 
         // 3. Verfügbarkeit im Lager prüfen
         const currentStorage = user.village.storage || {};
@@ -325,12 +381,12 @@ export function useVillageActions(state, showNotification) {
         const availableRare = currentStorage[rareItem.id] || 0;
 
         if (availableBase < baseCost) {
-            showNotification(`Zu wenig ${baseItem.label}! (Benötigt: ${baseCost.toLocaleString()})`, 'error');
+            showNotification(t('notif_not_enough', { item: t('item_' + baseItem.id) }), 'error');
             return;
         }
 
         if (specialCost > 0 && availableRare < specialCost) {
-            showNotification(`Zu wenig ${rareItem.label}! (Benötigt: ${specialCost.toLocaleString()})`, 'error');
+            showNotification(t('notif_not_enough', { item: t('item_' + rareItem.id) }), 'error');
             return;
         }
 
@@ -347,7 +403,8 @@ export function useVillageActions(state, showNotification) {
             "village.storage": newStorage
         });
 
-        showNotification(`${RESOURCES[resourceId.toUpperCase()].label} verbessert!`, 'success');
+        showNotification(t('notif_building_upgraded', { building: t('res_' + resourceId) }), 'success');
+        playSound('build');
     };
 
     // --- HANDEL ---
@@ -357,7 +414,7 @@ export function useVillageActions(state, showNotification) {
         
         const recipe = TRADE_RECIPES.find(r => r.offerId === offerItemId && r.wantId === wantItemId);
         if (!recipe) {
-            showNotification("Dieser Tausch ist nicht möglich!", "error");
+            showNotification(t('notif_trade_impossible'), "error");
             return;
         }
 
@@ -365,7 +422,7 @@ export function useVillageActions(state, showNotification) {
         const totalReceive = recipe.receive * amountOfTrades;
 
         if (!storage[offerItemId] || storage[offerItemId] < totalCost) {
-            showNotification("Nicht genügend Material!", "error");
+            showNotification(t('notif_not_enough', { item: t('item_' + offerItemId) }), "error");
             return;
         }
 
@@ -374,7 +431,8 @@ export function useVillageActions(state, showNotification) {
         newStorage[wantItemId] = (newStorage[wantItemId] || 0) + totalReceive;
 
         await updateUser(user.id, { "village.storage": newStorage });
-        showNotification(`Tausch erfolgreich: +${totalReceive} Items`, "success");
+        showNotification(t('notif_trade_success', { amount: totalReceive }), "success");
+        playSound('kaching');
     };
 
     // --- MEILENSTEINE ---
@@ -395,7 +453,7 @@ export function useVillageActions(state, showNotification) {
         }
 
         if (current < requiredTotal) {
-            showNotification("Ziel noch nicht erreicht!", "error");
+            showNotification(t('notif_milestone_not_ready'), "error");
             return;
         }
 
@@ -413,7 +471,7 @@ export function useVillageActions(state, showNotification) {
                 currentLvl++;
                 currentXp -= xpToNext;
                 xpToNext = Math.floor(xpToNext * 1.5); 
-                showNotification(`Dorf Level Up! Level ${currentLvl}`, 'success');
+                showNotification(t('notif_village_levelup', { level: currentLvl }), 'success');
             }
             updates['village.level'] = currentLvl;
             updates['village.xp'] = currentXp;
@@ -432,7 +490,8 @@ export function useVillageActions(state, showNotification) {
         }
 
         await updateUser(user.id, updates);
-        showNotification(`Meilenstein (Stufe ${currentLevel + 1}) erreicht!`, "success");
+        showNotification(t('notif_milestone_reached', { level: currentLevel + 1 }), "success");
+        playSound('success');
     };
 
     // --- KOSMETIK KAUFEN ---
@@ -446,7 +505,7 @@ export function useVillageActions(state, showNotification) {
         const costAmount = cosmetic.costAmount;
 
         if (!storage[costItem] || storage[costItem] < costAmount) {
-            showNotification("Nicht genügend Materialien!", "error");
+            showNotification(t('notif_not_enough', { item: t('item_' + costItem) }), "error");
             return;
         }
 
@@ -465,7 +524,8 @@ export function useVillageActions(state, showNotification) {
             "inventory": newInventory 
         });
         
-        showNotification(`${cosmetic.label} gekauft!`, "success");
+        showNotification(t('notif_item_bought', { item: cosmetic.label }), "success");
+        playSound('kaching');
     };
 
     // --- SPEZIAL ANGEBOT KAUFEN ---
@@ -479,7 +539,7 @@ export function useVillageActions(state, showNotification) {
         const costAmount = offer.costAmount;
 
         if (!storage[costItem] || storage[costItem] < costAmount) {
-            showNotification("Nicht genügend Materialien!", "error");
+            showNotification(t('notif_not_enough', { item: t('item_' + costItem) }), "error");
             return;
         }
 
@@ -503,7 +563,8 @@ export function useVillageActions(state, showNotification) {
         }
 
         await updateUser(user.id, updates);
-        showNotification(`${offer.label} gekauft!`, "success");
+        showNotification(t('notif_item_bought', { item: offer.label }), "success");
+        playSound('kaching');
     };
 
     return { 

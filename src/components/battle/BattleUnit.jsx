@@ -10,7 +10,7 @@ const StatBox = ({ icon: Icon, val, color, bg }) => (
     </div>
 );
 
-export default function BattleUnit({ pet, isEnemy, attackState, isHit, damageText }) {
+export default function BattleUnit({ pet, isEnemy, attackState, isHit, damageText, t }) {
   const hpPercent = (pet.hp / pet.maxHp) * 100;
   const typeInfo = TYPES[pet.type] || TYPES.FIRE;
   
@@ -73,11 +73,11 @@ export default function BattleUnit({ pet, isEnemy, attackState, isHit, damageTex
           <div className="flex justify-between items-center mb-2">
               <div className="flex flex-col overflow-hidden">
                   <span className={`font-black text-sm truncate ${isEnemy ? 'text-red-200' : 'text-indigo-200'}`}>{pet.name}</span>
-                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Lvl {pet.level}</span>
+                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">{t ? t('village_lvl') : 'Lvl'} {pet.level}</span>
               </div>
               <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg border border-white/10 shadow-sm bg-gradient-to-br ${typeInfo.bg} from-black/40 to-transparent`}>
                   <div className="text-white scale-75">{typeInfo.icon}</div>
-                  <span className="text-[9px] font-black text-white uppercase">{typeInfo.label}</span>
+                  <span className="text-[9px] font-black text-white uppercase">{t ? t('type_' + pet.type) : typeInfo.label}</span>
               </div>
           </div>
 

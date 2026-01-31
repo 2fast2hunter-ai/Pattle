@@ -4,7 +4,7 @@ import { claimQuestReward, claimCompositeReward } from '../utils/db';
 import { RARITIES, TYPES, COMPOSITE_QUEST_REWARDS } from '../data/gameData';
 
 // Hilfskomponente für schöne Belohnungs-Badges
-const RewardBadge = ({ type, amount, label: customLabel }) => {
+const RewardBadge = ({ type, amount, label: customLabel, t }) => {
     let Icon = Sparkles;
     let color = 'text-slate-400';
     let bg = 'bg-slate-800';
@@ -14,29 +14,29 @@ const RewardBadge = ({ type, amount, label: customLabel }) => {
         Icon = Coins;
         color = 'text-yellow-400';
         bg = 'bg-yellow-500/10 border border-yellow-500/20';
-        label = 'Münzen';
+        label = t ? t('reward_coins') : 'Münzen';
     } else if (type === 'GEMS') {
         Icon = Gem;
         color = 'text-pink-400';
         bg = 'bg-pink-500/10 border border-pink-500/20';
-        label = 'Edelsteine';
+        label = t ? t('reward_gems') : 'Edelsteine';
     } else if (type === 'XP') {
         Icon = Sparkles;
         color = 'text-green-400';
         bg = 'bg-green-500/10 border border-green-500/20';
-        label = 'XP';
+        label = t ? t('reward_xp') : 'XP';
     } else if (type && type.includes('EGG')) {
         Icon = Egg;
         const rarityStr = type.split('_')[1] || 'COMMON';
         const rarity = RARITIES[rarityStr] || RARITIES.COMMON;
         color = rarity.color;
         bg = `bg-slate-800 border ${rarity.border}`;
-        label = `${rarity.label} Ei`;
+        label = t ? `${t('rarity_' + rarityStr)} ${t('reward_egg')}` : `${rarity.label} Ei`;
     } else if (type === 'LOOTBOX') {
         Icon = Package;
         color = 'text-amber-400';
         bg = 'bg-amber-500/10 border border-amber-500/20';
-        label = customLabel || 'Truhe';
+        label = customLabel || (t ? t('reward_lootbox') : 'Truhe');
     }
 
     return (
@@ -47,7 +47,7 @@ const RewardBadge = ({ type, amount, label: customLabel }) => {
     );
 };
 
-export default function QuestsScreen({ user, onBack }) {
+export default function QuestsScreen({ user, onBack, t }) {
     const [claiming, setClaiming] = useState(null); 
     const [claimingComposite, setClaimingComposite] = useState(false); 
     const [activeTab, setActiveTab] = useState('daily');
@@ -63,9 +63,9 @@ export default function QuestsScreen({ user, onBack }) {
     }
 
     const categories = {
-        daily: { id: 'daily', label: 'Täglich', icon: RefreshCw, color: 'text-blue-400', data: user.quests.daily },
-        weekly: { id: 'weekly', label: 'Wöchentlich', icon: Calendar, color: 'text-purple-400', data: user.quests.weekly },
-        monthly: { id: 'monthly', label: 'Monatlich', icon: Star, color: 'text-amber-400', data: user.quests.monthly },
+        daily: { id: 'daily', label: t ? t('quests_tab_daily') : 'Täglich', icon: RefreshCw, color: 'text-blue-400', data: user.quests.daily },
+        weekly: { id: 'weekly', label: t ? t('quests_tab_weekly') : 'Wöchentlich', icon: Calendar, color: 'text-purple-400', data: user.quests.weekly },
+        monthly: { id: 'monthly', label: t ? t('quests_tab_monthly') : 'Monatlich', icon: Star, color: 'text-amber-400', data: user.quests.monthly },
     };
 
     const currentCat = categories[activeTab];
@@ -105,42 +105,44 @@ export default function QuestsScreen({ user, onBack }) {
 
     // --- NEU: GENERIERT BESCHREIBUNGSTEXT ---
     const getQuestDescription = (quest) => {
+        if (!t) return quest.label; // Fallback
+
         const { type, target } = quest;
         
-        if (type === 'WIN_PVP') return `Gewinne ${target} Kämpfe in der Arena.`;
-        if (type === 'HATCH_EGG') return `Brüte ${target} Eier in der Brutstätte aus.`;
-        if (type === 'BREED_PET') return `Züchte ${target} neue Pets im Labor.`;
-        if (type === 'SPEND_COINS') return `Gib insgesamt ${target} Münzen aus.`;
-        if (type === 'EARN_XP') return `Sammle ${target} Erfahrungspunkte.`;
-        if (type === 'LEVEL_UP_PET') return `Level deine Pets ${target} mal auf.`;
+        if (type === 'WIN_PVP') return t('quest_WIN_PVP', { target });
+        if (type === 'HATCH_EGG') return t('quest_HATCH_EGG', { target });
+        if (type === 'BREED_PET') return t('quest_BREED_PET', { target });
+        if (type === 'SPEND_COINS') return t('quest_SPEND_COINS', { target });
+        if (type === 'EARN_XP') return t('quest_EARN_XP', { target });
+        if (type === 'LEVEL_UP_PET') return t('quest_LEVEL_UP_PET', { target });
+        if (type === 'WATCH_AD') return t('quest_WATCH_AD', { target });
         
         // Spezifische Element-Wins
         if (type.startsWith('WIN_')) {
             const element = type.split('_')[1];
-            const typeLabel = TYPES[element]?.label || element;
-            return `Gewinne ${target}x mit einem ${typeLabel}-Pet im Team.`;
+            const typeKey = `type_${element}`;
+            const typeLabel = t(typeKey) !== typeKey ? t(typeKey) : (TYPES[element]?.label || element);
+            return t('quest_WIN_ELEMENT', { target, element: typeLabel });
         }
 
         // Spezifische Zucht
         if (type.startsWith('BREED_')) {
             const element = type.split('_')[1];
-            const typeLabel = TYPES[element]?.label || element;
-            return `Züchte ${target} Pets vom Typ ${typeLabel}.`;
+            const typeKey = `type_${element}`;
+            const typeLabel = t(typeKey) !== typeKey ? t(typeKey) : (TYPES[element]?.label || element);
+            return t('quest_BREED_ELEMENT', { target, element: typeLabel });
         }
 
         // Spezifisches Brüten (Element oder Rarity)
         if (type.startsWith('HATCH_')) {
             const suffix = type.split('_')[1];
             // Check ob Rarity oder Type
-            const rarityLabel = RARITIES[suffix]?.label;
-            const typeLabel = TYPES[suffix]?.label;
-
-            if (rarityLabel) return `Brüte ${target} Eier der Seltenheit "${rarityLabel}".`;
-            if (typeLabel) return `Brüte ${target} Eier vom Typ ${typeLabel}.`;
-            return `Brüte ${target} spezielle Eier aus.`;
+            if (RARITIES[suffix]) return t('quest_HATCH_RARITY', { target, rarity: t('rarity_' + suffix) });
+            if (TYPES[suffix]) return t('quest_HATCH_ELEMENT', { target, element: t('type_' + suffix) });
+            return t('quest_HATCH_SPECIAL', { target });
         }
 
-        return `Erfülle das Ziel ${target} mal.`;
+        return t('quest_generic', { target });
     };
 
     return (
@@ -149,7 +151,7 @@ export default function QuestsScreen({ user, onBack }) {
             {/* --- HEADER --- */}
             <div className="relative flex items-center justify-center mb-4 pt-2 px-4">
                 <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-                    AUFGABEN
+                    {t ? t('quests_title') : 'AUFGABEN'}
                 </h1>
                 <button 
                     onClick={onBack} 
@@ -185,7 +187,7 @@ export default function QuestsScreen({ user, onBack }) {
                 <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-900/30 py-2 rounded-lg border border-white/5 mx-8">
                     <Clock className="w-3 h-3" />
                     <span>
-                        Reset in: <span className="text-white">{daysLeft > 0 ? `${daysLeft} Tagen` : `${hoursLeft} Stunden`}</span>
+                        {t ? t('quests_reset') : 'Reset in'}: <span className="text-white">{daysLeft > 0 ? `${daysLeft} d` : `${hoursLeft} h`}</span>
                     </span>
                 </div>
 
@@ -198,14 +200,14 @@ export default function QuestsScreen({ user, onBack }) {
                             <div className="flex justify-between items-center mb-3">
                                 <div>
                                     <h3 className="text-sm font-black text-white uppercase tracking-wide flex items-center gap-2">
-                                        <Trophy className="w-4 h-4 text-yellow-400" /> {compositeReward.label}
+                                        <Trophy className="w-4 h-4 text-yellow-400" /> {t ? t('quest_bonus_' + activeTab) : compositeReward.label}
                                     </h3>
                                     <p className="text-xs text-slate-400 mt-0.5 font-bold">
-                                        Erledige alle Aufgaben für den Bonus!
+                                        {t ? t('quest_bonus_desc') : 'Erledige alle Aufgaben für den Bonus!'}
                                     </p>
                                 </div>
                                 <div className="scale-90 origin-right">
-                                    <RewardBadge type={compositeReward.rewardType} amount={compositeReward.rewardAmount} label={compositeReward.rewardType === 'LOOTBOX' ? 'Elementar-Truhe' : null} />
+                                    <RewardBadge type={compositeReward.rewardType} amount={compositeReward.rewardAmount} label={compositeReward.rewardType === 'LOOTBOX' ? (t ? t('shop_elemental_chest') : 'Elementar-Truhe') : null} t={t} />
                                 </div>
                             </div>
 
@@ -218,11 +220,11 @@ export default function QuestsScreen({ user, onBack }) {
                             </div>
 
                             <div className="flex justify-between items-center relative z-10">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{completedCount} / {totalQuests} FERTIG</span>
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{completedCount} / {totalQuests} {t ? t('quests_progress_done') : 'FERTIG'}</span>
                                 
                                 {claimedComposite ? (
                                     <span className="flex items-center gap-1 text-green-400 text-xs font-black uppercase bg-green-400/10 px-3 py-1.5 rounded-lg border border-green-400/20">
-                                        <CheckCircle2 className="w-3 h-3" /> Eingesammelt
+                                        <CheckCircle2 className="w-3 h-3" /> {t ? t('shop_claimed') : 'Eingesammelt'}
                                     </span>
                                 ) : (
                                     <button
@@ -235,7 +237,7 @@ export default function QuestsScreen({ user, onBack }) {
                                                 : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-white/5'}
                                         `}
                                     >
-                                        {claimingComposite ? <Loader2 className="w-3 h-3 animate-spin" /> : (isCompositeReady ? <><Gift className="w-3 h-3" /> ABHOLEN</> : 'LOCKED')}
+                                        {claimingComposite ? <Loader2 className="w-3 h-3 animate-spin" /> : (isCompositeReady ? <><Gift className="w-3 h-3" /> {t ? t('quests_claim_btn') : 'ABHOLEN'}</> : 'LOCKED')}
                                     </button>
                                 )}
                             </div>
@@ -260,7 +262,7 @@ export default function QuestsScreen({ user, onBack }) {
                                     
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="flex-1 pr-2">
-                                            <h3 className={`text-sm font-bold mb-1 ${quest.claimed ? 'text-slate-500 line-through' : 'text-white'}`}>{quest.label}</h3>
+                                            <h3 className={`text-sm font-bold mb-1 ${quest.claimed ? 'text-slate-500 line-through' : 'text-white'}`}>{getQuestDescription(quest)}</h3>
                                             
                                             {/* Progress Bar */}
                                             <div className="flex items-center gap-2 mb-2">
@@ -270,17 +272,11 @@ export default function QuestsScreen({ user, onBack }) {
                                                 <span className="text-[10px] font-mono text-slate-400">{quest.progress}/{quest.target}</span>
                                             </div>
 
-                                            {/* NEU: BESCHREIBUNGSTEXT UNTER DEM BALKEN */}
-                                            <p className="text-[10px] text-slate-400 leading-tight flex items-center gap-1">
-                                                <Info className="w-3 h-3 inline opacity-50" />
-                                                {getQuestDescription(quest)}
-                                            </p>
-
                                         </div>
 
                                         {/* Belohnung (Rechts) */}
                                         <div className="shrink-0">
-                                            <RewardBadge type="XP" amount={displayXp} />
+                                            <RewardBadge type="XP" amount={displayXp} t={t} />
                                         </div>
                                     </div>
 
@@ -288,7 +284,7 @@ export default function QuestsScreen({ user, onBack }) {
                                     <div className="flex justify-end pt-2 border-t border-white/5 mt-2">
                                         {quest.claimed ? (
                                             <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1 uppercase tracking-wider">
-                                                <CheckCircle2 className="w-3 h-3" /> Fertig
+                                                <CheckCircle2 className="w-3 h-3" /> {t ? t('quests_completed') : 'Fertig'}
                                             </span>
                                         ) : isComplete ? (
                                             <button 
@@ -296,11 +292,11 @@ export default function QuestsScreen({ user, onBack }) {
                                                 disabled={claiming === quest.id}
                                                 className="bg-green-600 hover:bg-green-500 text-white text-[10px] font-black uppercase py-1.5 px-4 rounded-lg shadow-md shadow-green-900/20 active:scale-95 transition-all flex items-center gap-1.5 animate-pulse"
                                             >
-                                                {claiming === quest.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> BELOHNUNG</>}
+                                                {claiming === quest.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> {t ? t('quests_claim_btn') : 'BELOHNUNG'}</>}
                                             </button>
                                         ) : (
                                             <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 uppercase tracking-wider bg-slate-900/50 px-2 py-1 rounded">
-                                                <Play className="w-2.5 h-2.5" /> In Arbeit
+                                                <Play className="w-2.5 h-2.5" /> {t ? t('quests_in_progress') : 'In Arbeit'}
                                             </span>
                                         )}
                                     </div>

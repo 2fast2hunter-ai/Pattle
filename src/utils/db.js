@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import { 
   doc, getDoc, setDoc, updateDoc, collection, addDoc, 
   onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
-  runTransaction, increment 
+  runTransaction, increment, getCountFromServer, deleteField
 } from 'firebase/firestore';
 import { generatePet, generateQuests } from './gameMechanics'; 
 import { calculatePlayerLevel, getXpToNextPlayerLevel } from './mechanics/progression'; 
@@ -72,8 +72,22 @@ const generatePatchedQuests = (catName) => {
     if (!data) return data;
     const config = getFixedQuestReward(catName);
     
+    // --- NEU: Werbe-Quest für Daily ---
+    if (catName === 'DAILY' && data.quests) {
+        const adQuest = {
+            id: `daily_ad_${Date.now()}`,
+            type: 'WATCH_AD',
+            target: 10,
+            progress: 0,
+            label: 'Werbe-Marathon',
+            claimed: false
+        };
+        data.quests.unshift(adQuest);
+    }
+    
     if (data.quests) {
         data.quests = data.quests.map(q => ({ ...q, rewardType: 'XP', rewardAmount: config.xp }));
+        data.totalQuests = data.quests.length; // Gesamtanzahl aktualisieren
     }
     if (config.composite) {
         data.reward = config.composite;
@@ -123,6 +137,90 @@ const checkAndResetTower = async (userData) => {
     }
 };
 
+// --- HELPER: LEADERBOARD RESET & REWARDS ---
+const getLeaderboardRewards = (rank, total) => {
+    const percent = total > 0 ? (rank / total) * 100 : 100;
+    
+    // Belohnungen definieren
+    if (rank === 1) return { coins: 50000, gems: 500, breedTickets: 10, adTickets: 20, label: 'Platz 1' };
+    if (rank === 2) return { coins: 30000, gems: 300, breedTickets: 7, adTickets: 15, label: 'Platz 2' };
+    if (rank === 3) return { coins: 20000, gems: 200, breedTickets: 5, adTickets: 10, label: 'Platz 3' };
+
+    if (percent <= 5) return { coins: 15000, gems: 150, breedTickets: 4, adTickets: 8, label: 'Top 5%' };
+    if (percent <= 10) return { coins: 10000, gems: 100, breedTickets: 3, adTickets: 6, label: 'Top 10%' };
+    if (percent <= 20) return { coins: 8000, gems: 80, breedTickets: 2, adTickets: 5, label: 'Top 20%' };
+    if (percent <= 30) return { coins: 7000, gems: 70, breedTickets: 2, adTickets: 4, label: 'Top 30%' };
+    if (percent <= 40) return { coins: 6000, gems: 60, breedTickets: 1, adTickets: 4, label: 'Top 40%' };
+    if (percent <= 50) return { coins: 5000, gems: 50, breedTickets: 1, adTickets: 3, label: 'Top 50%' };
+    if (percent <= 60) return { coins: 4000, gems: 40, breedTickets: 1, adTickets: 3, label: 'Top 60%' };
+    if (percent <= 70) return { coins: 3000, gems: 30, breedTickets: 1, adTickets: 2, label: 'Top 70%' };
+    if (percent <= 80) return { coins: 2000, gems: 20, breedTickets: 0, adTickets: 2, label: 'Top 80%' };
+    if (percent <= 90) return { coins: 1000, gems: 10, breedTickets: 0, adTickets: 1, label: 'Top 90%' };
+
+    return null; // Keine Belohnung für die unteren 10%
+};
+
+const checkAndResetLeaderboard = async (userData) => {
+    if (!userData) return;
+    const now = new Date();
+    const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`; 
+    
+    if (userData.leaderboardResetDate !== currentMonthKey) {
+        console.log("[DB] Neuer Monat! Prüfe Rangliste...");
+        
+        try {
+            // 1. Rang ermitteln (Anzahl User mit höherem Rating + 1)
+            const usersRef = collection(db, "users");
+            const qHigher = query(usersRef, where("rating", ">", userData.rating || 1000));
+            
+            // Fallback für getCountFromServer falls nicht verfügbar (ältere SDKs), aber hier nutzen wir es
+            const snapshotHigher = await getCountFromServer(qHigher);
+            const rank = snapshotHigher.data().count + 1;
+
+            const snapshotTotal = await getCountFromServer(usersRef);
+            const total = snapshotTotal.data().count;
+
+            // 2. Belohnung berechnen
+            const reward = getLeaderboardRewards(rank, total);
+            
+            let updates = { 
+                leaderboardResetDate: currentMonthKey,
+                rating: 1000, // Reset Elo
+                startEloToday: 1000, 
+                lastEloDate: now.toISOString().split('T')[0]
+            };
+            
+            let rewardMsg = null;
+
+            if (reward) {
+                updates.coins = (userData.coins || 0) + reward.coins;
+                updates.gems = (userData.gems || 0) + reward.gems;
+                updates.adTickets = (userData.adTickets || 0) + reward.adTickets;
+                
+                if (reward.breedTickets > 0) {
+                    const ticketItems = Array.from({length: reward.breedTickets}, () => ({
+                        id: Date.now() + Math.random(), type: 'TICKET'
+                    }));
+                    updates.inventory = [...(userData.inventory || []), ...ticketItems];
+                }
+                
+                rewardMsg = `Saison Ende! Rang ${rank} (${reward.label}). Belohnung: ${reward.coins} Münzen, ${reward.gems} Edelsteine, ${reward.breedTickets} Zuchttickets, ${reward.adTickets} Werbetickets.`;
+            } else {
+                rewardMsg = `Saison Ende! Rang ${rank}. Viel Glück im nächsten Monat!`;
+            }
+
+            // Nachricht speichern, damit UI sie anzeigen kann
+            updates.seasonRewardMessage = rewardMsg;
+
+            await updateDoc(doc(db, "users", userData.id), updates);
+        } catch(e) { 
+            console.error("[DB] Fehler beim Leaderboard Reset:", e); 
+            // Fallback um Loop zu verhindern
+            await updateDoc(doc(db, "users", userData.id), { leaderboardResetDate: currentMonthKey });
+        }
+    }
+};
+
 // ... (Restlicher Code identisch - initializeUser, listenToUser etc. nutzen die Helfer oben) ...
 export const initializeUser = async (firebaseUser, username) => {
   const userRef = doc(db, "users", firebaseUser.uid);
@@ -132,6 +230,7 @@ export const initializeUser = async (firebaseUser, username) => {
     const userData = { id: userSnap.id, ...userSnap.data() };
     checkAndMigrateLevel(userData);
     checkAndResetTower(userData);
+    checkAndResetLeaderboard(userData);
     return userData; 
   } else {
     const today = new Date().toISOString().split('T')[0];
@@ -185,7 +284,8 @@ export const initializeUser = async (firebaseUser, username) => {
              totalIdleTime: 0
           },
       towerProgress: 1,
-      towerResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`
+      towerResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`,
+      leaderboardResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`
       }
     };
     await setDoc(userRef, newUserData);
@@ -200,6 +300,7 @@ export const listenToUser = (userId, callback) => {
             checkAndMigrateLevel(userData);
             checkAndMigrateQuests(userData); // Automatische Korrektur der Quest-Anzeige
             checkAndResetTower(userData);
+            checkAndResetLeaderboard(userData);
             callback(userData); 
         }
     }); 
@@ -352,7 +453,7 @@ export const claimDailyLoginReward = async (user) => {
         { type: 'COINS', amount: 1000, label: '1.000 Münzen' },
         { type: 'GEMS', amount: 10, label: '10 Edelsteine' },
         { type: 'ITEM', variant: 'XP_POTION_M', amount: 2, label: '2x XP Trank (M)' },
-        { type: 'LOOTBOX', variant: 'PREMIUM', amount: 1, label: 'Premium Box' }
+        { type: 'LOOTBOX', variant: 'MASTER', amount: 1, label: 'Meister Box' }
     ];
     
     const reward = rewards[dayIndex];
@@ -375,4 +476,26 @@ export const claimDailyLoginReward = async (user) => {
 
     await updateDoc(userRef, updates);
     return { ...reward, streak: nextStreak };
+};
+
+export { deleteField };
+
+export const getUserRankAndPercent = async (user) => {
+    if (!user) return null;
+    try {
+        const usersRef = collection(db, "users");
+        // Anzahl User mit höherem Rating zählen
+        const qHigher = query(usersRef, where("rating", ">", user.rating || 1000));
+        const snapshotHigher = await getCountFromServer(qHigher);
+        const rank = snapshotHigher.data().count + 1;
+
+        const snapshotTotal = await getCountFromServer(usersRef);
+        const total = snapshotTotal.data().count;
+        
+        const percent = total > 0 ? (rank / total) * 100 : 100;
+        return { rank, percent, total };
+    } catch (e) {
+        console.error("Fehler beim Abrufen des Rangs:", e);
+        return null;
+    }
 };

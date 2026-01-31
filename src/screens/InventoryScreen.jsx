@@ -3,7 +3,7 @@ import { ArrowLeft, Search, Filter, Egg, Dna, ShoppingBag } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-export default function InventoryScreen({ pets, title = "Inventar", onBack, onSelectPet, highlightMode = false, filterEggs = false }) {
+export default function InventoryScreen({ pets, title = "Inventar", onBack, onSelectPet, highlightMode = false, filterEggs = false, t }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('ALL');
     
@@ -72,7 +72,7 @@ export default function InventoryScreen({ pets, title = "Inventar", onBack, onSe
                         >
                             {/* Kleiner Farb-Punkt für den Typ */}
                             <span className={`w-2 h-2 rounded-full ${TYPES[type].bg}`}></span>
-                            {TYPES[type].label}
+                            {t ? t('type_' + type) : TYPES[type].label}
                         </button>
                     ))}
                 </div>
@@ -118,7 +118,7 @@ export default function InventoryScreen({ pets, title = "Inventar", onBack, onSe
                                             <div className="font-black text-white text-xs truncate w-full mb-1">{pet.name}</div>
                                             <div className="flex items-center justify-center gap-1.5 flex-wrap">
                                                 <span className="text-[9px] font-bold text-slate-400 bg-slate-950/50 px-1.5 py-0.5 rounded">Lvl {pet.level}</span>
-                                                <span className={`text-[9px] font-bold uppercase ${rarity.color}`}>{rarity.label}</span>
+                                                <span className={`text-[9px] font-bold uppercase ${rarity.color}`}>{t ? t('rarity_' + pet.rarity) : rarity.label}</span>
                                             </div>
                                         </div>
                                     </div>

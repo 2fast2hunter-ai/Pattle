@@ -6,6 +6,9 @@ import { claimDailyLoginReward } from '../utils/db';
 
 // --- RIPPLE BUTTON COMPONENT ---
 const MenuTile = ({ item, index, onClick }) => {
+    // Fallback für t, falls es noch nicht geladen ist (wird von MainMenu durchgereicht)
+    // Hier nicht direkt verfügbar, daher nutzen wir die Props von MainMenu
+    
     const [ripples, setRipples] = useState([]);
 
     const handleClick = (e) => {
@@ -80,9 +83,12 @@ const MenuTile = ({ item, index, onClick }) => {
     );
 };
 
-export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage }) { // onVillage prop
+export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, t }) { // onVillage prop
   
   const [showDailyLogin, setShowDailyLogin] = useState(false);
+  
+  // Fallback für t
+  const translate = t || ((key) => key);
 
   // Check Daily Login beim Laden
   useEffect(() => {
@@ -103,44 +109,44 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
 
   const menuItems = [
       { 
-          id: 'arena', title: 'ARENA', subtitle: 'Kämpfe',
+          id: 'arena', title: translate('menu_play'), subtitle: 'Kämpfe',
           icon: Swords, color: 'from-red-600 to-orange-600', shadow: 'shadow-red-900/20',
           onClick: onArena
       },
       { 
-          id: 'pethub', title: 'PET HUB', subtitle: 'Sammlung',
+          id: 'pethub', title: translate('menu_collection'), subtitle: 'Sammlung',
           icon: Egg, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-900/20',
           onClick: onPetHub
       },
       // DORF BUTTON (JETZT AKTIV)
       { 
-          id: 'village', title: 'DORF', subtitle: 'Ressourcen',
+          id: 'village', title: translate('menu_village'), subtitle: 'Ressourcen',
           icon: Home, color: 'from-emerald-600 to-green-700', shadow: 'shadow-emerald-900/20',
           onClick: onVillage, // Action zugewiesen
           locked: false // Entsperrt
       },
       { 
-          id: 'quests', title: 'AUFGABEN', subtitle: 'Missionen',
+          id: 'quests', title: translate('menu_quests'), subtitle: 'Missionen',
           icon: ClipboardList, color: 'from-amber-500 to-orange-500', shadow: 'shadow-amber-900/20',
           onClick: onQuests
       },
       { 
-          id: 'marketplace', title: 'MARKT', subtitle: 'Handel',
+          id: 'marketplace', title: translate('menu_marketplace'), subtitle: 'Handel',
           icon: Store, color: 'from-blue-600 to-cyan-600', shadow: 'shadow-cyan-900/20',
           onClick: onMarketplace
       },
       { 
-          id: 'shop', title: 'SHOP', subtitle: 'Items',
+          id: 'shop', title: translate('menu_shop'), subtitle: 'Items',
           icon: ShoppingBag, color: 'from-yellow-500 to-amber-600', shadow: 'shadow-yellow-900/20',
           onClick: onShop
       },
       { 
-          id: 'profile', title: 'PROFIL', subtitle: 'Stats',
+          id: 'profile', title: translate('menu_profile'), subtitle: 'Stats',
           icon: User, color: 'from-pink-600 to-rose-600', shadow: 'shadow-pink-900/20',
           onClick: onProfile
       },
       { 
-          id: 'settings', title: 'OPTIONEN', subtitle: 'System',
+          id: 'settings', title: translate('menu_settings'), subtitle: 'System',
           icon: Settings, color: 'from-slate-600 to-slate-700', shadow: 'shadow-slate-900/20',
           onClick: onSettings
       },
@@ -148,6 +154,15 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
 
   return (
     <div className="pt-4 pb-24 px-4 space-y-4 h-full overflow-y-auto scrollbar-hide relative">
+      
+      <div className="p-2 pb-0">
+          <h1 className="text-3xl font-black text-white italic tracking-wider text-center drop-shadow-lg">
+              PET BATTLE
+          </h1>
+          <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
+              {translate('menu_welcome')}, {user?.username || translate('common_player')}
+          </p>
+      </div>
       
       {showDailyLogin && (
         <DailyLoginModal 

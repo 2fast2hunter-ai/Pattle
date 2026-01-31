@@ -1,4 +1,5 @@
 import { updateUser, calculateEloChange, setBattleActive } from '../../../utils/db';
+import { playSound } from '../../../utils/soundManager';
 
 export const handleLose = async (state, showNotification, startBattleFn, enemyRating) => {
     const { user, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView } = state;
@@ -22,6 +23,7 @@ export const handleLose = async (state, showNotification, startBattleFn, enemyRa
     await setBattleActive(user.id, false);
 
     if (!isAuto) {
+        playSound('lose');
         showNotification(isTower ? "Turm-Kampf verloren!" : "Niederlage!", "error");
         setCurrentView(isTower ? 'tower' : 'arena-hub');
         setActiveBattle(null);
@@ -33,12 +35,17 @@ export const handleLose = async (state, showNotification, startBattleFn, enemyRa
             setCurrentView('arena-hub');
             setActiveBattle(null);
         } else {
-             // Bei Niederlage Auto-Battle abbrechen? Oder weitermachen? 
-             // Hier: Abbrechen
-             setAutoBattleRemaining(0);
-             showNotification("Auto-Kampf nach Niederlage gestoppt.", "error");
+             // Weiterkämpfen auch bei Niederlage
+             const nextRemaining = autoBattleRemaining - 1;
+             setAutoBattleRemaining(nextRemaining);
+             showNotification(`Niederlage! Nächster Kampf... (${nextRemaining} übrig)`, "info");
+             
              setCurrentView('arena-hub');
              setActiveBattle(null);
+             
+             setTimeout(() => {
+                 startBattleFn();
+             }, 1500);
         }
     }
 };

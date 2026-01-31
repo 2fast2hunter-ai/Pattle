@@ -1,16 +1,19 @@
 import React from 'react';
-import { ArrowLeft, Clock, Info, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Loader2, Trophy, RefreshCw, Zap, Plus, Timer, Scissors } from 'lucide-react';
+import { ArrowLeft, Clock, Info, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Loader2, Trophy, RefreshCw, Zap, Plus, Timer, Scissors, Swords } from 'lucide-react';
 import { RESOURCES } from '../data/gameData';
+import { TrainingScreen } from './TrainingScreen';
+import { playSound } from '../utils/soundManager';
 
 const RESOURCE_ICONS = {
-    wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
+    wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles, training: Swords
 };
 
-export default function VillageScreen({ user, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onOpenCosmetics }) {
+export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onOpenCosmetics, onOpenTraining, onToggleTrainingPet }) {
     
     // Timer State für Countdown
     const [timeLeftStr, setTimeLeftStr] = React.useState("00:00:00");
     const [isActive, setIsActive] = React.useState(false);
+    const [showTraining, setShowTraining] = React.useState(false);
 
     React.useEffect(() => {
         if (!user?.village) return;
@@ -28,7 +31,7 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                 setTimeLeftStr(`${h}h ${m}m ${s}s`);
             } else {
                 setIsActive(false);
-                setTimeLeftStr("Inaktiv");
+                setTimeLeftStr(t ? t('village_inactive') : "Inaktiv");
             }
         };
 
@@ -41,8 +44,22 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
         return (
             <div className="flex flex-col h-full items-center justify-center bg-slate-900 text-white">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Initialisiere Dorf...</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t ? t('village_init') : "Initialisiere Dorf..."}</p>
             </div>
+        );
+    }
+
+    if (showTraining) {
+        return (
+            <TrainingScreen 
+                user={user} 
+                pets={pets}
+                onBack={() => setShowTraining(false)} 
+                onToggleTrainingPet={onToggleTrainingPet} 
+                productionRates={productionRates}
+                onCollect={onCollect}
+                t={t}
+            />
         );
     }
 
@@ -58,19 +75,19 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                         <ArrowLeft className="w-5 h-5" />
                     </button>
                     <div>
-                        <h2 className="text-2xl font-black italic tracking-wide text-white">DORF</h2>
+                        <h2 className="text-2xl font-black italic tracking-wide text-white">{t ? t('village_title') : 'DORF'}</h2>
                         <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
                             <span className="text-indigo-400">Level {user.village.level}</span>
                             <span className="w-1 h-1 bg-slate-600 rounded-full"></span>
-                            <span>{Math.floor(user.village.xp)} / {user.village.xpToNext} XP</span>
+                            <span>{Math.floor(user.village.xp)} / {user.village.xpToNext} {t ? t('common_xp') : 'XP'}</span>
                         </div>
                     </div>
                 </div>
                 <button 
-                    onClick={onCollect}
+                    onClick={() => onCollect(false)}
                     className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 py-2 rounded-xl font-black text-xs shadow-lg shadow-green-900/20 active:scale-95 transition-all flex items-center gap-2"
                 >
-                    <Clock className="w-4 h-4" /> EINSAMMELN
+                    <Clock className="w-4 h-4" /> {t ? t('village_collect') : 'EINSAMMELN'}
                 </button>
             </div>
 
@@ -86,7 +103,7 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                         </div>
                         <div>
                             <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                                {isActive ? 'Produktion läuft' : 'Produktion gestoppt'}
+                                {isActive ? (t ? t('village_production_active') : 'Produktion läuft') : (t ? t('village_production_stopped') : 'Produktion gestoppt')}
                             </div>
                             <div className={`text-lg font-black ${isActive ? 'text-white' : 'text-red-400'}`}>
                                 {timeLeftStr}
@@ -104,7 +121,7 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                             <Plus className="w-3 h-3" /> 20m
                         </div>
                         <div className="text-[9px] text-slate-500 font-bold uppercase">
-                            {ticketCount} Tickets
+                            {ticketCount} {t ? t('village_tickets') : 'Tickets'}
                         </div>
                     </button>
                 </div>
@@ -127,7 +144,13 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                         return (
                             <button 
                                 key={res.id}
-                                onClick={() => isUnlocked && onSelectResource(res.id)}
+                                onClick={() => {
+                                    if (isUnlocked) {
+                                        playSound('click');
+                                        if (res.id === 'training') setShowTraining(true);
+                                        else onSelectResource(res.id);
+                                    }
+                                }}
                                 disabled={!isUnlocked}
                                 className={`
                                     relative p-4 rounded-3xl border text-left h-40 flex flex-col justify-between overflow-hidden group transition-all
@@ -142,40 +165,41 @@ export default function VillageScreen({ user, onBack, onCollect, onSelectResourc
                                     <div className={`w-10 h-10 ${isUnlocked ? res.bg : 'bg-slate-700'} rounded-xl flex items-center justify-center shadow-md mb-3 group-hover:scale-110 transition-transform`}>
                                         {isUnlocked ? React.createElement(RESOURCE_ICONS[res.id], { className: "w-5 h-5 text-white" }) : <Lock className="w-5 h-5 text-slate-500" />}
                                     </div>
-                                    <h3 className={`font-black text-sm leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{res.buildingLabel}</h3>
+                                    <h3 className={`font-black text-sm leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{t ? t('res_' + res.id) : res.buildingLabel}</h3>
                                 </div>
 
                                 <div className="relative z-10">
                                     {isUnlocked ? (
                                         <div className="space-y-1">
                                             <div className="flex justify-between items-end">
-                                                <span className="text-[10px] text-slate-500 font-bold uppercase">Rate/h</span>
+                                                <span className="text-[10px] text-slate-500 font-bold uppercase">{t ? t('village_rate') : 'Rate/h'}</span>
                                                 <span className={`text-xs font-bold ${isActive ? 'text-green-400' : 'text-slate-500'}`}>+{rate}</span>
                                             </div>
-                                            {!isActive && <div className="text-[8px] text-red-400 font-bold uppercase">Pausiert</div>}
+                                            {!isActive && <div className="text-[8px] text-red-400 font-bold uppercase">{t ? t('village_paused') : 'Pausiert'}</div>}
                                         </div>
                                     ) : (
-                                        <span className="text-[9px] font-bold text-red-400 uppercase bg-red-500/10 px-2 py-1 rounded border border-red-500/20">Lvl {res.unlockLevel}</span>
+                                        <span className="text-[9px] font-bold text-red-400 uppercase bg-red-500/10 px-2 py-1 rounded border border-red-500/20">{t ? t('village_lvl') : 'Lvl'} {res.unlockLevel}</span>
                                     )}
                                 </div>
                             </button>
                         );
                     })}
+
                 </div>
 
                 {/* EXTRA KACHELN (3er Grid) */}
-                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
                     <button onClick={onOpenMilestones} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
                         <Trophy className="w-6 h-6 text-yellow-400" />
-                        <span className="text-[10px] font-black text-white uppercase">Meilensteine</span>
+                        <span className="text-[10px] font-black text-white uppercase">{t ? t('village_milestones') : 'Meilensteine'}</span>
                     </button>
                     <button onClick={onOpenTrading} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
                         <RefreshCw className="w-6 h-6 text-blue-400" />
-                        <span className="text-[10px] font-black text-white uppercase">Tauschplatz</span>
+                        <span className="text-[10px] font-black text-white uppercase">{t ? t('village_trading') : 'Tauschplatz'}</span>
                     </button>
                     <button onClick={onOpenCosmetics} className="bg-slate-800 border border-white/5 p-3 rounded-3xl flex flex-col items-center justify-center gap-2 hover:bg-slate-750 active:scale-95 transition-all h-24">
                         <Scissors className="w-6 h-6 text-pink-400" />
-                        <span className="text-[10px] font-black text-white uppercase">Schneider</span>
+                        <span className="text-[10px] font-black text-white uppercase">{t ? t('village_cosmetics') : 'Schneider'}</span>
                     </button>
                 </div>
 

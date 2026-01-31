@@ -6,7 +6,7 @@ import PetAvatar from '../components/PetAvatar';
 import RenameModal from '../components/modals/RenameModal';
 import DeleteModal from '../components/modals/DeleteModal';
 
-export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet }) {
+export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet, t }) { // t prop added
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   
@@ -64,7 +64,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
                 )}
                 <div className={`px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center gap-1.5 ${rarity.color}`}>
                     <Star className="w-3 h-3 fill-current" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">{rarity.label}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t ? t('rarity_' + pet.rarity) : rarity.label}</span>
                 </div>
             </div>
         </div>
@@ -89,7 +89,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
             <div className="flex items-center gap-2 mt-2 mb-4">
                 <span className={`text-[10px] font-bold uppercase tracking-wider text-slate-500`}>{species.label}</span>
                 <span className="w-1 h-1 bg-slate-700 rounded-full"></span>
-                <div className={`flex items-center gap-1 ${type.color} text-[10px] font-black uppercase`}>{type.icon} {type.label}</div>
+                <div className={`flex items-center gap-1 ${type.color} text-[10px] font-black uppercase`}>{type.icon} {t ? t('type_' + pet.type) : type.label}</div>
             </div>
 
             {/* XP BAR (ANGEPASST) */}

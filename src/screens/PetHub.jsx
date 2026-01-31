@@ -2,7 +2,7 @@ import React from 'react';
 import { LayoutGrid, Backpack, ThermometerSun, Heart, X, ChevronRight } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
 
-export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory }) {
+export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory, t }) {
   
   // Helper Komponente für die modernen Kacheln
   const HubCard = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, delay }) => (
@@ -52,7 +52,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
       {/* --- HEADER --- */}
       <div className="relative flex items-center justify-center mb-6 pt-2">
           <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200 drop-shadow-sm">
-              PET HUB
+              {t ? t('pethub_title') : 'PET HUB'}
           </h1>
           <button 
               onClick={onBack} 
@@ -67,8 +67,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
 
         {/* 1. PET SAMMLUNG (Blau) */}
         <HubCard 
-            title="SAMMLUNG" 
-            subtitle="Alle deine Monster" 
+            title={t ? t('pethub_inventory_btn') : "SAMMLUNG"} 
+            subtitle={t ? t('pethub_inventory_desc') : "Alle deine Monster"} 
             icon={LayoutGrid} 
             colorFrom="from-blue-600" 
             colorTo="to-indigo-600" 
@@ -79,8 +79,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
 
         {/* 2. ITEM INVENTAR (Amber/Orange) */}
         <HubCard 
-            title="RUCKSACK" 
-            subtitle="Eier, Items & Tickets" 
+            title={t ? t('pethub_items_btn') : "RUCKSACK"} 
+            subtitle={t ? t('pethub_items_desc') : "Eier, Items & Tickets"} 
             icon={Backpack} 
             colorFrom="from-amber-500" 
             colorTo="to-orange-600" 
@@ -91,8 +91,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
 
         {/* 3. ZUCHT LABOR (Pink/Rose) - Jetzt VOR der Brutstätte */}
         <HubCard 
-            title="ZUCHT LABOR" 
-            subtitle="Neue Arten erschaffen" 
+            title={t ? t('pethub_breed_btn') : "ZUCHT LABOR"} 
+            subtitle={t ? t('pethub_breed_desc') : "Neue Arten erschaffen"} 
             icon={Heart} 
             colorFrom="from-pink-600" 
             colorTo="to-rose-600" 
@@ -103,8 +103,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
 
         {/* 4. BRUTSTÄTTE (Emerald/Teal) */}
         <HubCard 
-            title="BRUTSTÄTTE" 
-            subtitle="Eier ausbrüten" 
+            title={t ? t('pethub_hatchery_btn') : "BRUTSTÄTTE"} 
+            subtitle={t ? t('pethub_hatchery_desc') : "Eier ausbrüten"} 
             icon={ThermometerSun} 
             colorFrom="from-emerald-500" 
             colorTo="to-teal-600" 

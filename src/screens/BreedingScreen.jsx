@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Filter, X, Search, Heart, Dna, Ticket, Timer, Ghost, Swords, Shield, Zap, ArrowDownWideNarrow, Trash2, Clock, FastForward, Lock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Filter, X, Search, Heart, Dna, Ticket, Timer, Ghost, Swords, Shield, Zap, ArrowDownWideNarrow, Trash2, Clock, FastForward, Lock, Loader2, Sparkles, Egg } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCooldown }) {
+export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCooldown, t }) { // t prop added
   // --- STATES ---
   const [selected, setSelected] = useState([]); 
   
@@ -14,15 +14,17 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
   const [activeRarityFilter, setActiveRarityFilter] = useState('ALL');
   const [sortBy, setSortBy] = useState('RARITY');
 
+  // Animation States
+  const [breedingResult, setBreedingResult] = useState(null);
+  const [isBreeding, setIsBreeding] = useState(false);
+
   // UPDATE: Zählt Tickets direkt aus dem Inventar
   const ticketCount = user?.inventory?.filter(i => i.type === 'TICKET').length || 0;
 
   // --- HELPER: Cooldown Berechnung ---
   const getCooldownStatus = (pet) => {
-    if (!pet || !pet.bredAt) return null;
-    const cooldownDuration = RARITIES[pet.rarity]?.breedCooldown || 0; 
-    const cooldownEnd = pet.bredAt + cooldownDuration;
-    const timeLeft = cooldownEnd - Date.now();
+    if (!pet || !pet.breedingCooldown) return null;
+    const timeLeft = pet.breedingCooldown - Date.now();
 
     if (timeLeft <= 0) return null;
 
@@ -33,6 +35,13 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
     if (days > 0) return `${days}d ${hours}h`;
     return `${hours}h ${minutes}m`;
   }
+
+  // Timer für Live-Updates
+  const [, setTick] = useState(0);
+  useEffect(() => {
+      const interval = setInterval(() => setTick(t => t + 1), 1000);
+      return () => clearInterval(interval);
+  }, []);
 
   const getLevelReq = (pet) => {
       return RARITIES[pet.rarity]?.minBreedLevel || 0;
@@ -119,9 +128,12 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
           const nextRarityKey = (idx !== -1 && idx < sortedKeys.length - 1) ? sortedKeys[idx + 1] : null;
           
           if (nextRarityKey) {
+              // Basis 10%, -1% pro Stufe über Common (Index 0)
+              const upgradeChance = Math.max(1, 10 - idx);
+
               rarityProbabilities = [
-                  { key: nextRarityKey, chance: 10 },
-                  { key: p1.rarity, chance: 90 }
+                  { key: nextRarityKey, chance: upgradeChance },
+                  { key: p1.rarity, chance: 100 - upgradeChance }
               ];
           } else {
               rarityProbabilities = [{ key: p1.rarity, chance: 100 }];
@@ -131,8 +143,33 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
       }
   }
 
+  const handleBreedClick = async () => {
+      if (!canBreed || isBreeding) return;
+      setIsBreeding(true);
+      try {
+          const result = await onBreed(p1.id, p2.id);
+          if (result) {
+              setBreedingResult({ egg: result, parent1: p1, parent2: p2 });
+              setSelected([]);
+          }
+      } catch (e) {
+          console.error("Breeding error:", e);
+      } finally {
+          setIsBreeding(false);
+      }
+  };
+
   return (
     <div className="h-full flex flex-col animate-in fade-in relative">
+      
+      {/* --- BREEDING RESULT MODAL --- */}
+      {breedingResult && (
+          <BreedingResultModal 
+              result={breedingResult} 
+              onClose={() => setBreedingResult(null)} 
+              t={t}
+          />
+      )}
       
       {/* --- SIDEBAR --- */}
       {isSidebarOpen && (
@@ -140,19 +177,19 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
             <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSidebarOpen(false)}></div>
             <div className="relative w-4/5 max-w-xs bg-slate-900 h-full shadow-2xl p-5 flex flex-col gap-6 border-r border-white/10">
                 <div className="flex justify-between items-center pb-4 border-b border-white/10">
-                    <h2 className="text-xl font-black text-white flex items-center gap-2"><Filter className="w-5 h-5 text-pink-400" /> FILTER</h2>
+                    <h2 className="text-xl font-black text-white flex items-center gap-2"><Filter className="w-5 h-5 text-pink-400" /> {t ? t('breeding_filter_title') : 'FILTER'}</h2>
                     <button onClick={() => setSidebarOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto space-y-6 scrollbar-hide">
                      <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase">Suche</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase">{t ? t('breeding_search') : 'Suche'}</label>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                             <input type="text" placeholder="Name..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-xl py-3 pl-10 pr-4 text-sm text-white outline-none focus:border-pink-500" />
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase">Sortieren</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase">{t ? t('breeding_sort') : 'Sortieren'}</label>
                         <div className="grid grid-cols-2 gap-2">
                             {['RARITY', 'LEVEL', 'ATK', 'HP'].map(opt => (
                                 <button key={opt} onClick={() => setSortBy(opt)} className={`px-3 py-2 rounded-xl text-xs font-bold border ${sortBy === opt ? 'bg-pink-600 border-pink-500 text-white' : 'bg-slate-800 border-slate-700 text-slate-400'}`}>{opt}</button>
@@ -160,7 +197,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-bold text-slate-500 uppercase">Element</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase">{t ? t('breeding_element') : 'Element'}</label>
                         <div className="grid grid-cols-4 gap-2">
                             <button onClick={() => setActiveTypeFilter('ALL')} className={`aspect-square rounded-xl border flex items-center justify-center font-bold text-[10px] ${activeTypeFilter === 'ALL' ? 'bg-white text-black' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>ALL</button>
                             {Object.keys(TYPES).map(k => (
@@ -170,8 +207,8 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                     </div>
                 </div>
                 <div className="pt-4 border-t border-white/10">
-                    <button onClick={resetFilters} className="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm mb-3">Reset</button>
-                    <button onClick={() => setSidebarOpen(false)} className="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-sm">Fertig</button>
+                    <button onClick={resetFilters} className="w-full py-3 rounded-xl bg-slate-800 text-slate-300 font-bold text-sm mb-3">{t ? t('breeding_reset') : 'Reset'}</button>
+                    <button onClick={() => setSidebarOpen(false)} className="w-full py-3 rounded-xl bg-pink-600 text-white font-bold text-sm">{t ? t('breeding_done') : 'Fertig'}</button>
                 </div>
             </div>
         </div>
@@ -183,7 +220,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
               <Filter className="w-5 h-5" />
               {activeFilterCount > 0 && <div className="absolute -top-1 -right-1 w-4 h-4 bg-white text-pink-600 rounded-full flex items-center justify-center text-[9px] font-bold">{activeFilterCount}</div>}
           </button>
-          <h1 className="text-2xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-white">ZUCHT LABOR</h1>
+          <h1 className="text-2xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-white">{t ? t('breeding_title') : 'ZUCHT LABOR'}</h1>
           <button onClick={onBack} className="p-2 bg-slate-800 text-slate-400 rounded-full hover:text-white"><ArrowLeft className="w-5 h-5" /></button>
       </div>
 
@@ -202,7 +239,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                         {p1 ? <PetAvatar pet={p1} className="w-16 h-16" /> : <Dna className="w-8 h-8 text-slate-600" />}
                         {p1 && <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100"><Trash2 className="text-white w-6 h-6" /></div>}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 truncate max-w-full">{p1 ? p1.name : 'Elternteil 1'}</span>
+                    <span className="text-[10px] font-bold text-slate-400 truncate max-w-full">{p1 ? p1.name : (t ? t('breeding_parent_1') : 'Elternteil 1')}</span>
                 </div>
 
                 {/* Parent 2 */}
@@ -211,7 +248,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                         {p2 ? <PetAvatar pet={p2} className="w-16 h-16" /> : <Dna className="w-8 h-8 text-slate-600" />}
                         {p2 && <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100"><Trash2 className="text-white w-6 h-6" /></div>}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 truncate max-w-full">{p2 ? p2.name : 'Elternteil 2'}</span>
+                    <span className="text-[10px] font-bold text-slate-400 truncate max-w-full">{p2 ? p2.name : (t ? t('breeding_parent_2') : 'Elternteil 2')}</span>
                 </div>
             </div>
             
@@ -220,13 +257,13 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                 <div className="mt-4 bg-slate-900/60 rounded-2xl p-3 border border-white/10 animate-in fade-in slide-in-from-bottom-2">
                     <div className="flex items-center justify-center gap-2 mb-3">
                         <Dna className="w-3 h-3 text-pink-400" />
-                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Genetik Vorschau</span>
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{t ? t('breeding_preview') : 'Genetik Vorschau'}</span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3">
                         {/* TYPES */}
                         <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
-                            <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">Element</span>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">{t ? t('breeding_element') : 'Element'}</span>
                             <div className="flex items-center justify-center gap-2 w-full">
                                 {p1.type === p2.type ? (
                                     <div className={`flex items-center gap-1 ${TYPES[p1.type].color}`}>
@@ -248,7 +285,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
 
                         {/* RARITY */}
                         <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
-                            <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">Seltenheit</span>
+                            <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">{t ? t('breeding_rarity') : 'Seltenheit'}</span>
                             <div className="flex flex-col w-full px-1 gap-0.5">
                                 {rarityProbabilities.map(prob => {
                                     const r = RARITIES[prob.key];
@@ -266,11 +303,11 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
             )}
 
             <button 
-                onClick={() => canBreed && onBreed(p1.id, p2.id)}
-                disabled={!canBreed}
+                onClick={handleBreedClick}
+                disabled={!canBreed || isBreeding}
                 className={`w-full mt-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg ${canBreed ? 'bg-pink-600 text-white hover:scale-[1.02] active:scale-95 shadow-pink-900/30' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
             >
-                {canBreed ? 'JETZT ZÜCHTEN' : 'WÄHLE 2 PETS'}
+                {isBreeding ? <Loader2 className="w-4 h-4 animate-spin" /> : (canBreed ? (t ? t('breeding_start_btn') : 'JETZT ZÜCHTEN') : (t ? t('breeding_select_2') : 'WÄHLE 2 PETS'))}
             </button>
         </div>
       </div>
@@ -279,14 +316,14 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
       <div className="px-4 mb-2 flex justify-end">
           <div className="flex items-center gap-1.5 bg-slate-800/60 px-3 py-1.5 rounded-full border border-white/5">
               <Ticket className="w-3.5 h-3.5 text-pink-400" />
-              <span className="text-xs font-bold text-white">{ticketCount} Tickets</span>
+              <span className="text-xs font-bold text-white">{ticketCount} {t ? t('arena_tickets') : 'Tickets'}</span>
           </div>
       </div>
 
       {/* --- LISTE --- */}
       <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide">
           {filteredPets.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-40 text-slate-500 opacity-50"><Ghost className="w-12 h-12 mb-2"/><p className="text-xs font-bold">Keine passenden Pets.</p></div>
+              <div className="flex flex-col items-center justify-center h-40 text-slate-500 opacity-50"><Ghost className="w-12 h-12 mb-2"/><p className="text-xs font-bold">{t ? t('breeding_no_pets') : 'Keine passenden Pets.'}</p></div>
           ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                   {filteredPets.map(pet => {
@@ -317,15 +354,15 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                             {isLevelLow && (
                                 <div className="absolute inset-0 bg-black/80 z-30 flex flex-col items-center justify-center backdrop-blur-[2px] p-2 text-center animate-in fade-in">
                                     <Lock className="w-5 h-5 text-slate-400 mb-1" />
-                                    <span className="text-xs font-black text-slate-200 mb-1">Lvl {minLevel}</span>
-                                    <span className="text-[9px] text-slate-500 font-bold uppercase">Benötigt</span>
+                                    <span className="text-xs font-black text-slate-200 mb-1">{t ? t('village_lvl') : 'Lvl'} {minLevel}</span>
+                                    <span className="text-[9px] text-slate-500 font-bold uppercase">{t ? t('breeding_required') : 'Benötigt'}</span>
                                 </div>
                             )}
 
                             {/* Rarity Mismatch Overlay */}
                             {isRarityMismatch && (
                                 <div className="absolute inset-0 bg-black/60 z-30 flex flex-col items-center justify-center backdrop-blur-[1px] p-2 text-center animate-in fade-in">
-                                    <span className="text-[9px] text-slate-400 font-bold uppercase">Falsche Seltenheit</span>
+                                    <span className="text-[9px] text-slate-400 font-bold uppercase">{t ? t('breeding_wrong_rarity') : 'Falsche Seltenheit'}</span>
                                 </div>
                             )}
 
@@ -346,7 +383,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                                             <Ticket className="w-3 h-3" /> -5m
                                         </button>
                                     ) : (
-                                        <span className="text-[9px] text-slate-500 font-bold">Warten...</span>
+                                        <span className="text-[9px] text-slate-500 font-bold">{t ? t('breeding_wait') : 'Warten...'}</span>
                                     )}
                                 </div>
                             )}
@@ -360,8 +397,8 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                             <div className="relative z-10 text-center">
                                 <h3 className={`font-bold text-xs truncate mb-1 ${rarity.color}`}>{pet.name}</h3>
                                 <div className="flex justify-center gap-2 text-[9px] font-bold text-slate-400 bg-black/20 p-1 rounded-lg">
-                                    <span className={`${type.color}`}>{type.label}</span>
-                                    <span>Lvl {pet.level}</span>
+                                    <span className={`${type.color}`}>{t ? t('type_' + pet.type) : type.label}</span>
+                                    <span>{t ? t('village_lvl') : 'Lvl'} {pet.level}</span>
                                 </div>
                             </div>
                         </div>
@@ -372,4 +409,65 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
       </div>
     </div>
   );
+}
+
+// --- INTERNE KOMPONENTE: ANIMATION MODAL ---
+function BreedingResultModal({ result, onClose, t }) {
+    const [stage, setStage] = useState('parents'); // parents -> heart -> egg
+    const { egg, parent1, parent2 } = result;
+    const rarity = RARITIES[egg.rarity];
+
+    useEffect(() => {
+        const t1 = setTimeout(() => setStage('heart'), 800);
+        const t2 = setTimeout(() => setStage('egg'), 2500);
+        return () => { clearTimeout(t1); clearTimeout(t2); };
+    }, []);
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-300">
+            <div className="flex flex-col items-center justify-center w-full max-w-md relative">
+                
+                {/* STAGE 1 & 2: PARENTS */}
+                {stage !== 'egg' && (
+                    <div className="flex items-center gap-8 mb-8">
+                        <div className={`transition-all duration-1000 ${stage === 'heart' ? 'translate-x-8 scale-75 opacity-50' : ''}`}>
+                            <PetAvatar pet={parent1} className="w-24 h-24" />
+                        </div>
+                        <div className={`transition-all duration-1000 ${stage === 'heart' ? '-translate-x-8 scale-75 opacity-50' : ''}`}>
+                            <PetAvatar pet={parent2} className="w-24 h-24" />
+                        </div>
+                    </div>
+                )}
+
+                {/* STAGE 2: HEART */}
+                {stage === 'heart' && (
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 animate-in zoom-in duration-500">
+                        <Heart className="w-32 h-32 text-pink-500 fill-pink-500 animate-pulse drop-shadow-[0_0_30px_rgba(236,72,153,0.8)]" />
+                    </div>
+                )}
+
+                {/* STAGE 3: EGG REVEAL */}
+                {stage === 'egg' && (
+                    <div className="flex flex-col items-center animate-in zoom-in duration-500">
+                        <div className={`relative w-48 h-48 flex items-center justify-center mb-8`}>
+                            <div className={`absolute inset-0 ${rarity.bg} blur-[60px] opacity-40 animate-pulse`}></div>
+                            <Egg className={`w-40 h-40 ${rarity.color} drop-shadow-2xl animate-bounce`} />
+                            <Sparkles className="absolute top-0 right-0 w-12 h-12 text-yellow-300 animate-spin-slow" />
+                        </div>
+                        
+                        <h2 className={`text-3xl font-black uppercase tracking-widest ${rarity.color} mb-2 drop-shadow-lg`}>
+                            {t ? t('rarity_' + egg.rarity) : rarity.label}
+                        </h2>
+                        <p className="text-white text-sm font-bold opacity-80 mb-8">
+                            {t ? t('inv_egg_suffix') : 'Ei'} erhalten!
+                        </p>
+
+                        <button onClick={onClose} className="bg-white text-black font-black py-3 px-10 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl">
+                            {t ? t('breeding_done') : 'Fertig'}
+                        </button>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
 }

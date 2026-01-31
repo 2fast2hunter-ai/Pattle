@@ -8,7 +8,7 @@ const RES_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable, onOpenLootbox }) { 
+export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable, onOpenLootbox, t }) { // t prop added
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
   const [selectedPotion, setSelectedPotion] = useState(null); 
@@ -171,8 +171,8 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
               title={selectedPotion.config.label}
               icon={Icon}
               count={selectedPotion.count}
-              description={selectedPotion.config.desc || "Ein magischer Gegenstand."}
-              actionLabel="WÄHLEN"
+              description={selectedPotion.config.desc || (t ? t('inv_magic_item_desc') : "Ein magischer Gegenstand.")}
+              actionLabel={t ? t('inv_use') : "WÄHLEN"}
               actionIcon={Zap}
               onAction={(qty) => { onUseConsumable(selectedPotion.ids[0], qty); setSelectedPotion(null); }}
               onClose={() => setSelectedPotion(null)}
@@ -256,18 +256,18 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* MODALS */}
       {selectedItem && (
         <ItemActionModal 
-            title={`${RARITIES[selectedItem.base.rarity].label} Ei`}
+            title={t ? `${t('rarity_' + selectedItem.base.rarity)} ${t('inv_egg_suffix')}` : `${RARITIES[selectedItem.base.rarity].label} Ei`}
             icon={Egg}
             count={selectedItem.count}
             description={
                 <div className="flex flex-col items-center gap-1">
-                    <span className="mb-2">Ein {selectedItem.isBreeding ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei.</span>
+                    <span className="mb-2">{t ? (selectedItem.isBreeding ? t('inv_egg_desc_breed') : t('inv_egg_desc_mystery')) : `Ein ${selectedItem.isBreeding ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei.`}</span>
                     
                     {/* NEU: Detaillierte Eltern-Anzeige */}
                     {selectedItem.base.parents && selectedItem.base.parents.length > 0 ? (
                         <div className="w-full bg-slate-950/40 rounded-xl p-3 border border-white/5">
                             <div className="text-[10px] text-slate-500 font-bold uppercase text-center mb-2 flex items-center justify-center gap-1">
-                                <Dna className="w-3 h-3 text-pink-400" /> Eltern-Genetik
+                                <Dna className="w-3 h-3 text-pink-400" /> {t ? t('inv_genetics') : 'Eltern-Genetik'}
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                                 {selectedItem.base.parents.map((p, i) => {
@@ -292,14 +292,14 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                         <div className="mt-1 flex items-center gap-2 bg-pink-500/20 px-3 py-1.5 rounded-lg border border-pink-500/30">
                             <Dna className="w-3.5 h-3.5 text-pink-400" />
                             <span className="text-pink-200 font-bold text-xs">
-                                Eltern: {selectedItem.base.customData.parentsNames}
+                                {t ? t('inv_parents') : 'Eltern'}: {selectedItem.base.customData.parentsNames}
                             </span>
                         </div>
                         )
                     )}
                 </div>
             }
-            actionLabel="INKUBIEREN"
+            actionLabel={t ? t('inv_incubate') : "INKUBIEREN"}
             actionIcon={ThermometerSun}
             onAction={() => { onStartIncubation(selectedItem.ids[0]); setSelectedItem(null); }}
             onClose={() => setSelectedItem(null)}
@@ -309,11 +309,11 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       )}
       {selectedBox && (
         <ItemActionModal 
-            title={`${selectedBox.variant === 'TYPE_DAILY' ? 'Elementar' : selectedBox.variant} Box`}
+            title={t ? t('box_' + selectedBox.variant) : `${selectedBox.variant === 'TYPE_DAILY' ? 'Elementar' : selectedBox.variant} Box`}
             icon={Package}
             count={selectedBox.count}
-            description="Eine verschlossene Schatzkiste."
-            actionLabel="ÖFFNEN"
+            description={t ? t('inv_box_desc') : "Eine verschlossene Schatzkiste."}
+            actionLabel={t ? t('inv_open') : "ÖFFNEN"}
             actionIcon={BoxSelect}
             onAction={() => startLootboxSequence(selectedBox.ids[0], 'BOX')}
             onClose={() => setSelectedBox(null)}
@@ -326,7 +326,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* HEADER */}
       <div className="relative flex items-center justify-between mb-6 pt-2 px-4 shrink-0">
           <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-orange-500 drop-shadow-sm">
-              RUCKSACK
+              {t ? t('pethub_items_btn') : 'RUCKSACK'}
           </h1>
           <button onClick={onBack} className="p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md">
               <ArrowLeft className="w-5 h-5" />
@@ -339,7 +339,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* 1. VERBRAUCHSGÜTER */}
       {potionItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500">
-              <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><FlaskConical className="w-4 h-4 text-purple-400" /> Verbrauchsgüter</h3>
+              <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><FlaskConical className="w-4 h-4 text-purple-400" /> {t ? t('inv_consumables') : 'Verbrauchsgüter'}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {potionItems.map((potion, idx) => {
                       const isCosmetic = !!COSMETICS[potion.variant];
@@ -349,7 +349,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                               onClick={() => setSelectedPotion(potion)} 
                               icon={isCosmetic ? Palette : FlaskConical}
                               count={potion.count}
-                              label={potion.config.label}
+                              label={t ? t('item_' + potion.variant) : potion.config.label}
                               colorColor={potion.config.color}
                               bgColor={potion.config.bg}
                               ringColor={isCosmetic ? "ring-pink-500/50" : "ring-purple-500/50"}
@@ -363,14 +363,14 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* 2. MATERIALIEN */}
       {hasResources && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-100">
-              <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Pickaxe className="w-4 h-4 text-emerald-400" /> Materialien</h3>
+              <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Pickaxe className="w-4 h-4 text-emerald-400" /> {t ? t('inv_materials') : 'Materialien'}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {materialItems.map((item) => (
                       <InventoryCard 
                           key={item.id}
                           icon={RES_ICONS[item.category]} 
                           count={item.count}
-                          label={item.label}
+                          label={t ? t('item_' + item.id) : item.label}
                           colorColor={item.color} 
                           bgColor="bg-slate-800"
                           onClick={() => {}} 
@@ -383,14 +383,14 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* 3. TICKETS */}
       {ticketItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-150">
-              <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Ticket className="w-4 h-4 text-pink-400" /> Spezial-Items</h3>
+              <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Ticket className="w-4 h-4 text-pink-400" /> {t ? t('inv_special') : 'Spezial-Items'}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {ticketItems.map((ticket, idx) => (
                       <InventoryCard 
                           key={idx}
                           icon={Ticket}
                           count={ticket.count}
-                          label="Zucht-Ticket"
+                          label={t ? t('inv_ticket_breed') : "Zucht-Ticket"}
                           colorColor="text-pink-400"
                           bgColor="bg-pink-600"
                           ringColor="ring-pink-500/50"
@@ -399,7 +399,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                                 onClick={(e) => { e.stopPropagation(); onRedeemTicket(ticket.ids[0]); }} 
                                 className='w-full bg-pink-600 hover:bg-pink-500 text-white text-[10px] font-black py-2 rounded-xl shadow-lg flex justify-center items-center gap-1 active:scale-95 transition-all'
                             >
-                                <Gift className='w-3 h-3' /> EINLÖSEN
+                                <Gift className='w-3 h-3' /> {t ? t('inv_redeem') : 'EINLÖSEN'}
                             </button>
                           }
                       />
@@ -411,7 +411,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
       {/* 4. BOXEN */}
       {boxItems.length > 0 && (
           <div className="animate-in slide-in-from-bottom-4 duration-500 delay-200">
-               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Package className="w-4 h-4 text-yellow-400" /> Schatzkisten</h3>
+               <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Package className="w-4 h-4 text-yellow-400" /> {t ? t('inv_lootboxes') : 'Schatzkisten'}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {boxItems.map((box, idx) => (
                       <InventoryCard 
@@ -419,7 +419,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                           onClick={() => setSelectedBox(box)}
                           icon={Package}
                           count={box.count}
-                          label={box.variant === 'TYPE_DAILY' ? 'Elementar-Truhe' : box.variant}
+                          label={t ? t('box_' + box.variant) : (box.variant === 'TYPE_DAILY' ? 'Elementar-Truhe' : box.variant)}
                           colorColor="text-yellow-400"
                           bgColor="bg-yellow-500"
                       />
@@ -430,7 +430,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
 
       {/* 5. EIER */}
       <div className="animate-in slide-in-from-bottom-4 duration-500 delay-300">
-          <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Egg className="w-4 h-4 text-indigo-400" /> Monster-Eier</h3>
+          <h3 className="text-sm font-black text-slate-300 uppercase mb-3 ml-1 flex items-center gap-2"><Egg className="w-4 h-4 text-indigo-400" /> {t ? t('inv_eggs') : 'Monster-Eier'}</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {inventoryItems.map((item, idx) => { 
                   const rarity = RARITIES[item.base.rarity]; 
@@ -440,7 +440,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                         onClick={() => setSelectedItem(item)}
                         icon={Egg}
                         count={item.count}
-                        label={rarity.label}
+                        label={t ? t('rarity_' + item.base.rarity) : rarity.label}
                         colorColor={rarity.color}
                         bgColor={rarity.bg}
                         ringColor={item.isBreeding ? 'ring-pink-500/50' : null}

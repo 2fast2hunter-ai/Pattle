@@ -6,7 +6,7 @@ import PetAvatar from '../components/PetAvatar';
 import EggSelectionModal from '../components/modals/EggSelectionModal';
 
 // --- MAIN SCREEN ---
-export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation }) {
+export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation, t }) { // t prop added
   const unlockedSlots = getUnlockedHatcherySlots(user.level);
   const maxSlots = 10;
   
@@ -86,10 +86,10 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                     
                     <div className="relative z-10">
                         <h2 className="text-4xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-white mb-1 uppercase drop-shadow-sm">
-                            ES LEBT!
+                            {t ? t('hatchery_modal_title') : 'ES LEBT!'}
                         </h2>
                         <p className={`text-xs font-bold uppercase tracking-[0.2em] ${RARITIES[hatchingPet.rarity].color} mb-8`}>
-                            Neuer Begleiter
+                            {t ? t('hatchery_modal_subtitle') : 'Neuer Begleiter'}
                         </p>
                         
                         <div className="relative w-64 h-64 mx-auto flex items-center justify-center mb-8">
@@ -109,13 +109,12 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                         
                         <div className="bg-slate-800/60 backdrop-blur rounded-2xl p-4 mb-6 border border-white/5">
                             <p className="text-slate-300 text-sm">
-                                Ein <span className={`${RARITIES[hatchingPet.rarity].color} font-bold`}>{RARITIES[hatchingPet.rarity].label}</span>es <br/>
-                                <span className="font-bold text-white">{TYPES[hatchingPet.type].label}-Monster</span> ist geschlüpft!
+                                {t ? t('hatchery_hatched_msg', { rarity: t('rarity_' + hatchingPet.rarity), type: TYPES[hatchingPet.type].label }) : `Ein ${RARITIES[hatchingPet.rarity].label}es ${TYPES[hatchingPet.type].label}-Monster ist geschlüpft!`}
                             </p>
                         </div>
                         
                         <div className="text-left mb-6">
-                            <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-wider">Gib ihm einen Namen</label>
+                            <label className="text-[10px] font-black text-slate-500 uppercase ml-2 tracking-wider">{t ? t('hatchery_name_label') : 'Gib ihm einen Namen'}</label>
                             <div className="flex items-center bg-slate-950 rounded-2xl mt-1 border border-white/10 focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all overflow-hidden">
                                 <input 
                                     type="text" 
@@ -136,7 +135,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                             className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-black text-lg py-4 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                         >
                             <Check className="w-6 h-6" />
-                            WILLKOMMEN!
+                            {t ? t('hatchery_welcome_btn') : 'WILLKOMMEN!'}
                         </button>
                     </div>
                 </div>
@@ -146,7 +145,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
         {/* --- HEADER --- */}
         <div className="relative flex items-center justify-center mb-6 pt-2 px-4">
             <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-white">
-                BRUTSTÄTTE
+                {t ? t('hatchery_title') : 'BRUTSTÄTTE'}
             </h1>
             <button 
                 onClick={onBack} 
@@ -164,8 +163,8 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                         <ThermometerSun className="w-5 h-5 text-emerald-400" />
                     </div>
                     <div>
-                        <div className="text-xs text-slate-400 font-bold uppercase">Kapazität</div>
-                        <div className="text-sm font-black text-white">{incubatingEggs.length} / {unlockedSlots} Eier</div>
+                        <div className="text-xs text-slate-400 font-bold uppercase">{t ? t('hatchery_capacity') : 'Kapazität'}</div>
+                        <div className="text-sm font-black text-white">{incubatingEggs.length} / {unlockedSlots} {t ? t('hatchery_eggs') : 'Eier'}</div>
                     </div>
                 </div>
                 
@@ -193,7 +192,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                             <Lock className="w-5 h-5 text-slate-600" />
                         </div>
                         <span className="text-[10px] text-slate-600 font-bold uppercase tracking-wider">
-                            Lvl {index === 0 ? 1 : (index === 1 ? 15 : 15 + ((index-1)*10))}
+                            {t ? t('village_lvl') : 'Lvl'} {index === 0 ? 1 : (index === 1 ? 15 : 15 + ((index-1)*10))}
                         </span>
                     </div>
                   );
@@ -225,7 +224,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                         <div className="w-full relative z-10">
                             {isReady ? (
                                 <button onClick={() => startHatchingProcess(egg)} className="w-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1">
-                                    SCHLÜPFEN
+                                    {t ? t('hatchery_hatch_btn') : 'SCHLÜPFEN'}
                                 </button>
                             ) : (
                                 <div className="flex gap-1">
@@ -262,7 +261,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                     <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-white/5">
                         <Plus className="w-6 h-6 text-slate-500 group-hover:text-emerald-400" />
                     </div>
-                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-emerald-400">Belegen</div>
+                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-emerald-400">{t ? t('hatchery_assign_btn') : 'Belegen'}</div>
                 </button>
               );
             })}

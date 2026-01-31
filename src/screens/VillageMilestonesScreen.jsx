@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft, CheckCircle, Coins, Gem, Star, RefreshCw, FlaskConical } from 'lucide-react';
 import { MILESTONES, RESOURCES, CONSUMABLES } from '../data/gameData';
 
-export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
+export default function VillageMilestonesScreen({ user, onBack, onClaim, t }) { // t prop added
     const itemStats = user.village.stats?.totalItemsCollected || {};
     const timeStats = user.village.stats?.totalIdleTime || 0;
     const milestoneLevels = user.village.milestones || {};
@@ -46,13 +46,16 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
 
                     // Consumable Info holen
                     const rewardItem = milestone.reward.type === 'CONSUMABLE' ? CONSUMABLES[milestone.reward.variant] : null;
-
+                    
+                    // Label übersetzen (wenn es ein Item-Meilenstein ist)
+                    const label = milestone.itemId ? `Sammle ${milestone.target}x ${t ? t('item_' + milestone.itemId) : milestone.label.split(' ').pop()}` : milestone.label;
+                    
                     return (
                         <div key={milestone.id} className={`relative p-4 rounded-2xl border ${isCompleted ? 'bg-slate-800 border-yellow-500/30' : 'bg-slate-900 border-white/5'} overflow-hidden shadow-lg`}>
                             
                             <div className="flex justify-between items-center mb-2 relative z-10">
                                 <div>
-                                    <h3 className={`font-black text-sm uppercase ${isCompleted ? 'text-yellow-400' : 'text-slate-400'}`}>{milestone.label}</h3>
+                                    <h3 className={`font-black text-sm uppercase ${isCompleted ? 'text-yellow-400' : 'text-slate-400'}`}>{label}</h3>
                                     <div className="flex items-center gap-2 mt-1">
                                         <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">{currentLevel}x Erreicht</span>
                                     </div>
@@ -77,7 +80,7 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim }) {
                                              <FlaskConical className={`w-3.5 h-3.5 ${rewardItem?.color || 'text-white'}`} />
                                              {/* HIER GEÄNDERT: Voller Name statt S/M/L */}
                                              <span className={`text-[10px] font-bold ${rewardItem?.color || 'text-white'}`}>
-                                                 {rewardItem ? rewardItem.label : milestone.reward.variant}
+                                                 {rewardItem ? (t ? t('item_' + milestone.reward.variant) : rewardItem.label) : milestone.reward.variant}
                                              </span>
                                         </div>
                                     )}

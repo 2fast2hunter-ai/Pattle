@@ -3,7 +3,7 @@ import { ArrowLeft, Swords, Users, Trophy, Crown, Shield, Flame, ChevronRight, X
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import { PageBackground } from '../components/GameLayout';
 
-export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower }) {
+export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, t }) {
   
   const rank = user?.rating || 1000;
   const teamCount = user?.team?.filter(Boolean).length || 0;
@@ -74,11 +74,11 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
       <div className="relative flex items-center justify-between mb-4 sm:mb-6 pt-2 px-4 shrink-0 z-10">
           <div className="flex flex-col">
             <h2 className="text-2xl sm:text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 drop-shadow-sm">
-                ARENA
+                {t ? t('arena_title') : 'ARENA'}
             </h2>
             <div className="flex items-center gap-1.5 mt-1">
                   <Trophy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-500" />
-                  <span className="text-xs font-bold text-slate-400">{rank} Elo</span>
+                  <span className="text-xs font-bold text-slate-400">{rank} {t ? t('arena_elo') : 'Elo'}</span>
              </div>
           </div>
           
@@ -107,14 +107,14 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                 <div className="flex justify-between items-start">
                     <div className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 shadow-lg animate-pulse-slow">
                         <span className="text-[9px] sm:text-[10px] font-bold text-red-100 uppercase tracking-widest flex items-center gap-1.5">
-                            <Flame className="w-3 h-3 fill-current animate-pulse" /> PvP Zone
+                            <Flame className="w-3 h-3 fill-current animate-pulse" /> {t ? t('arena_pvp_zone') : 'PvP Zone'}
                         </span>
                     </div>
                 </div>
                 
                 <div>
-                    <h3 className="text-4xl sm:text-5xl font-black italic text-white mb-2 drop-shadow-xl uppercase tracking-tighter group-hover:text-glow transition-all">Kämpfen</h3>
-                    <p className="text-red-100/90 text-xs sm:text-sm font-bold max-w-[200px] leading-tight">Fordere Gegner heraus und erklimme die Rangliste!</p>
+                    <h3 className="text-4xl sm:text-5xl font-black italic text-white mb-2 drop-shadow-xl uppercase tracking-tighter group-hover:text-glow transition-all">{t ? t('arena_battle_btn') : 'Kämpfen'}</h3>
+                    <p className="text-red-100/90 text-xs sm:text-sm font-bold max-w-[200px] leading-tight">{t ? t('arena_pvp_desc') : 'Fordere Gegner heraus und erklimme die Rangliste!'}</p>
                 </div>
             </div>
           </button>
@@ -129,8 +129,8 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                           <Zap className="w-6 h-6" />
                       </div>
                       <div className="text-left">
-                          <h4 className="font-black text-white text-lg leading-none">Auto-Kampf</h4>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">1 Ticket = 10 Kämpfe</p>
+                          <h4 className="font-black text-white text-lg leading-none">{t ? t('arena_auto_btn') : 'Auto-Kampf'}</h4>
+                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{t ? t('arena_auto_desc') : '1 Ticket = 10 Kämpfe'}</p>
                       </div>
                   </div>
                   
@@ -138,7 +138,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                   <div className="flex flex-col items-end">
                      <div className="bg-black/30 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5 mb-1">
                         <span className={`text-xs font-black ${ticketCount > 0 ? 'text-white' : 'text-red-400'}`}>{ticketCount}</span>
-                        <span className="text-[10px] text-slate-500 font-bold uppercase">Tickets</span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase">{t ? t('arena_tickets') : 'Tickets'}</span>
                     </div>
                   </div>
               </div>
@@ -174,9 +174,9 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                         `}
                    >
                        {ticketCount >= 1 ? (
-                           <>STARTEN ({ticketsToUse * 10}) <Play className="w-4 h-4 fill-current" /></>
+                           <>{t ? t('arena_start_btn') : 'STARTEN'} ({ticketsToUse * 10}) <Play className="w-4 h-4 fill-current" /></>
                        ) : (
-                           "KEINE TICKETS"
+                           (t ? t('arena_no_tickets') : "KEINE TICKETS")
                        )}
                    </button>
               </div>
@@ -184,20 +184,20 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
               <HubTile 
-                  title="Battle Tower" 
-                  subtitle="PvE Herausforderung" 
+                  title={t ? t('arena_tower_btn') : "Battle Tower"} 
+                  subtitle={t ? t('arena_tower_desc') : "PvE Herausforderung"} 
                   icon={Castle} 
                   colorFrom="from-indigo-700" 
                   colorTo="to-purple-800" 
                   iconColor="text-indigo-300"
                   onClick={onTower}
-                  extraInfo={`Stufe ${user?.towerProgress || 1}`}
+                  extraInfo={`${t ? t('arena_stage') : 'Stufe'} ${user?.towerProgress || 1}`}
                   delay={100}
               />
 
               <HubTile 
-                  title="Team" 
-                  subtitle="Verwalten" 
+                  title={t ? t('arena_team_btn') : "Team"} 
+                  subtitle={t ? t('arena_team_desc') : "Verwalten"} 
                   icon={Shield} 
                   colorFrom="from-slate-700" 
                   colorTo="to-slate-800" 
@@ -208,8 +208,8 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
               />
 
               <HubTile 
-                  title="Rangliste" 
-                  subtitle="Top Spieler" 
+                  title={t ? t('arena_leaderboard_btn') : "Rangliste"} 
+                  subtitle={t ? t('arena_leaderboard_desc') : "Top Spieler"} 
                   icon={Crown} 
                   colorFrom="from-slate-700" 
                   colorTo="to-slate-800" 

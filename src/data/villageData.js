@@ -6,7 +6,8 @@ export const RESOURCES = {
     SEAFOOD: { id: 'seafood', label: 'Meeresfrüchte', buildingLabel: 'Fischerei', desc: 'Fängt frischen Fisch und sammelt Muscheln.', slots: 5, unlockLevel: 20, color: 'text-blue-400', bg: 'bg-blue-500' },
     STARDUST: { id: 'stardust', label: 'Sternenstaub', buildingLabel: 'Sternenwarte', desc: 'Sammelt kosmische Energie aus dem All.', slots: 5, unlockLevel: 15, color: 'text-purple-400', bg: 'bg-purple-600' },
     COMPUTER_PARTS: { id: 'computer_parts', label: 'Computerteile', buildingLabel: 'Tech-Fabrik', desc: 'Produziert hochkomplexe Bauteile.', slots: 5, unlockLevel: 10, color: 'text-cyan-400', bg: 'bg-cyan-700' },
-    SPECIAL: { id: 'special', label: 'Spezial', buildingLabel: 'Alchemielabor', desc: 'Experimentiert mit seltenen Materien.', slots: 5, unlockLevel: 30, color: 'text-pink-500', bg: 'bg-pink-600' }
+    SPECIAL: { id: 'special', label: 'Spezial', buildingLabel: 'Alchemielabor', desc: 'Experimentiert mit seltenen Materien.', slots: 5, unlockLevel: 30, color: 'text-pink-500', bg: 'bg-pink-600' },
+    TRAINING: { id: 'training', label: 'Training', buildingLabel: 'Übungsplatz', desc: 'Deine Pets trainieren hier intensiv für Erfahrungspunkte.', slots: 5, unlockLevel: 3, color: 'text-red-500', bg: 'bg-red-600' }
 };
 
 export const ALLOWED_TYPES = {
@@ -15,7 +16,11 @@ export const ALLOWED_TYPES = {
     seafood: ['WATER', 'ICE', 'DARK', 'POISON', 'FAIRY'],
     stardust: ['NATURE', 'WIND', 'ICE', 'PSYCHIC', 'ROCK', 'DRAGON', 'SOUND', 'SPACE', 'VOID'],
     computer_parts: ['FIRE', 'WIND', 'ELECTRIC', 'LIGHT', 'MAGIC', 'METAL', 'TECH', 'SPACE'],
-    special: ['WATER', 'ELECTRIC', 'GHOST', 'PSYCHIC', 'FIGHTING', 'POISON', 'FAIRY', 'TECH', 'TIME', 'CHAOS', 'ORDER']
+    special: ['WATER', 'ELECTRIC', 'GHOST', 'PSYCHIC', 'FIGHTING', 'POISON', 'FAIRY', 'TECH', 'TIME', 'CHAOS', 'ORDER'],
+    training: [
+        'NATURE', 'EARTH', 'MAGIC', 'FIGHTING', 'TIME', 'LIGHT', 'ORDER', 'DRAGON', 'FIRE', 'DARK', 'GHOST', 'PSYCHIC', 'METAL', 'ROCK', 'SOUND', 'VOID',
+        'WATER', 'ICE', 'POISON', 'FAIRY', 'WIND', 'SPACE', 'ELECTRIC', 'TECH', 'CHAOS'
+    ]
 };
 
 export const RARITY_MULTIPLIERS = {

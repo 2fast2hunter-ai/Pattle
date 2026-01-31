@@ -11,7 +11,7 @@ const getRequiredLevel = (index) => {
     return 3 + (index - 1) * 5;
 };
 
-export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet }) {
+export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet, t }) {
   const unlockedSlots = getUnlockedTeamSlots(user.level);
   const maxSlots = 10;
   const teamCount = user.team.filter(Boolean).length;
@@ -123,8 +123,8 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                        <div className="font-black text-white text-lg leading-none mb-1">{pet.name}</div>
                        <div className="flex items-center gap-2 flex-wrap">
                            <span className="text-xs font-bold text-slate-400 bg-slate-950/50 px-1.5 py-0.5 rounded border border-white/5">Lvl {pet.level}</span>
-                           <span className={`text-[10px] font-bold uppercase ${typeInfo.color}`}>{typeInfo.label}</span>
-                           <span className={`text-[10px] font-bold uppercase ${rarityInfo.color}`}>• {rarityInfo.label}</span>
+                           <span className={`text-[10px] font-bold uppercase ${typeInfo.color}`}>{t ? t('type_' + pet.type) : typeInfo.label}</span>
+                           <span className={`text-[10px] font-bold uppercase ${rarityInfo.color}`}>• {t ? t('rarity_' + pet.rarity) : rarityInfo.label}</span>
                        </div>
                    </div>
                </div>

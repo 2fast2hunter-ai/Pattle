@@ -13,7 +13,7 @@ const ALL_RESOURCE_ITEMS = (() => {
 
 const getResourceInfo = (itemId) => ALL_RESOURCE_ITEMS.find(i => i.id === itemId);
 
-export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, onSellResource, onRemoveListing, myPets }) {
+export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, onSellResource, onRemoveListing, myPets, t }) { // t prop added
     const [activeTab, setActiveTab] = useState('buy'); 
     const [subTab, setSubTab] = useState('pets'); 
     
@@ -152,7 +152,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
             const displayCount = listing.quantity || 1;
             
             // ÄNDERUNG: Name verschleiern auch im "Kaufen" Tab
-            const displayName = isEgg ? `${rarity.label} Ei` : pet.name;
+            const displayName = isEgg ? (t ? `${t('rarity_' + pet.rarity)} ${t('inv_egg_suffix')}` : `${rarity.label} Ei`) : pet.name;
 
             return (
                 <div className="bg-slate-800 rounded-2xl border border-white/5 p-3 flex items-center gap-4">
@@ -183,7 +183,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                      <Box className="w-8 h-8" />
                  </div>
                  <div className="flex-1">
-                     <div className={`font-black text-sm ${resInfo.color}`}>{resInfo.label}</div>
+                     <div className={`font-black text-sm ${resInfo.color}`}>{t ? t('item_' + resInfo.id) : resInfo.label}</div>
                      <div className="text-xs text-slate-400">Menge: {listing.amount}</div>
                      <div className="text-xs text-slate-600">{isOwner ? "Dein Angebot" : listing.sellerName}</div>
                  </div>
@@ -204,7 +204,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                 <div onClick={() => toggleSaleSelection(item)} className={`bg-slate-800 p-3 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${isSelected ? 'border-green-500' : 'border-white/5'}`}>
                     <div className={`w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center ${item.color}`}><Pickaxe className="w-6 h-6"/></div>
                     <div className="flex-1">
-                        <div className={`font-bold ${item.color}`}>{item.label}</div>
+                        <div className={`font-bold ${item.color}`}>{t ? t('item_' + item.id) : item.label}</div>
                         <div className="text-xs text-slate-400">Besitz: {item.count}</div>
                     </div>
                     {isSelected && <div className="bg-green-500 text-black p-1 rounded-full"><DollarSign className="w-4 h-4"/></div>}
@@ -215,7 +215,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
         const rarity = RARITIES[item.rarity];
         
         // ÄNDERUNG: Name verschleiern beim Verkauf
-        const displayName = item.isEgg ? `${rarity.label} Ei` : (item.name || rarity.label);
+        const displayName = item.isEgg ? (t ? `${t('rarity_' + item.rarity)} ${t('inv_egg_suffix')}` : `${rarity.label} Ei`) : (item.name || (t ? t('rarity_' + item.rarity) : rarity.label));
 
         return (
             <div onClick={() => toggleSaleSelection(item)} className={`bg-slate-800 p-3 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${isSelected ? 'border-green-500' : 'border-white/5'}`}>
@@ -278,9 +278,9 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                                     <div className="flex justify-between text-sm font-bold text-white items-center">
                                         <span>Verkaufe: <span className={selectedForSale.color || 'text-white'}>
                                             {selectedForSale.isResource 
-                                                ? selectedForSale.label 
+                                                ? (t ? t('item_' + selectedForSale.id) : selectedForSale.label)
                                                 : (selectedForSale.isEgg 
-                                                    ? `${RARITIES[selectedForSale.rarity].label} Ei` 
+                                                    ? (t ? `${t('rarity_' + selectedForSale.rarity)} ${t('inv_egg_suffix')}` : `${RARITIES[selectedForSale.rarity].label} Ei`)
                                                     : (selectedForSale.name || selectedForSale.label))
                                             }
                                         </span></span>

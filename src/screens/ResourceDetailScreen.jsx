@@ -11,7 +11,7 @@ const RESOURCE_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-export default function ResourceDetailScreen({ resourceId, user, pets, onBack, onAssignWorker, onRemoveWorker, onUpgradeBuilding, productionRates, onCollect }) {
+export default function ResourceDetailScreen({ resourceId, user, pets, onBack, onAssignWorker, onRemoveWorker, onUpgradeBuilding, productionRates, onCollect, t }) { // t prop added
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showFloating, setShowFloating] = useState(false);
@@ -76,7 +76,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
 
             {/* HEADER */}
             <div className="relative flex items-center justify-between mb-4 pt-2 px-4 shrink-0 z-10">
-                <div className="flex items-center gap-3"><button onClick={onBack} className="p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md"><ArrowLeft className="w-5 h-5" /></button><h2 className="text-2xl font-black italic tracking-wide text-white uppercase">{resource.label}</h2></div>
+                <div className="flex items-center gap-3"><button onClick={onBack} className="p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md"><ArrowLeft className="w-5 h-5" /></button><h2 className="text-2xl font-black italic tracking-wide text-white uppercase">{t ? t('res_' + resourceId) : resource.label}</h2></div>
                 <button onClick={() => setShowUpgrade(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-xl font-black text-xs shadow-lg shadow-indigo-900/20 active:scale-95 transition-all flex items-center gap-2"><Hammer className="w-4 h-4" /> Lv {level}</button>
             </div>
 
@@ -88,7 +88,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
                     <div className="absolute inset-0 flex items-center justify-center">{React.createElement(RESOURCE_ICONS[resourceId], { className: `w-32 h-32 text-white/10 transition-transform duration-1000 ${rate > 0 ? 'scale-110 opacity-20' : 'scale-100'}` })}</div>
                     {showFloating && <FloatingBadge text="+1" />}
-                    <div className="absolute bottom-0 left-0 w-full p-6"><h3 className="text-3xl font-black text-white mb-1">{resource.buildingLabel}</h3><p className="text-slate-400 text-xs font-bold uppercase tracking-wide">{resource.desc}</p></div>
+                    <div className="absolute bottom-0 left-0 w-full p-6"><h3 className="text-3xl font-black text-white mb-1">{t ? t('res_' + resourceId) : resource.buildingLabel}</h3><p className="text-slate-400 text-xs font-bold uppercase tracking-wide">{resource.desc}</p></div>
                 </div>
 
                 {/* PROGRESS & PRODUCTION */}
@@ -112,7 +112,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                                     <div className="flex items-center gap-3">
                                         <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center border border-white/10 ${rarity.color} font-black`}>?</div>
                                         <div>
-                                            <div className={`text-xs font-bold ${item.color}`}>{item.label}</div>
+                                            <div className={`text-xs font-bold ${item.color}`}>{t ? t('item_' + item.id) : item.label}</div>
                                             <div className="text-[9px] text-slate-500">{item.chance}% Chance</div>
                                         </div>
                                     </div>
