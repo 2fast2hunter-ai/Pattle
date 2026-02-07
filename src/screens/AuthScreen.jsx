@@ -56,7 +56,7 @@ export default function AuthScreen({ onLogin }) {
         <Egg className="w-14 h-14 text-white drop-shadow-md" />
       </div>
       
-      <h1 className="text-4xl font-black mb-2 tracking-tight text-center text-white drop-shadow-lg relative z-10">MONSTER<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">EVOLUTION</span></h1>
+      <h1 className="text-6xl font-black mb-2 tracking-tighter text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 drop-shadow-lg relative z-10">Pattle</h1>
       <p className="text-indigo-200 mb-10 text-xs font-black uppercase tracking-[0.3em] bg-slate-900/50 backdrop-blur px-4 py-1.5 rounded-full border border-white/10 relative z-10">RPG Edition</p>
 
       <div className="w-full max-w-sm bg-slate-900/70 backdrop-blur-xl p-8 rounded-[40px] border border-white/10 shadow-2xl relative overflow-hidden z-10">

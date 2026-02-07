@@ -11,7 +11,7 @@ const getRequiredLevel = (index) => {
     return 3 + (index - 1) * 5;
 };
 
-export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet, t }) {
+export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet, t, tutorialHighlight }) {
   const unlockedSlots = getUnlockedTeamSlots(user.level);
   const maxSlots = 10;
   const teamCount = user.team.filter(Boolean).length;
@@ -90,7 +90,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
             <button 
                 key={index} 
                 onClick={() => onAddPet(index)}
-                className="w-full bg-slate-800/30 border-2 border-dashed border-slate-700 hover:border-indigo-500/50 rounded-2xl p-3 flex items-center gap-4 cursor-pointer group transition-all active:scale-98"
+                className={`w-full bg-slate-800/30 border-2 border-dashed border-slate-700 hover:border-indigo-500/50 rounded-2xl p-3 flex items-center gap-4 cursor-pointer group transition-all active:scale-98 ${tutorialHighlight === `slot-${index}` ? 'ring-4 ring-yellow-400 z-50 animate-pulse' : ''}`}
             >
                 <div className="w-16 h-16 bg-slate-900/50 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/10 transition-colors">
                     <Plus className="w-6 h-6 text-slate-500 group-hover:text-indigo-400 transition-colors" />

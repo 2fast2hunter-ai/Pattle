@@ -1,6 +1,6 @@
 // src/hooks/useGameLogic/actions/useVillageActions.js
 
-import { updateUser, updatePetInDB, trackQuestProgress } from '../../../utils/db';
+import { updateUser, updatePetInDB, trackQuestProgress, addPetXp } from '../../../utils/db';
 import { 
     RESOURCES, 
     ALLOWED_TYPES, 
@@ -13,13 +13,10 @@ import {
     SPECIAL_OFFERS,
     PROFILE_ICONS
 } from '../../../data/gameData';
-import { 
-    recalculatePetStats, 
-    calculateMaxXp 
-    // getLevelUpStats entfernt, da nicht existent und nicht benötigt
-} from '../../../utils/gameMechanics'; 
 import { playSound } from '../../../utils/soundManager';
 import { TRANSLATIONS } from '../../../data/translations';
+import { db } from '../../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function useVillageActions(state, showNotification) {
     const { user, myPets, settings } = state;
@@ -286,39 +283,24 @@ export function useVillageActions(state, showNotification) {
 
             // --- PETS LEVEL UP LOGIC (VILLAGE) ---
             // Hier werden die gesammelten XP auf die Pets angewendet
-            Object.entries(petXpUpdates).forEach(([petId, xpAmount]) => {
-                const pet = myPets.find(p => p.id === petId);
+            const petPromises = Object.entries(petXpUpdates).map(async ([petId, xpAmount]) => {
+                // Lade Pet frisch aus DB
+                const petRef = doc(db, "pets", petId);
+                const petSnap = await getDoc(petRef);
+                const pet = petSnap.exists() ? { id: petId, ...petSnap.data() } : myPets.find(p => p.id === petId);
+
                 if (pet) {
-                    let pXp = (pet.xp || 0) + xpAmount;
-                    let pLevel = pet.level || 1;
-                    const startLevel = pLevel;
-                    let currentMaxXp = pet.maxXp || calculateMaxXp(pLevel);
-
-                    let leveledUp = false;
+                    // Nutze addPetXp
+                    const res = await addPetXp(pet, xpAmount);
                     
-                    // Level Up Loop
-                    while (pXp >= currentMaxXp) {
-                        pXp -= currentMaxXp;
-                        pLevel++;
-                        currentMaxXp = calculateMaxXp(pLevel);
-                        leveledUp = true;
-                    }
-
-                    if (leveledUp) {
-                        // Stats komplett neu berechnen für Ziel-Level
-                        const newStats = recalculatePetStats(pet, pLevel);
-                        updatePetInDB(petId, { ...newStats, xp: pXp });
-                        
-                        // Quest Fortschritt (Anzahl der Level)
-                        trackQuestProgress(user, 'LEVEL_UP_PET', pLevel - startLevel);
-                        showNotification(t('notif_pet_levelup', { name: pet.name, level: pLevel }), 'success');
+                    if (res.success && res.levelUp) {
+                        trackQuestProgress(user, 'LEVEL_UP_PET', res.newLevel - pet.level);
+                        showNotification(t('notif_pet_levelup', { name: pet.name, level: res.newLevel }), 'success');
                         playSound('levelup');
-                    } else {
-                        // Nur XP updaten
-                        updatePetInDB(petId, { xp: pXp });
                     }
                 }
             });
+            await Promise.all(petPromises);
             // -------------------------------------
 
             updates["village.level"] = currentLvl;

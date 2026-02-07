@@ -5,7 +5,7 @@ import DailyLoginModal from '../components/modals/DailyLoginModal';
 import { claimDailyLoginReward } from '../utils/db';
 
 // --- RIPPLE BUTTON COMPONENT ---
-const MenuTile = ({ item, index, onClick }) => {
+const MenuTile = ({ item, index, onClick, highlight }) => {
     // Fallback für t, falls es noch nicht geladen ist (wird von MainMenu durchgereicht)
     // Hier nicht direkt verfügbar, daher nutzen wir die Props von MainMenu
     
@@ -38,7 +38,7 @@ const MenuTile = ({ item, index, onClick }) => {
             style={{ animationDelay: `${index * 50}ms` }}
             className={`
                 group relative w-full aspect-square p-0.5 rounded-[24px] shadow-lg ${item.shadow}
-                bg-gradient-to-br ${item.color} bg-[length:200%_200%] animate-gradient-xy
+                bg-gradient-to-br ${item.color} bg-[length:200%_200%] ${highlight ? 'animate-pulse ring-4 ring-yellow-400 z-50' : 'animate-gradient-xy'}
                 transform transition-all duration-300 animate-in zoom-in-50 fade-in fill-mode-backwards overflow-hidden
                 ${item.locked ? 'opacity-80 cursor-not-allowed grayscale-[0.3]' : 'hover:scale-[1.02] active:scale-95'}
             `}
@@ -83,7 +83,7 @@ const MenuTile = ({ item, index, onClick }) => {
     );
 };
 
-export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, t }) { // onVillage prop
+export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, t, tutorialHighlight }) { // onVillage prop
   
   const [showDailyLogin, setShowDailyLogin] = useState(false);
   
@@ -156,8 +156,8 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
     <div className="pt-4 pb-24 px-4 space-y-4 h-full overflow-y-auto scrollbar-hide relative">
       
       <div className="p-2 pb-0">
-          <h1 className="text-3xl font-black text-white italic tracking-wider text-center drop-shadow-lg">
-              PET BATTLE
+          <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 italic tracking-wider text-center drop-shadow-lg">
+              Pattle
           </h1>
           <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
               {translate('menu_welcome')}, {user?.username || translate('common_player')}
@@ -194,7 +194,7 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
       {/* --- GRID LAYOUT (Kacheln) --- */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {menuItems.map((item, index) => (
-              <MenuTile key={item.id} item={item} index={index} onClick={item.onClick} />
+              <MenuTile key={item.id} item={item} index={index} onClick={item.onClick} highlight={tutorialHighlight === item.id} />
           ))}
       </div>
     </div>

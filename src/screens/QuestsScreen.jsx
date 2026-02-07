@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Clock, CheckCircle2, Gift, Play, Loader2, Star, Calendar, RefreshCw, Coins, Gem, Sparkles, Egg, Trophy, Info, Package } from 'lucide-react';
-import { claimQuestReward, claimCompositeReward } from '../utils/db';
+import { claimQuestReward, claimCompositeReward, trackQuestProgress } from '../utils/db';
 import { RARITIES, TYPES, COMPOSITE_QUEST_REWARDS } from '../data/gameData';
 
 // Hilfskomponente für schöne Belohnungs-Badges
@@ -100,6 +100,11 @@ export default function QuestsScreen({ user, onBack, t }) {
     const handleClaimComposite = async () => {
         setClaimingComposite(true);
         await claimCompositeReward(user, activeTab);
+        
+        // Wenn der tägliche Bonus abgeholt wird, zählt das als Fortschritt für die "Complete Daily Set" Quest
+        if (activeTab === 'daily') {
+            await trackQuestProgress(user, 'COMPLETE_DAILY_SET', 1);
+        }
         setClaimingComposite(false);
     }
 
@@ -116,6 +121,7 @@ export default function QuestsScreen({ user, onBack, t }) {
         if (type === 'EARN_XP') return t('quest_EARN_XP', { target });
         if (type === 'LEVEL_UP_PET') return t('quest_LEVEL_UP_PET', { target });
         if (type === 'WATCH_AD') return t('quest_WATCH_AD', { target });
+        if (type === 'COMPLETE_DAILY_SET') return t('quest_COMPLETE_DAILY_SET', { target });
         
         // Spezifische Element-Wins
         if (type.startsWith('WIN_')) {

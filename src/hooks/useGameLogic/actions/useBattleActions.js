@@ -18,8 +18,8 @@ export function useBattleActions(state, showNotification) {
         startFriendBattle: (friendTeam) => startFriendBattle(state, showNotification, friendTeam),
         handleWin: (reward, winningTeamIds, enemyRating, damageReport) => 
             handleWin(state, showNotification, startBattleFn, reward, winningTeamIds, enemyRating, damageReport),
-        handleLose: (enemyRating) => 
-            handleLose(state, showNotification, startBattleFn, enemyRating),
+        handleLose: (reward, teamIds, enemyRating) => 
+            handleLose(state, showNotification, startBattleFn, reward, teamIds, enemyRating),
         handleAutoBattle: (tickets) => 
             handleAutoBattle(state, showNotification, startBattleFn, tickets),
         cancelAutoBattle: () => cancelAutoBattle(state, showNotification)

@@ -1,6 +1,7 @@
-import { updatePetInDB, updateUser } from '../../../utils/db';
+import { updateUser, updatePetInDB, addPetXp } from '../../../utils/db';
 import { CONSUMABLES, COSMETICS } from '../../../data/gameData';
-import { calculateMaxXp, recalculatePetStats } from '../../../utils/gameMechanics';
+import { db } from '../../../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export const applyItem = async (state, showNotification, petId, itemId, quantity) => {
     const { user, myPets } = state;
@@ -14,7 +15,11 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
     }
 
     try {
-        const pet = myPets.find(p => p.id === petId);
+        // Lade Pet frisch aus DB für Konsistenz
+        const petRef = doc(db, "pets", petId);
+        const petSnap = await getDoc(petRef);
+        const pet = petSnap.exists() ? { id: petId, ...petSnap.data() } : myPets.find(p => p.id === petId);
+
         const item = user.inventory.find(i => i.id === itemId);
 
         if (!pet || !item) {
@@ -38,32 +43,10 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
         const effectAmount = config.amount || config.value || 0;
 
         if (effectType === 'XP') {
-            let xpToAdd = effectAmount * qty;
-            let currentXp = Number(pet.xp) || 0;
-            let newXp = currentXp + xpToAdd;
-            let newLevel = Number(pet.level) || 1;
-            const rarity = pet.rarity || 'COMMON';
-            let maxXp = pet.maxXp || calculateMaxXp(newLevel, rarity);
-
-            if (!maxXp || maxXp <= 0) maxXp = 100; // Sicherheits-Fallback
-
-            while (newXp >= maxXp) {
-                newXp -= maxXp;
-                newLevel++;
-                maxXp = calculateMaxXp(newLevel, rarity);
-                if (!maxXp || maxXp <= 0) maxXp = 100 * newLevel; // Safety in loop
-            }
-
-            const newStats = recalculatePetStats(pet, newLevel);
-            const petUpdate = {
-                ...newStats,
-                level: newLevel,
-                xp: newXp,
-                maxXp: maxXp
-            };
+            const xpToAdd = effectAmount * qty;
             
-            console.log("Applying XP Item:", { petId, oldLevel: pet.level, newLevel, newXp, maxXp });
-            await updatePetInDB(petId, petUpdate);
+            // Nutze die zentrale Funktion aus db.js
+            await addPetXp(pet, xpToAdd);
             
             // Corrected Item removal logic for stacks
             let remainingToRemove = qty;

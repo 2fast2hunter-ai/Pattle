@@ -2,15 +2,15 @@ import React from 'react';
 import { LayoutGrid, Backpack, ThermometerSun, Heart, X, ChevronRight } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
 
-export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory, t }) {
+export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory, t, tutorialHighlight }) {
   
   // Helper Komponente für die modernen Kacheln
-  const HubCard = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, delay }) => (
+  const HubCard = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, delay, highlight }) => (
     <button 
         onClick={onClick} 
         style={{ animationDelay: `${delay}ms` }}
         className={`
-            group relative w-full p-0.5 rounded-3xl shadow-lg shadow-black/20
+            group relative w-full p-0.5 rounded-3xl shadow-lg shadow-black/20 ${highlight ? 'ring-4 ring-yellow-400 z-50 animate-pulse' : ''}
             bg-gradient-to-br ${colorFrom} ${colorTo}
             transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left animate-in slide-in-from-right-8 fade-in fill-mode-backwards overflow-hidden
         `}
@@ -87,6 +87,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
             iconColor="text-amber-400"
             onClick={onItemInventory}
             delay={100}
+            highlight={tutorialHighlight === 'items'}
         />
 
         {/* 3. ZUCHT LABOR (Pink/Rose) - Jetzt VOR der Brutstätte */}
@@ -111,6 +112,7 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
             iconColor="text-emerald-400"
             onClick={onHatchery}
             delay={300}
+            highlight={tutorialHighlight === 'hatchery'}
         />
 
       </div>

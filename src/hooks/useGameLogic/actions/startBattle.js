@@ -19,7 +19,10 @@ export const startBattle = async (state, showNotification) => {
 
     for (let i = 0; i < enemyCount; i++) {
         const randomType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
-        const enemyLevel = Math.max(1, user.level + Math.floor(Math.random() * 3) - 1);
+        
+        // Anfänger-Schutz: Bis Level 5 sind Gegner immer Level 1
+        const enemyLevel = user.level <= 5 ? 1 : Math.max(1, user.level + Math.floor(Math.random() * 3) - 1);
+        
         const enemy = generatePet(enemyLevel, randomType, 'COMMON', null, 'ENEMY');
         enemy.currentHp = enemy.maxHp;
         enemy.currentCd = 0;

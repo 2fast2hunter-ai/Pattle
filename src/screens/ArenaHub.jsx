@@ -3,7 +3,7 @@ import { ArrowLeft, Swords, Users, Trophy, Crown, Shield, Flame, ChevronRight, X
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import { PageBackground } from '../components/GameLayout';
 
-export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, t }) {
+export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, t, tutorialHighlight }) {
   
   const rank = user?.rating || 1000;
   const teamCount = user?.team?.filter(Boolean).length || 0;
@@ -24,13 +24,13 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
   };
 
   // Helper für moderne Kacheln
-  const HubTile = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, extraInfo, delay }) => (
+  const HubTile = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, extraInfo, delay, highlight }) => (
       <button 
           onClick={onClick} 
           style={{ animationDelay: `${delay}ms` }}
           className={`
               relative group w-full p-0.5 rounded-[24px] shadow-lg
-              bg-gradient-to-br ${colorFrom} ${colorTo}
+              bg-gradient-to-br ${colorFrom} ${colorTo} ${highlight ? 'ring-4 ring-yellow-400 z-50 animate-pulse' : ''}
               transform transition-all duration-300 hover:scale-[1.02] active:scale-95 text-left h-32 sm:h-36 animate-in slide-in-from-bottom-8 fade-in fill-mode-backwards overflow-hidden
           `}
       >
@@ -94,7 +94,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
 
           <button 
               onClick={onBattle} 
-              className="w-full relative h-56 sm:h-64 rounded-[32px] overflow-hidden group shadow-2xl shadow-red-900/20 transition-all duration-300 hover:scale-[1.02] active:scale-95 border border-white/5 animate-in fade-in zoom-in-95"
+              className={`w-full relative h-56 sm:h-64 rounded-[32px] overflow-hidden group shadow-2xl shadow-red-900/20 transition-all duration-300 hover:scale-[1.02] active:scale-95 border border-white/5 animate-in fade-in zoom-in-95 ${tutorialHighlight === 'battle' ? 'ring-4 ring-yellow-400 z-50 animate-pulse' : ''}`}
           >
             <div className="absolute inset-0 bg-gradient-to-br from-red-600 to-orange-700"></div>
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
@@ -205,6 +205,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                   onClick={onTeam}
                   extraInfo={`${teamCount} / ${unlockedSlots}`}
                   delay={200}
+                  highlight={tutorialHighlight === 'team'}
               />
 
               <HubTile 

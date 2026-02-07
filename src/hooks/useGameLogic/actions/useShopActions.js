@@ -1,7 +1,8 @@
-import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS, TIMED_REWARDS } from '../../../data/gameData';
+import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS, TIMED_REWARDS, TYPES } from '../../../data/gameData';
 import { updateUser, trackQuestProgress, addPetToDB } from '../../../utils/db';
 import { determineRarity } from '../../../utils/mechanics/lootLogic';
 import { generatePet } from '../../../utils/mechanics/petGeneration';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export function useShopActions(state, showNotification) {
     const { user } = state;
@@ -138,44 +139,22 @@ export function useShopActions(state, showNotification) {
     const openLootbox = async (boxId, boxVariant) => {
         if (!user) return null;
 
-        const inventory = user.inventory || [];
-        const boxIndex = inventory.findIndex(i => i.id === boxId);
-        
-        if (boxIndex === -1) {
-            showNotification("Box nicht gefunden!", "error");
-            return null;
-        }
-
-        // Determine Rarity
-        let dropConfigKey = boxVariant;
-        if (boxVariant === 'TYPE_DAILY' || boxVariant.startsWith('ELEMENTAL_')) {
-            dropConfigKey = 'MASTER'; 
-        } else if (!LOOTBOXES[boxVariant]) {
-             dropConfigKey = 'DAILY'; 
-        }
-
-        const rarity = determineRarity(dropConfigKey);
-        
-        // Determine Type
-        let type = null;
-        if (boxVariant.startsWith('ELEMENTAL_')) {
-            type = boxVariant.split('_')[1];
-        }
-        
-        const newPet = generatePet(1, type, rarity, null, 'LOOTBOX');
-        newPet.ownerId = user.id;
-        newPet.isEgg = true;
-        newPet.hatchAt = 0;
-
-        const newInventory = [...inventory];
-        newInventory.splice(boxIndex, 1);
-
         try {
-            await updateUser(user.id, { inventory: newInventory });
-            await addPetToDB(newPet, user.id);
-            return newPet;
+            // CLOUD FUNCTION AUFRUF (SICHER)
+            const functions = getFunctions();
+            const openLootboxFn = httpsCallable(functions, 'openLootbox');
+            
+            showNotification("Öffne Box auf dem Server...", "info");
+            
+            const result = await openLootboxFn({ boxId, boxVariant });
+            
+            if (result.data.success) {
+                return result.data.pet;
+            } else {
+                throw new Error("Server Error");
+            }
         } catch (error) {
-            console.error("Lootbox Error:", error);
+            console.error("Lootbox Error (Cloud Function):", error);
             showNotification("Fehler beim Öffnen.", "error");
             return null;
         }

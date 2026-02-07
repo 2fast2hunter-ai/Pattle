@@ -228,6 +228,7 @@ export const TRANSLATIONS = {
         quest_HATCH_SPECIAL: "Brüte {target} spezielle Eier aus.",
         quest_generic: "Erfülle das Ziel {target} mal.",
         quest_WATCH_AD: "Schaue {target} mal Werbung an.",
+        quest_COMPLETE_DAILY_SET: "Schließe {target}x alle täglichen Missionen ab.",
 
         // Breeding
         breeding_title: "ZUCHT LABOR",
@@ -501,6 +502,7 @@ export const TRANSLATIONS = {
         quest_HATCH_SPECIAL: "Hatch {target} special eggs.",
         quest_generic: "Complete the goal {target} times.",
         quest_WATCH_AD: "Watch {target} ads.",
+        quest_COMPLETE_DAILY_SET: "Complete all daily missions {target} times.",
 
         breeding_title: "BREEDING LAB",
         breeding_filter_title: "FILTER",

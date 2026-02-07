@@ -1,4 +1,5 @@
 import { updateUser, updatePetInDB, trackQuestProgress, calculateEloChange, setBattleActive } from './src/utils/db';
+import { increment, arrayUnion } from 'firebase/firestore';
 import { calculateMaxXp, recalculatePetStats, getPlayerMaxXpForLevel } from './src/utils/gameMechanics';
 import { TOWER_STAGES } from './src/data/gameData';
 
@@ -12,17 +13,17 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     const towerStage = activeBattle?.towerStage;
 
     // 1. ELO Berechnung (Nur wenn nicht Friendly und nicht Tower)
-    let newRating = user.rating;
+    let eloChange = 0;
     if (!isFriendly && !isTower) {
-        const eloChange = calculateEloChange(user.rating, enemyRating || 1000, true);
-        newRating += eloChange;
+        eloChange = calculateEloChange(user.rating, enemyRating || 1000, true);
     }
 
     // 2. Belohnungen (Coins & XP)
     let coinsGain = reward?.coins || 0;
     let xpGain = reward?.xp || 0;
+    let gemsGain = 0;
     let towerRewardMsg = "";
-    let newInventory = [...(user.inventory || [])];
+    const itemsToAdd = [];
 
     // TOWER REWARD LOGIC
     if (isTower) {
@@ -31,13 +32,12 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
             const r = stageConfig.reward;
             if (r.type === 'COINS') coinsGain += r.amount;
             else if (r.type === 'GEMS') {
-                // Gems direkt adden
-                await updateUser(user.id, { gems: (user.gems || 0) + r.amount });
+                gemsGain += r.amount;
                 towerRewardMsg = `+${r.amount} Edelsteine`;
             }
             else if (r.type === 'CONSUMABLE' || r.type === 'LOOTBOX') {
                 for(let i=0; i<r.amount; i++) {
-                    newInventory.push({ id: Date.now() + Math.random(), type: r.type, variant: r.variant });
+                    itemsToAdd.push({ id: Date.now() + Math.random(), type: r.type, variant: r.variant });
                 }
                 towerRewardMsg = `+${r.amount}x ${r.variant}`;
             }
@@ -84,15 +84,27 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     // ... (Hier könnte man calculatePlayerLevel nutzen)
 
     // 5. DB Update
+    const willContinueAuto = isAuto && autoBattleRemaining > 1;
+
     const updates = { 
-        coins: user.coins + coinsGain,
-        inventory: newInventory,
-        xp: newPlayerXp, 
-        rating: newRating,
-        isInBattle: false,
-        "stats.pvpWins": (user.stats?.pvpWins || 0) + 1,
-        "stats.pvpTotal": (user.stats?.pvpTotal || 0) + 1
+        coins: increment(coinsGain),
+        xp: increment(xpGain), 
+        rating: increment(eloChange),
+        "stats.pvpWins": increment(1),
+        "stats.pvpTotal": increment(1)
     };
+
+    if (gemsGain > 0) {
+        updates.gems = increment(gemsGain);
+    }
+
+    if (itemsToAdd.length > 0) {
+        updates.inventory = arrayUnion(...itemsToAdd);
+    }
+
+    if (!willContinueAuto) {
+        updates.isInBattle = false;
+    }
 
     if (isTower) {
         // Fortschritt erhöhen, wenn es die aktuelle Stufe war
@@ -101,11 +113,14 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
         }
     }
 
-    if (user.buffs?.coinBoostMatches > 0) updates["buffs.coinBoostMatches"] = user.buffs.coinBoostMatches - 1;
-    if (user.buffs?.xpBoostMatches > 0) updates["buffs.xpBoostMatches"] = user.buffs.xpBoostMatches - 1;
+    if (user.buffs?.coinBoostMatches > 0) updates["buffs.coinBoostMatches"] = increment(-1);
+    if (user.buffs?.xpBoostMatches > 0) updates["buffs.xpBoostMatches"] = increment(-1);
 
     await updateUser(user.id, updates);
-    await setBattleActive(user.id, false);
+    
+    if (!willContinueAuto) {
+        await setBattleActive(user.id, false);
+    }
 
     // Quest Tracking
     if (!isFriendly) {

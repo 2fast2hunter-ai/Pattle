@@ -19,6 +19,33 @@ export function useGameLogic() {
     const isCollectingRef = useRef(false); // Schutz gegen überlappende Aufrufe
     const lastIdleNotificationRef = useRef(0); // Schutz gegen Spam bei abgelaufener Zeit
 
+    // --- SPLASH SCREEN LOGIC ---
+    const minTimePassed = useRef(false);
+    const authCheckComplete = useRef(false);
+
+    // 5 Sekunden Timer beim Start
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            minTimePassed.current = true;
+            attemptFinishLoading();
+        }, 5000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const attemptFinishLoading = () => {
+        // Nur fortfahren, wenn 5s um sind UND Auth-Check durch ist
+        if (!minTimePassed.current || !authCheckComplete.current) return;
+
+        // Wenn wir noch im Loading-Status sind, jetzt beenden
+        if (stateRef.current.authLoading) {
+            stateRef.current.setAuthLoading(false);
+            // Ziel-View basierend auf Login-Status
+            if (stateRef.current.user) stateRef.current.setCurrentView('menu');
+            else stateRef.current.setCurrentView('auth');
+        }
+    };
+    // ---------------------------
+
     useEffect(() => {
         actionsRef.current = actions;
         stateRef.current = gameLogicState;
@@ -74,10 +101,8 @@ export function useGameLogic() {
                 updateUser(userId, { seasonRewardMessage: deleteField() });
             }
             
-            if (stateRef.current.currentView === 'auth' || stateRef.current.authLoading) {
-                stateRef.current.setAuthLoading(false);
-                stateRef.current.setCurrentView('menu');
-            }
+            authCheckComplete.current = true;
+            attemptFinishLoading();
 
             checkAndResetQuests(userData).catch(e => console.error("Quest Error:", e));
             
@@ -121,8 +146,8 @@ export function useGameLogic() {
                 console.log("Auth: User erkannt:", currentUser.uid);
                 await actionsRef.current.handleLogin(currentUser, currentUser.displayName);
             } else {
-                stateRef.current.setAuthLoading(false);
-                stateRef.current.setCurrentView('auth');
+                authCheckComplete.current = true;
+                attemptFinishLoading();
             }
         });
         return () => unsubscribe();
@@ -131,6 +156,9 @@ export function useGameLogic() {
     // --- D. AUTO COLLECT VILLAGE (HINTERGRUND) ---
     useEffect(() => {
         if (!userId) return;
+
+        // Reset bei User-Wechsel/Start
+        lastIdleNotificationRef.current = 0;
 
         const intervalId = setInterval(async () => {
             if (isCollectingRef.current) return; // Nicht starten, wenn noch ein Request läuft
@@ -153,7 +181,10 @@ export function useGameLogic() {
                     }
                 } else {
                     // Idle Zeit abgelaufen -> Benachrichtigen (nur einmal pro Ablaufzeit)
-                    if (lastIdleNotificationRef.current !== expiresAt) {
+                    if (lastIdleNotificationRef.current === 0) {
+                        // Beim Start unterdrücken, wenn bereits abgelaufen
+                        lastIdleNotificationRef.current = expiresAt;
+                    } else if (lastIdleNotificationRef.current !== expiresAt) {
                         if (actions?.showNotification) {
                             actions.showNotification("Dorf-Produktion gestoppt! Idle-Zeit abgelaufen.", "error");
                         }

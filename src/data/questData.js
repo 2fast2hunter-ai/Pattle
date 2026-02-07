@@ -5,6 +5,7 @@ export const QUEST_TYPES = {
   SPEND_COINS: 'SPEND_COINS',
   EARN_XP: 'EARN_XP',
   LEVEL_UP_PET: 'LEVEL_UP_PET',
+  COMPLETE_DAILY_SET: 'COMPLETE_DAILY_SET',
 };
 
 // --- ALLE 100 QUEST TEMPLATES (NUR XP BELOHNUNGEN) ---
@@ -110,6 +111,7 @@ export const QUEST_TEMPLATES = [
   { type: 'BREED_PET', label: "Paarung", baseAmount: 1, rewardType: 'XP', rewardBase: 100 },
   { type: 'WIN_PVP', label: "Duell", baseAmount: 1, rewardType: 'XP', rewardBase: 50 },
   { type: 'SPEND_COINS', label: "Investition", baseAmount: 300, rewardType: 'XP', rewardBase: 30 },
+  { type: 'COMPLETE_DAILY_SET', label: "Pflichtbewusst", baseAmount: 1, rewardType: 'GEMS', rewardBase: 5 },
 ];
 
 export const COMPOSITE_QUEST_REWARDS = {

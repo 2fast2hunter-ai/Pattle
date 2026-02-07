@@ -38,8 +38,8 @@ export const LOOTBOXES = {
             LEGENDARY: 2.50,
             EPIC: 8.00,
             RARE: 15.00,
-            UNCOMMON: 40.00,
-            COMMON: 23.49
+            UNCOMMON: 45.00,
+            COMMON: 28.49
         }
     },
     DIVINE: {
@@ -54,7 +54,7 @@ export const LOOTBOXES = {
             DIVINE: 5.25,
             MYTHIC: 10.80,
             LEGENDARY: 20.60,
-            EPIC: 58.66
+            EPIC: 58.21
         }
     }
 };

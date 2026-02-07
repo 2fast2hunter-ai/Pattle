@@ -4,10 +4,12 @@ import { ABILITIES, TYPES } from '../data/gameData';
 import { calculateDamage } from '../utils/mechanics/battleLogic'; 
 import { BattleStyles } from '../components/battle/BattleStyles';
 import ArenaBackground from '../components/battle/ArenaBackground';
+import { getPetLevelProgress } from '../utils/mechanics/petStats';
 import BattleUnit from '../components/battle/BattleUnit';
 import TeamDots from '../components/battle/TeamDots';
+import PetAvatar from '../components/PetAvatar';
 
-export default function BattleScreen({ battleState, setBattleState, onWin, onLose, isAutoBattle, autoBattleRemaining, onCancelAutoBattle, t }) { // t prop added
+export default function BattleScreen({ battleState, setBattleState, user, onWin, onLose, isAutoBattle, autoBattleRemaining, onCancelAutoBattle, t }) { // t prop added
   const [animatingUnit, setAnimatingUnit] = useState(null); // { side: 'PLAYER'|'ENEMY', type: 'PHYSICAL'|'SPECIAL' }
   const [hitUnit, setHitUnit] = useState(null); 
   const [floatingDamage, setFloatingDamage] = useState(null); 
@@ -49,12 +51,12 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
               if (elapsed >= duration) {
                    clearInterval(interval);
                    if (won) onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds, null, damageDealt);
-                   else onLose();
+                   else onLose({ xp: rewardXp }, myTeamIds);
               }
           }, step);
           return () => clearInterval(interval);
       } else { setAutoProgress(0); }
-  }, [isOver, isAutoBattle, autoBattleRemaining]); 
+  }, [isOver, isAutoBattle, autoBattleRemaining, myTeam]); 
 
   const executeTurn = async (attacker, defender, who) => {
     let newLog = [...log];
@@ -185,62 +187,106 @@ export default function BattleScreen({ battleState, setBattleState, onWin, onLos
   if (isOver) {
     const won = enemyTeam[enemyTeam.length - 1].hp === 0;
     const myTeamIds = myTeam.map(p => p.id);
-    const rewardCoins = !isFriendly && won ? 150 : (!isFriendly ? 5 : 0);
-    const rewardXp = !isFriendly && won ? 200 : (!isFriendly ? 20 : 0);
+    
+    const baseCoins = !isFriendly && won ? 150 : (!isFriendly ? 5 : 0);
+    const baseXp = !isFriendly && won ? 200 : (!isFriendly ? 20 : 0);
+    
+    let displayCoins = baseCoins;
+    let displayXp = baseXp;
+    if (user?.buffs?.coinBoostMatches > 0) displayCoins *= 2;
+    if (user?.buffs?.xpBoostMatches > 0) displayXp *= 2;
+    
+    const xpPerPet = Math.floor(displayXp / Math.max(1, myTeam.length));
     const isLastAuto = isAutoBattle && autoBattleRemaining === 1;
 
     return (
-        <div className="h-full flex flex-col relative overflow-hidden animate-in zoom-in duration-500 z-50 bg-slate-900">
+        <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col">
           <BattleStyles />
           <ArenaBackground enemyType={won ? 'LIGHT' : 'DARK'} />
           
-          <div className="relative z-10 flex flex-col h-full p-6 items-center justify-center">
+          <div className="relative z-10 flex-1 w-full overflow-y-auto p-6 flex flex-col items-center justify-center scrollbar-hide">
               {isAutoBattle && (<div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>{isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}{isLastAuto ? (t ? t('battle_auto_done') : 'Fertig') : `${t ? t('battle_auto_remaining') : 'Auto: Noch'} ${autoBattleRemaining}`}</div>)}
               
-              <div className="flex flex-col items-center mb-8">
+              <div className="flex flex-col items-center mb-8 shrink-0">
                   <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-4 shadow-[0_0_60px_rgba(0,0,0,0.6)] border-4 border-white/20 ${won ? 'bg-gradient-to-br from-yellow-400 to-amber-600 animate-bounce' : 'bg-gradient-to-br from-red-500 to-red-900'}`}>
                       {won ? <Trophy className="w-12 h-12 text-white drop-shadow-md" /> : <Skull className="w-12 h-12 text-white drop-shadow-md" />}
                   </div>
-                  <h2 className="text-5xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300 drop-shadow-2xl">
+                  <h2 className="text-5xl font-black uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300 drop-shadow-2xl text-center">
                       {won ? (t ? t('battle_win') : 'SIEG!') : (t ? t('battle_loss') : 'NIEDERLAGE')}
                   </h2>
               </div>
 
               {isAutoBattle && !isLastAuto && (
-                  <div className="w-full max-w-xs mx-auto mb-8">
+                  <div className="w-full max-w-xs mx-auto mb-8 shrink-0">
                       <div className="flex justify-between text-[10px] text-purple-300 font-bold mb-1 uppercase"><span>{t ? t('battle_next_fight') : 'Nächster Kampf'}</span><span>{(3 - (autoProgress / 33.3)).toFixed(1)}s</span></div>
                       <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-purple-500/30"><div className="h-full bg-purple-500 transition-all duration-100 ease-linear" style={{ width: `${autoProgress}%` }}></div></div>
                   </div>
               )}
 
               {!isFriendly ? (
-                  <div className="bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-white/10 mb-8 flex justify-around items-center shadow-2xl w-full max-w-sm">
+                  <div className="bg-slate-900/80 backdrop-blur-xl p-6 rounded-3xl border border-white/10 mb-8 flex justify-around items-center shadow-2xl w-full max-w-sm shrink-0">
                       <div className="flex flex-col items-center">
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t ? t('reward_xp') : 'XP'}</span>
-                          <div className="flex items-center gap-2 text-green-400"><Star className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{rewardXp}</span></div>
+                          <div className="flex items-center gap-2 text-green-400"><Star className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{displayXp}</span></div>
                       </div>
                       <div className="w-px h-12 bg-white/10"></div>
                       <div className="flex flex-col items-center">
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t ? t('reward_coins') : 'Münzen'}</span>
-                          <div className="flex items-center gap-2 text-yellow-400"><Coins className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{rewardCoins}</span></div>
+                          <div className="flex items-center gap-2 text-yellow-400"><Coins className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{displayCoins}</span></div>
                       </div>
                   </div>
               ) : (
-                  <div className="bg-blue-900/40 backdrop-blur-md p-4 rounded-2xl border border-blue-500/30 mb-8 text-center w-full max-w-sm">
+                  <div className="bg-blue-900/40 backdrop-blur-md p-4 rounded-2xl border border-blue-500/30 mb-8 text-center w-full max-w-sm shrink-0">
                       <p className="text-blue-200 font-black text-sm">{t ? t('battle_friendly_title') : 'FREUNDSCHAFTSKAMPF'}</p>
                       <p className="text-blue-300/70 text-xs">{t ? t('battle_friendly_desc') : 'Keine Belohnungen erhalten'}</p>
                   </div>
               )}
 
-              <div className="flex flex-col gap-3 w-full max-w-sm">
-                  <button onClick={() => won ? onWin({coins: rewardCoins, xp: rewardXp}, myTeamIds, null, damageDealt) : onLose()} className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl flex justify-center items-center gap-2 transition-all ${isAutoBattle && !isLastAuto ? 'bg-purple-600 text-white animate-pulse' : (isLastAuto ? 'bg-green-600 text-white hover:scale-[1.02]' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95')}`}>
+              {!isFriendly && won && myTeam && (
+                  <div className="w-full max-w-sm space-y-2 mb-6 shrink-0">
+                      <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 text-center">Team Erfahrung</h3>
+                      {myTeam.map(pet => {
+                          const progress = getPetLevelProgress(pet);
+                          const gainedPercent = (xpPerPet / progress.max) * 100;
+                          const isLevelUp = (progress.current + xpPerPet) >= progress.max;
+
+                          return (
+                              <div key={pet.id} className="flex flex-col bg-slate-800/60 p-2 rounded-xl border border-white/5">
+                                  <div className="flex items-center justify-between mb-1">
+                                      <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8"><PetAvatar pet={pet} className="w-full h-full" /></div>
+                                          <div className="flex flex-col">
+                                              <span className="text-xs font-bold text-white">{pet.name}</span>
+                                              <div className="flex items-center gap-2">
+                                                  <span className="text-[10px] text-slate-400">Lvl {pet.level}</span>
+                                                  {isLevelUp && <span className="text-[9px] font-black text-yellow-400 animate-bounce">LEVEL UP!</span>}
+                                              </div>
+                                          </div>
+                                      </div>
+                                      <div className="flex items-center gap-1 text-green-400 font-bold text-xs bg-green-500/10 px-2 py-1 rounded-lg">
+                                          <Star className="w-3 h-3 fill-current" />
+                                          <span>+{xpPerPet}</span>
+                                      </div>
+                                  </div>
+                                  <div className="w-full h-1.5 bg-slate-950 rounded-full overflow-hidden flex relative">
+                                      <div className="h-full bg-blue-600 transition-all duration-500" style={{ width: `${progress.percent}%` }}></div>
+                                      <div className="h-full bg-green-400 animate-pulse transition-all duration-500" style={{ width: `${Math.min(gainedPercent, 100 - progress.percent)}%` }}></div>
+                                  </div>
+                              </div>
+                          );
+                      })}
+                  </div>
+              )}
+
+              <div className="flex flex-col gap-3 w-full max-w-sm shrink-0 pb-6">
+                  <button onClick={() => won ? onWin({coins: baseCoins, xp: baseXp}, myTeamIds, null, damageDealt) : onLose({ xp: baseXp }, myTeamIds)} className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl flex justify-center items-center gap-2 transition-all ${isAutoBattle && !isLastAuto ? 'bg-purple-600 text-white animate-pulse' : (isLastAuto ? 'bg-green-600 text-white hover:scale-[1.02]' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95')}`}>
                       {isLastAuto ? <><CheckCircle className="w-5 h-5" /> {t ? t('battle_finish') : 'ABSCHLIESSEN'}</> : isAutoBattle ? <><Repeat className="w-5 h-5" /> {t ? t('battle_continue') : 'WEITER'} ({autoBattleRemaining})</> : (isFriendly ? (t ? t('battle_back') : "ZURÜCK") : (t ? t('battle_continue') : "WEITER"))}
                   </button>
                   {isAutoBattle && !isLastAuto && (<button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><XCircle className="w-4 h-4" /> {t ? t('battle_cancel_auto') : 'AUTO-KAMPF ABBRECHEN'}</button>)}
               </div>
           </div>
         </div>
-      );
+    );
   }
 
   return (

@@ -168,12 +168,19 @@ const checkAndResetLeaderboard = async (userData) => {
     if (userData.leaderboardResetDate !== currentMonthKey) {
         console.log("[DB] Neuer Monat! Prüfe Rangliste...");
         
+        // Standard-Updates für den Reset VORBEREITEN (Rating auf 1000)
+        let updates = { 
+            leaderboardResetDate: currentMonthKey,
+            rating: 1000, // Reset Elo
+            startEloToday: 1000, 
+            lastEloDate: now.toISOString().split('T')[0]
+        };
+
         try {
             // 1. Rang ermitteln (Anzahl User mit höherem Rating + 1)
             const usersRef = collection(db, "users");
             const qHigher = query(usersRef, where("rating", ">", userData.rating || 1000));
             
-            // Fallback für getCountFromServer falls nicht verfügbar (ältere SDKs), aber hier nutzen wir es
             const snapshotHigher = await getCountFromServer(qHigher);
             const rank = snapshotHigher.data().count + 1;
 
@@ -183,15 +190,6 @@ const checkAndResetLeaderboard = async (userData) => {
             // 2. Belohnung berechnen
             const reward = getLeaderboardRewards(rank, total);
             
-            let updates = { 
-                leaderboardResetDate: currentMonthKey,
-                rating: 1000, // Reset Elo
-                startEloToday: 1000, 
-                lastEloDate: now.toISOString().split('T')[0]
-            };
-            
-            let rewardMsg = null;
-
             if (reward) {
                 updates.coins = (userData.coins || 0) + reward.coins;
                 updates.gems = (userData.gems || 0) + reward.gems;
@@ -204,19 +202,22 @@ const checkAndResetLeaderboard = async (userData) => {
                     updates.inventory = [...(userData.inventory || []), ...ticketItems];
                 }
                 
-                rewardMsg = `Saison Ende! Rang ${rank} (${reward.label}). Belohnung: ${reward.coins} Münzen, ${reward.gems} Edelsteine, ${reward.breedTickets} Zuchttickets, ${reward.adTickets} Werbetickets.`;
+                updates.seasonRewardMessage = `Saison Ende! Rang ${rank} (${reward.label}). Belohnung: ${reward.coins} Münzen, ${reward.gems} Edelsteine, ${reward.breedTickets} Zuchttickets, ${reward.adTickets} Werbetickets.`;
             } else {
-                rewardMsg = `Saison Ende! Rang ${rank}. Viel Glück im nächsten Monat!`;
+                updates.seasonRewardMessage = `Saison Ende! Rang ${rank}. Viel Glück im nächsten Monat!`;
             }
 
-            // Nachricht speichern, damit UI sie anzeigen kann
-            updates.seasonRewardMessage = rewardMsg;
-
-            await updateDoc(doc(db, "users", userData.id), updates);
         } catch(e) { 
-            console.error("[DB] Fehler beim Leaderboard Reset:", e); 
-            // Fallback um Loop zu verhindern
-            await updateDoc(doc(db, "users", userData.id), { leaderboardResetDate: currentMonthKey });
+            console.error("[DB] Fehler beim Leaderboard Reset (Reward):", e); 
+            // Fallback: Trotz Fehler beim Rang-Berechnen das Rating zurücksetzen!
+            updates.seasonRewardMessage = "Saison Ende! Elo wurde zurückgesetzt.";
+        }
+
+        // 3. Update durchführen (Reset + ggf. Belohnung)
+        try {
+            await updateDoc(doc(db, "users", userData.id), updates);
+        } catch (e) {
+            console.error("[DB] Kritischer Fehler beim Speichern des Resets:", e);
         }
     }
 };
@@ -252,6 +253,7 @@ export const initializeUser = async (firebaseUser, username) => {
       inventory: [{ id: Date.now(), type: 'LOOTBOX', variant: 'STARTER' }], 
       friends: [],
       stats: { pvpWins: 0, pvpTotal: 0, hatched: 0, bred: 0, marketSpent: 0, marketEarned: 0 },
+      tutorialStep: 0, // 0=Start, 10=Fertig
       quests: { 
           daily: generatePatchedQuests('DAILY'),
           weekly: generatePatchedQuests('WEEKLY'),
@@ -323,6 +325,63 @@ export const listenToMarket = (callback) => { return onSnapshot(collection(db, "
 export const updateUser = async (userId, data) => { if (!userId) return; const userRef = doc(db, "users", userId); await updateDoc(userRef, data); };
 export const addPetToDB = async (pet, ownerId) => { await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId }); };
 export const updatePetInDB = async (petId, data) => { await updateDoc(doc(db, "pets", petId), data); };
+
+/**
+ * Fügt einem Pet XP hinzu, berechnet Level-Ups und Stats neu und speichert alles in der DB.
+ * @param {Object} pet - Das Pet-Objekt
+ * @param {number} xpAmount - Menge der hinzuzufügenden XP
+ */
+export const addPetXp = async (pet, xpAmount) => {
+    if (!pet || !pet.id) return { success: false, error: "Invalid Pet" };
+
+    let currentXp = Number(pet.xp) || 0;
+    let newXp = currentXp + xpAmount;
+    let currentLevel = Number(pet.level) || 1;
+    const rarity = pet.rarity || 'COMMON';
+
+    // MaxXP holen (Fallback falls nicht im Pet-Objekt)
+    let maxXp = pet.maxXp || calculateMaxXp(currentLevel, rarity);
+    if (!maxXp || maxXp <= 0) maxXp = 100;
+
+    let levelUp = false;
+
+    // Level-Up Schleife (falls XP für mehrere Level reichen)
+    while (newXp >= maxXp) {
+        newXp -= maxXp;
+        currentLevel++;
+        levelUp = true;
+        maxXp = calculateMaxXp(currentLevel, rarity);
+        if (!maxXp || maxXp <= 0) maxXp = 100 * currentLevel;
+    }
+
+    const updates = { xp: newXp, level: currentLevel, maxXp: maxXp };
+
+    if (levelUp) {
+        const newStats = recalculatePetStats(pet, currentLevel);
+        // Nur die Stats übernehmen, nicht das ganze Pet-Objekt
+        updates.maxHp = newStats.maxHp;
+        updates.hp = newStats.maxHp; // Heilung beim Level-Up
+        updates.atk = newStats.atk;
+        updates.def = newStats.def;
+        updates.ap = newStats.ap;
+        updates.res = newStats.res;
+        updates.speed = newStats.speed;
+        updates.maxXp = newStats.maxXp;
+    }
+
+    try {
+        // Direktes Update via Firestore Referenz für Sicherheit
+        const petRef = doc(db, "pets", pet.id);
+        await updateDoc(petRef, updates);
+        
+        console.log(`[DB] addPetXp: ${pet.name} +${xpAmount} XP -> Lvl ${currentLevel}`);
+        return { success: true, levelUp, newLevel: currentLevel };
+    } catch (e) {
+        console.error("[DB] Fehler beim Speichern der Pet-XP:", e);
+        return { success: false, error: e };
+    }
+};
+
 export const removePetFromDB = async (petId) => { await deleteDoc(doc(db, "pets", petId)); };
 export const createMarketListing = async (listing) => { const docRef = await addDoc(collection(db, "market"), listing); return docRef.id; };
 export const createResourceListing = async (user, itemId, amount, price) => { if (!user || !user.id) throw new Error("User nicht gefunden."); const userRef = doc(db, "users", user.id); const LISTING_FEE = 100; try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) throw new Error("User existiert nicht."); const userData = userDoc.data(); if (userData.coins < LISTING_FEE) throw new Error("Nicht genügend Gold für die Gebühr (100)."); const storage = userData.village?.storage || {}; if ((storage[itemId] || 0) < amount) throw new Error("Nicht genügend Ressourcen im Lager."); const newStorage = { ...storage }; newStorage[itemId] -= amount; if (newStorage[itemId] <= 0) delete newStorage[itemId]; transaction.update(userRef, { coins: userData.coins - LISTING_FEE, "village.storage": newStorage }); const newListingRef = doc(collection(db, "market")); const listingData = { type: 'RESOURCE', itemId: itemId, amount: amount, price: price, sellerId: user.id, sellerName: user.username, createdAt: Date.now() }; transaction.set(newListingRef, listingData); }); return { success: true }; } catch (e) { console.error("Fehler beim Erstellen des Ressourcen-Angebots:", e); return { success: false, message: e.message }; } };

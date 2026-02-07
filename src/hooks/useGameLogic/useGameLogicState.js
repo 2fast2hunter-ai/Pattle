@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function useGameLogicState(userId) {
     const [user, setUser] = useState(null); 
@@ -11,7 +11,19 @@ export function useGameLogicState(userId) {
     // UI States
     const [activeBattle, setActiveBattle] = useState(null);
     const [selectedPetDetail, setSelectedPetDetail] = useState(null);
-    const [settings, setSettings] = useState({ music: true, sfx: true, notifications: false });
+    
+    // SETTINGS: Laden aus LocalStorage (Persistenz)
+    const [settings, setSettings] = useState(() => {
+        try {
+            const saved = localStorage.getItem('game_settings');
+            if (saved) return JSON.parse(saved);
+        } catch (e) { console.error("Settings load error", e); }
+        return { musicEnabled: true, soundEnabled: true, language: 'de' };
+    });
+
+    // SETTINGS: Speichern bei Änderung
+    useEffect(() => { localStorage.setItem('game_settings', JSON.stringify(settings)); }, [settings]);
+
     const [showLevelUpModal, setShowLevelUpModal] = useState(false);
     const [selectedSlotForTeam, setSelectedSlotForTeam] = useState(null);
     const [notification, setNotification] = useState(null);

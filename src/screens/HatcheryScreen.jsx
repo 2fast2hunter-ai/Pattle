@@ -6,7 +6,7 @@ import PetAvatar from '../components/PetAvatar';
 import EggSelectionModal from '../components/modals/EggSelectionModal';
 
 // --- MAIN SCREEN ---
-export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation, t }) { // t prop added
+export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation, t, tutorialHighlight }) { // t prop added
   const unlockedSlots = getUnlockedHatcherySlots(user.level);
   const maxSlots = 10;
   
@@ -256,7 +256,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                 <button 
                     key={index} 
                     onClick={() => handleSlotClick(index)}
-                    className="aspect-square bg-slate-800/30 border-2 border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800/50 rounded-3xl flex flex-col items-center justify-center gap-2 group transition-all active:scale-95 cursor-pointer"
+                    className={`aspect-square bg-slate-800/30 border-2 border-slate-700 hover:border-emerald-500/50 hover:bg-slate-800/50 rounded-3xl flex flex-col items-center justify-center gap-2 group transition-all active:scale-95 cursor-pointer ${tutorialHighlight === `slot-${index}` ? 'ring-4 ring-yellow-400 animate-pulse z-50' : ''}`}
                 >
                     <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-white/5">
                         <Plus className="w-6 h-6 text-slate-500 group-hover:text-emerald-400" />

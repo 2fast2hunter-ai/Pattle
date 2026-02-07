@@ -8,7 +8,7 @@ const RES_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable, onOpenLootbox, t }) { // t prop added
+export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, user, onRedeemTicket, onUseConsumable, onOpenLootbox, t, tutorialHighlight }) { // t prop added
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedBox, setSelectedBox] = useState(null);
   const [selectedPotion, setSelectedPotion] = useState(null); 
@@ -422,6 +422,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                           label={t ? t('box_' + box.variant) : (box.variant === 'TYPE_DAILY' ? 'Elementar-Truhe' : box.variant)}
                           colorColor="text-yellow-400"
                           bgColor="bg-yellow-500"
+                          ringColor={tutorialHighlight === box.variant ? 'ring-yellow-400 animate-pulse' : null}
                       />
                   ))}
               </div>

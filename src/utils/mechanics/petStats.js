@@ -86,7 +86,7 @@ export const calculatePetLevelFromXp = (currentXp, rarityKey) => {
 };
 
 export const calculateMaxXp = (level, rarityKey) => {
-    if (level >= 100) return Infinity;
+    if (level >= 100) return 2000000000; // Sichere Zahl statt Infinity für Firestore
     return calculatePetTotalXpForLevel(level + 1, rarityKey);
 };
 
