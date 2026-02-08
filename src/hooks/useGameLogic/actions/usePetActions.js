@@ -6,7 +6,7 @@ import { breedPets } from './breedPets';
 import { renamePet } from './renamePet';
 import { applyItem } from './applyItem';
 import { updatePetInDB, trackQuestProgress, updateUser } from '../../../utils/db';
-import { RARITIES } from '../../../data/gameData';
+import { RARITIES, ZODIAC_ANIMALS } from '../../../data/gameData';
 import { getUnlockedHatcherySlots } from '../../../utils/mechanics/progression';
 
 export function usePetActions(state, showNotification) {
@@ -47,10 +47,17 @@ export function usePetActions(state, showNotification) {
         }
 
         try {
+            // Wenn kein Custom Name, versuche den Spezies-Namen zu nehmen, falls der aktuelle Name generisch ist
+            let finalName = customName || pet.name;
+            if (!customName && pet.name.startsWith('Wildes')) {
+                 const speciesInfo = ZODIAC_ANIMALS[pet.species];
+                 if (speciesInfo) finalName = speciesInfo.label;
+            }
+
             const updates = {
                 isEgg: false,
                 hatchAt: 0,
-                name: customName || pet.name
+                name: finalName
             };
             
             await updatePetInDB(pet.id, updates);

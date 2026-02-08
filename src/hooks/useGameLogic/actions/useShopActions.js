@@ -3,6 +3,8 @@ import { updateUser, trackQuestProgress, addPetToDB } from '../../../utils/db';
 import { determineRarity } from '../../../utils/mechanics/lootLogic';
 import { generatePet } from '../../../utils/mechanics/petGeneration';
 import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
+import { auth } from '../../../firebase';
 
 export function useShopActions(state, showNotification) {
     const { user } = state;
@@ -16,7 +18,7 @@ export function useShopActions(state, showNotification) {
                 showNotification("Du hast die Daily Box heute schon abgeholt!", "error");
                 return;
             }
-            const newInv = [...(user.inventory || []), { id: Date.now(), type: 'LOOTBOX', variant: boxType }];
+            const newInv = [...(user.inventory || []), { id: `box_${Date.now()}`, type: 'LOOTBOX', variant: boxType }];
             updateUser(user.id, { inventory: newInv, lastDailyBoxClaim: today });
             showNotification(`${LOOTBOXES.DAILY.label} erhalten!`, 'success');
             return;
@@ -29,7 +31,7 @@ export function useShopActions(state, showNotification) {
             
             const newItems = [];
             for(let i = 0; i < quantity; i++) {
-                newItems.push({ id: Date.now() + Math.random() + i, type: 'LOOTBOX', variant: boxType });
+                newItems.push({ id: `box_${Date.now()}_${i}`, type: 'LOOTBOX', variant: boxType });
             }
 
             const newInv = [...(user.inventory || []), ...newItems];
@@ -41,7 +43,7 @@ export function useShopActions(state, showNotification) {
             
             const newItems = [];
             for(let i = 0; i < quantity; i++) {
-                newItems.push({ id: Date.now() + Math.random() + i, type: 'LOOTBOX', variant: boxType });
+                newItems.push({ id: `box_${Date.now()}_${i}`, type: 'LOOTBOX', variant: boxType });
             }
 
             const newInv = [...(user.inventory || []), ...newItems];
@@ -64,7 +66,7 @@ export function useShopActions(state, showNotification) {
         if (currency === 'GEMS' && (user.gems || 0) < cost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
         
         const newInventory = [...(user.inventory || [])];
-        for (let i = 0; i < item.tickets; i++) { newInventory.push({ id: Date.now() + Math.random() + i, type: 'TICKET', variant: 'BREED' }); }
+        for (let i = 0; i < item.tickets; i++) { newInventory.push({ id: `ticket_${Date.now()}_${i}`, type: 'TICKET', variant: 'BREED' }); }
         
         const updateData = {};
         if (currency === 'COINS') { updateData.coins = user.coins - cost; trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost); } 
@@ -139,9 +141,21 @@ export function useShopActions(state, showNotification) {
     const openLootbox = async (boxId, boxVariant) => {
         if (!user) return null;
 
+        // SICHERHEITS-CHECK: Ist der User im Auth-Modul eingeloggt?
+        if (!auth.currentUser) {
+            console.error("Auth Error: User state ist da, aber Firebase Auth user fehlt.");
+            showNotification("Authentifizierungs-Fehler. Bitte neu einloggen.", "error");
+            return null;
+        }
+
         try {
+            // 1. TOKEN REFRESH ERZWINGEN
+            // Das behebt "User must be logged in" Fehler, falls das Token 'stale' ist
+            await auth.currentUser.getIdToken(true);
+
             // CLOUD FUNCTION AUFRUF (SICHER)
-            const functions = getFunctions();
+            // Wir nutzen getApp(), um sicherzustellen, dass die Instanz korrekt ist
+            const functions = getFunctions(getApp());
             const openLootboxFn = httpsCallable(functions, 'openLootbox');
             
             showNotification("Öffne Box auf dem Server...", "info");
@@ -151,7 +165,7 @@ export function useShopActions(state, showNotification) {
             if (result.data.success) {
                 return result.data.pet;
             } else {
-                throw new Error("Server Error");
+                throw new Error(result.data.message || "Unbekannter Server Fehler");
             }
         } catch (error) {
             console.error("Lootbox Error (Cloud Function):", error);

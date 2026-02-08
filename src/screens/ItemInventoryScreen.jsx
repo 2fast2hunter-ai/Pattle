@@ -315,7 +315,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
             description={t ? t('inv_box_desc') : "Eine verschlossene Schatzkiste."}
             actionLabel={t ? t('inv_open') : "ÖFFNEN"}
             actionIcon={BoxSelect}
-            onAction={() => startLootboxSequence(selectedBox.ids[0], 'BOX')}
+            onAction={() => startLootboxSequence(selectedBox.ids[0], selectedBox.variant)}
             onClose={() => setSelectedBox(null)}
             colorClass="text-yellow-400"
             bgClass="bg-yellow-500"
