@@ -1,22 +1,21 @@
 // src/hooks/useGameLogic/actions/useVillageActions.js
 
-import { updateUser, updatePetInDB, trackQuestProgress, addPetXp } from '../../../utils/db';
-import { 
-    RESOURCES, 
-    ALLOWED_TYPES, 
-    RARITY_MULTIPLIERS, 
-    UPGRADE_COSTS, 
-    RESOURCE_ITEMS, 
-    TRADE_RECIPES, 
-    MILESTONES, 
-    COSMETICS, 
+import { updateUser } from '../../../utils/db';
+import {
+    RESOURCES,
+    ALLOWED_TYPES,
+    RARITY_MULTIPLIERS,
+    UPGRADE_COSTS,
+    RESOURCE_ITEMS,
+    TRADE_RECIPES,
+    MILESTONES,
+    COSMETICS,
     SPECIAL_OFFERS,
     PROFILE_ICONS
 } from '../../../data/gameData';
 import { playSound } from '../../../utils/soundManager';
 import { TRANSLATIONS } from '../../../data/translations';
-import { db } from '../../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { collectResources, calculateProductionRate as calcRateHelper } from './collectResources';
 
 export function useVillageActions(state, showNotification) {
     const { user, myPets, settings } = state;
@@ -33,41 +32,21 @@ export function useVillageActions(state, showNotification) {
 
     // --- PRODUKTIONSRATE BERECHNEN ---
     const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds) => {
-        let cycleTime = 10 - ((buildingLevel - 1) * 0.05);
-        if (cycleTime < 1) cycleTime = 1; 
-        
-        // FIX: Training hat feste Geschwindigkeit (1 Zyklus), unabhängig von Seltenheit oder Anzahl
-        if (resourceId === 'training') {
-            const hasWorkers = assignedPetIds.some(id => id);
-            if (!hasWorkers) return 0;
-            return 1 / cycleTime;
-        }
-
-        let totalMultiplier = 0;
-        assignedPetIds.forEach(petId => {
-            if (!petId) return;
-            const pet = myPets.find(p => p.id === petId);
-            if (pet) {
-                totalMultiplier += (RARITY_MULTIPLIERS[pet.rarity] || 1.0);
-            }
-        });
-        
-        if (totalMultiplier === 0) return 0;
-        return totalMultiplier / cycleTime;
+        return calcRateHelper(resourceId, buildingLevel, assignedPetIds, myPets, RARITY_MULTIPLIERS);
     };
 
     // --- ARBEITER ZUWEISEN ---
     const assignWorker = async (resourceId, slotIndex, petId) => {
         if (!user) return;
-        
+
         // Erst einsammeln, damit nichts verloren geht
-        await collectVillageResources(); 
-        
+        await collectVillageResources();
+
         if (slotIndex >= user.village.level) {
-            showNotification(t('notif_needs_village_lvl') + ` ${slotIndex + 1}`, 'error'); // Fallback string concatenation if key missing
+            showNotification(t('notif_needs_village_lvl') + ` ${slotIndex + 1}`, 'error');
             return;
         }
-        
+
         const pet = myPets.find(p => p.id === petId);
         if (!pet) return;
 
@@ -95,7 +74,7 @@ export function useVillageActions(state, showNotification) {
         // Duplikate Check (optional: kein Typ doppelt pro Gebäude)
         const currentWorkers = user.village.workers[resourceId] || [];
         for (const workerId of currentWorkers) {
-            if (workerId && workerId !== petId) { 
+            if (workerId && workerId !== petId) {
                 const worker = myPets.find(p => p.id === workerId);
                 if (worker && worker.type === pet.type) {
                     showNotification(t('notif_duplicate_type', { type: pet.type }), 'error');
@@ -105,14 +84,13 @@ export function useVillageActions(state, showNotification) {
         }
 
         const newWorkers = { ...user.village.workers };
-        
-        // Array initialisieren falls nicht vorhanden (z.B. bei neuen Gebäuden)
+
         if (!newWorkers[resourceId]) {
             newWorkers[resourceId] = [null, null, null, null, null];
         } else {
             newWorkers[resourceId] = [...newWorkers[resourceId]];
         }
-        
+
         newWorkers[resourceId][slotIndex] = petId;
 
         await updateUser(user.id, { "village.workers": newWorkers });
@@ -124,15 +102,15 @@ export function useVillageActions(state, showNotification) {
     const removeWorker = async (resourceId, slotIndex) => {
         if (!user) return;
         await collectVillageResources();
-        
+
         const newWorkers = { ...user.village.workers };
         newWorkers[resourceId][slotIndex] = null;
-        
+
         await updateUser(user.id, { "village.workers": newWorkers });
         showNotification(t('notif_worker_removed'), 'info');
     };
 
-    // --- IDLE ZEIT VERLÄNGERN (WERBUNG / TICKET) ---
+    // --- IDLE ZEIT VERLÄNGERN ---
     const addIdleTime = async () => {
         if (!user) return;
         if ((user.adTickets || 0) < 1) {
@@ -142,9 +120,7 @@ export function useVillageActions(state, showNotification) {
 
         const now = Date.now();
         const currentExpire = user.village.idleTimeExpiresAt || 0;
-        
-        // HIER GEÄNDERT: Von 10 auf 20 Minuten erhöht
-        const newExpire = Math.max(now, currentExpire) + (20 * 60 * 1000); 
+        const newExpire = Math.max(now, currentExpire) + (20 * 60 * 1000);
 
         await updateUser(user.id, {
             adTickets: user.adTickets - 1,
@@ -154,210 +130,41 @@ export function useVillageActions(state, showNotification) {
         showNotification(t('notif_idle_extended'), "success");
     };
 
-    // --- RESSOURCEN SAMMELN (HAUPTSCHLEIFE) ---
+    // --- RESSOURCEN SAMMELN ---
     const collectVillageResources = async (specificResourceId = null) => {
-        if (!user) return;
-
-        const now = Date.now();
-        const idleExpires = user.village.idleTimeExpiresAt || 0;
-        const globalLastCollection = user.village.lastCollectionTime || now;
-
-        // Migration & Init collectionTimes: Falls noch nicht vorhanden, von globaler Zeit erben
-        let collectionTimes = { ...(user.village.collectionTimes || {}) };
-        Object.values(RESOURCES).forEach(r => {
-            if (!collectionTimes[r.id]) {
-                collectionTimes[r.id] = globalLastCollection;
-            }
+        return await collectResources({
+            user, myPets, RARITY_MULTIPLIERS, specificResourceId, showNotification, t
         });
-
-        let totalXpGained = 0;
-        let updates = {};
-        
-        let newStorage = { ...(user.village.storage || {}) };
-        let newResourcesBuffer = { ...(user.village.resources || {}) };
-        
-        let newStats = { ...(user.village.stats || {}) };
-        if (!newStats.totalCollected) newStats.totalCollected = {};
-        if (!newStats.totalItemsCollected) newStats.totalItemsCollected = {};
-        
-        // Globale Statistik nur bei vollständigem Sammeln aktualisieren
-        if (!specificResourceId) {
-            const productionEnd = Math.min(now, idleExpires);
-            if (productionEnd > globalLastCollection) {
-                const globalElapsed = (productionEnd - globalLastCollection) / 1000;
-                if (globalElapsed > 0) {
-                    newStats.totalIdleTime = (newStats.totalIdleTime || 0) + globalElapsed;
-                }
-            }
-        }
-
-        let somethingProduced = false;
-        let itemsLog = []; 
-        let petXpUpdates = {};
-
-        // Für jedes Gebäude berechnen
-        // FIX: Über alle definierten Ressourcen iterieren, damit auch neue (wie Training) erfasst werden
-        for (const resKey of Object.values(RESOURCES).map(r => r.id)) {
-            // Filter: Wenn eine spezifische Ressource angefordert wurde, andere überspringen
-            if (specificResourceId && resKey !== specificResourceId) continue;
-
-            const buildingLvl = (user.village.buildings && user.village.buildings[resKey]) || 1;
-            const workerIds = user.village.workers[resKey] || [];
-            
-            // Zeitberechnung PRO Ressource
-            const lastCollection = collectionTimes[resKey];
-            const productionEnd = Math.min(now, idleExpires);
-            let elapsedSeconds = 0;
-            if (productionEnd > lastCollection) {
-                elapsedSeconds = (productionEnd - lastCollection) / 1000;
-            }
-
-            // Zeitstempel aktualisieren (auch wenn nichts produziert wurde, um Zeit vorzuspulen)
-            collectionTimes[resKey] = now;
-
-            const ratePerSecond = calculateProductionRate(resKey, buildingLvl, workerIds);
-            
-            if (ratePerSecond > 0) {
-                const produced = ratePerSecond * elapsedSeconds;
-                
-                if (!isNaN(produced)) {
-                    newResourcesBuffer[resKey] = (newResourcesBuffer[resKey] || 0) + produced;
-                }
-                
-                const finishedItems = Math.floor(newResourcesBuffer[resKey]);
-                
-                if (finishedItems > 0) {
-                    somethingProduced = true;
-                    newResourcesBuffer[resKey] -= finishedItems;
-                    newStats.totalCollected[resKey] = (newStats.totalCollected[resKey] || 0) + finishedItems;
-
-                    // XP für Arbeiter merken
-                    workerIds.forEach(petId => {
-                        if (petId) {
-                            const xpMult = resKey === 'training' ? 10 : 1; // 10x XP im Übungsplatz
-                            petXpUpdates[petId] = (petXpUpdates[petId] || 0) + (finishedItems * xpMult);
-                        }
-                    });
-
-                    // Items droppen (Zufall)
-                    const dropTable = RESOURCE_ITEMS[resKey] || [];
-                    if (dropTable.length > 0) {
-                        for (let i = 0; i < finishedItems; i++) {
-                            let roll = Math.random() * 100;
-                            let dropped = dropTable[0];
-                            
-                            for (const item of dropTable) {
-                                if (roll <= item.chance) {
-                                    dropped = item;
-                                    break;
-                                }
-                                roll -= item.chance;
-                            }
-                            
-                            const itemId = dropped.id;
-                            newStorage[itemId] = (newStorage[itemId] || 0) + 1;
-                            newStats.totalItemsCollected[itemId] = (newStats.totalItemsCollected[itemId] || 0) + 1;
-                            
-                            totalXpGained += 10; // XP für den Spieler
-
-                            itemsLog.push(dropped.id);
-                        }
-                    }
-                }
-            }
-        }
-
-        if (somethingProduced || totalXpGained > 0) {
-            // Dorf Level Up Logik
-            let currentLvl = user.village.level;
-            let currentXp = user.village.xp + totalXpGained;
-            let xpToNext = user.village.xpToNext || 16000; 
-
-            while (currentXp >= xpToNext && currentLvl < 20) {
-                currentLvl++;
-                currentXp -= xpToNext;
-                xpToNext = Math.floor(xpToNext * 1.5); 
-                showNotification(t('notif_village_levelup', { level: currentLvl }), 'success');
-                playSound('levelup');
-            }
-
-            // --- PETS LEVEL UP LOGIC (VILLAGE) ---
-            // Hier werden die gesammelten XP auf die Pets angewendet
-            const petPromises = Object.entries(petXpUpdates).map(async ([petId, xpAmount]) => {
-                // Lade Pet frisch aus DB
-                const petRef = doc(db, "pets", petId);
-                const petSnap = await getDoc(petRef);
-                const pet = petSnap.exists() ? { id: petId, ...petSnap.data() } : myPets.find(p => p.id === petId);
-
-                if (pet) {
-                    // Nutze addPetXp
-                    const res = await addPetXp(pet, xpAmount);
-                    
-                    if (res.success && res.levelUp) {
-                        trackQuestProgress(user, 'LEVEL_UP_PET', res.newLevel - pet.level);
-                        showNotification(t('notif_pet_levelup', { name: pet.name, level: res.newLevel }), 'success');
-                        playSound('levelup');
-                    }
-                }
-            });
-            await Promise.all(petPromises);
-            // -------------------------------------
-
-            updates["village.level"] = currentLvl;
-            updates["village.xp"] = currentXp;
-            updates["village.xpToNext"] = xpToNext;
-            updates["village.lastCollectionTime"] = now; // Fallback/Global
-            updates["village.collectionTimes"] = collectionTimes; // NEU: Pro Ressource
-            updates["village.resources"] = newResourcesBuffer;
-            updates["village.storage"] = newStorage;
-            updates["village.stats"] = newStats;
-
-            await updateUser(user.id, updates);
-            
-            return { items: itemsLog, xp: totalXpGained };
-        } else {
-            await updateUser(user.id, { 
-                "village.lastCollectionTime": now, 
-                "village.collectionTimes": collectionTimes,
-                "village.resources": newResourcesBuffer, 
-                "village.stats.totalIdleTime": newStats.totalIdleTime 
-            });
-            return null;
-        }
     };
 
     // --- GEBÄUDE UPGRADE ---
     const upgradeBuilding = async (resourceId) => {
         if (!user) return;
         const currentLvl = user.village.buildings[resourceId] || 1;
-        
-        // 1. Nächstes Level Daten holen
+
         const nextLvlData = UPGRADE_COSTS.find(u => u.level === currentLvl + 1);
-        if (!nextLvlData) { 
-            showNotification(t('notif_max_level'), 'error'); 
-            return; 
+        if (!nextLvlData) {
+            showNotification(t('notif_max_level'), 'error');
+            return;
         }
-        
-        const baseCost = nextLvlData.baseCost; 
+
+        const baseCost = nextLvlData.baseCost;
         const specialCost = nextLvlData.specialCost;
 
         let baseItem, rareItem;
 
         if (resourceId === 'training') {
-            // Sonderfall: Übungsplatz kostet Holz und Stein
             baseItem = { id: 'wood_oak', label: 'Eiche' };
             rareItem = { id: 'stone_rock', label: 'Stein' };
         } else {
-            // 2. Benötigte Items identifizieren (Basis & Seltenste)
             const categoryItems = RESOURCE_ITEMS[resourceId];
             if (!categoryItems) { showNotification("Fehler: Ressource nicht gefunden.", 'error'); return; }
-            
+
             const sortedItems = [...categoryItems].sort((a, b) => b.chance - a.chance);
-            baseItem = sortedItems[0]; // Häufigste
-            rareItem = sortedItems[sortedItems.length - 1]; // Seltenste
+            baseItem = sortedItems[0];
+            rareItem = sortedItems[sortedItems.length - 1];
         }
 
-        // 3. Verfügbarkeit im Lager prüfen
         const currentStorage = user.village.storage || {};
         const availableBase = currentStorage[baseItem.id] || 0;
         const availableRare = currentStorage[rareItem.id] || 0;
@@ -372,15 +179,13 @@ export function useVillageActions(state, showNotification) {
             return;
         }
 
-        // 4. Kosten abziehen
         const newStorage = { ...currentStorage };
         newStorage[baseItem.id] -= baseCost;
         if (specialCost > 0) {
             newStorage[rareItem.id] -= specialCost;
         }
 
-        // 5. Update durchführen
-        await updateUser(user.id, { 
+        await updateUser(user.id, {
             [`village.buildings.${resourceId}`]: currentLvl + 1,
             "village.storage": newStorage
         });
@@ -393,7 +198,7 @@ export function useVillageActions(state, showNotification) {
     const tradeResources = async (offerItemId, wantItemId, amountOfTrades) => {
         if (!user) return;
         const storage = user.village.storage || {};
-        
+
         const recipe = TRADE_RECIPES.find(r => r.offerId === offerItemId && r.wantId === wantItemId);
         if (!recipe) {
             showNotification(t('notif_trade_impossible'), "error");
@@ -426,7 +231,7 @@ export function useVillageActions(state, showNotification) {
         const claimed = user.village.milestones || {};
         const currentLevel = claimed[milestoneId] || 0;
         const requiredTotal = milestone.target * (currentLevel + 1);
-        
+
         let current = 0;
         if (milestone.type === 'TIME') {
             current = user.village.stats?.totalIdleTime || 0;
@@ -440,7 +245,7 @@ export function useVillageActions(state, showNotification) {
         }
 
         let updates = { [`village.milestones.${milestoneId}`]: currentLevel + 1 };
-        
+
         if (milestone.reward.type === 'COINS') {
             updates['coins'] = (user.coins || 0) + milestone.reward.amount;
         } else if (milestone.reward.type === 'GEMS') {
@@ -452,7 +257,7 @@ export function useVillageActions(state, showNotification) {
             while (currentXp >= xpToNext && currentLvl < 20) {
                 currentLvl++;
                 currentXp -= xpToNext;
-                xpToNext = Math.floor(xpToNext * 1.5); 
+                xpToNext = Math.floor(xpToNext * 1.5);
                 showNotification(t('notif_village_levelup', { level: currentLvl }), 'success');
             }
             updates['village.level'] = currentLvl;
@@ -460,11 +265,11 @@ export function useVillageActions(state, showNotification) {
             updates['village.xpToNext'] = xpToNext;
         } else if (milestone.reward.type === 'CONSUMABLE') {
             const newItems = [];
-            for(let i=0; i < milestone.reward.amount; i++) {
-                newItems.push({ 
-                    id: Date.now() + Math.random(), 
-                    type: 'CONSUMABLE', 
-                    variant: milestone.reward.variant 
+            for (let i = 0; i < milestone.reward.amount; i++) {
+                newItems.push({
+                    id: Date.now() + Math.random(),
+                    type: 'CONSUMABLE',
+                    variant: milestone.reward.variant
                 });
             }
             const currentInventory = user.inventory || [];
@@ -496,16 +301,16 @@ export function useVillageActions(state, showNotification) {
 
         const newItem = {
             id: Date.now() + Math.random(),
-            type: 'CONSUMABLE', 
+            type: 'CONSUMABLE',
             variant: cosmeticId
         };
         const newInventory = [...(user.inventory || []), newItem];
 
-        await updateUser(user.id, { 
+        await updateUser(user.id, {
             "village.storage": newStorage,
-            "inventory": newInventory 
+            "inventory": newInventory
         });
-        
+
         showNotification(t('notif_item_bought', { item: cosmetic.label }), "success");
         playSound('kaching');
     };
@@ -533,7 +338,7 @@ export function useVillageActions(state, showNotification) {
         // 2. Belohnung
         if (offer.reward.type === 'AD_TICKET') {
             updates['adTickets'] = (user.adTickets || 0) + offer.reward.amount;
-        } 
+        }
         else if (offer.reward.type === 'ITEM' || offer.reward.type === 'CONSUMABLE') {
             const newItem = {
                 id: Date.now() + Math.random(),
@@ -549,8 +354,8 @@ export function useVillageActions(state, showNotification) {
         playSound('kaching');
     };
 
-    return { 
-        assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate, 
-        tradeResources, claimMilestone, addIdleTime, buyCosmetic, buySpecialOffer 
+    return {
+        assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
+        tradeResources, claimMilestone, addIdleTime, buyCosmetic, buySpecialOffer
     };
 }

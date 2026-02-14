@@ -1,245 +1,31 @@
-import React, { useState, useMemo } from 'react';
-import { ArrowLeft, X, Coins, DollarSign, Egg, Search, Info, Minus, Plus, Trash2, Pickaxe, Box } from 'lucide-react';
-import { RARITIES, RESOURCE_ITEMS } from '../data/gameData';
-import PetAvatar from '../components/PetAvatar';
+import React from 'react';
+import { ArrowLeft, X, Info } from 'lucide-react';
 import MarketDetailModal from '../components/market/MarketDetailModal';
+import MarketCard from '../components/market/MarketCard';
+import SellCard from '../components/market/SellCard';
+import MarketSellInput from '../components/market/MarketSellInput';
+import { useMarketplace } from '../hooks/useMarketplace';
 
-// --- HELPER: Flatten Resource List ---
-const ALL_RESOURCE_ITEMS = (() => {
-    const list = [];
-    Object.values(RESOURCE_ITEMS).forEach(items => list.push(...items));
-    return list;
-})();
-
-const getResourceInfo = (itemId) => ALL_RESOURCE_ITEMS.find(i => i.id === itemId);
-
-export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, onSellResource, onRemoveListing, myPets, t }) { // t prop added
-    const [activeTab, setActiveTab] = useState('buy'); 
-    const [subTab, setSubTab] = useState('pets'); 
-    
-    const [sellPrice, setSellPrice] = useState('');
-    const [sellQuantity, setSellQuantity] = useState(1); 
-    const [selectedForSale, setSelectedForSale] = useState(null);
-    const [viewingPetDetails, setViewingPetDetails] = useState(null); 
-
-    const [isSidebarOpen, setSidebarOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filterRarity, setFilterRarity] = useState('ALL');
-
-    // --- FILTER LOGIK ---
-    const checkFilters = (item, price = null) => {
-        if (!item) return false;
-        
-        // Für Pets
-        if (item.type || item.isEgg) {
-            const displayName = item.isEgg ? 'Ei' : item.name;
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                // Suche auch bei Eiern im verschleierten Namen
-                const matchesName = displayName && displayName.toLowerCase().includes(term);
-                if (!matchesName) return false;
-            }
-            if (filterRarity !== 'ALL' && item.rarity !== filterRarity) return false;
-        }
-        // Für Ressourcen
-        else if (item.id) { 
-            if (searchTerm && !item.label.toLowerCase().includes(searchTerm.toLowerCase())) return false;
-        }
-
-        return true;
-    };
-
-    // --- LISTEN VORBEREITEN ---
-    
-    // 1. BUY LISTE
-    const buyList = useMemo(() => {
-        return listings
-            .filter(l => {
-                if (subTab === 'pets') return l.type !== 'RESOURCE' && (!l.type || l.pet);
-                if (subTab === 'items') return l.type === 'RESOURCE';
-                return false;
-            })
-            .sort((a, b) => {
-                const isMyA = a.sellerId === user.id;
-                const isMyB = b.sellerId === user.id;
-                if (isMyA && !isMyB) return -1;
-                if (!isMyA && isMyB) return 1;
-                return b.createdAt - a.createdAt;
-            });
-    }, [listings, subTab, user.id]);
-
-    // 2. SELL LISTE (PETS)
-    const sellPetsList = useMemo(() => {
-        const list = [];
-        const eggStacks = {};
-        
-        myPets.forEach(p => {
-            if (user.team.includes(p.id)) return; 
-            if (!checkFilters(p)) return;
-
-            if (p.isEgg) {
-                const stackKey = `${p.rarity}`;
-                if (!eggStacks[stackKey]) eggStacks[stackKey] = { ...p, id: `stack-${p.rarity}`, isStack: true, count: 0, pets: [] };
-                eggStacks[stackKey].count++;
-                eggStacks[stackKey].pets.push(p);
-            } else {
-                list.push(p);
-            }
-        });
-        return [...list, ...Object.values(eggStacks)];
-    }, [myPets, user.team, searchTerm, filterRarity]);
-
-    // 3. SELL LISTE (ITEMS)
-    const sellItemsList = useMemo(() => {
-        const storage = user.village?.storage || {};
-        const list = [];
-        
-        Object.entries(storage).forEach(([id, count]) => {
-            if (count <= 0) return;
-            const info = getResourceInfo(id);
-            if (info) {
-                list.push({ ...info, count, isResource: true });
-            }
-        });
-        return list;
-    }, [user.village]);
-
-
-    // --- ACTIONS ---
-    const handleSellSubmit = () => {
-        if (!selectedForSale || !sellPrice || isNaN(sellPrice) || sellPrice <= 0) return;
-        const price = parseInt(sellPrice);
-
-        if (selectedForSale.isResource) {
-             const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
-             const totalPrice = price * qty;
-             if (onSellResource) {
-                 onSellResource(selectedForSale.id, qty, totalPrice);
-             }
-        } else {
-            if (selectedForSale.isStack) {
-                const qty = Math.max(1, Math.min(sellQuantity, selectedForSale.count));
-                const petsToSell = selectedForSale.pets.slice(0, qty);
-                const totalPrice = price * qty;
-                onSell(petsToSell, totalPrice);
-            } else {
-                onSell(selectedForSale, price);
-            }
-        }
-
-        setSelectedForSale(null);
-        setSellPrice('');
-        setSellQuantity(1);
-    };
-
-    const toggleSaleSelection = (item) => {
-        if (selectedForSale?.id === item.id) { 
-            setSelectedForSale(null); setSellPrice(''); setSellQuantity(1); 
-        } else { 
-            setSelectedForSale(item); setSellPrice(''); setSellQuantity(1); 
-        }
-    };
-
-    // --- CARDS ---
-    const MarketCard = ({ listing, isOwner, onClickAction }) => {
-        const isResource = listing.type === 'RESOURCE';
-        
-        // PET CARD
-        if (!isResource) {
-            const pet = listing.pet;
-            const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
-            const isEgg = pet.isEgg;
-            const displayCount = listing.quantity || 1;
-            
-            // ÄNDERUNG: Name verschleiern auch im "Kaufen" Tab
-            const displayName = isEgg ? (t ? `${t('rarity_' + pet.rarity)} ${t('inv_egg_suffix')}` : `${rarity.label} Ei`) : pet.name;
-
-            return (
-                <div className="bg-slate-800 rounded-2xl border border-white/5 p-3 flex items-center gap-4">
-                     <div className="relative shrink-0" onClick={() => !isEgg && setViewingPetDetails({ pet, price: listing.price, isOwner, listingId: listing.id, onBuy: () => onBuy(listing.id) })}>
-                         {isEgg ? <div className="w-16 h-16 flex items-center justify-center"><Egg className={`w-10 h-10 ${rarity.color}`} /></div> : <PetAvatar pet={pet} className="w-16 h-16" />}
-                         {displayCount > 1 && <div className="absolute -top-1 -right-1 bg-white text-black font-bold text-xs px-1.5 rounded">x{displayCount}</div>}
-                     </div>
-                     <div className="flex-1">
-                         <div className={`font-black text-sm ${rarity.color}`}>{displayName}</div>
-                         <div className="text-xs text-slate-500">{isOwner ? "Dein Angebot" : listing.sellerName}</div>
-                     </div>
-                     {isOwner ? (
-                        <button onClick={() => onRemoveListing(listing.id)} className="bg-red-600 p-2 rounded-xl text-white"><Trash2 className="w-4 h-4"/></button>
-                     ) : (
-                        <button onClick={() => onBuy(listing.id)} className="bg-yellow-500 px-3 py-2 rounded-xl text-black font-bold text-xs flex items-center gap-1"><Coins className="w-3 h-3"/> {listing.price}</button>
-                     )}
-                </div>
-            );
-        } 
-        
-        // RESOURCE CARD
-        const resInfo = getResourceInfo(listing.itemId);
-        if (!resInfo) return null; 
-
-        return (
-            <div className="bg-slate-800 rounded-2xl border border-white/5 p-3 flex items-center gap-4">
-                 <div className={`w-16 h-16 rounded-xl bg-slate-900 flex items-center justify-center ${resInfo.color} font-bold text-lg border border-white/10`}>
-                     <Box className="w-8 h-8" />
-                 </div>
-                 <div className="flex-1">
-                     <div className={`font-black text-sm ${resInfo.color}`}>{t ? t('item_' + resInfo.id) : resInfo.label}</div>
-                     <div className="text-xs text-slate-400">Menge: {listing.amount}</div>
-                     <div className="text-xs text-slate-600">{isOwner ? "Dein Angebot" : listing.sellerName}</div>
-                 </div>
-                 {isOwner ? (
-                    <button onClick={() => onRemoveListing(listing.id)} className="bg-red-600 p-2 rounded-xl text-white"><Trash2 className="w-4 h-4"/></button>
-                 ) : (
-                    <button onClick={() => onBuy(listing.id)} className="bg-yellow-500 px-3 py-2 rounded-xl text-black font-bold text-xs flex items-center gap-1"><Coins className="w-3 h-3"/> {listing.price}</button>
-                 )}
-            </div>
-        );
-    };
-
-    // SELL CARD (Selectable)
-    const SellCard = ({ item, isSelected }) => {
-        // RESOURCE
-        if (item.isResource) {
-            return (
-                <div onClick={() => toggleSaleSelection(item)} className={`bg-slate-800 p-3 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${isSelected ? 'border-green-500' : 'border-white/5'}`}>
-                    <div className={`w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center ${item.color}`}><Pickaxe className="w-6 h-6"/></div>
-                    <div className="flex-1">
-                        <div className={`font-bold ${item.color}`}>{t ? t('item_' + item.id) : item.label}</div>
-                        <div className="text-xs text-slate-400">Besitz: {item.count}</div>
-                    </div>
-                    {isSelected && <div className="bg-green-500 text-black p-1 rounded-full"><DollarSign className="w-4 h-4"/></div>}
-                </div>
-            );
-        }
-        // PET
-        const rarity = RARITIES[item.rarity];
-        
-        // ÄNDERUNG: Name verschleiern beim Verkauf
-        const displayName = item.isEgg ? (t ? `${t('rarity_' + item.rarity)} ${t('inv_egg_suffix')}` : `${rarity.label} Ei`) : (item.name || (t ? t('rarity_' + item.rarity) : rarity.label));
-
-        return (
-            <div onClick={() => toggleSaleSelection(item)} className={`bg-slate-800 p-3 rounded-2xl border-2 transition-all flex items-center gap-4 cursor-pointer ${isSelected ? 'border-green-500' : 'border-white/5'}`}>
-                {item.isEgg ? <Egg className={`w-12 h-12 ${rarity.color}`}/> : <PetAvatar pet={item} className="w-12 h-12"/>}
-                <div className="flex-1">
-                    <div className={`font-bold ${rarity.color}`}>{displayName}</div>
-                    <div className="text-xs text-slate-400">{item.isStack ? `x${item.count}` : `Lvl ${item.level}`}</div>
-                </div>
-                {isSelected && <div className="bg-green-500 text-black p-1 rounded-full"><DollarSign className="w-4 h-4"/></div>}
-            </div>
-        );
-    };
+export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSell, onSellResource, onRemoveListing, myPets, t }) {
+    const {
+        activeTab, setActiveTab, subTab, setSubTab,
+        sellPrice, setSellPrice, sellQuantity, setSellQuantity,
+        selectedForSale, viewingPetDetails, setViewingPetDetails,
+        buyList, sellPetsList, sellItemsList,
+        handleSellSubmit, toggleSaleSelection
+    } = useMarketplace(user, listings, myPets, onSell, onSellResource);
 
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
             {viewingPetDetails && (<MarketDetailModal pet={viewingPetDetails.pet} price={viewingPetDetails.price} isOwner={viewingPetDetails.isOwner} onBuy={viewingPetDetails.onBuy} onRemove={() => { onRemoveListing(viewingPetDetails.listingId); setViewingPetDetails(null); }} onClose={() => setViewingPetDetails(null)} />)}
-            
+
             {/* HEADER & TABS */}
             <div className="px-4 pt-4 pb-2">
                 <div className="flex items-center justify-between mb-4">
-                     <h1 className="text-2xl font-black italic text-white">MARKT</h1>
-                     <button onClick={onBack} className="p-2 bg-slate-800 rounded-full"><X className="w-5 h-5 text-white" /></button>
+                    <h1 className="text-2xl font-black italic text-white">MARKT</h1>
+                    <button onClick={onBack} className="p-2 bg-slate-800 rounded-full"><X className="w-5 h-5 text-white" /></button>
                 </div>
-                
+
                 {/* MAIN TABS (BUY / SELL) */}
                 <div className="flex p-1 bg-slate-800 rounded-xl border border-white/5 mb-3">
                     <button onClick={() => setActiveTab('buy')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'buy' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500'}`}>KAUFEN</button>
@@ -255,11 +41,10 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
             {/* LISTE */}
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide pt-2">
-                
                 {activeTab === 'buy' && (
                     <div className="space-y-3">
                         {buyList.length === 0 ? <div className="text-center text-slate-500 py-10">Nichts gefunden.</div> : buyList.map(l => (
-                            <MarketCard key={l.id} listing={l} isOwner={l.sellerId === user.id} onClickAction={() => onBuy(l.id)} />
+                            <MarketCard key={l.id} listing={l} isOwner={l.sellerId === user.id} onClickAction={() => onBuy(l.id)} onRemoveListing={onRemoveListing} setViewingPetDetails={setViewingPetDetails} t={t} />
                         ))}
                     </div>
                 )}
@@ -267,83 +52,14 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
                 {activeTab === 'sell' && (
                     <div className="space-y-3">
                         <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-xl flex items-center gap-3 mb-2"><Info className="w-5 h-5 text-blue-400 shrink-0" /><p className="text-xs text-blue-200">Gebühr: 100 Gold pro Angebot.</p></div>
-                        
-                        {subTab === 'pets' && sellPetsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} />)}
-                        {subTab === 'items' && sellItemsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} />)}
-
-                        {/* INPUT PANEL */}
-                        {selectedForSale && (
-                            <div className="fixed bottom-0 left-0 w-full bg-slate-900 border-t border-white/10 p-4 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] animate-in slide-in-from-bottom duration-300">
-                                <div className="flex flex-col gap-3 max-w-md mx-auto">
-                                    <div className="flex justify-between text-sm font-bold text-white items-center">
-                                        <span>Verkaufe: <span className={selectedForSale.color || 'text-white'}>
-                                            {selectedForSale.isResource 
-                                                ? (t ? t('item_' + selectedForSale.id) : selectedForSale.label)
-                                                : (selectedForSale.isEgg 
-                                                    ? (t ? `${t('rarity_' + selectedForSale.rarity)} ${t('inv_egg_suffix')}` : `${RARITIES[selectedForSale.rarity].label} Ei`)
-                                                    : (selectedForSale.name || selectedForSale.label))
-                                            }
-                                        </span></span>
-                                        
-                                        {(selectedForSale.isStack || selectedForSale.isResource) && (
-                                            <div className="flex items-center gap-2 bg-slate-800 rounded-xl p-1 border border-white/10">
-                                                <button 
-                                                    onClick={() => setSellQuantity(Math.max(1, (parseInt(sellQuantity) || 0) - 1))} 
-                                                    className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white"
-                                                >
-                                                    <Minus className="w-4 h-4"/>
-                                                </button>
-                                                
-                                                <input
-                                                    type="number"
-                                                    value={sellQuantity}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value;
-                                                        if (val === '') {
-                                                            setSellQuantity('');
-                                                        } else {
-                                                            const num = parseInt(val);
-                                                            if (!isNaN(num)) setSellQuantity(num);
-                                                        }
-                                                    }}
-                                                    onBlur={() => {
-                                                        let val = parseInt(sellQuantity);
-                                                        if (isNaN(val) || val < 1) val = 1;
-                                                        if (val > selectedForSale.count) val = selectedForSale.count;
-                                                        setSellQuantity(val);
-                                                    }}
-                                                    className="w-12 bg-transparent text-center font-bold text-white outline-none appearance-none"
-                                                />
-
-                                                <button 
-                                                    onClick={() => setSellQuantity(Math.min(selectedForSale.count, (parseInt(sellQuantity) || 0) + 1))} 
-                                                    className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white"
-                                                >
-                                                    <Plus className="w-4 h-4"/>
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <input 
-                                                type="number" 
-                                                placeholder="Preis (Gesamt)" 
-                                                value={sellPrice} 
-                                                onChange={(e) => setSellPrice(e.target.value)} 
-                                                className="bg-slate-800 border border-white/10 rounded-xl p-3 pl-4 text-white font-bold w-full outline-none focus:border-green-500 transition-colors" 
-                                                autoFocus 
-                                            />
-                                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">GOLD</span>
-                                        </div>
-                                        <button onClick={handleSellSubmit} className="bg-green-600 hover:bg-green-500 text-white font-black px-6 rounded-xl shadow-lg active:scale-95 transition-all">OK</button>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                        {subTab === 'pets' && sellPetsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} onToggle={toggleSaleSelection} t={t} />)}
+                        {subTab === 'items' && sellItemsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} onToggle={toggleSaleSelection} t={t} />)}
+                        <MarketSellInput
+                            selectedForSale={selectedForSale} sellPrice={sellPrice} setSellPrice={setSellPrice}
+                            sellQuantity={sellQuantity} setSellQuantity={setSellQuantity} handleSellSubmit={handleSellSubmit} t={t}
+                        />
                     </div>
                 )}
-
             </div>
         </div>
     );

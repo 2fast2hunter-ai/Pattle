@@ -2,7 +2,8 @@ import { updatePetInDB, updateUser } from '../../../utils/db';
 
 export const handleReduceCooldown = async (state, showNotification, petId, type) => {
     const { user, myPets } = state;
-    if (!user || user.adTickets < 1) {
+    const ticketIndex = user.inventory.findIndex(i => i.type === 'TICKET');
+    if (ticketIndex === -1) {
         showNotification("Keine Tickets!", "error");
         return;
     }
@@ -17,7 +18,10 @@ export const handleReduceCooldown = async (state, showNotification, petId, type)
         updates.breedingCooldown = Math.max(Date.now(), pet.breedingCooldown - (30 * 60 * 1000)); // -30 Min
     }
 
+    const newInventory = [...user.inventory];
+    newInventory.splice(ticketIndex, 1);
+
     await updatePetInDB(petId, updates);
-    await updateUser(user.id, { adTickets: user.adTickets - 1 });
+    await updateUser(user.id, { inventory: newInventory });
     showNotification("Zeit verkürzt!", "success");
 };

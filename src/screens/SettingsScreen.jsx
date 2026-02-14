@@ -1,8 +1,8 @@
 import React from 'react';
-import { ArrowLeft, Globe, LogOut, Music, Volume2 } from 'lucide-react';
+import { ArrowLeft, Globe, LogOut, Music, Volume2, Scale, ChevronRight } from 'lucide-react';
 import { playSound } from '../utils/soundManager';
 
-export default function SettingsScreen({ settings, setSettings, onLogout, onBack, t }) {
+export default function SettingsScreen({ settings, setSettings, onLogout, onBack, onNavigate, t }) {
     const currentSettings = settings || {};
     const language = currentSettings.language || 'de'; // Standard: Deutsch
     const musicEnabled = currentSettings.musicEnabled !== false; // Default: true
@@ -108,6 +108,23 @@ export default function SettingsScreen({ settings, setSettings, onLogout, onBack
                                 )}
                             </button>
                         ))}
+                    </div>
+                </div>
+
+                {/* RECHTLICHES */}
+                <div className="space-y-3">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2 px-1">
+                        <Scale className="w-4 h-4" /> {t ? t('settings_legal') : 'Rechtliches'}
+                    </h3>
+                    <div className="grid grid-cols-1 gap-2">
+                        <button onClick={() => onNavigate('legal-imprint')} className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-white/5 hover:bg-slate-800 transition-all active:scale-[0.98]">
+                            <span className="font-bold text-white text-sm">{t ? t('legal_imprint') : 'Impressum'}</span>
+                            <ChevronRight className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button onClick={() => onNavigate('legal-privacy')} className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-white/5 hover:bg-slate-800 transition-all active:scale-[0.98]">
+                            <span className="font-bold text-white text-sm">{t ? t('legal_privacy') : 'Datenschutz'}</span>
+                            <ChevronRight className="w-4 h-4 text-slate-500" />
+                        </button>
                     </div>
                 </div>
 

@@ -9,7 +9,10 @@ export const TRANSLATIONS = {
         settings_sound: "Soundeffekte",
         settings_on: "AN",
         settings_off: "AUS",
-        
+        settings_legal: "RECHTLICHES",
+        legal_imprint: "Impressum",
+        legal_privacy: "Datenschutz",
+
         // Hauptmenü (Vorbereitung für den nächsten Schritt)
         menu_play: "KAMPF",
         menu_collection: "SAMMLUNG",
@@ -23,7 +26,7 @@ export const TRANSLATIONS = {
         village_title: "DORF",
         village_collect: "EINSAMMELN",
         shop_title: "ITEM SHOP",
-        
+
         // Common
         common_level: "Level",
         common_xp: "XP",
@@ -38,6 +41,7 @@ export const TRANSLATIONS = {
         village_inactive: "Inaktiv",
         village_tickets: "Tickets",
         village_rate: "Rate/h",
+        village_cycle: "Produktions-Zyklus",
         village_paused: "Pausiert",
         village_lvl: "Lvl",
         village_milestones: "Meilensteine",
@@ -85,7 +89,7 @@ export const TRANSLATIONS = {
         arena_leaderboard_btn: "RANGLISTE",
         arena_auto_btn: "AUTO-KAMPF",
         arena_tower_btn: "TURM",
-        
+
         // PetHub (Sammlung)
         pethub_title: "PET HUB",
         pethub_inventory_btn: "SAMMLUNG",
@@ -96,7 +100,7 @@ export const TRANSLATIONS = {
         pethub_items_desc: "Eier, Items & Tickets",
         pethub_breed_desc: "Neue Arten erschaffen",
         pethub_hatchery_desc: "Eier ausbrüten",
-        
+
         // Quests
         quests_title: "AUFGABEN",
         quests_daily_title: "Tägliche Missionen",
@@ -113,7 +117,7 @@ export const TRANSLATIONS = {
         quest_bonus_desc: "Erledige alle Aufgaben für den Bonus!",
         quests_in_progress: "In Arbeit",
         quests_progress_done: "FERTIG",
-        
+
         reward_coins: "Münzen",
         reward_gems: "Edelsteine",
         reward_xp: "XP",
@@ -176,6 +180,7 @@ export const TRANSLATIONS = {
         box_PREMIUM: "Premium Box",
         box_MASTER: "Meister Box",
         box_TYPE_DAILY: "Elementar-Truhe",
+        box_STARTER: "Starter Box",
         inv_egg_suffix: "Ei",
 
         // Consumables
@@ -273,6 +278,20 @@ export const TRANSLATIONS = {
         arena_stage: "Stufe",
         arena_team_desc: "Verwalten",
         arena_leaderboard_desc: "Top Spieler",
+        arena_gauntlet_btn: "Gauntlet",
+        arena_gauntlet_desc: "Endlos Survival",
+
+        // Gauntlet
+        gauntlet_finished: "GAUNTLET BEENDET",
+        gauntlet_over: "Keine kampffähigen Pets mehr",
+        gauntlet_stage: "Erreichte Stufe",
+        gauntlet_score: "Score",
+        gauntlet_continue: "Zur Übersicht",
+        gauntlet_round_start_log: "Gauntlet Runde {round} beginnt!",
+        gauntlet_round_start_notif: "Sieg! Runde {round} startet...",
+        gauntlet_rewards: "Belohnungen",
+        gauntlet_highscore_notif: "Neuer Highscore! {score} Punkte!",
+        battle_next_round: "Nächste Runde...",
 
         // Inventory Headers & Details
         inv_consumables: "Verbrauchsgüter",
@@ -290,7 +309,9 @@ export const TRANSLATIONS = {
         inv_incubate: "INKUBIEREN",
         inv_open: "ÖFFNEN",
         inv_use: "WÄHLEN",
-        inv_magic_item_desc: "Ein magischer Gegenstand."
+        inv_magic_item_desc: "Ein magischer Gegenstand.",
+        inv_status_ready: "BEREIT...",
+        inv_status_opening: "ÖFFNEN"
     },
     en: {
         settings_title: "SETTINGS",
@@ -300,7 +321,10 @@ export const TRANSLATIONS = {
         settings_sound: "Sound Effects",
         settings_on: "ON",
         settings_off: "OFF",
-        
+        settings_legal: "LEGAL",
+        legal_imprint: "Imprint",
+        legal_privacy: "Privacy Policy",
+
         menu_play: "BATTLE",
         menu_collection: "COLLECTION",
         menu_shop: "SHOP",
@@ -544,6 +568,20 @@ export const TRANSLATIONS = {
         arena_stage: "Stage",
         arena_team_desc: "Manage",
         arena_leaderboard_desc: "Top Players",
+        arena_gauntlet_btn: "Gauntlet",
+        arena_gauntlet_desc: "Endless Survival",
+
+        // Gauntlet
+        gauntlet_finished: "GAUNTLET FINISHED",
+        gauntlet_over: "No more capable pets",
+        gauntlet_stage: "Stage Reached",
+        gauntlet_score: "Score",
+        gauntlet_continue: "Overview",
+        gauntlet_round_start_log: "Gauntlet Round {round} begins!",
+        gauntlet_round_start_notif: "Victory! Round {round} starting...",
+        gauntlet_rewards: "Rewards",
+        gauntlet_highscore_notif: "New Highscore! {score} points!",
+        battle_next_round: "Next Round...",
 
         inv_consumables: "Consumables",
         inv_materials: "Materials",
@@ -560,7 +598,9 @@ export const TRANSLATIONS = {
         inv_incubate: "INCUBATE",
         inv_open: "OPEN",
         inv_use: "SELECT",
-        inv_magic_item_desc: "A magical item."
+        inv_magic_item_desc: "A magical item.",
+        inv_status_ready: "READY...",
+        inv_status_opening: "OPENING"
     },
     zh: {
         settings_title: "设置",
@@ -570,7 +610,10 @@ export const TRANSLATIONS = {
         settings_sound: "音效",
         settings_on: "开",
         settings_off: "关",
-        
+        settings_legal: "法律信息",
+        legal_imprint: "版本说明",
+        legal_privacy: "隐私政策",
+
         menu_play: "战斗",
         menu_collection: "收藏",
         menu_shop: "商店",
@@ -693,6 +736,8 @@ export const TRANSLATIONS = {
         battle_log_crit: "暴击！ {damage}",
         battle_log_extra_turn: "⚡ {attacker} 速度极快！额外攻击！",
         battle_log_defeated: "💀 {defender} 被击败！",
+        inv_status_ready: "准备...",
+        inv_status_opening: "打开中"
     },
     fr: {
         settings_title: "PARAMÈTRES",
@@ -702,7 +747,10 @@ export const TRANSLATIONS = {
         settings_sound: "Effets sonores",
         settings_on: "ON",
         settings_off: "OFF",
-        
+        settings_legal: "LÉGAL",
+        legal_imprint: "Mentions légales",
+        legal_privacy: "Confidentialité",
+
         menu_play: "COMBAT",
         menu_collection: "COLLECTION",
         menu_shop: "BOUTIQUE",
@@ -825,6 +873,8 @@ export const TRANSLATIONS = {
         battle_log_crit: "CRITIQUE ! {damage}",
         battle_log_extra_turn: "⚡ {attacker} est si rapide ! Tour supplémentaire !",
         battle_log_defeated: "💀 {defender} vaincu !",
+        inv_status_ready: "PRÊT...",
+        inv_status_opening: "OUVERTURE"
     },
     es: {
         settings_title: "AJUSTES",
@@ -834,7 +884,10 @@ export const TRANSLATIONS = {
         settings_sound: "Efectos de sonido",
         settings_on: "ENCENDIDO",
         settings_off: "APAGADO",
-        
+        settings_legal: "LEGAL",
+        legal_imprint: "Aviso legal",
+        legal_privacy: "Privacidad",
+
         menu_play: "BATALLA",
         menu_collection: "COLECCIÓN",
         menu_shop: "TIENDA",
@@ -923,7 +976,9 @@ export const TRANSLATIONS = {
         quests_completed: "Completado",
         quests_tab_daily: "Diario",
         quests_tab_weekly: "Semanal",
-        quests_tab_monthly: "Mensual"
+        quests_tab_monthly: "Mensuel",
+        inv_status_ready: "LISTO...",
+        inv_status_opening: "ABRIENDO"
     }
 };
 

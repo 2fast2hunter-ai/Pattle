@@ -1,4 +1,13 @@
 export const LOOTBOXES = {
+    STARTER: {
+        id: 'STARTER',
+        label: 'Starter Box',
+        cost: 0,
+        currency: 'COINS',
+        drops: {
+            UNCOMMON: 100
+        }
+    },
     DAILY: {
         id: 'DAILY',
         label: 'Daily Box',
@@ -8,7 +17,7 @@ export const LOOTBOXES = {
             EPIC: 1.52,
             RARE: 10.10,
             UNCOMMON: 20.20,
-            COMMON: 68.16
+            COMMON: 68.18
         }
     },
     PREMIUM: {

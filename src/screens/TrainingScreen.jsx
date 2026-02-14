@@ -9,12 +9,12 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
     const workers = user?.village?.workers?.training || [null, null, null, null, null];
     const villageLevel = user?.village?.level || 1;
     const maxSlots = 5;
-    
+
     // --- AUTOMATISCHER ZYKLUS & XP UPDATE ---
     const [progress, setProgress] = React.useState(0);
     const [isCollecting, setIsCollecting] = React.useState(false);
     const buildingLevel = user?.village?.buildings?.training || 1;
-    
+
     // Rate berechnen (Items pro Sekunde)
     const rate = productionRates ? productionRates('training', buildingLevel, workers) : 0;
     const isIdleActive = (user?.village?.idleTimeExpiresAt || 0) > Date.now();
@@ -27,37 +27,62 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
         setIsCollecting(false);
     }, [user?.village?.resources?.training, user?.village?.lastCollectionTime]);
 
-    // 2. Lokaler Timer für flüssige Bar & Auto-Collect
+    // 2. Lokaler Timer für flüssige Bar (Synchronisiert mit 10s Zyklus)
     React.useEffect(() => {
-        if (!isIdleActive || rate <= 0) return;
+        if (!isIdleActive || rate <= 0) {
+            setProgress(0);
+            return;
+        }
 
-        const interval = setInterval(() => {
-            setProgress(prev => {
-                // Rate ist pro Sekunde, Interval ist 100ms (0.1s)
-                const next = prev + (rate * 0.1);
-                return next;
-            });
-        }, 100);
+        const updateProgress = () => {
+            const now = Date.now();
+            const cycleDuration = 10000; // 10s fix
+            const cyclePos = (now % cycleDuration) / cycleDuration;
+            setProgress(cyclePos);
+        };
+
+        const interval = setInterval(updateProgress, 100);
+        updateProgress(); // Sofort update
 
         return () => clearInterval(interval);
     }, [isIdleActive, rate]);
 
     // 3. Überwachen des Fortschritts für Auto-Collect
+    // Wir nutzen hier einen Tick-Check, da Progress jetzt springt (0.9 -> 0.0)
     React.useEffect(() => {
-        if (progress >= 1 && !isCollecting) {
-            // Zyklus fertig -> XP gutschreiben (Silent Collect)
-            setIsCollecting(true);
-            onCollect(true, 'training'); // Nur Training einsammeln!
-            playSound('pop'); // Leiser Sound für XP-Gewinn
-        }
-    }, [progress, isCollecting, onCollect]);
+        if (!isIdleActive || rate <= 0) return;
+
+        const checkCollect = setInterval(() => {
+            const now = Date.now();
+            const cycleDuration = 10000;
+            const cyclePos = (now % cycleDuration) / cycleDuration;
+
+            // Wenn Zyklus kurz vor Ende (z.B. > 9.8s) und noch nicht collected
+            if (cyclePos > 0.95 && !isCollectingRef.current) {
+                isCollectingRef.current = true;
+                onCollect(true, 'training');
+                playSound('pop');
+            }
+            // Reset Lock nach Zyklus-Neustart
+            if (cyclePos < 0.1 && isCollectingRef.current) {
+                isCollectingRef.current = false;
+            }
+        }, 500);
+
+        return () => clearInterval(checkCollect);
+    }, [isIdleActive, rate, onCollect]);
+
+    // Ref für Collect Lock
+    const isCollectingRef = React.useRef(false);
+
+
 
     return (
         <div className="h-full flex flex-col bg-slate-950 animate-in fade-in slide-in-from-right duration-300">
-            
+
             {/* HEADER */}
             <div className="relative flex items-center justify-center p-4 shrink-0 border-b border-white/5">
-                <button 
+                <button
                     onClick={onBack}
                     className="absolute left-4 p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5"
                 >
@@ -116,7 +141,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
 
                     // Slots werden basierend auf dem Dorf-Level freigeschaltet (wie in useVillageActions definiert)
                     const isLocked = index >= villageLevel;
-                    
+
                     return (
                         <button
                             key={index}
@@ -124,10 +149,10 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                             onClick={() => onToggleTrainingPet && onToggleTrainingPet(index)}
                             className={`
                                 w-full relative h-20 rounded-2xl border flex items-center px-4 gap-4 transition-all text-left group
-                                ${isLocked 
-                                    ? 'bg-slate-900/40 border-slate-800 opacity-50 cursor-not-allowed' 
-                                    : petId 
-                                        ? 'bg-slate-800 border-orange-500/30 hover:border-orange-500/50' 
+                                ${isLocked
+                                    ? 'bg-slate-900/40 border-slate-800 opacity-50 cursor-not-allowed'
+                                    : petId
+                                        ? 'bg-slate-800 border-orange-500/30 hover:border-orange-500/50'
                                         : 'bg-slate-800 border-white/5 hover:bg-slate-750 hover:border-white/20 active:scale-[0.98]'
                                 }
                             `}
@@ -135,10 +160,10 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                             {/* Slot Number */}
                             <div className={`
                                 w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 transition-colors
-                                ${isLocked 
-                                    ? 'bg-slate-900 text-slate-700' 
-                                    : petId 
-                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' 
+                                ${isLocked
+                                    ? 'bg-slate-900 text-slate-700'
+                                    : petId
+                                        ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
                                         : 'bg-slate-900 text-slate-500 group-hover:bg-slate-700 group-hover:text-white'
                                 }
                             `}>
@@ -158,13 +183,13 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                                             <span className="text-white font-bold text-sm truncate">{pet.name}</span>
                                             <span className="text-xs font-black text-orange-400">{t ? t('village_lvl') : 'Lvl'} {pet.level}</span>
                                         </div>
-                                        
+
                                         {/* XP Bar */}
                                         <div className="mt-1.5 w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-white/5 relative">
                                             <div className="absolute inset-0 bg-orange-500/20"></div>
                                             <div className="h-full bg-orange-500 transition-all duration-500" style={{ width: `${xpPercent}%` }}></div>
                                         </div>
-                                        
+
                                         <div className="text-[9px] text-slate-400 font-bold mt-0.5 text-right">{Math.floor(pet.xp)} / {maxXp} {t ? t('common_xp') : 'XP'}</div>
                                     </div>
                                 ) : (
@@ -179,8 +204,8 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                             {!isLocked && (
                                 <div className={`
                                     w-8 h-8 rounded-full flex items-center justify-center border transition-all
-                                    ${petId 
-                                        ? 'bg-red-500/10 border-red-500/20 text-red-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500' 
+                                    ${petId
+                                        ? 'bg-red-500/10 border-red-500/20 text-red-400 group-hover:bg-red-500 group-hover:text-white group-hover:border-red-500'
                                         : 'bg-white/5 border-white/10 text-slate-400 group-hover:bg-white group-hover:text-slate-900'
                                     }
                                 `}>

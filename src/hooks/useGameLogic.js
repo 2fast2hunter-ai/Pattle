@@ -102,6 +102,12 @@ export function useGameLogic() {
             }
             
             authCheckComplete.current = true;
+            
+            // FIX: Wenn Login erfolgreich war (wir haben Daten) und wir noch im Auth-Screen sind -> Weiterleiten
+            if (userData && stateRef.current.currentView === 'auth' && !stateRef.current.authLoading) {
+                stateRef.current.setCurrentView('menu');
+            }
+            
             attemptFinishLoading();
 
             checkAndResetQuests(userData).catch(e => console.error("Quest Error:", e));

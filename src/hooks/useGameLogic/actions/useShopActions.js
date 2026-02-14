@@ -9,9 +9,9 @@ import { auth } from '../../../firebase';
 export function useShopActions(state, showNotification) {
     const { user } = state;
 
-    const buyLootbox = (boxType, singleCost, currency, quantity = 1) => {
-        if (!user) return; 
-        
+    const buyLootbox = async (boxType, singleCost, currency, quantity = 1) => {
+        if (!user) return;
+
         if (boxType === 'DAILY') {
             const today = new Date().toDateString();
             if (user.lastDailyBoxClaim === today) {
@@ -19,7 +19,7 @@ export function useShopActions(state, showNotification) {
                 return;
             }
             const newInv = [...(user.inventory || []), { id: `box_${Date.now()}`, type: 'LOOTBOX', variant: boxType }];
-            updateUser(user.id, { inventory: newInv, lastDailyBoxClaim: today });
+            await updateUser(user.id, { inventory: newInv, lastDailyBoxClaim: today });
             showNotification(`${LOOTBOXES.DAILY.label} erhalten!`, 'success');
             return;
         }
@@ -28,58 +28,59 @@ export function useShopActions(state, showNotification) {
 
         if (currency === 'COINS') {
             if (user.coins < totalCost) { showNotification("Zu wenig Münzen!", 'error'); return; }
-            
+
             const newItems = [];
-            for(let i = 0; i < quantity; i++) {
+            for (let i = 0; i < quantity; i++) {
                 newItems.push({ id: `box_${Date.now()}_${i}`, type: 'LOOTBOX', variant: boxType });
             }
 
             const newInv = [...(user.inventory || []), ...newItems];
-            updateUser(user.id, { coins: user.coins - totalCost, inventory: newInv });
-            trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, totalCost);
+            await updateUser(user.id, { coins: user.coins - totalCost, inventory: newInv });
+            // Wait slightly to ensuring DB consistency before tracking quest which might read/write user again
+            setTimeout(() => trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, totalCost), 500);
 
         } else {
             if (user.gems < totalCost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
-            
+
             const newItems = [];
-            for(let i = 0; i < quantity; i++) {
+            for (let i = 0; i < quantity; i++) {
                 newItems.push({ id: `box_${Date.now()}_${i}`, type: 'LOOTBOX', variant: boxType });
             }
 
             const newInv = [...(user.inventory || []), ...newItems];
-            updateUser(user.id, { gems: user.gems - totalCost, inventory: newInv });
+            await updateUser(user.id, { gems: user.gems - totalCost, inventory: newInv });
         }
-        
+
         let boxLabel = boxType;
         if (LOOTBOXES[boxType]) boxLabel = LOOTBOXES[boxType].label;
         else if (boxType === 'TYPE_DAILY') boxLabel = 'Elementar-Truhe';
-        
+
         showNotification(`${quantity}x ${boxLabel} gekauft!`, 'success');
     };
 
     const buyTickets = (item) => {
-        if (!user) return; 
+        if (!user) return;
         let cost = item.costAmount;
         let currency = item.costCurrency;
-        
+
         if (currency === 'COINS' && (user.coins || 0) < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
         if (currency === 'GEMS' && (user.gems || 0) < cost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
-        
+
         const newInventory = [...(user.inventory || [])];
         for (let i = 0; i < item.tickets; i++) { newInventory.push({ id: `ticket_${Date.now()}_${i}`, type: 'TICKET', variant: 'BREED' }); }
-        
+
         const updateData = {};
-        if (currency === 'COINS') { updateData.coins = user.coins - cost; trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost); } 
+        if (currency === 'COINS') { updateData.coins = user.coins - cost; trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, cost); }
         else if (currency === 'GEMS') { updateData.gems = user.gems - cost; }
-        
+
         updateData.inventory = newInventory;
-        updateUser(user.id, updateData); 
+        updateUser(user.id, updateData);
         showNotification(`${item.tickets} Zucht-Tickets gekauft und im Inventar abgelegt!`, 'success');
     };
 
     const watchAdForReward = async (reward) => {
         if (!user || !reward) return;
-        
+
         const currentClaims = user.adClaims || {};
         let updateData = {
             adClaims: {
@@ -88,7 +89,7 @@ export function useShopActions(state, showNotification) {
             },
             adTickets: (user.adTickets || 0) + 1
         };
-        
+
         if (reward.type === 'GEMS') {
             updateData.gems = (user.gems || 0) + reward.amount;
         } else if (reward.type === 'COINS') {
@@ -109,7 +110,7 @@ export function useShopActions(state, showNotification) {
     // --- NEU: GRATIS BELOHNUNG ABHOLEN ---
     const claimTimedReward = async (rewardId) => {
         if (!user) return;
-        
+
         const rewardConfig = TIMED_REWARDS.find(r => r.id === rewardId);
         if (!rewardConfig) return;
 
@@ -157,11 +158,42 @@ export function useShopActions(state, showNotification) {
             // Wir nutzen getApp(), um sicherzustellen, dass die Instanz korrekt ist
             const functions = getFunctions(getApp());
             const openLootboxFn = httpsCallable(functions, 'openLootbox');
-            
-            showNotification("Öffne Box auf dem Server...", "info");
-            
-            const result = await openLootboxFn({ boxId, boxVariant });
-            
+
+            showNotification("Öffne Box...", "info");
+
+            // DATE-MATCHING LOGIC (Client-Side Fix)
+            let finalBoxVariant = boxVariant;
+            if (boxVariant === 'TYPE_DAILY') {
+                const dayIndex = new Date().getDay();
+                const schedule = {
+                    1: { start: 0, count: 3 }, // Mo (Fire, Water, Wind)
+                    2: { start: 3, count: 3 }, // Di (Earth, Lightning, Ice)
+                    3: { start: 6, count: 3 }, // Mi (Nature, Poison, Metal)
+                    4: { start: 9, count: 3 }, // Do (Light, Dark, Ghost)
+                    5: { start: 12, count: 4 }, // Fr (Psychic, Fighting, Flying, Bug)
+                    6: { start: 16, count: 4 }, // Sa (Dragon, Fairy, Magic, Tech)
+                    0: { start: 20, count: 4 }  // So (Cosmic, Chaos, Void, Crystal)
+                };
+
+                // Fallback für ungültige Tage/Daten
+                const config = schedule[dayIndex] || schedule[1];
+
+                // Wir nutzen die globalen TYPES aus gameData
+                // Da wir hier nur Keys brauchen, ist es wichtig, dass TYPES keys sind oder wir sie extracten
+                // TYPES in gameData ist ein Object { FIRE: {...}, ... }
+                const typeKeys = Object.keys(TYPES);
+
+                const dailyTypes = typeKeys.slice(config.start, config.start + config.count);
+
+                if (dailyTypes.length > 0) {
+                    const randomType = dailyTypes[Math.floor(Math.random() * dailyTypes.length)];
+                    finalBoxVariant = `ELEMENTAL_${randomType}`;
+                    console.log(`[ShopActions] Resolved TYPE_DAILY to ${finalBoxVariant}`);
+                }
+            }
+
+            const result = await openLootboxFn({ boxId, boxVariant: finalBoxVariant });
+
             if (result.data.success) {
                 return result.data.pet;
             } else {

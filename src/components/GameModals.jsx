@@ -36,7 +36,7 @@ export function LevelUpModal({ level, onClose }) {
   );
 }
 
-export function LootboxModal({ pet, onClose }) {
+export function LootboxModal({ pet, onClose, t }) {
   // Phase: 0 = shaking, 1 = cycling, 2 = reveal
   const [phase, setPhase] = useState(0);
   const [cycleRarity, setCycleRarity] = useState(RARITIES.COMMON);
@@ -104,7 +104,9 @@ export function LootboxModal({ pet, onClose }) {
                 <div className="animate-shake-hard">
                     <Package className="w-48 h-48 text-yellow-400 drop-shadow-[0_0_50px_rgba(234,179,8,0.8)] brightness-125" />
                 </div>
-                <p className="text-white mt-12 font-black text-2xl tracking-[0.5em] animate-pulse">ÖFFNE...</p>
+                <p className="text-white mt-12 font-black text-2xl tracking-[0.5em] animate-pulse">
+                    {t ? t('inv_status_opening') : 'ÖFFNEN'}
+                </p>
             </div>
         )}
 

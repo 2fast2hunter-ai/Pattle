@@ -2,16 +2,17 @@ const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
 
 if (admin.apps.length === 0) {
-  admin.initializeApp();
+    admin.initializeApp();
 }
 
 // --- KONFIGURATION ---
 const LOOTBOX_ODDS = {
-    DAILY: { COMMON: 68, UNCOMMON: 20, RARE: 10, EPIC: 2 },
-    PREMIUM: { COMMON: 72, UNCOMMON: 20, RARE: 5, EPIC: 2, LEGENDARY: 1 },
-    MASTER: { COMMON: 28, UNCOMMON: 45, RARE: 15, EPIC: 8, LEGENDARY: 3, MYTHIC: 1 },
-    TYPE_DAILY: { COMMON: 28, UNCOMMON: 45, RARE: 15, EPIC: 8, LEGENDARY: 3, MYTHIC: 1 },
-    DIVINE: { EPIC: 58, LEGENDARY: 20, MYTHIC: 10, DIVINE: 5, ANCIENT: 3, COSMIC: 1, TRANSCENDENT: 0.2 },
+    DAILY: { COMMON: 68.18, UNCOMMON: 20.20, RARE: 10.10, EPIC: 1.52 },
+    PREMIUM: { COMMON: 72.50, UNCOMMON: 20.00, RARE: 5.00, EPIC: 2.00, LEGENDARY: 0.50 },
+    MASTER: { COMMON: 28.49, UNCOMMON: 45.00, RARE: 15.00, EPIC: 8.00, LEGENDARY: 2.50, MYTHIC: 0.60, DIVINE: 0.25, ANCIENT: 0.10, COSMIC: 0.05, TRANSCENDENT: 0.01 },
+    TYPE_DAILY: { COMMON: 28.49, UNCOMMON: 45.00, RARE: 15.00, EPIC: 8.00, LEGENDARY: 2.50, MYTHIC: 0.60, DIVINE: 0.25, ANCIENT: 0.10, COSMIC: 0.05, TRANSCENDENT: 0.01 },
+    DIVINE: { EPIC: 58.21, LEGENDARY: 20.60, MYTHIC: 10.80, DIVINE: 5.25, ANCIENT: 3.68, COSMIC: 1.22, TRANSCENDENT: 0.24 },
+    STARTER: { UNCOMMON: 100 },
     DEFAULT: { COMMON: 50, UNCOMMON: 30, RARE: 15, EPIC: 5 }
 };
 
@@ -53,7 +54,7 @@ const determineRarity = (boxVariant) => {
     const odds = LOOTBOX_ODDS[boxVariant] || LOOTBOX_ODDS.DEFAULT;
     const rand = Math.random() * 100;
     let cumulative = 0;
-    
+
     for (const [rarity, chance] of Object.entries(odds)) {
         cumulative += chance;
         if (rand < cumulative) return rarity;
@@ -63,13 +64,13 @@ const determineRarity = (boxVariant) => {
 
 const generateServerPet = (ownerId, rarity, fixedType) => {
     const type = fixedType || TYPES[Math.floor(Math.random() * TYPES.length)];
-    
+
     // Spezies wählen
     const possibleSpecies = SPECIES_KEYS[type] || [];
-    const species = possibleSpecies.length > 0 
-        ? possibleSpecies[Math.floor(Math.random() * possibleSpecies.length)] 
+    const species = possibleSpecies.length > 0
+        ? possibleSpecies[Math.floor(Math.random() * possibleSpecies.length)]
         : `${type}_UNKNOWN`;
-    
+
     // Basis-Werte
     const baseStats = {
         COMMON: { hp: 10, atk: 2 },
@@ -83,7 +84,7 @@ const generateServerPet = (ownerId, rarity, fixedType) => {
         COSMIC: { hp: 150, atk: 30 },
         TRANSCENDENT: { hp: 250, atk: 50 }
     };
-    
+
     const stats = baseStats[rarity] || baseStats.COMMON;
 
     return {
@@ -98,7 +99,7 @@ const generateServerPet = (ownerId, rarity, fixedType) => {
         maxXp: 100,
         hp: stats.hp, maxHp: stats.hp,
         atk: stats.atk, def: 1, speed: 1, ap: 1, res: 1,
-        isEgg: true, 
+        isEgg: true,
         hatchAt: 0,
         source: 'LOOTBOX',
         createdAt: admin.firestore.FieldValue.serverTimestamp()
@@ -118,7 +119,7 @@ exports.openLootbox = onCall({ cors: true }, async (request) => {
 
     const userId = request.auth.uid;
     const { boxId, boxVariant } = request.data;
-    
+
     console.log(`[OpenLootbox] Start for User: ${userId}, BoxID: ${boxId}, Variant: ${boxVariant}`);
 
     const db = admin.firestore();
@@ -135,7 +136,7 @@ exports.openLootbox = onCall({ cors: true }, async (request) => {
 
             // 3. Prüfen: Hat der User die Box wirklich?
             const boxIndex = inventory.findIndex(i => String(i.id) === String(boxId));
-            
+
             if (boxIndex === -1) {
                 console.warn(`[OpenLootbox] Box ${boxId} not found in inventory of ${userId}`);
                 throw new HttpsError('invalid-argument', 'Box not found in inventory.');
@@ -147,11 +148,31 @@ exports.openLootbox = onCall({ cors: true }, async (request) => {
 
             // 5. Logik: Belohnung generieren
             const rarity = determineRarity(boxVariant);
-            
+
             // Optional: Typ aus Box-Variante lesen
             let fixedType = null;
             if (boxVariant && boxVariant.startsWith('ELEMENTAL_')) {
                 fixedType = boxVariant.split('_')[1];
+            } else if (boxVariant === 'TYPE_DAILY') {
+                // Determine Daily Type based on schedule (matches client ShopScreen)
+                const dayIndex = new Date().getDay();
+                const schedule = {
+                    1: { start: 0, count: 3 }, // Mo
+                    2: { start: 3, count: 3 }, // Di
+                    3: { start: 6, count: 3 }, // Mi
+                    4: { start: 9, count: 3 }, // Do
+                    5: { start: 12, count: 4 }, // Fr
+                    6: { start: 16, count: 4 }, // Sa
+                    0: { start: 20, count: 4 }  // So
+                };
+                const config = schedule[dayIndex] || schedule[1]; // Fallback Mo
+                const dailyTypes = TYPES.slice(config.start, config.start + config.count);
+                if (dailyTypes.length > 0) {
+                    fixedType = dailyTypes[Math.floor(Math.random() * dailyTypes.length)];
+                } else {
+                    fixedType = 'FIRE'; // Fallback
+                }
+                console.log(`[OpenLootbox] Resolved TYPE_DAILY to ${fixedType}`);
             }
 
             const newPet = generateServerPet(userId, rarity, fixedType);

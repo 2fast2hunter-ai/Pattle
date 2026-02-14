@@ -1,21 +1,35 @@
 import { calculateEloChange, setBattleActive } from '../../../utils/db';
 import { playSound } from '../../../utils/soundManager';
 import { db } from '../../../firebase';
-import { doc, getDoc, updateDoc, runTransaction } from 'firebase/firestore';
+import { increment, doc, getDoc, updateDoc, runTransaction } from 'firebase/firestore';
 import { calculateMaxXp, recalculatePetStats, calculatePetTotalXpForLevel } from '../../../utils/mechanics/petStats';
 
 export const handleLose = async (state, showNotification, startBattleFn, reward, teamIds, enemyRating) => {
-    const { user, myPets, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView } = state;
+    const { user, myPets, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView, t } = state;
     if (!user) return;
 
     const isAuto = autoBattleRemaining > 0;
+
     const isFriendly = activeBattle?.isFriendly;
     const isTower = activeBattle?.isTower;
+    const isGauntlet = activeBattle?.isGauntlet; // NEU
+
+    // --- GAUNTLET OVERRIDE ---
+    if (isGauntlet) {
+        // 1. Rewards zusammenführen (akkumulierte + aktuelle Runde)
+        const acc = activeBattle.accumulatedRewards || { xp: 0, coins: 0 };
+        reward = {
+            xp: acc.xp + (reward?.xp || 0),
+            coins: acc.coins + (reward?.coins || 0)
+        };
+        // Highscore-Logik erfolgt unten im zentralen Updates-Block
+    }
+    // -------------------------
 
     // 1. XP VERTEILUNG (Auch bei Niederlage)
     const xpGain = reward?.xp || 0;
-    
-    if (xpGain > 0 && teamIds && teamIds.length > 0) {    
+
+    if (xpGain > 0 && teamIds && teamIds.length > 0 && !isGauntlet) {
         const xpPerPet = Math.max(1, Math.floor(xpGain / Math.max(1, teamIds.length)));
 
         if (xpGain > 0) {
@@ -26,22 +40,22 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
                     await runTransaction(db, async (transaction) => {
                         const petRef = doc(db, "pets", petId);
                         const petDoc = await transaction.get(petRef);
-                        
+
                         if (!petDoc.exists()) {
                             console.warn(`[HandleLose] Pet ${petId} nicht gefunden.`);
                             return;
                         }
-                        
+
                         const data = petDoc.data();
                         console.log(`[HandleLose] Pet ${petId} (${data.name}) - Aktuell: Lvl ${data.level}, XP ${data.xp}`);
-                        
+
                         // SICHERHEITS-CHECKS
                         let currentLvl = Number(data.level);
                         if (!Number.isFinite(currentLvl) || currentLvl < 1) currentLvl = 1;
-                        
+
                         let currentXp = Number(data.xp);
                         if (!Number.isFinite(currentXp) || currentXp < 0) currentXp = 0;
-                        
+
                         const rarity = data.rarity || 'COMMON';
 
                         const minXpForLevel = calculatePetTotalXpForLevel(currentLvl, rarity);
@@ -103,24 +117,43 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
 
     // 2. ELO & STATS
     let newRating = user.rating;
-    if (!isFriendly && !isTower) {
+    const updates = {
+        isInBattle: false,
+        "stats.pvpTotal": (user.stats?.pvpTotal || 0) + 1
+    };
+
+    if (isGauntlet) {
+        // Gauntlet Specific Logic: Wir nutzen den akkumulierten Score aus dem battleState
+        const runScore = activeBattle.gauntletScore || 0;
+        const currentHighscore = user?.stats?.gauntletHighscore || 0;
+
+        if (runScore > currentHighscore) {
+            updates["stats.gauntletHighscore"] = runScore;
+            showNotification(t ? t('gauntlet_highscore_notif', { score: runScore }) : `Neuer Highscore! ${runScore} Punkte!`, "success");
+            // WICHTIG: NICHT rating überschreiben! Rating = PVP Elo, Highscore = Gauntlet.
+        }
+
+        updates.coins = increment(reward?.coins || 0);
+        updates.xp = increment(reward?.xp || 0);
+
+    } else if (!isFriendly && !isTower) {
+        // Standard PvP Logic
         const eloChange = calculateEloChange(user.rating, enemyRating || 1000, false);
         newRating += eloChange;
+        updates.rating = newRating;
     }
 
     const userRef = doc(db, "users", user.id);
-    await updateDoc(userRef, { 
-        rating: newRating, 
-        isInBattle: false,
-        "stats.pvpTotal": (user.stats?.pvpTotal || 0) + 1 
-    });
-    
+    await updateDoc(userRef, updates);
+
 
     await setBattleActive(user.id, false);
 
     if (!isAuto) {
         playSound('lose');
-        showNotification(isTower ? "Turm-Kampf verloren!" : "Niederlage!", "error");
+        if (!isGauntlet) {
+            showNotification(isTower ? "Turm-Kampf verloren!" : "Niederlage!", "error");
+        }
         setCurrentView(isTower ? 'tower' : 'arena-hub');
         setActiveBattle(null);
     } else {
@@ -131,17 +164,17 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
             setCurrentView('arena-hub');
             setActiveBattle(null);
         } else {
-             // Weiterkämpfen auch bei Niederlage
-             const nextRemaining = autoBattleRemaining - 1;
-             setAutoBattleRemaining(nextRemaining);
-             showNotification(`Niederlage! Nächster Kampf... (${nextRemaining} übrig)`, "info");
-             
-             setCurrentView('arena-hub');
-             setActiveBattle(null);
-             
-             setTimeout(() => {
-                 startBattleFn();
-             }, 1500);
+            // Weiterkämpfen auch bei Niederlage
+            const nextRemaining = autoBattleRemaining - 1;
+            setAutoBattleRemaining(nextRemaining);
+            showNotification(`Niederlage! Nächster Kampf... (${nextRemaining} übrig)`, "info");
+
+            setCurrentView('arena-hub');
+            setActiveBattle(null);
+
+            setTimeout(() => {
+                startBattleFn();
+            }, 1500);
         }
     }
 };

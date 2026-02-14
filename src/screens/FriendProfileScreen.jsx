@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-    ArrowLeft, Trophy, LayoutGrid, Dna, 
-    PieChart, Swords, Loader2, Copy, ArrowUpRight
+import {
+    ArrowLeft, Trophy, LayoutGrid, Dna,
+    PieChart, Swords, Loader2, Copy, ArrowUpRight, Sword
 } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import { findUserPublic, listenToPets } from '../utils/db';
@@ -9,7 +9,7 @@ import StatDetailModal from '../components/modals/StatDetailModal';
 
 export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
     const [fullProfile, setFullProfile] = useState(null);
-    const [friendPets, setFriendPets] = useState([]); 
+    const [friendPets, setFriendPets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState(null);
 
@@ -29,14 +29,14 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
         };
         let unsub;
         fetchProfile().then(u => unsub = u);
-        return () => { if(unsub) unsub(); };
+        return () => { if (unsub) unsub(); };
     }, [friend]);
 
     const displayUser = fullProfile || friend;
 
     const statsData = useMemo(() => {
         const safePets = friendPets || [];
-        
+
         // 1. Battle
         const totalBattles = displayUser.stats?.pvpTotal || 0;
         const wins = displayUser.stats?.pvpWins || 0;
@@ -57,18 +57,18 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
             label: r.label,
             count: rarityCounts[Object.keys(RARITIES).find(k => RARITIES[k].id === r.id)] || 0,
             color: r.color,
-            bg: r.bg.replace('bg-', 'bg-') 
-        })).sort((a,b) => b.count - a.count);
+            bg: r.bg.replace('bg-', 'bg-')
+        })).sort((a, b) => b.count - a.count);
 
-        return { 
+        return {
             battle: { wins, losses: totalBattles - wins, winRate, rating: displayUser.rating },
-            collection: { 
+            collection: {
                 totalPets: safePets.length,
                 highestLevel: maxLvl,
                 rarityStats
             },
             economy: { coins: displayUser.coins },
-            breeding: { 
+            breeding: {
                 hatched: displayUser.stats?.hatched || 0,
                 bred: displayUser.stats?.bred || 0
             }
@@ -83,16 +83,17 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
             return;
         }
         const enemyTeamPets = friendPets.filter(p => displayUser.team.includes(p.id));
-        
+
         if (enemyTeamPets.length === 0) {
-             alert("Konnte Team-Pets nicht finden.");
-             return;
+            alert("Konnte Team-Pets nicht finden.");
+            return;
         }
         onStartBattle(enemyTeamPets);
     };
 
     const categories = [
         { id: 'BATTLE', label: 'Kampf', icon: Swords, color: 'from-red-500 to-orange-600', textColor: 'text-red-400', value: `${statsData.battle.winRate}% WR` },
+        { id: 'GAUNTLET', label: 'Gauntlet', icon: Swords, color: 'from-purple-500 to-indigo-600', textColor: 'text-purple-400', value: `${displayUser.stats?.gauntletHighscore || 0}` },
         { id: 'COLLECTION', label: 'Sammlung', icon: LayoutGrid, color: 'from-blue-500 to-indigo-600', textColor: 'text-blue-400', value: `${statsData.collection.totalPets} Pets` },
         { id: 'ECONOMY', label: 'Wirtschaft', icon: PieChart, color: 'from-yellow-500 to-amber-600', textColor: 'text-amber-400', value: `${displayUser.coins}` },
         { id: 'BREEDING', label: 'Zucht', icon: Dna, color: 'from-pink-500 to-rose-600', textColor: 'text-pink-400', value: `${statsData.breeding.hatched}` },
@@ -100,7 +101,7 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative">
-            {selectedCategory && (<StatDetailModal category={categories.find(c => c.id === selectedCategory)} data={statsData[selectedCategory.toLowerCase()]} onClose={() => setSelectedCategory(null)}/>)}
+            {selectedCategory && (<StatDetailModal category={categories.find(c => c.id === selectedCategory)} data={statsData[selectedCategory.toLowerCase()]} onClose={() => setSelectedCategory(null)} />)}
             <div className="relative flex items-center justify-center mb-6 pt-6 px-4">
                 <h1 className="text-2xl font-black italic tracking-wide text-white">FREUND</h1>
                 <button onClick={onBack} className="absolute left-4 p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"><ArrowLeft className="w-5 h-5" /></button>
@@ -115,6 +116,7 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
                         <h2 className="text-3xl font-black text-white tracking-tight">{displayUser.username}</h2>
                         <div className="flex justify-center gap-2 mt-3">
                             <div className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-indigo-400 font-bold flex items-center gap-1.5 text-xs shadow-sm"><Trophy className="w-3.5 h-3.5" /> {displayUser.rating} Elo</div>
+                            <div className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-red-400 font-bold flex items-center gap-1.5 text-xs shadow-sm"><Sword className="w-3.5 h-3.5" /> {displayUser.stats?.gauntletHighscore || 0} Score</div>
                             <button onClick={copyId} className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors flex items-center gap-1.5 text-xs font-mono active:scale-95"><Copy className="w-3.5 h-3.5" /> ID</button>
                         </div>
                     </div>
