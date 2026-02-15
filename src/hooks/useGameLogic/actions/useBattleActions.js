@@ -11,7 +11,7 @@ import { startGauntletBattle } from './startGauntletBattle'; // NEU
 
 export function useBattleActions(state, showNotification) {
     // Wrapper functions to inject state and showNotification
-    const startBattleFn = () => startBattle(state, showNotification);
+    const startBattleFn = (overridePets) => startBattle(state, showNotification, overridePets);
 
     return {
         startBattle: startBattleFn,

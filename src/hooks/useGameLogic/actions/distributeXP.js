@@ -4,23 +4,24 @@ import { db } from '../../../firebase';
 import { calculateMaxXp, recalculatePetStats, calculatePetTotalXpForLevel } from '../../../utils/mechanics/petStats';
 
 export const distributeXP = async (winningTeamIds, xpGain, trackQuestProgress, user) => {
-    if (xpGain <= 0 || winningTeamIds.length === 0) return 0;
+    if (xpGain <= 0 || winningTeamIds.length === 0) return { levelUpCount: 0, updatedPets: {} };
 
     const xpPerPet = Math.max(1, Math.floor(xpGain / Math.max(1, winningTeamIds.length)));
     let levelUpCount = 0;
+    const updatedPets = {}; // Map: petId -> updatedStats
 
     console.log(`[DistributeXP] Verteile ${xpPerPet} XP an ${winningTeamIds.length} Pets.`);
 
     for (const petId of winningTeamIds) {
         if (!petId) continue;
         try {
-            const leveledUp = await runTransaction(db, async (transaction) => {
+            await runTransaction(db, async (transaction) => {
                 const petRef = doc(db, "pets", petId);
                 const petDoc = await transaction.get(petRef);
 
                 if (!petDoc.exists()) {
                     console.warn(`[DistributeXP] Pet ${petId} nicht in DB gefunden.`);
-                    return false;
+                    return;
                 }
 
                 const data = petDoc.data();
@@ -66,6 +67,8 @@ export const distributeXP = async (winningTeamIds, xpGain, trackQuestProgress, u
                     maxXp: Math.floor(maxXp)
                 };
 
+                let updatedStats = {};
+
                 if (didLevelUp) {
                     const updatedPetBase = { ...data, level: newLevel };
                     const newStats = recalculatePetStats(updatedPetBase, newLevel);
@@ -76,13 +79,17 @@ export const distributeXP = async (winningTeamIds, xpGain, trackQuestProgress, u
                     updates.ap = Number(newStats.ap) || 1;
                     updates.res = Number(newStats.res) || 1;
                     updates.speed = Number(newStats.speed) || 1;
+
+                    updatedStats = { ...updates };
+                } else {
+                    updatedStats = { ...updates };
                 }
 
                 transaction.update(petRef, updates);
-                return didLevelUp;
-            });
 
-            if (leveledUp) levelUpCount++;
+                if (didLevelUp) levelUpCount++;
+                updatedPets[petId] = updatedStats;
+            });
 
         } catch (err) {
             console.error(`[DistributeXP] Fehler bei Pet ${petId}:`, err);
@@ -94,5 +101,5 @@ export const distributeXP = async (winningTeamIds, xpGain, trackQuestProgress, u
         await trackQuestProgress(user, 'LEVEL_UP_PET', levelUpCount);
     }
 
-    return levelUpCount;
+    return { levelUpCount, updatedPets };
 };

@@ -99,8 +99,13 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     if (user.buffs?.xpBoostMatches > 0) xpGain *= 2;
 
     // 3. XP Verteilen via Helper
+    let updatedPetsMap = {};
     if (xpGain > 0 && winningTeamIds.length > 0) {
-        await distributeXP(winningTeamIds, xpGain, trackQuestProgress, user);
+        const result = await distributeXP(winningTeamIds, xpGain, trackQuestProgress, user);
+        // Fallback für alte Return-Werte (falls distributeXP noch number returned)
+        if (typeof result === 'object' && result !== null) {
+            updatedPetsMap = result.updatedPets || {};
+        }
     }
 
     // 4. DB Update
@@ -129,6 +134,8 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     const userRef = doc(db, "users", user.id);
     await updateDoc(userRef, userUpdates);
 
+    // WICHTIG: Wenn Auto-Kampf weitergeht, NICHT isInBattle auf false setzen (macht DB Update oben schon richtig)
+    // Aber wir müssen sicherstellen, dass wir lokal Bescheid wissen für UI
     if (!isAuto || autoBattleRemaining <= 1) {
         await setBattleActive(user.id, false);
     }
@@ -149,7 +156,17 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     if (isAuto) {
         if (autoBattleRemaining > 1) {
             setAutoBattleRemaining(prev => prev - 1);
-            startBattleFn();
+
+            // FIX: Nächsten Kampf mit AKTUALISIERTEN Stats starten!
+            // Wir nehmen die aktuellen Pets (State) und überschreiben sie mit den neuen XP/Stats
+            const nextPets = myPets.map(p => {
+                if (updatedPetsMap[p.id]) {
+                    return { ...p, ...updatedPetsMap[p.id] };
+                }
+                return p;
+            });
+
+            startBattleFn(nextPets);
         } else {
             setAutoBattleRemaining(0);
             showNotification("Auto-Kampf abgeschlossen!", "success");
