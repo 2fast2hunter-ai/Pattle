@@ -11,7 +11,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
         selected, isSidebarOpen, setSidebarOpen, searchTerm, setSearchTerm,
         activeTypeFilter, setActiveTypeFilter, sortBy, setSortBy, breedingResult, setBreedingResult,
         isBreeding, filteredPets, resetFilters, activeFilterCount, canBreed,
-        rarityProbabilities, toggleSelect, handleBreedClick, getCooldownStatus, getLevelReq
+        rarityProbabilities, fusionRecipe, toggleSelect, handleBreedClick, getCooldownStatus, getLevelReq
     } = useBreeding(pets, user, onBreed);
 
     // Timer für Live-Updates
@@ -56,6 +56,7 @@ export default function BreedingScreen({ pets, onBreed, onBack, user, onReduceCo
                 isBreeding={isBreeding}
                 handleBreedClick={handleBreedClick}
                 rarityProbabilities={rarityProbabilities}
+                fusionRecipe={fusionRecipe}
                 t={t}
             />
 

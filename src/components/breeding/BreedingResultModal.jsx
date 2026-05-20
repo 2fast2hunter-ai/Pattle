@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Egg, Sparkles } from 'lucide-react';
+import { Heart, Egg, Sparkles, HelpCircle } from 'lucide-react';
 import { RARITIES } from '../../data/gameData';
 import PetAvatar from '../PetAvatar';
 
@@ -46,12 +46,32 @@ export default function BreedingResultModal({ result, onClose, t }) {
                             <Sparkles className="absolute top-0 right-0 w-12 h-12 text-yellow-300 animate-spin-slow" />
                         </div>
 
-                        <h2 className={`text-3xl font-black uppercase tracking-widest ${rarity.color} mb-2 drop-shadow-lg`}>
-                            {t ? t('rarity_' + egg.rarity) : rarity.label}
-                        </h2>
-                        <p className="text-white text-sm font-bold opacity-80 mb-8">
-                            {t ? t('inv_egg_suffix') : 'Ei'} erhalten!
-                        </p>
+                        {egg.isSecret ? (
+                            <>
+                                <div className="flex items-center gap-2 mb-2">
+                                    <HelpCircle className="w-5 h-5 text-yellow-400 animate-pulse" />
+                                    <h2 className="text-3xl font-black uppercase tracking-widest text-yellow-300 drop-shadow-lg">???</h2>
+                                    <HelpCircle className="w-5 h-5 text-yellow-400 animate-pulse" />
+                                </div>
+                                <p className="text-yellow-200 text-sm font-bold opacity-80 mb-8">Geheimes Hybrid-Ei!</p>
+                            </>
+                        ) : egg.isFusion ? (
+                            <>
+                                <h2 className={`text-3xl font-black uppercase tracking-widest ${rarity.color} mb-2 drop-shadow-lg`}>
+                                    {t ? t('rarity_' + egg.rarity) : rarity.label}
+                                </h2>
+                                <p className="text-purple-300 text-sm font-bold opacity-80 mb-8">✨ Fusion-Ei erhalten!</p>
+                            </>
+                        ) : (
+                            <>
+                                <h2 className={`text-3xl font-black uppercase tracking-widest ${rarity.color} mb-2 drop-shadow-lg`}>
+                                    {t ? t('rarity_' + egg.rarity) : rarity.label}
+                                </h2>
+                                <p className="text-white text-sm font-bold opacity-80 mb-8">
+                                    {t ? t('inv_egg_suffix') : 'Ei'} erhalten!
+                                </p>
+                            </>
+                        )}
 
                         <button onClick={onClose} className="bg-white text-black font-black py-3 px-10 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl">
                             {t ? t('breeding_done') : 'Fertig'}

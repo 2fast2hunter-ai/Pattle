@@ -1,11 +1,11 @@
 import React from 'react';
-import { Heart, Loader2, Dna, Trash2 } from 'lucide-react';
+import { Heart, Loader2, Dna, Trash2, Sparkles, HelpCircle } from 'lucide-react';
 import { RARITIES, TYPES } from '../../data/gameData';
 import PetAvatar from '../PetAvatar';
 
 export default function BreedingStation({
     selected, pets, toggleSelect, canBreed, isBreeding,
-    handleBreedClick, rarityProbabilities, t
+    handleBreedClick, rarityProbabilities, fusionRecipe, t
 }) {
     const p1 = selected.length > 0 ? pets.find(p => p.id === selected[0]) : null;
     const p2 = selected.length > 1 ? pets.find(p => p.id === selected[1]) : null;
@@ -46,45 +46,70 @@ export default function BreedingStation({
                             <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">{t ? t('breeding_preview') : 'Genetik Vorschau'}</span>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            {/* TYPES */}
-                            <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
-                                <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">{t ? t('breeding_element') : 'Element'}</span>
-                                <div className="flex items-center justify-center gap-2 w-full">
-                                    {p1.type === p2.type ? (
-                                        <div className={`flex items-center gap-1 ${TYPES[p1.type].color}`}>
-                                            {TYPES[p1.type].icon} <span className="font-bold text-xs">100%</span>
-                                        </div>
-                                    ) : (
-                                        <>
+                        {/* FUSION BANNER */}
+                        {fusionRecipe ? (
+                            <div className={`rounded-xl p-3 flex flex-col items-center gap-1.5 border ${fusionRecipe.isSecret ? 'bg-yellow-500/10 border-yellow-500/40' : 'bg-purple-500/10 border-purple-500/40'}`}>
+                                <div className="flex items-center gap-1.5">
+                                    {fusionRecipe.isSecret
+                                        ? <HelpCircle className="w-4 h-4 text-yellow-400 animate-pulse" />
+                                        : <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                                    }
+                                    <span className={`text-[10px] font-black uppercase tracking-widest ${fusionRecipe.isSecret ? 'text-yellow-300' : 'text-purple-300'}`}>
+                                        {fusionRecipe.isSecret ? 'Geheimes Hybrid!' : 'Fusion erkannt!'}
+                                    </span>
+                                </div>
+                                {fusionRecipe.isSecret ? (
+                                    <span className="text-[9px] text-slate-400">Seltenheit: ???</span>
+                                ) : (
+                                    <>
+                                        <span className="text-[9px] text-slate-300 font-bold">{fusionRecipe.label}</span>
+                                        <span className={`text-[9px] font-bold ${RARITIES[fusionRecipe.rarity]?.color || 'text-white'}`}>
+                                            {RARITIES[fusionRecipe.rarity]?.label || fusionRecipe.rarity}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-3">
+                                {/* TYPES */}
+                                <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">{t ? t('breeding_element') : 'Element'}</span>
+                                    <div className="flex items-center justify-center gap-2 w-full">
+                                        {p1.type === p2.type ? (
                                             <div className={`flex items-center gap-1 ${TYPES[p1.type].color}`}>
-                                                {TYPES[p1.type].icon} <span className="font-bold text-xs">50%</span>
+                                                {TYPES[p1.type].icon} <span className="font-bold text-xs">100%</span>
                                             </div>
-                                            <div className="w-px h-3 bg-white/10"></div>
-                                            <div className={`flex items-center gap-1 ${TYPES[p2.type].color}`}>
-                                                {TYPES[p2.type].icon} <span className="font-bold text-xs">50%</span>
-                                            </div>
-                                        </>
-                                    )}
+                                        ) : (
+                                            <>
+                                                <div className={`flex items-center gap-1 ${TYPES[p1.type].color}`}>
+                                                    {TYPES[p1.type].icon} <span className="font-bold text-xs">50%</span>
+                                                </div>
+                                                <div className="w-px h-3 bg-white/10"></div>
+                                                <div className={`flex items-center gap-1 ${TYPES[p2.type].color}`}>
+                                                    {TYPES[p2.type].icon} <span className="font-bold text-xs">50%</span>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
 
-                            {/* RARITY */}
-                            <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
-                                <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">{t ? t('breeding_rarity') : 'Seltenheit'}</span>
-                                <div className="flex flex-col w-full px-1 gap-0.5">
-                                    {rarityProbabilities.map(prob => {
-                                        const r = RARITIES[prob.key];
-                                        return (
-                                            <div key={prob.key} className="flex justify-between items-center w-full">
-                                                <span className={`text-[9px] font-bold ${r.color}`}>{r.label}</span>
-                                                <span className="text-[9px] font-mono text-slate-400">{prob.chance}%</span>
-                                            </div>
-                                        );
-                                    })}
+                                {/* RARITY */}
+                                <div className="bg-black/20 rounded-xl p-2 flex flex-col items-center justify-center">
+                                    <span className="text-[9px] font-bold text-slate-500 uppercase mb-1">{t ? t('breeding_rarity') : 'Seltenheit'}</span>
+                                    <div className="flex flex-col w-full px-1 gap-0.5">
+                                        {rarityProbabilities.map(prob => {
+                                            const r = RARITIES[prob.key];
+                                            return (
+                                                <div key={prob.key} className="flex justify-between items-center w-full">
+                                                    <span className={`text-[9px] font-bold ${r.color}`}>{r.label}</span>
+                                                    <span className="text-[9px] font-mono text-slate-400">{prob.chance}%</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
                     </div>
                 )}
 

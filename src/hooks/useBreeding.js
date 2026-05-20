@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RARITIES, TYPES } from '../data/gameData';
+import { getFusionRecipe } from '../data/fusionRecipes';
 
 export function useBreeding(pets, user, onBreed) {
     const [selected, setSelected] = useState([]);
@@ -85,6 +86,7 @@ export function useBreeding(pets, user, onBreed) {
     const p1 = selected.length > 0 ? pets.find(p => p.id === selected[0]) : null;
     const p2 = selected.length > 1 ? pets.find(p => p.id === selected[1]) : null;
     const canBreed = p1 && p2;
+    const fusionRecipe = (p1 && p2) ? getFusionRecipe(p1.type, p2.type) : null;
 
     let rarityProbabilities = [];
     if (canBreed) {
@@ -139,6 +141,7 @@ export function useBreeding(pets, user, onBreed) {
         activeFilterCount,
         canBreed,
         rarityProbabilities,
+        fusionRecipe,
         toggleSelect,
         handleBreedClick,
         getCooldownStatus,
