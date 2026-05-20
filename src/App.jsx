@@ -11,6 +11,7 @@ import LoadingScreen from './components/ui/LoadingScreen';
 import ScreenRouter from './components/navigation/ScreenRouter';
 import AuthScreen from './screens/AuthScreen';
 import { BASE_ANIMALS } from './data/gameData';
+import IdleReturnModal from './components/village/IdleReturnModal';
 import { playSound, playBGM, setMusicEnabled, setSoundEnabled } from './utils/soundManager';
 import { TRANSLATIONS } from './data/translations';
 
@@ -19,6 +20,7 @@ export default function App() {
     const {
         user, setUser, currentView, setCurrentView, authLoading, handleLogin, notification,
         lootResult, setLootResult, showLevelUpModal, setShowLevelUpModal, myPets, activeBattle,
+        idleReturnResult, setIdleReturnResult,
         settings, handleUpdateProfile,
         selectedPetDetail, setSelectedPetDetail,
         selectedFriend, setSelectedFriend,
@@ -82,6 +84,7 @@ export default function App() {
             {notification && <div className="absolute top-0 left-0 w-full z-[9999] flex justify-center pt-4 pointer-events-none"><div className="pointer-events-auto w-full max-w-md px-4"><Notification notification={notification} /></div></div>}
             {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} t={t} />}
             {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
+            {idleReturnResult && <IdleReturnModal result={idleReturnResult} onClose={() => setIdleReturnResult(null)} t={t} />}
 
             {currentView !== 'battle' && <div className="w-full"><HeaderHUD user={user} /></div>}
 

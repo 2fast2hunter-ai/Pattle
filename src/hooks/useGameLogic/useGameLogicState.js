@@ -40,6 +40,7 @@ export function useGameLogicState(userId) {
     const [previousLevel, setPreviousLevel] = useState(null);
 
     const [autoBattleRemaining, setAutoBattleRemaining] = useState(0);
+    const [idleReturnResult, setIdleReturnResult] = useState(null);
 
     // HIER KEINE LISTENER MEHR! (Die sind jetzt in useGameLogic.js)
 
@@ -59,6 +60,7 @@ export function useGameLogicState(userId) {
         selectedFriend, setSelectedFriend,
         previousLevel, setPreviousLevel,
         autoBattleRemaining, setAutoBattleRemaining,
+        idleReturnResult, setIdleReturnResult,
         t
     };
 }

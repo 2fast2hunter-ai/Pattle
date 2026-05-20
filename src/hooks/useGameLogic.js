@@ -18,6 +18,7 @@ export function useGameLogic() {
     const initialBattleCheckDone = useRef(false);
     const isCollectingRef = useRef(false); // Schutz gegen überlappende Aufrufe
     const lastIdleNotificationRef = useRef(0); // Schutz gegen Spam bei abgelaufener Zeit
+    const idleReturnCheckedRef = useRef(false); // Einmalige Offline-Auswertung beim Login
 
     // --- SPLASH SCREEN LOGIC ---
     const minTimePassed = useRef(false);
@@ -77,6 +78,7 @@ export function useGameLogic() {
     useEffect(() => {
         if (!userId) {
             initialBattleCheckDone.current = false;
+            idleReturnCheckedRef.current = false;
             return;
         }
         
@@ -128,6 +130,26 @@ export function useGameLogic() {
             }
 
             checkAndInitVillage(userData).catch(e => console.error("Village Init Error:", e));
+
+            // Einmalige Offline-Auswertung beim ersten Login dieser Session
+            if (!idleReturnCheckedRef.current && userData.village) {
+                idleReturnCheckedRef.current = true;
+                const now = Date.now();
+                const lastCollection = userData.village.lastCollectionTime || now;
+                const idleExpires = userData.village.idleTimeExpiresAt || 0;
+                const offlineGapMs = now - lastCollection;
+                // Zeige Modal nur wenn >60s vergangen und Idle-Zeit während der Abwesenheit aktiv war
+                if (offlineGapMs > 60000 && idleExpires > lastCollection) {
+                    setTimeout(async () => {
+                        if (actionsRef.current?.collectVillageResources) {
+                            const result = await actionsRef.current.collectVillageResources().catch(() => null);
+                            if (result && (result.items?.length > 0 || result.xp > 0)) {
+                                stateRef.current.setIdleReturnResult({ ...result, elapsedMs: Math.min(offlineGapMs, idleExpires - lastCollection) });
+                            }
+                        }
+                    }, 1500);
+                }
+            }
         });
 
         const unsubPets = listenToPets(userId, (petsData) => {
