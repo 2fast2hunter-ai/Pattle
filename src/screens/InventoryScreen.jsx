@@ -1,31 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Search, Filter, Egg, Dna, ShoppingBag } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowLeft, Search, Dna, ArrowUpDown } from 'lucide-react';
 import { RARITIES, TYPES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
 export default function InventoryScreen({ pets, title = "Inventar", onBack, onSelectPet, highlightMode = false, filterEggs = false, t }) {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState('ALL');
-    
-    // Wir nutzen direkt die 'pets' Prop für die Anzeige, filtern sie aber lokal nach Suche/Typ
-    // WICHTIG: Keine Kopie in useState(pets), damit Updates von außen (App.jsx Filter) sofort greifen!
+    const [filterRarity, setFilterRarity] = useState('ALL');
+    const [sortBy, setSortBy] = useState('rarity'); // 'rarity' | 'level'
 
     const filteredPets = pets.filter(pet => {
-        // 1. Suche
-        const matchesSearch = pet.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        const matchesSearch = pet.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                               (pet.species && pet.species.toLowerCase().includes(searchTerm.toLowerCase()));
-        
-        // 2. Typ Filter
         const matchesType = filterType === 'ALL' || pet.type === filterType;
-
-        // 3. Eier Filter (falls prop gesetzt)
+        const matchesRarity = filterRarity === 'ALL' || pet.rarity === filterRarity;
         const matchesEgg = filterEggs ? !pet.isEgg : true;
-
-        return matchesSearch && matchesType && matchesEgg;
+        return matchesSearch && matchesType && matchesRarity && matchesEgg;
     });
 
-    // Sortieren: Favoriten/Seltenheit oben
     filteredPets.sort((a, b) => {
+        if (sortBy === 'level') return (b.level || 0) - (a.level || 0);
         const rA = RARITIES[a.rarity]?.id || 0;
         const rB = RARITIES[b.rarity]?.id || 0;
         return rB - rA;
@@ -49,32 +43,57 @@ export default function InventoryScreen({ pets, title = "Inventar", onBack, onSe
 
             {/* FILTERS */}
             <div className="px-4 mb-4 space-y-3">
-                {/* Search Bar */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <input 
-                        type="text" 
-                        placeholder="Suchen..." 
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-900 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
-                    />
+                {/* Search + Sort Row */}
+                <div className="flex gap-2">
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <input
+                            type="text"
+                            placeholder="Suchen..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-slate-900 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 transition-colors"
+                        />
+                    </div>
+                    <button
+                        onClick={() => setSortBy(s => s === 'rarity' ? 'level' : 'rarity')}
+                        className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-white hover:border-white/20 transition-all whitespace-nowrap"
+                    >
+                        <ArrowUpDown className="w-3.5 h-3.5" />
+                        {sortBy === 'rarity' ? 'Seltenheit' : 'Level'}
+                    </button>
                 </div>
 
                 {/* Type Filter Pills */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
                     <button onClick={() => setFilterType('ALL')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filterType === 'ALL' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400 border border-white/5'}`}>Alle</button>
                     {Object.keys(TYPES).map(type => (
-                        <button 
-                            key={type} 
+                        <button
+                            key={type}
                             onClick={() => setFilterType(type)}
                             className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${filterType === type ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-900/20' : 'bg-slate-800 text-slate-400 border border-white/5'}`}
                         >
-                            {/* Kleiner Farb-Punkt für den Typ */}
                             <span className={`w-2 h-2 rounded-full ${TYPES[type].bg}`}></span>
                             {t ? t('type_' + type) : TYPES[type].label}
                         </button>
                     ))}
+                </div>
+
+                {/* Rarity Filter Pills */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                    <button onClick={() => setFilterRarity('ALL')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filterRarity === 'ALL' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400 border border-white/5'}`}>Alle</button>
+                    {Object.keys(RARITIES).map(rKey => {
+                        const rar = RARITIES[rKey];
+                        return (
+                            <button
+                                key={rKey}
+                                onClick={() => setFilterRarity(rKey)}
+                                className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filterRarity === rKey ? `${rar.bg || 'bg-indigo-600'} text-white shadow-lg` : 'bg-slate-800 text-slate-400 border border-white/5'}`}
+                            >
+                                {t ? t('rarity_' + rKey) : rar.label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
