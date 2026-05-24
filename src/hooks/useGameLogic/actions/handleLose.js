@@ -1,11 +1,11 @@
 import { calculateEloChange, setBattleActive } from '../../../utils/db';
 import { playSound } from '../../../utils/soundManager';
 import { db } from '../../../firebase';
-import { increment, doc, getDoc, updateDoc, runTransaction } from 'firebase/firestore';
+import { increment, doc, updateDoc, runTransaction } from 'firebase/firestore';
 import { calculateMaxXp, recalculatePetStats, calculatePetTotalXpForLevel } from '../../../utils/mechanics/petStats';
 
 export const handleLose = async (state, showNotification, startBattleFn, reward, teamIds, enemyRating) => {
-    const { user, myPets, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView, t } = state;
+    const { user, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView, t } = state;
     if (!user) return;
 
     const isAuto = autoBattleRemaining > 0;

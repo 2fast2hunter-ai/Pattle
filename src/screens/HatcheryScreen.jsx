@@ -9,7 +9,7 @@ import EggSlot from '../components/hatchery/EggSlot';
 export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation, t, tutorialHighlight }) {
     const {
         unlockedSlots, maxSlots,
-        hatchingPet, setHatchingPet,
+        hatchingPet,
         nameInput, setNameInput,
         showSelector, setShowSelector,
         ticketCount,

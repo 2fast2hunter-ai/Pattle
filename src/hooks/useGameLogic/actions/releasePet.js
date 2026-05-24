@@ -1,4 +1,4 @@
-import { removePetFromDB, updateUser } from '../../../utils/db';
+import { removePetFromDB } from '../../../utils/db';
 
 export const releasePet = async (state, showNotification, petId) => {
     const { user, myPets } = state;

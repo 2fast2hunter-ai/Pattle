@@ -12,7 +12,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
 
     // --- AUTOMATISCHER ZYKLUS & XP UPDATE ---
     const [progress, setProgress] = React.useState(0);
-    const [isCollecting, setIsCollecting] = React.useState(false);
+    const [_isCollecting, setIsCollecting] = React.useState(false);
     const buildingLevel = user?.village?.buildings?.training || 1;
 
     // Rate berechnen (Items pro Sekunde)

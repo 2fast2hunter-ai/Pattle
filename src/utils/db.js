@@ -5,7 +5,7 @@ import {
     onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
     runTransaction, increment, getCountFromServer, deleteField, writeBatch
 } from 'firebase/firestore';
-import { generatePet, generateQuests } from './gameMechanics';
+import { generateQuests } from './gameMechanics';
 import { calculatePlayerLevel, getXpToNextPlayerLevel } from './mechanics/progression';
 import { recalculatePetStats, calculateMaxXp } from './mechanics/petStats';
 
@@ -29,7 +29,7 @@ const checkAndMigrateLevel = async (userData) => {
 };
 
 // Pet-Stats Migration (FIXED)
-const checkAndMigratePet = async (pet) => {
+const _checkAndMigratePet = async (pet) => {
     if (pet.isEgg) return;
 
     // 1. Level Check (Vertraue dem gespeicherten Level, da XP relativ ist)

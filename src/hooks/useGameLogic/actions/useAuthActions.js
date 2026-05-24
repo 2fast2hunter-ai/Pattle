@@ -8,7 +8,7 @@ export function useAuthActions(state, showNotification) {
         try { 
             await initializeUser(firebaseUser, displayName); 
             setUserId(firebaseUser.uid); 
-        } catch (error) { 
+        } catch (_error) {
             showNotification("Fehler beim Laden der Daten", "error"); 
             setAuthLoading(false); 
         } 

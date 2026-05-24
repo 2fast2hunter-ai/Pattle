@@ -1,7 +1,5 @@
 import { QUEST_TYPES, LOOTBOXES, SHOP_ITEMS, TIMED_REWARDS, TYPES } from '../../../data/gameData';
-import { updateUser, trackQuestProgress, addPetToDB } from '../../../utils/db';
-import { determineRarity } from '../../../utils/mechanics/lootLogic';
-import { generatePet } from '../../../utils/mechanics/petGeneration';
+import { updateUser, trackQuestProgress } from '../../../utils/db';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { getApp } from 'firebase/app';
 import { auth } from '../../../firebase';

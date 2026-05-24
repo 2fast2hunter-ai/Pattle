@@ -51,7 +51,7 @@ export function useVillageActions(state, showNotification) {
         if (!pet) return;
 
         // Prüfen ob Pet schon woanders arbeitet
-        for (const [resKey, slots] of Object.entries(user.village.workers)) {
+        for (const [, slots] of Object.entries(user.village.workers)) {
             if (slots.includes(petId)) {
                 showNotification(t('notif_worker_busy', { name: pet.name }), 'error');
                 return;

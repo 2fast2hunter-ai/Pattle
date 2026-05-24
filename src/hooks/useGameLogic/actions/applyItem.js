@@ -1,4 +1,4 @@
-import { updateUser, updatePetInDB, addPetXp } from '../../../utils/db';
+import { updateUser, addPetXp } from '../../../utils/db';
 import { CONSUMABLES, COSMETICS } from '../../../data/gameData';
 import { db } from '../../../firebase';
 import { doc, getDoc } from 'firebase/firestore';

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { X, Clock, Percent, Minus, Plus, Coins, Box, Star, Crown, Zap, PlayCircle } from 'lucide-react';
 import { LOOTBOXES, RARITIES, TYPES } from '../../data/gameData';
 

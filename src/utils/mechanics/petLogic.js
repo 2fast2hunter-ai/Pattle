@@ -1,5 +1,5 @@
 // src/utils/mechanics/petLogic.js
-import { recalculatePetStats, calculateMaxXp } from './petStats';
+import { recalculatePetStats } from './petStats';
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, SPECIES_BY_TYPE, FUSION_RECIPES } from '../../data/gameData';
 
 export const calculateBreedRarity = (rarity1Key, rarity2Key) => {

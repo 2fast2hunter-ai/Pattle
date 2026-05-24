@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 
 export function useTutorial(user, setUser, currentView, handleUpdateProfile) {
     const tutorialStep = user ? (user.tutorialStep !== undefined ? user.tutorialStep : (user.level === 1 && user.xp === 0 ? 0 : 13)) : 13;

@@ -2,9 +2,7 @@
 
 import { RESOURCES, RESOURCE_ITEMS } from '../../../data/gameData';
 import { TRANSLATIONS } from '../../../data/translations';
-import { db } from '../../../firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { updateUser, trackQuestProgress, addPetXp, batchUpdatePetsXp } from '../../../utils/db';
+import { updateUser, trackQuestProgress, batchUpdatePetsXp } from '../../../utils/db';
 import { playSound } from '../../../utils/soundManager';
 
 const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds, myPets, RARITY_MULTIPLIERS) => {

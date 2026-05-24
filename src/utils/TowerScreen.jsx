@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ArrowLeft, Lock, CheckCircle, Swords, Gift, Coins, Gem, Package, FlaskConical, Clock } from 'lucide-react';
 import { TOWER_STAGES } from '../data/gameData';
 

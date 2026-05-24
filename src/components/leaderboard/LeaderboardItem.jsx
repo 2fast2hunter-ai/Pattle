@@ -32,7 +32,7 @@ export default function LeaderboardItem({ player, index, isMe, onViewPlayer, typ
     const isNeutral = diff === 0;
     // ----------------------------------
 
-    const label = type === 'gauntlet' ? 'Score' : 'Elo';
+    const _label = type === 'gauntlet' ? 'Score' : 'Elo';
     const val = type === 'gauntlet' ? (player.stats?.gauntletHighscore || 0) : (player.rating || 1000);
 
     return (

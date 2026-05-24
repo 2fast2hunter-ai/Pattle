@@ -11,22 +11,19 @@ const RESOURCE_ICONS = {
     wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
 };
 
-export default function ResourceDetailScreen({ resourceId, user, pets, onBack, onAssignWorker, onRemoveWorker, onUpgradeBuilding, productionRates, onCollect, t }) { // t prop added
+export default function ResourceDetailScreen({ resourceId, user, pets, onBack, onAssignWorker, onRemoveWorker, onUpgradeBuilding, productionRates, onCollect, t }) {
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showFloating, setShowFloating] = useState(false);
     const [isProductionActive, setIsProductionActive] = useState(false);
-    
-    if (!resourceId || !RESOURCES[resourceId.toUpperCase()]) return null;
 
-    const resource = RESOURCES[resourceId.toUpperCase()];
-    const drops = RESOURCE_ITEMS[resourceId] || [];
-    const storage = user.village.storage || {}; 
-    
-    const level = user.village.buildings[resourceId] || 1;
-    const workers = user.village.workers[resourceId] || [];
-    
-    const rate = productionRates ? productionRates(resourceId, level, workers) : 0;
+    const isValid = resourceId && RESOURCES[resourceId.toUpperCase()];
+    const resource = isValid ? RESOURCES[resourceId.toUpperCase()] : null;
+    const drops = isValid ? (RESOURCE_ITEMS[resourceId] || []) : [];
+    const storage = user?.village?.storage || {};
+    const level = isValid ? (user?.village?.buildings?.[resourceId] || 1) : 1;
+    const workers = isValid ? (user?.village?.workers?.[resourceId] || []) : [];
+    const rate = (isValid && productionRates) ? productionRates(resourceId, level, workers) : 0;
     const cycleTime = Math.max(1, 10 - ((level - 1) * 0.05));
 
     useEffect(() => {
@@ -42,7 +39,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
 
     useEffect(() => {
         if (rate > 0 && isProductionActive) {
-            const tickRate = 100; 
+            const tickRate = 100;
             const step = (tickRate / (cycleTime * 1000)) * 100;
             const interval = setInterval(() => {
                 setProgress(old => {
@@ -61,6 +58,8 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
             setProgress(0);
         }
     }, [rate, cycleTime, onCollect, isProductionActive]);
+
+    if (!isValid) return null;
 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">

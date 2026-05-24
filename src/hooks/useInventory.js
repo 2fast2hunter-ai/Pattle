@@ -8,7 +8,7 @@ export function useInventory(user, pets, onOpenLootbox) {
 
     // --- ANIMATION STATES ---
     const [animationStage, setAnimationStage] = useState('idle');
-    const [processingBoxId, setProcessingBoxId] = useState(null);
+    const [_processingBoxId, setProcessingBoxId] = useState(null);
     const [resultPet, setResultPet] = useState(null);
     const [cycleRarity, setCycleRarity] = useState(RARITIES.COMMON);
     const [canCollect, setCanCollect] = useState(false);
