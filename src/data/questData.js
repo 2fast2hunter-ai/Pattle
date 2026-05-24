@@ -6,6 +6,11 @@ export const QUEST_TYPES = {
   EARN_XP: 'EARN_XP',
   LEVEL_UP_PET: 'LEVEL_UP_PET',
   COMPLETE_DAILY_SET: 'COMPLETE_DAILY_SET',
+  // Season 1 additions
+  WIN_DIVINE: 'WIN_DIVINE',
+  COLLECT_RESOURCE: 'COLLECT_RESOURCE',
+  UPGRADE_BUILDING: 'UPGRADE_BUILDING',
+  CHALLENGE_FRIEND: 'CHALLENGE_FRIEND',
 };
 
 // --- ALLE 100 QUEST TEMPLATES (NUR XP BELOHNUNGEN) ---
@@ -112,6 +117,34 @@ export const QUEST_TEMPLATES = [
   { type: 'WIN_PVP', label: "Duell", baseAmount: 1, rewardType: 'XP', rewardBase: 50 },
   { type: 'SPEND_COINS', label: "Investition", baseAmount: 300, rewardType: 'XP', rewardBase: 30 },
   { type: 'COMPLETE_DAILY_SET', label: "Pflichtbewusst", baseAmount: 1, rewardType: 'GEMS', rewardBase: 5 },
+
+  // --- SEASON 1: BATTLE-FOCUSED (5) ---
+  { type: 'WIN_TECH',   label: "Tech-Jäger",        baseAmount: 3, rewardType: 'XP', rewardBase: 250 },
+  { type: 'WIN_VOID',   label: "Leere bezwingen",    baseAmount: 2, rewardType: 'XP', rewardBase: 300 },
+  { type: 'WIN_CHAOS',  label: "Chaos besiegen",     baseAmount: 2, rewardType: 'XP', rewardBase: 300 },
+  { type: 'WIN_TIME',   label: "Zeit überwinden",    baseAmount: 3, rewardType: 'XP', rewardBase: 250 },
+  { type: 'WIN_DIVINE', label: "Göttliche Prüfung",  baseAmount: 1, rewardType: 'XP', rewardBase: 500 },
+
+  // --- SEASON 1: BREEDING-FOCUSED (5) ---
+  { type: 'HATCH_EGG',  label: "Zwillingsschlüpfen", baseAmount: 2, rewardType: 'XP', rewardBase: 200 },
+  { type: 'BREED_PET',  label: "Seltene Paarung",    baseAmount: 1, rewardType: 'XP', rewardBase: 300 },
+  { type: 'HATCH_RARE', label: "Seltenheit schlüpfen",baseAmount: 1, rewardType: 'XP', rewardBase: 600 },
+  { type: 'BREED_TECH', label: "Cyborg-Zucht",        baseAmount: 1, rewardType: 'XP', rewardBase: 300 },
+  { type: 'BREED_VOID', label: "Leere-Züchter",       baseAmount: 1, rewardType: 'XP', rewardBase: 350 },
+
+  // --- SEASON 1: VILLAGE-FOCUSED (7) ---
+  { type: 'COLLECT_RESOURCE', label: "Rohstoff-Sammler",  baseAmount: 5,  rewardType: 'XP', rewardBase: 100 },
+  { type: 'COLLECT_RESOURCE', label: "Fleißige Hände",    baseAmount: 10, rewardType: 'XP', rewardBase: 200 },
+  { type: 'COLLECT_RESOURCE', label: "Dorf-Ernte",        baseAmount: 20, rewardType: 'XP', rewardBase: 350 },
+  { type: 'UPGRADE_BUILDING', label: "Baumeister",        baseAmount: 1,  rewardType: 'XP', rewardBase: 400 },
+  { type: 'UPGRADE_BUILDING', label: "Dorfentwicklung",   baseAmount: 2,  rewardType: 'XP', rewardBase: 700 },
+  { type: 'SPEND_COINS',      label: "Markt-Investition", baseAmount: 2000, rewardType: 'XP', rewardBase: 200 },
+  { type: 'EARN_XP',          label: "Mehrstunden-Training", baseAmount: 2000, rewardType: 'XP', rewardBase: 400 },
+
+  // --- SEASON 1: SOCIAL (3) ---
+  { type: 'CHALLENGE_FRIEND', label: "Freundschafts-Duell",       baseAmount: 1, rewardType: 'XP', rewardBase: 200 },
+  { type: 'CHALLENGE_FRIEND', label: "Freundes-Herausforderung",  baseAmount: 3, rewardType: 'XP', rewardBase: 450 },
+  { type: 'WIN_PVP',          label: "Rivalen-Bezwinger",         baseAmount: 3, rewardType: 'XP', rewardBase: 250 },
 ];
 
 export const COMPOSITE_QUEST_REWARDS = {

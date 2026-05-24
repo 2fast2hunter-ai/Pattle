@@ -115,6 +115,8 @@ export const BASE_ANIMALS = {
   TECH_DOG: { id: 'TECH_DOG', label: 'Robo-Dog', icon: '🐕', type: 'TECH' },
   TECH_MOUSE: { id: 'TECH_MOUSE', label: 'Cyber-Maus', icon: '🖱️', type: 'TECH' },
   TECH_ANT: { id: 'TECH_ANT', label: 'Nano-Bot', icon: '🐜', type: 'TECH' },
+  TECH_CYBORG: { id: 'TECH_CYBORG', label: 'Cyborg-Krieger', icon: '🦾', type: 'TECH' },
+  TECH_MECH: { id: 'TECH_MECH', label: 'Mecha-Titan', icon: '⚙️', type: 'TECH' },
 
   SOUND_BAT: { id: 'SOUND_BAT', label: 'Schall-Bat', icon: '🦇', type: 'SOUND' },
   SOUND_PARROT: { id: 'SOUND_PARROT', label: 'Lautsprecher-Ara', icon: '🦜', type: 'SOUND' },
@@ -127,6 +129,8 @@ export const BASE_ANIMALS = {
   TIME_RABBIT: { id: 'TIME_RABBIT', label: 'Weißes Kaninchen', icon: '🐇', type: 'TIME' },
   TIME_LIZARD: { id: 'TIME_LIZARD', label: 'Chronos-Echse', icon: '🦎', type: 'TIME' },
   TIME_CAT: { id: 'TIME_CAT', label: 'Schrödingers Katze', icon: '🐈', type: 'TIME' },
+  TIME_CLOCKWORK: { id: 'TIME_CLOCKWORK', label: 'Uhrwerk-Titan', icon: '⏰', type: 'TIME' },
+  TIME_PARADOX: { id: 'TIME_PARADOX', label: 'Zeit-Paradox', icon: '🌀', type: 'TIME' },
 
   SPACE_ALIEN: { id: 'SPACE_ALIEN', label: 'Marsianer', icon: '👽', type: 'SPACE' },
   SPACE_STARFISH: { id: 'SPACE_STARFISH', label: 'Sternenwesen', icon: '⭐', type: 'SPACE' },
@@ -139,18 +143,25 @@ export const BASE_ANIMALS = {
   VOID_SHADOW: { id: 'VOID_SHADOW', label: 'Schattenriss', icon: '👤', type: 'VOID' },
   VOID_SPIDER: { id: 'VOID_SPIDER', label: 'Leerenweber', icon: '🕷️', type: 'VOID' },
   VOID_SNAKE: { id: 'VOID_SNAKE', label: 'Abgrundschlange', icon: '🐍', type: 'VOID' },
+  VOID_WRAITH: { id: 'VOID_WRAITH', label: 'Schattenwandler', icon: '🌑', type: 'VOID' },
+  VOID_LEVIATHAN: { id: 'VOID_LEVIATHAN', label: 'Leeren-Leviathen', icon: '🐉', type: 'VOID' },
 
   CHAOS_HYENA: { id: 'CHAOS_HYENA', label: 'Lachende Hyäne', icon: '🐕', type: 'CHAOS' },
   CHAOS_MONKEY: { id: 'CHAOS_MONKEY', label: 'Wahnsinnsaffe', icon: '🐒', type: 'CHAOS' },
   CHAOS_SNAKE: { id: 'CHAOS_SNAKE', label: 'Hydra', icon: '🐍', type: 'CHAOS' },
   CHAOS_DRAGON: { id: 'CHAOS_DRAGON', label: 'Chaosdrache', icon: '🐉', type: 'CHAOS' },
   CHAOS_JOKER: { id: 'CHAOS_JOKER', label: 'Joker', icon: '🤡', type: 'CHAOS' },
+  CHAOS_BEAST: { id: 'CHAOS_BEAST', label: 'Schreckensfürst', icon: '🦬', type: 'CHAOS' },
+  CHAOS_JESTER: { id: 'CHAOS_JESTER', label: 'Wahnsinns-Jester', icon: '🎭', type: 'CHAOS' },
 
   ORDER_LION: { id: 'ORDER_LION', label: 'Königslöwe', icon: '🦁', type: 'ORDER' },
   ORDER_EAGLE: { id: 'ORDER_EAGLE', label: 'Reichsadler', icon: '🦅', type: 'ORDER' },
   ORDER_HORSE: { id: 'ORDER_HORSE', label: 'Ritterross', icon: '🐎', type: 'ORDER' },
   ORDER_DOG: { id: 'ORDER_DOG', label: 'Wachhund', icon: '🐕', type: 'ORDER' },
   ORDER_OWL: { id: 'ORDER_OWL', label: 'Richter', icon: '🦉', type: 'ORDER' },
+
+  DIVINE_ANGEL: { id: 'DIVINE_ANGEL', label: 'Erzengel', icon: '👼', type: 'DIVINE' },
+  DIVINE_SERAPH: { id: 'DIVINE_SERAPH', label: 'Seraphim', icon: '✨', type: 'DIVINE' },
 };
 
 // --- 2. GEHEIME ZUCHT-HYBRIDEN ---

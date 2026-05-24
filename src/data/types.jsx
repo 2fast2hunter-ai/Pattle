@@ -1,8 +1,8 @@
 import React from 'react';
-import { 
-  Flame, Droplets, Leaf, Wind, Mountain, Snowflake, Zap, Sun, Moon, Ghost, 
-  Sparkles, Eye, Swords, Hexagon, Box, TestTube, Trophy, Heart, Cpu, Music, 
-  Clock, Orbit, Aperture, AlertTriangle, Gavel
+import {
+  Flame, Droplets, Leaf, Wind, Mountain, Snowflake, Zap, Sun, Moon, Ghost,
+  Sparkles, Eye, Swords, Hexagon, Box, TestTube, Trophy, Heart, Cpu, Music,
+  Clock, Orbit, Aperture, AlertTriangle, Gavel, Star
 } from 'lucide-react';
 
 export const TYPES = {
@@ -31,6 +31,7 @@ export const TYPES = {
   VOID:      { label: 'Leere',      color: 'text-black',      bg: 'bg-black',      bgLight: 'bg-gray-900',      icon: <Aperture /> },
   CHAOS:     { label: 'Chaos',      color: 'text-red-400',    bg: 'bg-red-900',    bgLight: 'bg-red-900/20',    icon: <AlertTriangle /> },
   ORDER:     { label: 'Ordnung',    color: 'text-white',      bg: 'bg-slate-400',  bgLight: 'bg-slate-400/20',  icon: <Gavel /> },
+  DIVINE:    { label: 'Göttlich',   color: 'text-yellow-200', bg: 'bg-yellow-400', bgLight: 'bg-yellow-400/20', icon: <Star /> },
 };
 
 // Generiere die Effektivitäts-Tabelle basierend auf dem Kreislauf-Muster:

@@ -1,6 +1,6 @@
 // src/hooks/useGameLogic/actions/useVillageActions.js
 
-import { updateUser } from '../../../utils/db';
+import { updateUser, trackQuestProgress } from '../../../utils/db';
 import {
     RESOURCES,
     ALLOWED_TYPES,
@@ -204,6 +204,7 @@ export function useVillageActions(state, showNotification) {
 
         showNotification(t('notif_building_upgraded', { building: t('res_' + resourceId) }), 'success');
         playSound('build');
+        trackQuestProgress(user, 'UPGRADE_BUILDING', 1, ['UPGRADE_BUILDING']);
     };
 
     // --- HANDEL ---

@@ -36,4 +36,5 @@ export const ABILITIES = {
     blackhole:    { id: 'blackhole',    name: 'Schwarzes Loch',type: 'SPECIAL',  element: 'VOID',     dmgScale: 2.0, cd: 3, desc: 'Verschlingt alles.' },
     disorder:     { id: 'disorder',     name: 'Entropie',      type: 'SPECIAL',  element: 'CHAOS',    dmgScale: 1.9, cd: 3, desc: 'Pures Chaos.' },
     judgment:     { id: 'judgment',     name: 'Urteil',        type: 'SPECIAL',  element: 'ORDER',    dmgScale: 1.9, cd: 3, desc: 'Göttliche Ordnung.' },
+    divinelight:  { id: 'divinelight',  name: 'Göttliches Licht', type: 'SPECIAL', element: 'DIVINE',  dmgScale: 2.1, cd: 4, desc: 'Überirdische Energie vernichtet Böses.' },
 };

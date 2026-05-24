@@ -196,6 +196,10 @@ export const collectResources = async ({
 
         await updateUser(user.id, updates);
 
+        if (itemsLog.length > 0) {
+            trackQuestProgress(user, 'COLLECT_RESOURCE', itemsLog.length, ['COLLECT_RESOURCE']);
+        }
+
         return { items: itemsLog, xp: totalXpGained };
     } else {
         await updateUser(user.id, {
