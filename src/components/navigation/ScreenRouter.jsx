@@ -23,6 +23,8 @@ import VillageTradingScreen from '../../screens/VillageTradingScreen';
 import VillageCosmeticsScreen from '../../screens/VillageCosmeticsScreen';
 import TowerScreen from '../../screens/TowerScreen';
 import LegalScreen from '../../screens/LegalScreen';
+import PatchesScreen from '../../screens/PatchesScreen';
+import FeedbackScreen from '../../screens/FeedbackScreen';
 import { ALLOWED_TYPES } from '../../data/gameData';
 
 export default function ScreenRouter({
@@ -121,6 +123,8 @@ export default function ScreenRouter({
         case 'settings': return <SettingsScreen settings={settings} setSettings={setSettings} onLogout={handleLogout} onBack={() => setCurrentView('menu')} onNavigate={setCurrentView} t={t} />;
         case 'legal-imprint': return <LegalScreen type='imprint' onBack={() => setCurrentView('settings')} t={t} />;
         case 'legal-privacy': return <LegalScreen type='privacy' onBack={() => setCurrentView('settings')} t={t} />;
+        case 'patches': return <PatchesScreen onBack={() => setCurrentView('settings')} t={t} />;
+        case 'feedback': return <FeedbackScreen onBack={() => setCurrentView('settings')} user={user} t={t} />;
 
         default: return null;
     }
