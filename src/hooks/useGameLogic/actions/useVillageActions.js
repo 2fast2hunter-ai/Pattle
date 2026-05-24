@@ -110,7 +110,7 @@ export function useVillageActions(state, showNotification) {
         showNotification(t('notif_worker_removed'), 'info');
     };
 
-    // --- IDLE ZEIT VERLÄNGERN ---
+    // --- IDLE ZEIT VERLÄNGERN (Ticket) ---
     const addIdleTime = async () => {
         if (!user) return;
         if ((user.adTickets || 0) < 1) {
@@ -128,6 +128,18 @@ export function useVillageActions(state, showNotification) {
         });
 
         showNotification(t('notif_idle_extended'), "success");
+    };
+
+    // --- IDLE ZEIT VERLÄNGERN (Werbung) — +1 Stunde, kein Ticket nötig ---
+    const addIdleTimeByAd = async () => {
+        if (!user) return;
+
+        const now = Date.now();
+        const currentExpire = user.village.idleTimeExpiresAt || 0;
+        const newExpire = Math.max(now, currentExpire) + (60 * 60 * 1000);
+
+        await updateUser(user.id, { "village.idleTimeExpiresAt": newExpire });
+        showNotification('Produktion um 1 Stunde verlängert! 🎉', 'success');
     };
 
     // --- RESSOURCEN SAMMELN ---
@@ -356,6 +368,6 @@ export function useVillageActions(state, showNotification) {
 
     return {
         assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
-        tradeResources, claimMilestone, addIdleTime, buyCosmetic, buySpecialOffer
+        tradeResources, claimMilestone, addIdleTime, addIdleTimeByAd, buyCosmetic, buySpecialOffer
     };
 }

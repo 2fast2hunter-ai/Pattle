@@ -1,5 +1,20 @@
 import { updatePetInDB, updateUser } from '../../../utils/db';
 
+export const handleReduceCooldownByAd = async (state, showNotification, petId) => {
+    const { myPets } = state;
+    const pet = myPets.find(p => p.id === petId);
+    if (!pet || !pet.hatchAt) return;
+
+    const timeLeft = Math.max(0, pet.hatchAt - Date.now());
+    if (timeLeft <= 0) return;
+
+    const reduction = Math.ceil(timeLeft * 0.5);
+    const newHatchAt = Math.max(Date.now() + 1000, pet.hatchAt - reduction);
+
+    await updatePetInDB(petId, { hatchAt: newHatchAt });
+    showNotification('Brutzeit um 50% verkürzt! 🎉', 'success');
+};
+
 export const handleReduceCooldown = async (state, showNotification, petId, type) => {
     const { user, myPets } = state;
     const ticketIndex = user.inventory.findIndex(i => i.type === 'TICKET');

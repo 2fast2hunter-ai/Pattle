@@ -3,6 +3,7 @@ import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings,
 import { PageBackground } from '../components/GameLayout';
 import DailyLoginModal from '../components/modals/DailyLoginModal';
 import { claimDailyLoginReward } from '../utils/db';
+import BannerAd from '../components/ui/BannerAd';
 
 // --- RIPPLE BUTTON COMPONENT ---
 const MenuTile = ({ item, index, onClick, highlight }) => {
@@ -197,6 +198,9 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
               <MenuTile key={item.id} item={item} index={index} onClick={item.onClick} highlight={tutorialHighlight === item.id} />
           ))}
       </div>
+
+      {/* Banner Ad */}
+      <BannerAd className="mt-4" />
     </div>
   );
 }

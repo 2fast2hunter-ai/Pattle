@@ -6,7 +6,7 @@ import HatchingModal from '../components/hatchery/HatchingModal';
 import EggSlot from '../components/hatchery/EggSlot';
 
 // --- MAIN SCREEN ---
-export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation, t, tutorialHighlight }) {
+export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduceCooldown, onStartIncubation, onWatchAdForHatch, t, tutorialHighlight }) {
     const {
         unlockedSlots, maxSlots,
         hatchingPet,
@@ -92,6 +92,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                                 onClick={handleSlotClick}
                                 startHatchingProcess={startHatchingProcess}
                                 onReduceCooldown={onReduceCooldown}
+                                onWatchAdForHatch={onWatchAdForHatch}
                                 ticketCount={ticketCount}
                                 formatTime={formatTime}
                                 t={t}

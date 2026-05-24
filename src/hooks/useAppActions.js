@@ -61,12 +61,18 @@ export function useAppActions(gameLogic, user, setUser, tutorialStep) {
         trackQuestProgress(user, 'WATCH_AD', 1);
     };
 
+    const handleWatchAdForHatchWrapper = async (petId) => {
+        await gameLogic.handleReduceCooldownByAd(petId);
+        trackQuestProgress(user, 'WATCH_AD', 1);
+    };
+
     return {
         handleOpenLootboxWrapper,
         handleStartIncubationWrapper,
         handleReduceCooldownWrapper,
         handleHatchEggWrapper,
         handleWinWrapper,
-        handleWatchAd
+        handleWatchAd,
+        handleWatchAdForHatchWrapper
     };
 }

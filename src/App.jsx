@@ -105,7 +105,7 @@ export default function App() {
                         handleUseItemRequest={handleUseItemRequest} handleApplyItemToPet={handleApplyItemToPet}
                         handleOpenLootboxWrapper={appActions.handleOpenLootboxWrapper} handleStartIncubationWrapper={appActions.handleStartIncubationWrapper}
                         handleReduceCooldownWrapper={appActions.handleReduceCooldownWrapper} handleHatchEggWrapper={appActions.handleHatchEggWrapper}
-                        handleWinWrapper={appActions.handleWinWrapper} handleLose={gameLogic.handleLose} handleWatchAd={appActions.handleWatchAd}
+                        handleWinWrapper={appActions.handleWinWrapper} handleLose={gameLogic.handleLose} handleWatchAd={appActions.handleWatchAd} handleWatchAdForHatchWrapper={appActions.handleWatchAdForHatchWrapper}
                         handleAutoBattle={gameLogic.handleAutoBattle} cancelAutoBattle={gameLogic.cancelAutoBattle}
                         renamePet={gameLogic.renamePet} releasePet={gameLogic.releasePet} addToTeam={gameLogic.addToTeam} removeFromTeam={gameLogic.removeFromTeam}
                         handleBuyMarket={gameLogic.handleBuyMarket} handleSellMarket={gameLogic.handleSellMarket} handleSellResource={gameLogic.handleSellResource} handleRemoveListing={gameLogic.handleRemoveListing}

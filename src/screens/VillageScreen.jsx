@@ -6,7 +6,7 @@ import IdleTimerBanner from '../components/village/IdleTimerBanner';
 import ResourceGrid from '../components/village/ResourceGrid';
 import VillageActionButtons from '../components/village/VillageActionButtons';
 
-export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onOpenCosmetics, onOpenTraining, onToggleTrainingPet }) {
+export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onAddIdleTimeByAd, onOpenCosmetics, onOpenTraining, onToggleTrainingPet }) {
 
     // Timer State für Countdown
     const [timeLeftStr, setTimeLeftStr] = React.useState("00:00:00");
@@ -93,6 +93,7 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
                     isActive={isActive}
                     timeLeftStr={timeLeftStr}
                     onAddIdleTime={onAddIdleTime}
+                    onAddIdleTimeByAd={onAddIdleTimeByAd}
                     ticketCount={ticketCount}
                     t={t}
                 />

@@ -1,12 +1,34 @@
-import React from 'react';
-import { Lock, Hourglass, Egg, FastForward, Plus } from 'lucide-react';
+import React, { useState } from 'react';
+import { Lock, Hourglass, Egg, FastForward, Plus, Tv } from 'lucide-react';
 import { RARITIES } from '../../data/gameData';
+import { showRewardedAd } from '../../utils/adManager';
+import AdModal from '../ui/AdModal';
 
 export default function EggSlot({
     index, egg, isUnlocked, unlockedSlots,
-    onClick, startHatchingProcess, onReduceCooldown,
+    onClick, startHatchingProcess, onReduceCooldown, onWatchAdForHatch,
     ticketCount, formatTime, t, tutorialHighlight
 }) {
+    const [showDevAdModal, setShowDevAdModal] = useState(false);
+    const [pendingAdForEgg, setPendingAdForEgg] = useState(null);
+
+    const handleWatchAdClick = (eggId) => {
+        setPendingAdForEgg(eggId);
+        showRewardedAd({
+            onReward: () => { if (onWatchAdForHatch) onWatchAdForHatch(eggId); setPendingAdForEgg(null); },
+            onError: () => { setPendingAdForEgg(null); },
+            onOpenDevModal: () => setShowDevAdModal(true)
+        });
+    };
+    if (showDevAdModal) {
+        return (
+            <AdModal
+                onClose={() => setShowDevAdModal(false)}
+                onReward={() => { if (pendingAdForEgg && onWatchAdForHatch) { onWatchAdForHatch(pendingAdForEgg); setPendingAdForEgg(null); } }}
+            />
+        );
+    }
+
     // GESPERRT
     if (!isUnlocked) {
         return (
@@ -62,9 +84,19 @@ export default function EggSlot({
                                 <button
                                     onClick={() => onReduceCooldown(egg.id, 'HATCHING')}
                                     className={`bg-pink-600 hover:bg-pink-500 text-white p-2 rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-all ${tutorialHighlight === 'speedup-btn' ? 'ring-4 ring-yellow-400 z-50 animate-pulse' : ''}`}
-                                    title="-5 Min"
+                                    title="-5 Min (Ticket)"
                                 >
                                     <FastForward className="w-3 h-3" />
+                                </button>
+                            )}
+
+                            {onWatchAdForHatch && (
+                                <button
+                                    onClick={() => handleWatchAdClick(egg.id)}
+                                    className="bg-indigo-600 hover:bg-indigo-500 text-white p-2 rounded-xl flex items-center justify-center shadow-lg active:scale-95 transition-all"
+                                    title="-50% Werbung schauen"
+                                >
+                                    <Tv className="w-3 h-3" />
                                 </button>
                             )}
                         </div>

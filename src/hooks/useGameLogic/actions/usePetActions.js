@@ -1,5 +1,5 @@
 import { releasePet } from './releasePet';
-import { handleReduceCooldown } from './handleReduceCooldown';
+import { handleReduceCooldown, handleReduceCooldownByAd } from './handleReduceCooldown';
 import { addToTeam } from './addToTeam';
 import { removeFromTeam } from './removeFromTeam';
 import { breedPets } from './breedPets';
@@ -77,8 +77,9 @@ export function usePetActions(state, showNotification) {
         }
     };
 
-    return { 
+    return {
         handleReduceCooldown: (petId, type) => handleReduceCooldown(state, showNotification, petId, type),
+        handleReduceCooldownByAd: (petId) => handleReduceCooldownByAd(state, showNotification, petId),
         addToTeam: (petId) => addToTeam(state, showNotification, petId),
         removeFromTeam: (index) => removeFromTeam(state, showNotification, index),
         hatchEgg,
