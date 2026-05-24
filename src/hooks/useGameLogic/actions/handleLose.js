@@ -1,5 +1,6 @@
 import { calculateEloChange, setBattleActive } from '../../../utils/db';
 import { playSound } from '../../../utils/soundManager';
+import { trackBattleLost } from '../../../utils/analytics';
 import { db } from '../../../firebase';
 import { increment, doc, updateDoc, runTransaction } from 'firebase/firestore';
 import { calculateMaxXp, recalculatePetStats, calculatePetTotalXpForLevel } from '../../../utils/mechanics/petStats';
@@ -148,6 +149,9 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
 
 
     await setBattleActive(user.id, false);
+
+    const lostBattleType = isTower ? 'tower' : isGauntlet ? 'gauntlet' : isFriendly ? 'friendly' : 'pvp';
+    trackBattleLost(lostBattleType);
 
     if (!isAuto) {
         playSound('lose');

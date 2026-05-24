@@ -14,6 +14,7 @@ import { BASE_ANIMALS } from './data/gameData';
 import IdleReturnModal from './components/village/IdleReturnModal';
 import { playSound, playBGM, setMusicEnabled, setSoundEnabled } from './utils/soundManager';
 import { TRANSLATIONS } from './data/translations';
+import { trackScreenView, trackSessionDuration } from './utils/analytics';
 
 export default function App() {
     const gameLogic = useGameLogic();
@@ -52,6 +53,18 @@ export default function App() {
         setSoundEnabled(settings?.soundEnabled !== false);
         if (settings?.musicEnabled !== false) playBGM(currentView);
     }, [currentView, settings]);
+
+    useEffect(() => {
+        if (currentView) trackScreenView(currentView);
+    }, [currentView]);
+
+    useEffect(() => {
+        const sessionStart = Date.now();
+        return () => {
+            const seconds = Math.round((Date.now() - sessionStart) / 1000);
+            trackSessionDuration(seconds);
+        };
+    }, []);
 
     useEffect(() => { if (notification) playSound('notification'); }, [notification]);
 

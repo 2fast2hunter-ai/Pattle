@@ -92,14 +92,21 @@ export default function LegalScreen({ type, onBack, t }) {
                         </div>
 
                         <div>
-                            <h4 className="text-white font-bold mb-1">4. Werbung</h4>
+                            <h4 className="text-white font-bold mb-1">4. Google Analytics 4</h4>
+                            <p>
+                                Wir verwenden Google Analytics 4 (Google Ireland Limited, Gordon House, Barrow Street, Dublin 4, Irland) zur Analyse des Nutzerverhaltens. Dabei werden anonymisierte Nutzungsdaten erhoben, z.B. welche Spielbereiche aufgerufen werden und wie oft bestimmte Aktionen ausgeführt werden. Es werden <strong>keine personenbezogenen Daten</strong> (Name, E-Mail, Standort) erhoben. IP-Adressen werden anonymisiert. Weitere Informationen: <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">https://policies.google.com/privacy</a>
+                            </p>
+                        </div>
+
+                        <div>
+                            <h4 className="text-white font-bold mb-1">5. Werbung</h4>
                             <p>
                                 Diese App bindet Werbung ein (z.B. für Belohnungen). Hierbei können durch den Werbeanbieter (z.B. Monetag) Daten wie IP-Adresse oder Device-ID verarbeitet werden, um passende Werbung anzuzeigen.
                             </p>
                         </div>
 
                         <div>
-                            <h4 className="text-white font-bold mb-1">5. Deine Rechte</h4>
+                            <h4 className="text-white font-bold mb-1">6. Deine Rechte</h4>
                             <p>
                                 Du hast das Recht auf Auskunft über deine gespeicherten Daten sowie ein Recht auf Berichtigung, Sperrung oder Löschung dieser Daten. Kontaktiere uns dazu einfach per E-Mail.
                             </p>

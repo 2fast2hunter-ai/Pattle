@@ -1,5 +1,6 @@
 import { trackQuestProgress, calculateEloChange, setBattleActive } from '../../../utils/db';
 import { TOWER_STAGES } from '../../../data/gameData';
+import { trackBattleWon } from '../../../utils/analytics';
 import { db } from '../../../firebase';
 import { doc, increment, arrayUnion, updateDoc } from 'firebase/firestore';
 import { handleGauntletWin, generateGauntletEnemies } from './handleGauntletWin';
@@ -139,6 +140,10 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     if (!isAuto || autoBattleRemaining <= 1) {
         await setBattleActive(user.id, false);
     }
+
+    // Analytics
+    const wonBattleType = isTower ? 'tower' : isGauntlet ? 'gauntlet' : isFriendly ? 'friendly' : 'pvp';
+    trackBattleWon(wonBattleType, Math.floor(coinsGain), Math.floor(xpGain));
 
     // Quest Tracking
     if (!isFriendly) {

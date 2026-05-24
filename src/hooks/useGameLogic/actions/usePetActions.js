@@ -8,6 +8,7 @@ import { applyItem } from './applyItem';
 import { updatePetInDB, trackQuestProgress, updateUser } from '../../../utils/db';
 import { RARITIES, ZODIAC_ANIMALS } from '../../../data/gameData';
 import { getUnlockedHatcherySlots } from '../../../utils/mechanics/progression';
+import { trackEggHatched } from '../../../utils/analytics';
 
 export function usePetActions(state, showNotification) {
     const startIncubation = async (petId) => {
@@ -69,6 +70,7 @@ export function usePetActions(state, showNotification) {
             // Quest Progress
             const subTypes = [`HATCH_${pet.rarity}`, `HATCH_${pet.type}`];
             await trackQuestProgress(user, 'HATCH_EGG', 1, subTypes);
+            trackEggHatched(pet.type, pet.rarity);
 
             showNotification(`${updates.name} ist geschlüpft!`, "success");
         } catch (error) {

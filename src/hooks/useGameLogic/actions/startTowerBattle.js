@@ -1,6 +1,7 @@
 import { TOWER_STAGES, TYPES } from '../../../data/gameData';
 import { generatePet } from '../../../utils/gameMechanics';
 import { setBattleActive } from '../../../utils/db';
+import { trackBattleStarted } from '../../../utils/analytics';
 
 export const startTowerBattle = async (state, showNotification, stageId) => {
     const { user, myPets, setActiveBattle, setCurrentView } = state;
@@ -50,6 +51,7 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
         isFriendly: false 
     };
     
+    trackBattleStarted('tower');
     setActiveBattle(battleState);
     setCurrentView('battle');
     await setBattleActive(user.id, true);

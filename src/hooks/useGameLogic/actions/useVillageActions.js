@@ -1,6 +1,7 @@
 // src/hooks/useGameLogic/actions/useVillageActions.js
 
 import { updateUser, trackQuestProgress } from '../../../utils/db';
+import { trackBuildingUpgraded } from '../../../utils/analytics';
 import {
     RESOURCES,
     ALLOWED_TYPES,
@@ -202,6 +203,7 @@ export function useVillageActions(state, showNotification) {
             "village.storage": newStorage
         });
 
+        trackBuildingUpgraded(resourceId, currentLvl + 1);
         showNotification(t('notif_building_upgraded', { building: t('res_' + resourceId) }), 'success');
         playSound('build');
         trackQuestProgress(user, 'UPGRADE_BUILDING', 1, ['UPGRADE_BUILDING']);

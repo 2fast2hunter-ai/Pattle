@@ -1,6 +1,7 @@
 import { generatePet } from '../../../utils/gameMechanics';
 import { setBattleActive } from '../../../utils/db';
 import { TYPES } from '../../../data/gameData';
+import { trackBattleStarted } from '../../../utils/analytics';
 
 export const startGauntletBattle = async (state, showNotification) => {
     const { user, myPets, setActiveBattle, setCurrentView } = state;
@@ -41,6 +42,7 @@ export const startGauntletBattle = async (state, showNotification) => {
         gauntletTeamIds: myTeam.map(p => p.id)
     };
 
+    trackBattleStarted('gauntlet');
     setActiveBattle(battleState);
     setCurrentView('battle');
     await setBattleActive(user.id, true);

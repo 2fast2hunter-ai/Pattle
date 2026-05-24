@@ -2,6 +2,7 @@ import { updateUser, addPetToDB, updatePetInDB, trackQuestProgress } from '../..
 import { generatePet } from '../../../utils/gameMechanics';
 import { RARITIES } from '../../../data/gameData';
 import { getFusionRecipe } from '../../../data/fusionRecipes';
+import { trackPetBred } from '../../../utils/analytics';
 
 export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     const { user, myPets } = state;
@@ -79,6 +80,7 @@ export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
         baby.name = isSecret ? '???' : baby.name;
     }
 
+    trackPetBred(baby.type, baby.rarity, isFusion);
     const babyData = JSON.parse(JSON.stringify(baby));
     await addPetToDB(babyData, user.id);
 

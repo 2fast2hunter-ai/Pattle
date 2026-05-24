@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { claimQuestReward, claimCompositeReward, trackQuestProgress } from '../utils/db';
 import { COMPOSITE_QUEST_REWARDS } from '../data/gameData';
 import { RefreshCw, Calendar, Star } from 'lucide-react';
+import { trackQuestCompleted } from '../utils/analytics';
 
 export function useQuests(user, t) {
     const [claiming, setClaiming] = useState(null);
@@ -36,6 +37,7 @@ export function useQuests(user, t) {
     const handleClaim = async (questId) => {
         setClaiming(questId);
         await claimQuestReward(user, activeTab, questId);
+        trackQuestCompleted(activeTab, questId);
         setClaiming(null);
     };
 

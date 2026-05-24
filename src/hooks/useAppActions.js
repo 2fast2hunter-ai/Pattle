@@ -1,5 +1,6 @@
 import React from 'react';
 import { trackQuestProgress } from '../utils/db';
+import { trackAdWatched } from '../utils/analytics';
 
 export function useAppActions(gameLogic, user, setUser, tutorialStep) {
 
@@ -59,11 +60,13 @@ export function useAppActions(gameLogic, user, setUser, tutorialStep) {
     const handleWatchAd = async (reward) => {
         await gameLogic.watchAdForReward(reward);
         trackQuestProgress(user, 'WATCH_AD', 1);
+        trackAdWatched('shop');
     };
 
     const handleWatchAdForHatchWrapper = async (petId) => {
         await gameLogic.handleReduceCooldownByAd(petId);
         trackQuestProgress(user, 'WATCH_AD', 1);
+        trackAdWatched('hatchery');
     };
 
     return {

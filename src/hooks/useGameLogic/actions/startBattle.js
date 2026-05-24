@@ -1,6 +1,7 @@
 import { generatePet } from '../../../utils/gameMechanics';
 import { setBattleActive } from '../../../utils/db';
 import { TYPES } from '../../../data/gameData';
+import { trackBattleStarted } from '../../../utils/analytics';
 
 export const startBattle = async (state, showNotification, overridePets = null) => {
     const { user, myPets, setActiveBattle, setCurrentView } = state;
@@ -32,6 +33,7 @@ export const startBattle = async (state, showNotification, overridePets = null) 
 
     const battleState = { myTeam, enemyTeam, myIndex: 0, enemyIndex: 0, turn: 'PLAYER', log: ["Kampf beginnt!"], isOver: false, round: 1, isFriendly: false };
 
+    trackBattleStarted('pvp');
     setActiveBattle(battleState);
     setCurrentView('battle');
     await setBattleActive(user.id, true);
