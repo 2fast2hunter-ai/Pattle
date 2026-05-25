@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Sparkles, Trash2, Share2, Check } from 'lucide-react';
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import { getPetLevelProgress } from '../utils/mechanics/petStats'; // IMPORT HINZUGEFÜGT
+import { sharePet } from '../utils/shareUtils';
 import PetAvatar from '../components/PetAvatar';
 import RenameModal from '../components/modals/RenameModal';
 import DeleteModal from '../components/modals/DeleteModal';
@@ -9,6 +10,7 @@ import DeleteModal from '../components/modals/DeleteModal';
 export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet, t }) { // t prop added
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
   
   if (!pet) return null;
 
@@ -34,6 +36,16 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
       if (newName === pet.name) { setShowRenameModal(false); return; }
       const success = await onRenamePet(pet.id, newName);
       if (success) setShowRenameModal(false);
+  };
+
+  const handleShare = async () => {
+      try {
+          const result = await sharePet(pet, rarity.label, type.label);
+          if (result === 'copied') {
+              setShareCopied(true);
+              setTimeout(() => setShareCopied(false), 2000);
+          }
+      } catch (_) {}
   };
 
   const handleReleaseSubmit = async () => {
@@ -124,8 +136,15 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
                 </div>
             </div>
             
-            <button 
-                onClick={() => setShowDeleteModal(true)} 
+            <button
+                onClick={handleShare}
+                className="w-full py-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-indigo-500 hover:text-white transition-all active:scale-95 mb-3"
+            >
+                {shareCopied ? <><Check className="w-5 h-5" /> Kopiert!</> : <><Share2 className="w-5 h-5" /> Pet teilen</>}
+            </button>
+
+            <button
+                onClick={() => setShowDeleteModal(true)}
                 className="w-full py-4 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-red-500 hover:text-white transition-all active:scale-95"
             >
                 <Trash2 className="w-5 h-5" /> Pet freilassen

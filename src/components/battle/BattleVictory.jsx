@@ -1,7 +1,9 @@
-import React from 'react';
-import { Skull, Trophy, Coins, Star, Repeat, XCircle, CheckCircle, Flame } from 'lucide-react';
+import React, { useState } from 'react';
+import { Skull, Trophy, Coins, Star, Repeat, XCircle, CheckCircle, Flame, Share2, Check } from 'lucide-react';
 import PetAvatar from '../PetAvatar';
 import { getPetLevelProgress } from '../../utils/mechanics/petStats';
+import { TYPES } from '../../data/gameData';
+import { shareVictory } from '../../utils/shareUtils';
 
 export default function BattleVictory({
     won,
@@ -24,6 +26,21 @@ export default function BattleVictory({
     t
 }) {
     const xpPerPet = Math.floor(displayXp / Math.max(1, myTeam.length));
+    const [victoryCopied, setVictoryCopied] = useState(false);
+
+    const handleShareVictory = async () => {
+        try {
+            const elementLabel = myTeam && myTeam.length > 0
+                ? (TYPES[myTeam[0]?.type]?.label || myTeam[0]?.type || '')
+                : '';
+            const floorNumber = battleState.isGauntlet ? battleState.gauntletRound : null;
+            const result = await shareVictory(elementLabel, floorNumber);
+            if (result === 'copied') {
+                setVictoryCopied(true);
+                setTimeout(() => setVictoryCopied(false), 2000);
+            }
+        } catch (_) {}
+    };
 
     return (
         <>
@@ -107,6 +124,11 @@ export default function BattleVictory({
                 </div>
             ) : (
                 <div className="flex flex-col gap-3 w-full max-w-sm shrink-0 pb-6">
+                    {won && (
+                        <button onClick={handleShareVictory} className="w-full py-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-sm flex justify-center items-center gap-2 hover:bg-indigo-500 hover:text-white transition-all active:scale-95">
+                            {victoryCopied ? <><Check className="w-4 h-4" /> Kopiert!</> : <><Share2 className="w-4 h-4" /> Sieg teilen</>}
+                        </button>
+                    )}
                     <button onClick={() => won ? onWin({ coins: baseCoins, xp: baseXp }, myTeamIds, null, damageDealt) : onLose({ xp: baseXp }, myTeamIds)} className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl flex justify-center items-center gap-2 transition-all ${isAutoBattle && !isLastAuto ? 'bg-purple-600 text-white animate-pulse' : (isLastAuto ? 'bg-green-600 text-white hover:scale-[1.02]' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95')}`}>
                         {isLastAuto ? <><CheckCircle className="w-5 h-5" /> {t ? t('battle_finish') : 'ABSCHLIESSEN'}</> : isAutoBattle ? <><Repeat className="w-5 h-5" /> {t ? t('battle_continue') : 'WEITER'} ({autoBattleRemaining})</> : (isFriendly ? (t ? t('battle_back') : "ZURÜCK") : (t ? t('battle_continue') : "WEITER"))}
                     </button>
