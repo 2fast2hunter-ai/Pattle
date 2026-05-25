@@ -20,7 +20,6 @@ export function useGameLogic() {
     const isCollectingRef = useRef(false); // Schutz gegen überlappende Aufrufe
     const lastIdleNotificationRef = useRef(0); // Schutz gegen Spam bei abgelaufener Zeit
     const idleReturnCheckedRef = useRef(false); // Einmalige Offline-Auswertung beim Login
-    const storageFullCheckedRef = useRef(false);
 
     // --- SPLASH SCREEN LOGIC ---
     const minTimePassed = useRef(false);

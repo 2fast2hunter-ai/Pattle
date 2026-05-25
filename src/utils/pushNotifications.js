@@ -28,7 +28,7 @@ async function showNotification(title, body, data = {}) {
       renotify: true,
     });
   } catch {
-    try { new Notification(title, { body, icon: '/icons/icon-192x192.png' }); } catch {}
+    try { new Notification(title, { body, icon: '/icons/icon-192x192.png' }); } catch (_e) { /* fallback failed silently */ }
   }
 }
 
