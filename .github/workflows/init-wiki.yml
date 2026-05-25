@@ -1,0 +1,501 @@
+name: Initialize Pattle Wiki
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  init-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Push all wiki pages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          git config --global user.email "2fast2hunter@gmail.com"
+          git config --global user.name "2fast2hunter-ai"
+          mkdir wiki && cd wiki
+          git init
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.wiki.git"
+
+          cat > Home.md << 'ENDOFFILE'
+# Welcome to the Pattle Wiki
+
+**Pattle** is a free browser-based pet collection game blending turn-based monster battles, idle village building, and a deep breeding system.
+Play now: https://2fast2hunter-ai.github.io/Pattle/
+
+## Quick Start — 5 Steps
+
+1. **Complete the tutorial** — 12-step onboarding covers battles, breeding, and village basics.
+2. **Build your team** — collect pets from 26 elemental types; add up to 3 to your active team.
+3. **Battle in the Arena** — fight opponents for XP, gold, and leaderboard rank.
+4. **Breed your pets** — combine two pets in the Breeding Lab; hatch eggs with inherited traits.
+5. **Upgrade your village** — buildings generate Gold, Wood, and Stone even while offline.
+
+## Wiki Pages
+
+| Page | Contents |
+|------|----------|
+| [Getting Started](Getting-Started) | Tutorial walkthrough, first pet, first battle, first hatch |
+| [Pet System](Pet-System) | 26 element types, rarity tiers, stats, leveling |
+| [Breeding Lab](Breeding-Lab) | How to breed, hatchery timers, fusion recipes |
+| [Battle System](Battle-System) | Turn order, type chart, Arena/Tower/Gauntlet/Auto-battle |
+| [Village and Idle Economy](Village-and-Idle-Economy) | Buildings, resources, upgrade paths, offline income |
+| [Season 1 Pets](Season-1-Pets) | 10 launch-season pets with elements and rarity |
+
+## At a Glance
+
+- 26 element types — each beats 4 and loses to 4 (circular chart)
+- 10 rarity tiers — Common through Transcendent
+- 6 stats per pet — HP, ATK, DEF, AP, RES, SPEED
+- Battle modes — Arena, Tower, Gauntlet, Friend Battles, Auto-battle
+- Breeding genetics — 1% chance the child exceeds both parents' rarity
+- Idle village — 7 building types running 24/7, even offline
+- Free to play — no pay-to-win; ads are optional (hatch speed-ups only)
+
+*Last updated: Season 1*
+ENDOFFILE
+
+          cat > Getting-Started.md << 'ENDOFFILE'
+# Getting Started
+
+*Deutsch weiter unten.*
+
+## Tutorial Walkthrough (12 Steps)
+
+| Step | Action |
+|------|--------|
+| 1 | Welcome — meet your first pet |
+| 2 | Pet Hub — navigate to your collection |
+| 3 | Add to team — place your starter on the battle team |
+| 4 | Arena Hub — open the battle area |
+| 5 | Start a battle — launch your first Arena fight |
+| 6 | Fight — execute your first attack |
+| 7 | Win — claim victory rewards |
+| 8 | Breeding Lab — navigate to the Breeding screen |
+| 9 | Select parents — pick two pets to breed |
+| 10 | Breed — start the egg incubation timer |
+| 11 | Hatchery — hatch your egg |
+| 12 | Village — collect your first idle resources |
+
+## Your First Pet
+
+Every new player starts with a Common-rarity starter pet. Its element is random. Don't stress about type — you'll collect many more through battles, breeding, and lootboxes.
+
+**Tip:** Open the free daily lootbox in the Shop immediately. It awards a random pet or item every 24 hours.
+
+## Your First Battle
+
+1. Go to **Pet Hub** and tap **Add to Team**.
+2. Open **Arena Hub** and tap **Quick Battle**.
+3. Tap an attack. SPEED determines who goes first.
+4. Defeat all enemy pets to win Gold and XP.
+
+No stamina cost — battle as often as you want.
+
+## Your First Hatch
+
+1. Go to **Breeding Lab**, select two pets, tap **Breed**.
+2. An egg appears in the Hatchery with a countdown timer.
+3. Wait (or watch an optional ad to speed up).
+4. Tap the egg to reveal your new pet.
+
+## Progression Loop
+
+```
+Battle  → XP + Gold → level up pets
+Breed   → hatch eggs → expand roster
+Village → collect resources → upgrade buildings → grow faster
+```
+
+## Deutsch — Erste Schritte
+
+Das Tutorial zeigt dir in **12 Schritten** Kämpfe, Zucht und Dorf-Management. Öffne täglich deine **Gratis-Lootbox** im Shop, kämpfe in der **Arena** für XP, züchte Pets in der **Zuchtstation** und sammle Ressourcen in deinem **Dorf**. Ziel: das stärkste Team aus 26 Elementtypen aufbauen und die globale Rangliste erklimmen.
+ENDOFFILE
+
+          cat > Pet-System.md << 'ENDOFFILE'
+# Pet System
+
+*Deutsch weiter unten.*
+
+## All 26 Element Types
+
+Each type beats the 4 types above it in this list (2x damage) and loses to the 4 types below it (0.5x). The list wraps — type 26 connects back to type 1.
+
+| # | Type | German |
+|---|------|--------|
+| 1 | Fire | Feuer |
+| 2 | Water | Wasser |
+| 3 | Nature | Natur |
+| 4 | Wind | Wind |
+| 5 | Earth | Erde |
+| 6 | Ice | Eis |
+| 7 | Electric | Elektro |
+| 8 | Light | Licht |
+| 9 | Dark | Dunkel |
+| 10 | Ghost | Geist |
+| 11 | Magic | Magie |
+| 12 | Psychic | Psycho |
+| 13 | Fighting | Kampf |
+| 14 | Metal | Metall |
+| 15 | Rock | Gestein |
+| 16 | Poison | Gift |
+| 17 | Dragon | Drache |
+| 18 | Fairy | Fee |
+| 19 | Tech | Cyber |
+| 20 | Sound | Schall |
+| 21 | Time | Zeit |
+| 22 | Space | Raum |
+| 23 | Void | Leere |
+| 24 | Chaos | Chaos |
+| 25 | Order | Ordnung |
+| 26 | Divine | Gottlich |
+
+**Example — Fire (type 1):** beats Divine, Order, Chaos, Void (types 26-23); loses to Water, Nature, Wind, Earth (types 2-5).
+
+## Rarity Tiers
+
+| Rarity | German | Drop Rate | Breed Cooldown | Min Level |
+|--------|--------|-----------|----------------|-----------|
+| Common | Gewohnlich | 63.49% | 10 sec | 10 |
+| Uncommon | Ungewohnlich | 20.00% | 5 min | 20 |
+| Rare | Selten | 10.00% | 30 min | 30 |
+| Epic | Episch | 4.00% | 1 hr | 40 |
+| Legendary | Legendar | 1.50% | 2 hr | 50 |
+| Mythic | Mythisch | 0.60% | 4 hr | 60 |
+| Divine | Gottlich | 0.25% | 8 hr | 70 |
+| Ancient | Uralt | 0.10% | 12 hr | 80 |
+| Cosmic | Kosmisch | 0.05% | 18 hr | 90 |
+| Transcendent | Transzendent | 0.01% | 24 hr | 100 |
+
+> 1% chance on hatch that the egg's rarity exceeds both parents — even a Common + Uncommon pair can produce a Rare!
+
+## Stats
+
+| Stat | Role |
+|------|------|
+| HP | Total health — reaches 0 means knocked out |
+| ATK | Physical attack power |
+| DEF | Physical defense — reduces ATK damage |
+| AP | Special attack (Ability Power) — for elemental moves |
+| RES | Special defense (Resistance) — reduces AP damage |
+| SPEED | Determines turn order; highest SPEED acts first |
+
+Stats scale with level and rarity. A level 20 Common often beats a level 5 Rare.
+
+## Leveling
+
+Pets earn XP from Arena wins, Tower/Gauntlet clears, quests, and XP potions. Each level increases all base stats. Level thresholds unlock breeding eligibility (see rarity table above).
+
+**Tip:** Level your core team of 3 first. Depth beats width early in the game.
+
+## Deutsch — Pet-System
+
+Pattle hat **26 Elementtypen** im Kreisrad — jeder Typ schlagt 4 andere (2x) und verliert gegen 4 andere (0,5x). Es gibt **10 Seltenheltsstufen** von Gewohnlich bis Transzendent. Jedes Pet hat 6 Werte: LP, ANG, VER, MG, WID, GES. Hohere Seltenheit = bessere Basiswerte.
+ENDOFFILE
+
+          cat > Breeding-Lab.md << 'ENDOFFILE'
+# Breeding Lab
+
+*Deutsch weiter unten.*
+
+## How to Breed
+
+1. Go to **Breeding Lab** from the main menu.
+2. Select **two parent pets** (both must meet minimum level for their rarity).
+3. Tap **Breed**. An egg appears in the Hatchery with a countdown.
+4. Wait for the timer, then tap the egg to hatch.
+
+Both parents enter a **breed cooldown** after breeding. You need a free Hatchery slot.
+
+## Hatchery Timers
+
+| Rarity | Hatch Time |
+|--------|-----------|
+| Common | 10 seconds |
+| Uncommon | 5 minutes |
+| Rare | 30 minutes |
+| Epic | 1 hour |
+| Legendary | 2 hours |
+| Mythic | 4 hours |
+| Divine | 8 hours |
+| Ancient | 12 hours |
+| Cosmic | 18 hours |
+| Transcendent | 24 hours |
+
+Watch an optional ad to speed up any hatch timer.
+
+## Genetics
+
+- Child rarity falls between the two parents' rarities (at or above the lower parent).
+- **1% chance** the child's rarity exceeds both parents.
+- Stats blend from both parents with slight randomness.
+- Element type is inherited from one parent (randomly), unless a fusion recipe applies.
+
+## Fusion Recipes (Key Combinations)
+
+| Parent A | Parent B | Result | Rarity |
+|----------|----------|--------|--------|
+| Fire | Water | Steam Serpent | Epic |
+| Fire | Dragon | Red Dragon | Legendary |
+| Water | Ice | Frost Hydra | Rare |
+| Nature | Earth | Ancient Treant | Epic |
+| Electric | Metal | Thunder Golem | Rare |
+| Light | Magic | Arcane Herald | Epic |
+| Dark | Ghost | Shadow Phantom | Rare |
+| Psychic | Time | Chrono Seer | Epic |
+| Tech | Electric | Cyber Hawk | Rare |
+| Space | Void | Nebula Wraith | Legendary |
+
+27 standard fusions exist in total. Experiment to find the rest.
+
+## Secret Hybrids
+
+Nine secret recipes produce unique named pets unavailable through other means:
+
+- The rarest secret fusion requires combining **Chaos + Order** — something beyond both. 🌌
+- Secret hybrids require **Epic+ parents** in most cases.
+- Most secret hybrids are **Legendary rarity or higher**.
+
+Full spoilers are withheld — discovery is part of the fun.
+
+## Tips
+
+- Pair high-level parents for better child stats.
+- Use multiple Hatchery slots simultaneously — breed multiple pairs at once.
+- Breed Tickets (from Special Workshop) instantly reset a parent's cooldown.
+
+## Deutsch — Zuchtstation
+
+Wahle zwei Eltern-Pets mit ausreichendem Level. Nach dem Bruten erscheint ein Ei in der **Brutanlage** mit einem Countdown. Das Kind erbt Typ und Werte beider Eltern — mit 1% Chance ubertrifft es sogar die Seltenheit beider Eltern. Bestimmte Typen-Kombinationen erzeugen spezielle **Fusions-Hybriden**. Es gibt 27 dokumentierte und 9 geheime Rezepte.
+ENDOFFILE
+
+          cat > Battle-System.md << 'ENDOFFILE'
+# Battle System
+
+*Deutsch weiter unten.*
+
+## Turn Order — SPEED Stat
+
+Pattle uses **turn-based combat**. The pet with the highest **SPEED** attacks first. Equal SPEED = random order. Build a fast team to land first hits every round.
+
+## Elemental Effectiveness
+
+| Matchup | Damage |
+|---------|--------|
+| Attacker has advantage | 2x |
+| Neutral | 1x |
+| Attacker is at disadvantage | 0.5x |
+
+The 26 types form a circular chain — each beats 4 and loses to 4. See [Pet System](Pet-System) for the full chart.
+
+## Battle Modes
+
+### Arena
+Standard matchmade mode. Win to earn Gold, XP, and Arena Points that determine your leaderboard rank. No stamina cost — battle freely.
+
+### Tower
+Single-player challenge with **escalating difficulty floors**. Each floor rewards Gold, XP, and rare items. No healing between floors. Reach high floors to climb the Tower Leaderboard. Some floors have special modifiers (all-Fire enemies, double-SPEED rules, etc.).
+
+### Gauntlet
+**Survival run** — fight waves back-to-back. Your pets carry over their HP from the previous fight. Score = waves cleared. Great for farming XP and items in bulk.
+
+### Auto-Battle
+Enable in Arena to let the AI fight for you. The AI chooses moves based on type effectiveness. Useful for grinding while idle — rewards are identical to manual battles.
+
+### Friend Battles
+Challenge any player on your friends list to direct PvP. No ranking points change hands — purely for fun and bragging rights.
+
+## Team Building
+
+### Core Rules
+1. **Never run 3 pets of the same type** — one counter sweeps you.
+2. **Balance SPEED and power** — fast sweeper + high-ATK attacker + high-HP tank.
+3. **Type diversity** — 3 different types covers more favorable matchups.
+
+### Roles
+
+| Role | Priority Stats |
+|------|---------------|
+| Sweeper | SPEED then ATK/AP |
+| Tank | HP then DEF and RES |
+| Coverage | SPEED then type spread |
+
+### Templates
+- **Balanced:** fast sweeper + mid-SPEED all-rounder + slow tank
+- **Speed Rush:** three high-SPEED pets — win before the opponent acts
+- **Type Triangle:** three types covering each other's weaknesses
+
+## Tips
+
+- Knowing the type chart is the single biggest skill advantage.
+- In Tower/Gauntlet, damage-over-time effects stack across waves.
+- Auto-battle is not optimal for hard fights — use manual control.
+- Save your fastest pet for last when losing; it may outspeed the surviving enemies.
+
+## Deutsch — Kampfsystem
+
+**GES (Geschwindigkeit)** bestimmt die Angreifreihenfolge. Elementtypen verandern den Schaden: Vorteil 2x, Nachteil 0,5x. Modi: **Arena** (Ranglisten-PvP), **Turm** (aufsteigende Schwierigkeit), **Gauntlet** (Uberlebensmodus), **Auto-Kampf** (KI-gesteuert) und **Freundeskampf**. Baue ein Team aus 3 verschiedenen Typen, um Schwachen abzudecken.
+ENDOFFILE
+
+          cat > Village-and-Idle-Economy.md << 'ENDOFFILE'
+# Village and Idle Economy
+
+*Deutsch weiter unten.*
+
+## How Idle Income Works
+
+Your village generates resources **automatically**, even while the game is closed. Every building produces specific resources based on:
+
+- **Building level** (higher = more output)
+- **Pets assigned** as workers (higher rarity = bigger yield multiplier)
+- **Offline accumulation** up to the building's storage cap
+
+Come back daily to collect before storage fills up.
+
+## Resource Buildings (7 Types)
+
+| Building | Resources | Notes |
+|----------|-----------|-------|
+| Forest | Wood, Berries, Resin | Available from start |
+| Quarry | Stone, Coal, Iron, Diamond, Emerald | Available from start |
+| Harbor | Fish, Pearls, Coral, Kelp | Unlocked later |
+| Observatory | Stardust, Crystals, Meteorite | Unlocked later |
+| Server Farm | Circuit Boards, Chips, Code Fragments | Unlocked later |
+| Special Workshop | Special resources (for Shop offers) | Unlocked later |
+| Training Ground | XP Potions, Breed Tickets | Unlocked later |
+
+Each building accepts only specific pet **element types** as workers. Matching type to building increases yield significantly.
+
+## Building Upgrade Path (15 Levels)
+
+| Tier | Levels | Cost |
+|------|--------|------|
+| Starter | 1–5 | Low Gold |
+| Mid | 6–10 | Moderate Gold |
+| Advanced | 11–15 | Gold + special resources |
+
+Formula: ~1,000 × 10^(level-2) Gold per upgrade. Levels 11+ also require materials from higher-tier buildings.
+
+### Priority Order
+1. **Quarry** first — Stone and Iron are needed for later upgrades.
+2. **Forest** second — Wood is a universal material.
+3. **Harbor** and **Observatory** when unlocked — rarest resources.
+
+## Rarity Multipliers
+
+| Pet Rarity | Yield Multiplier |
+|------------|-----------------|
+| Common | 1x |
+| Uncommon | ~1.2x |
+| Rare | ~1.5x |
+| Epic | ~2x |
+| Legendary+ | ~3x+ |
+
+Assign your highest-rarity pets of the correct type to maximize output.
+
+## Trade Recipes
+
+The **Trading Post** lets you convert excess resources into ones you need. 26 trade recipes are available — open the Trading Post to see current exchange rates.
+
+## Special Shop Offers
+
+Spend Special Workshop resources on:
+
+| Item | Effect |
+|------|--------|
+| Ad Ticket | Skip an ad prompt; watch it later for full reward |
+| Breed Ticket | Instantly reset a pet's breed cooldown |
+| Large XP Potion | Big XP burst for one pet |
+| Shiny Potion | Cosmetic shiny effect on any pet |
+
+## Daily Loop
+
+```
+Log in
+  Collect idle resources from all buildings
+  Open free daily lootbox (Shop)
+  Check daily and weekly quests
+  Battle in Arena (XP + Gold)
+  Breed and check Hatchery
+  Spend resources on upgrades
+Log out — idle income keeps running
+```
+
+## Tips
+
+- Collect at least once daily so storage never overflows.
+- Match pet types to building types — a mismatch costs 50% or more yield.
+- Breed Tickets are the most valuable Special Workshop item for active breeders.
+- Upgrade storage alongside production so you don't waste idle time.
+
+## Deutsch — Dorf und Idle-Wirtschaft
+
+Dein Dorf produziert Ressourcen automatisch, auch offline. Es gibt 7 Gebaudetypen mit je 15 Upgrade-Stufen. Weise passende Pets als Arbeiter zu — hohere Seltenheit = hohere Ausbeute. Tausche uberschussige Ressourcen an der **Handelsstatte** gegen benotigte Materialien. Komm taglich zuruck, bevor der Speicher voll ist.
+ENDOFFILE
+
+          cat > Season-1-Pets.md << 'ENDOFFILE'
+# Season 1 Pets
+
+*Deutsch weiter unten.*
+
+Season 1 marks the Pattle launch roster. These 10 pets were the featured collectibles at game launch, each representing a core elemental identity.
+
+## The 10 Season 1 Pets
+
+| # | Pet | Element | Rarity | How to Obtain |
+|---|-----|---------|--------|---------------|
+| 1 | Fire Phoenix | Fire | Rare | Lootbox, Breeding (Fire parents) |
+| 2 | Water Shark | Water | Common | Lootbox, Starter pool |
+| 3 | Nature Wolf | Nature | Uncommon | Lootbox, Breeding |
+| 4 | Thunder Bird | Electric | Rare | Lootbox, Breeding (Electric parents) |
+| 5 | Ice Yeti | Ice | Uncommon | Lootbox, Breeding |
+| 6 | Dark Dragon | Dark | Epic | Lootbox (rare), Breeding (Dark parents) |
+| 7 | Magic Unicorn | Magic | Epic | Lootbox (rare), Fusion breeding |
+| 8 | Earth Elephant | Earth | Common | Lootbox, Starter pool |
+| 9 | Ghost Spirit | Ghost | Uncommon | Lootbox, Breeding |
+| 10 | Light Pegasus | Light | Rare | Lootbox, Breeding (Light parents) |
+
+## Pet Spotlights
+
+**Fire Phoenix (Fire / Rare)** — the Season 1 mascot. High AP and solid SPEED make it a strong elemental sweeper. Counters Void, Chaos, Order, and Divine types.
+
+**Dark Dragon (Dark / Epic)** — balanced ATK and DEF with above-average HP. Counters Ghost, Magic, Psychic, and Fighting types.
+
+**Magic Unicorn (Magic / Epic)** — exceptional AP with wide type coverage. Obtainable through specific Magic-type fusion combinations.
+
+**Earth Elephant (Earth / Common)** — the tankiest Common in Season 1. Enormous HP and DEF; slow but nearly impossible to one-shot. Great for new players learning combat.
+
+## Rarity Breakdown
+
+| Rarity | Count | % of Roster |
+|--------|-------|-------------|
+| Common | 2 | 20% |
+| Uncommon | 3 | 30% |
+| Rare | 3 | 30% |
+| Epic | 2 | 20% |
+
+## How to Obtain Season 1 Pets
+
+All 10 are in the standard pool:
+
+- **Daily Lootbox** — free box every 24 hours. Common and Uncommon Season 1 pets appear regularly.
+- **Breeding** — pair two pets of the correct element type.
+- **Arena Milestones** — rank-up rewards occasionally include Season 1 pets.
+
+## Secret Hybrids
+
+Beyond the 10 base pets, 15 **secret hybrid pets** are obtainable only through specific breeding combinations. See [Breeding Lab](Breeding-Lab) for hints.
+
+## Deutsch — Saison-1-Pets
+
+Saison 1 enthalt **10 Featured-Pets**: Fire Phoenix (Feuer, Selten), Water Shark (Wasser, Gewohnlich), Nature Wolf (Natur, Ungewohnlich), Thunder Bird (Elektro, Selten), Ice Yeti (Eis, Ungewohnlich), Dark Dragon (Dunkel, Episch), Magic Unicorn (Magie, Episch), Earth Elephant (Erde, Gewohnlich), Ghost Spirit (Geist, Ungewohnlich) und Light Pegasus (Licht, Selten). Alle uber Lootboxen und Zucht erhaltlich. Zusatzlich gibt es 15 geheime Hybrid-Pets uber spezielle Typen-Kombinationen.
+ENDOFFILE
+
+          git add .
+          git commit -m "Add comprehensive Pattle game guide — Season 1 (7 wiki pages)"
+          git push -u origin HEAD:master --force
+          echo "All wiki pages pushed successfully"
