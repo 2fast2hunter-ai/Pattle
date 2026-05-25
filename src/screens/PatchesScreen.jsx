@@ -3,6 +3,29 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 const PATCHES = [
     {
+        version: 'v1.5.0',
+        date: '2026-05-25',
+        changes: [
+            { type: 'new', text: 'Push-Benachrichtigungen für Ei-Schlüpfen, vollen Speicher und tägliche Quests' },
+            { type: 'new', text: 'Sicherheit: Marktplatz-Transaktionen werden jetzt serverseitig validiert' },
+            { type: 'fixed', text: 'Turm-Fortschritt wird jetzt korrekt in Firestore gespeichert' },
+            { type: 'fixed', text: 'Firebase Offline-Fallback hinzugefügt' },
+        ]
+    },
+    {
+        version: 'v1.4.0',
+        date: '2026-05-24',
+        changes: [
+            { type: 'new', text: 'Season 1 Inhalte: 10 neue Pets (TECH, VOID, DIVINE, CHAOS, TIME Typen)' },
+            { type: 'new', text: '20 neue tägliche Quest-Vorlagen' },
+            { type: 'new', text: 'Turm-Etagen 31-40 mit CHAOS-Zwischen-Boss und DIVINE-Champion' },
+            { type: 'new', text: 'Google Analytics 4 zur Analyse des Spielerverhaltens' },
+            { type: 'new', text: 'Android PWA – aus Chrome-Browser installierbar' },
+            { type: 'new', text: 'Belohnte Video-Anzeigen + Banner-Ads (AdSense-bereit)' },
+            { type: 'new', text: 'Spieler-Feedback-Meldesystem' },
+        ]
+    },
+    {
         version: 'v1.3.0',
         date: '2026-05-24',
         changes: [
@@ -51,6 +74,7 @@ const PATCHES = [
 const BADGE = {
     new: { label: 'NEU', className: 'bg-green-500/20 text-green-400 border border-green-500/30' },
     changed: { label: 'GEÄNDERT', className: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
+    fixed: { label: 'BEHOBEN', className: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' },
     removed: { label: 'ENTFERNT', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
 };
 
