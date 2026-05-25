@@ -6,6 +6,7 @@ import { useGameLogicState } from './useGameLogic/useGameLogicState';
 import { useGameActions } from './useGameLogic/useGameActions'; 
 import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB, deleteField } from '../utils/db'; // updatePetInDB hinzugefügt
 import { ABILITIES } from '../data/gameData'; // Import ABILITIES
+import { restoreEggNotifications, notifyStorageFull, scheduleDailyQuestReset } from '../utils/pushNotifications';
 
 export function useGameLogic() {
     const [userId, setUserId] = useState(null); 
@@ -19,6 +20,7 @@ export function useGameLogic() {
     const isCollectingRef = useRef(false); // Schutz gegen überlappende Aufrufe
     const lastIdleNotificationRef = useRef(0); // Schutz gegen Spam bei abgelaufener Zeit
     const idleReturnCheckedRef = useRef(false); // Einmalige Offline-Auswertung beim Login
+    const storageFullCheckedRef = useRef(false);
 
     // --- SPLASH SCREEN LOGIC ---
     const minTimePassed = useRef(false);
@@ -206,6 +208,13 @@ export function useGameLogic() {
                         // Silent Collect: Sammelt Ressourcen & XP. Level-Ups zeigen Benachrichtigungen (in useVillageActions).
                         await actions.collectVillageResources().catch(e => console.error("[AutoCollect] Fehler:", e));
                         isCollectingRef.current = false;
+
+                        // Check if storage is near full (any item >= 500)
+                        const storage = stateRef.current.user?.village?.storage || {};
+                        const storageFull = Object.values(storage).some(v => v >= 500);
+                        if (storageFull) {
+                            notifyStorageFull();
+                        }
                     }
                 } else {
                     // Idle Zeit abgelaufen -> Benachrichtigen (nur einmal pro Ablaufzeit)
@@ -224,6 +233,16 @@ export function useGameLogic() {
 
         return () => clearInterval(intervalId);
     }, [userId]);
+
+    // --- E. PUSH NOTIFICATION RESTORE & DAILY RESET ---
+    useEffect(() => {
+        if (!gameLogicState.myPets) return;
+        restoreEggNotifications(gameLogicState.myPets);
+    }, [gameLogicState.myPets]);
+
+    useEffect(() => {
+        scheduleDailyQuestReset();
+    }, []);
 
     // --- C. LEVEL UP CHECK ---
     useEffect(() => {

@@ -23,6 +23,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const { screen } = event.notification.data || {};
+  const url = screen ? `/?screen=${screen}` : '/';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if (client.url.startsWith(self.location.origin)) {
+          client.focus();
+          client.postMessage({ type: 'NAVIGATE_TO', screen: screen || 'hatchery' });
+          return;
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   // Only handle same-origin GET requests

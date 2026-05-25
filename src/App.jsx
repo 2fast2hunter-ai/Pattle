@@ -38,6 +38,17 @@ export default function App() {
     const { tutorialStep, isTutorialActive, tutorialMsg, tutorialHighlight } = useTutorial(user, setUser, currentView, handleUpdateProfile);
     const appActions = useAppActions(gameLogic, user, setUser, tutorialStep);
 
+    // Navigate to screen requested via notification click URL param
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const screen = params.get('screen');
+        if (screen && user && !authLoading) {
+            setCurrentView(screen);
+            // Clean the URL without reloading
+            window.history.replaceState({}, '', window.location.pathname);
+        }
+    }, [user, authLoading]);
+
     useEffect(() => {
         if (authLoading) {
             const keys = Object.keys(BASE_ANIMALS);
@@ -67,6 +78,21 @@ export default function App() {
     }, []);
 
     useEffect(() => { if (notification) playSound('notification'); }, [notification]);
+
+    // Handle navigation messages from service worker notification clicks
+    useEffect(() => {
+        if (!('serviceWorker' in navigator)) return;
+        const handler = (event) => {
+            if (event.data?.type === 'NAVIGATE_TO') {
+                const screen = event.data.screen;
+                if (screen === 'hatchery') setCurrentView('hatchery');
+                else if (screen === 'village') setCurrentView('village');
+                else if (screen === 'quests') setCurrentView('quests');
+            }
+        };
+        navigator.serviceWorker.addEventListener('message', handler);
+        return () => navigator.serviceWorker.removeEventListener('message', handler);
+    }, [setCurrentView]);
 
     const { t } = gameLogic;
 

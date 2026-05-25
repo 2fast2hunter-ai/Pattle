@@ -9,6 +9,7 @@ import { updatePetInDB, trackQuestProgress, updateUser } from '../../../utils/db
 import { RARITIES, ZODIAC_ANIMALS } from '../../../data/gameData';
 import { getUnlockedHatcherySlots } from '../../../utils/mechanics/progression';
 import { trackEggHatched } from '../../../utils/analytics';
+import { scheduleEggNotification, cancelEggNotification, requestNotificationPermission } from '../../../utils/pushNotifications';
 
 export function usePetActions(state, showNotification) {
     const startIncubation = async (petId) => {
@@ -35,6 +36,10 @@ export function usePetActions(state, showNotification) {
 
         await updatePetInDB(pet.id, { hatchAt });
         showNotification("Inkubation gestartet!", "success");
+
+        // Request permission on first incubation, then schedule notification
+        await requestNotificationPermission();
+        scheduleEggNotification(pet.id, pet.name || 'Ei', hatchAt);
     };
 
     const hatchEgg = async (petId, customName) => {
@@ -62,7 +67,8 @@ export function usePetActions(state, showNotification) {
             };
             
             await updatePetInDB(pet.id, updates);
-            
+            cancelEggNotification(pet.id);
+
             // Update User Stats (Hatched Count)
             const currentHatched = user.stats?.hatched || 0;
             await updateUser(user.id, { "stats.hatched": currentHatched + 1 });
