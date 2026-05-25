@@ -19,9 +19,7 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(userId);
       
-      // FIX FÜR MARKTPLATZ: Update erlauben für alle eingeloggten User
-      // (Damit Käufer dem Verkäufer Münzen gutschreiben können)
-      allow update: if isSignedIn();
+      allow update: if isOwner(userId);
       
       // Löschen darf nur der Besitzer selbst
       allow delete: if isSignedIn() && isOwner(userId);

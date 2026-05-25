@@ -106,6 +106,85 @@ const generateServerPet = (ownerId, rarity, fixedType) => {
     };
 };
 
+exports.buyMarketItem = onCall({ cors: true }, async (request) => {
+    if (!request.auth) {
+        throw new HttpsError('unauthenticated', 'User must be logged in.');
+    }
+
+    const buyerId = request.auth.uid;
+    const { listingId } = request.data;
+
+    if (!listingId) {
+        throw new HttpsError('invalid-argument', 'listingId is required.');
+    }
+
+    const db = admin.firestore();
+    const listingRef = db.collection('market').doc(listingId);
+    const buyerRef = db.collection('users').doc(buyerId);
+
+    try {
+        return await db.runTransaction(async (transaction) => {
+            const listingSnap = await transaction.get(listingRef);
+            if (!listingSnap.exists) {
+                throw new HttpsError('not-found', 'Angebot nicht mehr verfügbar.');
+            }
+
+            const listing = listingSnap.data();
+            const price = listing.price;
+            const sellerId = listing.sellerId;
+
+            if (sellerId === buyerId) {
+                throw new HttpsError('invalid-argument', 'Du kannst dein eigenes Angebot nicht kaufen.');
+            }
+
+            const buyerSnap = await transaction.get(buyerRef);
+            if (!buyerSnap.exists) {
+                throw new HttpsError('not-found', 'Käufer Profilfehler.');
+            }
+
+            const currentCoins = buyerSnap.data().coins || 0;
+            if (currentCoins < price) {
+                throw new HttpsError('invalid-argument', 'Nicht genug Münzen!');
+            }
+
+            const fee = Math.floor(price * 0.05);
+            const payout = price - fee;
+            const sellerRef = db.collection('users').doc(sellerId);
+
+            transaction.update(buyerRef, {
+                coins: admin.firestore.FieldValue.increment(-price),
+                'stats.marketSpent': admin.firestore.FieldValue.increment(price)
+            });
+            transaction.update(sellerRef, {
+                coins: admin.firestore.FieldValue.increment(payout),
+                'stats.marketEarned': admin.firestore.FieldValue.increment(payout)
+            });
+
+            if (listing.type === 'RESOURCE') {
+                transaction.update(buyerRef, {
+                    [`village.storage.${listing.itemId}`]: admin.firestore.FieldValue.increment(listing.amount)
+                });
+            } else if (listing.pets && Array.isArray(listing.pets)) {
+                listing.pets.forEach((p, index) => {
+                    const newId = `${Date.now()}_${index}_${Math.floor(Math.random() * 1000)}`;
+                    transaction.set(db.collection('pets').doc(newId), { ...p, id: newId, ownerId: buyerId });
+                });
+            } else {
+                const newId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+                transaction.set(db.collection('pets').doc(newId), { ...listing.pet, id: newId, ownerId: buyerId });
+            }
+
+            transaction.delete(listingRef);
+
+            return { success: true, message: 'Kauf erfolgreich!' };
+        });
+    } catch (error) {
+        if (error instanceof HttpsError) throw error;
+        console.error('[buyMarketItem] Transaction failed:', error);
+        throw new HttpsError('internal', error.message || 'Internal Server Error');
+    }
+});
+
 exports.openLootbox = onCall({ cors: true }, async (request) => {
     // DEBUG LOGGING
     console.log("=== OPEN LOOTBOX CALLED ===");

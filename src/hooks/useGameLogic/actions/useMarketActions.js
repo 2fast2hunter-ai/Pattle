@@ -1,17 +1,21 @@
-import { buyMarketItem, createMarketListing, createResourceListing, removePetFromDB, updateUser, cancelMarketListing } from '../../../utils/db';
+import { createMarketListing, createResourceListing, removePetFromDB, updateUser, cancelMarketListing } from '../../../utils/db';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { getApp } from 'firebase/app';
 
 export function useMarketActions(state, showNotification) {
     // WICHTIG: marketListings aus dem State holen
     const { user, marketListings } = state;
 
-    const handleBuyMarket = async (listingId) => { 
-        if (!user) return; 
-        const result = await buyMarketItem(user, listingId); 
-        if (result.success) { 
-            showNotification(result.message, 'success'); 
-        } else { 
-            showNotification(result.message, 'error'); 
-        } 
+    const handleBuyMarket = async (listingId) => {
+        if (!user) return;
+        try {
+            const functions = getFunctions(getApp());
+            const buyMarketItemFn = httpsCallable(functions, 'buyMarketItem');
+            const result = await buyMarketItemFn({ listingId });
+            showNotification(result.data.message, 'success');
+        } catch (e) {
+            showNotification(e.message || 'Fehler beim Kauf.', 'error');
+        }
     };
 
     // SELL PETS
