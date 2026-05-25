@@ -19,12 +19,14 @@ export function useGameLogicState(userId) {
             const saved = localStorage.getItem('game_settings');
             if (saved) return JSON.parse(saved);
         } catch (e) { console.error("Settings load error", e); }
-        return { musicEnabled: true, soundEnabled: true, language: 'de' };
+        const browserLang = navigator.language?.toLowerCase().startsWith('de') ? 'de' : 'en';
+        return { musicEnabled: true, soundEnabled: true, language: browserLang };
     });
 
     // Translation Helper
     const t = (key, params = {}) => {
-        let text = TRANSLATIONS[settings?.language || 'de']?.[key] || key;
+        const browserLang = navigator.language?.toLowerCase().startsWith('de') ? 'de' : 'en';
+        let text = TRANSLATIONS[settings?.language || browserLang]?.[key] || key;
         Object.entries(params).forEach(([k, v]) => text = text.replace(`{${k}}`, v));
         return text;
     };
