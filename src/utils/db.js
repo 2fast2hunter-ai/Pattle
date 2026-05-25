@@ -325,6 +325,10 @@ export const initializeUser = async (firebaseUser, username) => {
             redeemedTickets: 0,
             adTickets: 0,
             buffs: { coinBoostMatches: 0, xpBoostMatches: 0 },
+            towerProgress: 1,
+            towerResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`,
+            leaderboardResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`,
+            gauntletResetDate: `${new Date(Date.now() - 7 * 86400000).getFullYear()}-${new Date(Date.now() - 7 * 86400000).getMonth()}`,
             village: {
                 level: 1,
                 xp: 0,
@@ -347,11 +351,7 @@ export const initializeUser = async (firebaseUser, username) => {
                     totalCollected: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
                     totalItemsCollected: {},
                     totalIdleTime: 0
-                },
-                towerProgress: 1,
-                towerResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`,
-                leaderboardResetDate: `${new Date().getFullYear()}-${new Date().getMonth()}`,
-                gauntletResetDate: `${new Date(Date.now() - 7 * 86400000).getFullYear()}-${new Date(Date.now() - 7 * 86400000).getMonth()}`
+                }
             }
         };
         await setDoc(userRef, newUserData);
@@ -387,7 +387,16 @@ export const listenToPets = (userId, callback) => {
 };
 
 export const listenToMarket = (callback) => { return onSnapshot(collection(db, "market"), (snapshot) => { const listings = []; snapshot.forEach((doc) => listings.push({ id: doc.id, ...doc.data() })); callback(listings); }); };
-export const updateUser = async (userId, data) => { if (!userId) return; const userRef = doc(db, "users", userId); await updateDoc(userRef, data); };
+export const updateUser = async (userId, data) => {
+    if (!userId) return;
+    const userRef = doc(db, "users", userId);
+    try {
+        await updateDoc(userRef, data);
+    } catch (e) {
+        // Firebase offline: pending write will be retried automatically when online
+        console.error("[DB] updateUser failed:", e.code, e.message);
+    }
+};
 export const addPetToDB = async (pet, ownerId) => { await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId }); };
 export const updatePetInDB = async (petId, data) => { await updateDoc(doc(db, "pets", petId), data); };
 

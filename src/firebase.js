@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -18,6 +18,9 @@ const app = initializeApp(firebaseConfig);
 
 // Auth & Datenbank exportieren
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Offline persistence: reads cached data instantly; pending writes retry when online
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 
 getAnalytics(app);
