@@ -329,7 +329,25 @@ export const TRANSLATIONS = {
         inv_use: "WÄHLEN",
         inv_magic_item_desc: "Ein magischer Gegenstand.",
         inv_status_ready: "BEREIT...",
-        inv_status_opening: "ÖFFNEN"
+        inv_status_opening: "ÖFFNEN",
+
+        // Daily Streak
+        daily_streak_title: "Täglicher Bonus",
+        daily_streak_subtitle: "Komm jeden Tag zurück!",
+        daily_streak_day: "Tag",
+        daily_streak_claim: "Jetzt Einsammeln",
+        daily_streak_claimed: "Morgen wiederkommen",
+        daily_streak_badge: "Streak",
+        daily_streak_coins: "Gold",
+        daily_streak_gems: "Edelsteine",
+        daily_streak_mystery_egg: "Mysteriöses Ei",
+        daily_streak_day1: "50 Gold",
+        daily_streak_day2: "100 Gold + 1 Edelstein",
+        daily_streak_day3: "150 Gold + 2 Edelsteine",
+        daily_streak_day4: "200 Gold + 3 Edelsteine",
+        daily_streak_day5: "250 Gold + 5 Edelsteine + 1 Mysteriöses Ei",
+        daily_streak_day6: "300 Gold + 7 Edelsteine",
+        daily_streak_day7: "500 Gold + 10 Edelsteine + 2 Mysteriöse Eier"
     },
     en: {
         settings_title: "SETTINGS",
@@ -636,7 +654,25 @@ export const TRANSLATIONS = {
         inv_use: "SELECT",
         inv_magic_item_desc: "A magical item.",
         inv_status_ready: "READY...",
-        inv_status_opening: "OPENING"
+        inv_status_opening: "OPENING",
+
+        // Daily Streak
+        daily_streak_title: "Daily Bonus",
+        daily_streak_subtitle: "Come back every day!",
+        daily_streak_day: "Day",
+        daily_streak_claim: "Claim Now",
+        daily_streak_claimed: "Come Back Tomorrow",
+        daily_streak_badge: "Streak",
+        daily_streak_coins: "Gold",
+        daily_streak_gems: "Gems",
+        daily_streak_mystery_egg: "Mystery Egg",
+        daily_streak_day1: "50 Gold",
+        daily_streak_day2: "100 Gold + 1 Gem",
+        daily_streak_day3: "150 Gold + 2 Gems",
+        daily_streak_day4: "200 Gold + 3 Gems",
+        daily_streak_day5: "250 Gold + 5 Gems + 1 Mystery Egg",
+        daily_streak_day6: "300 Gold + 7 Gems",
+        daily_streak_day7: "500 Gold + 10 Gems + 2 Mystery Eggs"
     },
     zh: {
         settings_title: "设置",

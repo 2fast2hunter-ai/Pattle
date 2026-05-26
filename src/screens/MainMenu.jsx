@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock } from 'lucide-react';
+import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock, Flame } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
 import DailyLoginModal from '../components/modals/DailyLoginModal';
 import { claimDailyLoginReward } from '../utils/db';
@@ -163,13 +163,25 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           <p className="text-center text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
               {translate('menu_welcome')}, {user?.username || translate('common_player')}
           </p>
+          {(user?.loginStreak > 0) && (
+              <div className="flex justify-center mt-2">
+                  <button
+                      onClick={() => setShowDailyLogin(true)}
+                      className="inline-flex items-center gap-1.5 bg-orange-500/20 border border-orange-500/40 hover:bg-orange-500/30 transition-colors rounded-full px-3 py-1"
+                  >
+                      <Flame className="w-3.5 h-3.5 text-orange-400" />
+                      <span className="text-orange-300 text-xs font-bold">{user.loginStreak} {translate('daily_streak_badge')}</span>
+                  </button>
+              </div>
+          )}
       </div>
       
       {showDailyLogin && (
-        <DailyLoginModal 
-            user={user} 
-            onClaim={handleClaimDaily} 
-            onClose={() => setShowDailyLogin(false)} 
+        <DailyLoginModal
+            user={user}
+            onClaim={handleClaimDaily}
+            onClose={() => setShowDailyLogin(false)}
+            t={translate}
         />
       )}
 

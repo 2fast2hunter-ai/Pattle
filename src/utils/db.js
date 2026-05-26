@@ -649,36 +649,44 @@ export const claimDailyLoginReward = async (user) => {
     const nextStreak = currentStreak + 1;
     const dayIndex = (currentStreak) % 7; // 0-6 Index für 7 Tage Zyklus
 
-    const rewards = [
-        { type: 'COINS', amount: 250, label: '250 Münzen' },
-        { type: 'COINS', amount: 500, label: '500 Münzen' },
-        { type: 'GEMS', amount: 5, label: '5 Edelsteine' },
-        { type: 'COINS', amount: 1000, label: '1.000 Münzen' },
-        { type: 'GEMS', amount: 10, label: '10 Edelsteine' },
-        { type: 'ITEM', variant: 'XP_POTION_M', amount: 2, label: '2x XP Trank (M)' },
-        { type: 'LOOTBOX', variant: 'MASTER', amount: 1, label: 'Meister Box' }
+    const rewardSets = [
+        [{ type: 'COINS', amount: 50 }],
+        [{ type: 'COINS', amount: 100 }, { type: 'GEMS', amount: 1 }],
+        [{ type: 'COINS', amount: 150 }, { type: 'GEMS', amount: 2 }],
+        [{ type: 'COINS', amount: 200 }, { type: 'GEMS', amount: 3 }],
+        [{ type: 'COINS', amount: 250 }, { type: 'GEMS', amount: 5 }, { type: 'LOOTBOX', variant: 'MYSTERY_EGG', amount: 1 }],
+        [{ type: 'COINS', amount: 300 }, { type: 'GEMS', amount: 7 }],
+        [{ type: 'COINS', amount: 500 }, { type: 'GEMS', amount: 10 }, { type: 'LOOTBOX', variant: 'MYSTERY_EGG', amount: 2 }],
     ];
 
-    const reward = rewards[dayIndex];
+    const dayRewards = rewardSets[dayIndex];
 
     let updates = {
         lastLoginDate: today,
         loginStreak: nextStreak
     };
 
-    if (reward.type === 'COINS') updates.coins = (user.coins || 0) + reward.amount;
-    if (reward.type === 'GEMS') updates.gems = (user.gems || 0) + reward.amount;
+    let newCoins = user.coins || 0;
+    let newGems = user.gems || 0;
+    let newInventory = [...(user.inventory || [])];
 
-    if (reward.type === 'ITEM' || reward.type === 'LOOTBOX') {
-        const inventory = user.inventory || [];
-        const newItems = Array.from({ length: reward.amount }, (_, i) => ({
-            id: Date.now() + i, type: reward.type === 'LOOTBOX' ? 'LOOTBOX' : 'CONSUMABLE', variant: reward.variant
-        }));
-        updates.inventory = [...inventory, ...newItems];
+    for (const reward of dayRewards) {
+        if (reward.type === 'COINS') newCoins += reward.amount;
+        if (reward.type === 'GEMS') newGems += reward.amount;
+        if (reward.type === 'LOOTBOX') {
+            const newItems = Array.from({ length: reward.amount }, (_, i) => ({
+                id: Date.now() + i, type: 'LOOTBOX', variant: reward.variant
+            }));
+            newInventory = [...newInventory, ...newItems];
+        }
     }
 
+    updates.coins = newCoins;
+    updates.gems = newGems;
+    updates.inventory = newInventory;
+
     await updateDoc(userRef, updates);
-    return { ...reward, streak: nextStreak };
+    return { rewards: dayRewards, streak: nextStreak };
 };
 
 export { deleteField };
