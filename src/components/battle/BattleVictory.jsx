@@ -39,7 +39,7 @@ export default function BattleVictory({
                 setVictoryCopied(true);
                 setTimeout(() => setVictoryCopied(false), 2000);
             }
-        } catch (_) {}
+        } catch (_) { /* share API unavailable or user cancelled */ }
     };
 
     return (

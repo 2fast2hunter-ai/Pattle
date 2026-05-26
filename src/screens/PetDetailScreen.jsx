@@ -45,7 +45,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
               setShareCopied(true);
               setTimeout(() => setShareCopied(false), 2000);
           }
-      } catch (_) {}
+      } catch (_) { /* share API unavailable or user cancelled */ }
   };
 
   const handleReleaseSubmit = async () => {
