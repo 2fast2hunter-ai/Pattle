@@ -10,6 +10,7 @@ import { RARITIES, ZODIAC_ANIMALS } from '../../../data/gameData';
 import { getUnlockedHatcherySlots } from '../../../utils/mechanics/progression';
 import { trackEggHatched } from '../../../utils/analytics';
 import { scheduleEggNotification, cancelEggNotification, requestNotificationPermission } from '../../../utils/pushNotifications';
+import { checkAchievements } from '../../../utils/checkAchievements';
 
 export function usePetActions(state, showNotification) {
     const startIncubation = async (petId) => {
@@ -77,6 +78,16 @@ export function usePetActions(state, showNotification) {
             const subTypes = [`HATCH_${pet.rarity}`, `HATCH_${pet.type}`];
             await trackQuestProgress(user, 'HATCH_EGG', 1, subTypes);
             trackEggHatched(pet.type, pet.rarity);
+
+            // Achievement checks
+            const lang = state.settings?.language || 'en';
+            await checkAchievements(
+                user,
+                'egg_hatch',
+                { hatched: currentHatched + 1 },
+                showNotification,
+                lang
+            );
 
             showNotification(`${updates.name} ist geschlüpft!`, "success");
         } catch (error) {

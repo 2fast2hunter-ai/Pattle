@@ -5,6 +5,7 @@ import { db } from '../../../firebase';
 import { doc, increment, arrayUnion, updateDoc } from 'firebase/firestore';
 import { handleGauntletWin, generateGauntletEnemies } from './handleGauntletWin';
 import { distributeXP } from './distributeXP';
+import { checkAchievements } from '../../../utils/checkAchievements';
 
 export const handleWin = async (state, showNotification, startBattleFn, reward, winningTeamIds, enemyRating, damageReport) => {
     const { user, myPets, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView, t } = state;
@@ -134,6 +135,19 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
 
     const userRef = doc(db, "users", user.id);
     await updateDoc(userRef, userUpdates);
+
+    // Achievement checks — pass projected new stat values
+    const lang = state.settings?.language || 'en';
+    const projectedWins = (user.stats?.pvpWins || 0) + 1;
+    const projectedTower = isTower ? (user.towerProgress || 0) + 1 : (user.towerProgress || 0);
+    const achievementTrigger = isTower ? 'tower_win' : 'battle_win';
+    await checkAchievements(
+        user,
+        achievementTrigger,
+        { pvpWins: projectedWins, towerProgress: projectedTower },
+        showNotification,
+        lang
+    );
 
     // WICHTIG: Wenn Auto-Kampf weitergeht, NICHT isInBattle auf false setzen (macht DB Update oben schon richtig)
     // Aber wir müssen sicherstellen, dass wir lokal Bescheid wissen für UI
