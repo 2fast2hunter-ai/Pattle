@@ -3,6 +3,19 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 const PATCHES = [
     {
+        version: 'v1.6.0',
+        date: '2026-05-28',
+        changes: [
+            { type: 'new', text: 'Erfolge: 20 freischaltbare Badges mit Gold- und Edelstein-Belohnungen' },
+            { type: 'new', text: 'Tägliche Login-Serie: Erscheine 7 Tage in Folge für Boni-Belohnungen' },
+            { type: 'new', text: 'Achievements-Übersicht im Hauptmenü mit Fortschrittsanzeige' },
+            { type: 'fixed', text: 'Pet-Bild für NATURE_BEAR-Spezies wurde nicht geladen (Dateiname-Tippfehler)' },
+            { type: 'fixed', text: 'Feedback-Formular: Firestore-Berechtigungsregel für feedback-Sammlung hinzugefügt' },
+            { type: 'fixed', text: 'Errungenschafts-Karten zeigten immer Deutsch unabhängig von Spracheinstellung' },
+            { type: 'fixed', text: 'Freischaltzeitpunkt der Errungenschaften zeigte Invalid Date statt korrektem Datum' },
+        ]
+    },
+    {
         version: 'v1.5.0',
         date: '2026-05-25',
         changes: [
