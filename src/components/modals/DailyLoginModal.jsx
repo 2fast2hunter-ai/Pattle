@@ -18,13 +18,6 @@ const RewardIcon = ({ type, className = "w-4 h-4" }) => {
     return null;
 };
 
-const formatReward = (r, t) => {
-    if (r.type === 'COINS') return `${r.amount} ${t('daily_streak_coins')}`;
-    if (r.type === 'GEMS') return `${r.amount} ${t('daily_streak_gems')}`;
-    if (r.type === 'LOOTBOX') return `${r.amount}x ${t('daily_streak_mystery_egg')}`;
-    return '';
-};
-
 export default function DailyLoginModal({ user, onClaim, onClose, t }) {
     const translate = t || ((key) => key);
 
@@ -72,7 +65,6 @@ export default function DailyLoginModal({ user, onClaim, onClose, t }) {
                     {REWARD_SETS.map((rewards, idx) => {
                         const dayNum = idx + 1;
                         const isWeekly = idx === 6;
-                        const isPast = isClaimedToday ? idx < activeDayIndex : idx < activeDayIndex;
                         const isToday = isClaimedToday ? idx === activeDayIndex - 1 : idx === activeDayIndex;
                         const isDone = isClaimedToday && idx <= activeDayIndex - 1;
 

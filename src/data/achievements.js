@@ -15,7 +15,7 @@ export const ACHIEVEMENTS = {
   },
   battleHardened: {
     id: 'battleHardened',
-    icon: '\U0001f6e1️',
+    icon: '🛡️',
     title: 'Battle Hardened',
     titleDe: 'Kampferprobt',
     desc: 'Win 50 battles',
@@ -26,7 +26,7 @@ export const ACHIEVEMENTS = {
   },
   arenaChampion: {
     id: 'arenaChampion',
-    icon: '\U0001f3c6',
+    icon: '🏆',
     title: 'Arena Champion',
     titleDe: 'Arena-Champion',
     desc: 'Win 100 battles',
@@ -37,7 +37,7 @@ export const ACHIEVEMENTS = {
   },
   typeChartExpert: {
     id: 'typeChartExpert',
-    icon: '\U0001f3af',
+    icon: '🎯',
     title: 'Type Chart Expert',
     titleDe: 'Typ-Experte',
     desc: 'Win 5 battles using type advantage',
@@ -59,7 +59,7 @@ export const ACHIEVEMENTS = {
   },
   towerClimber: {
     id: 'towerClimber',
-    icon: '\U0001f5fc',
+    icon: '🗼',
     title: 'Tower Climber',
     titleDe: 'Turmkletterer',
     desc: 'Reach Tower floor 10',
@@ -70,7 +70,7 @@ export const ACHIEVEMENTS = {
   },
   towerConqueror: {
     id: 'towerConqueror',
-    icon: '\U0001f3f0',
+    icon: '🏰',
     title: 'Tower Conqueror',
     titleDe: 'Turmerobert',
     desc: 'Reach Tower floor 25',
@@ -81,7 +81,7 @@ export const ACHIEVEMENTS = {
   },
   gauntletSurvivor: {
     id: 'gauntletSurvivor',
-    icon: '\U0001f6e1',
+    icon: '🛡',
     title: 'Gauntlet Survivor',
     titleDe: 'Gauntlet-Überlebender',
     desc: 'Clear 20 Gauntlet waves',
@@ -92,7 +92,7 @@ export const ACHIEVEMENTS = {
   },
   hatchling: {
     id: 'hatchling',
-    icon: '\U0001f95a',
+    icon: '🥚',
     title: 'Hatchling',
     titleDe: 'Schlüpfling',
     desc: 'Hatch your first egg',
@@ -103,7 +103,7 @@ export const ACHIEVEMENTS = {
   },
   hatcheryMaster: {
     id: 'hatcheryMaster',
-    icon: '\U0001f423',
+    icon: '🐣',
     title: 'Hatchery Master',
     titleDe: 'Brutmeister',
     desc: 'Hatch 50 eggs',
@@ -114,7 +114,7 @@ export const ACHIEVEMENTS = {
   },
   rareFind: {
     id: 'rareFind',
-    icon: '\U0001f48e',
+    icon: '💎',
     title: 'Rare Find',
     titleDe: 'Seltener Fund',
     desc: 'Own a Rare or higher pet',
@@ -128,7 +128,7 @@ export const ACHIEVEMENTS = {
   },
   epicTamer: {
     id: 'epicTamer',
-    icon: '\U0001f31f',
+    icon: '🌟',
     title: 'Epic Tamer',
     titleDe: 'Epischer Zähmer',
     desc: 'Own an Epic or higher pet',
@@ -156,7 +156,7 @@ export const ACHIEVEMENTS = {
   },
   transcendent: {
     id: 'transcendent',
-    icon: '\U0001f320',
+    icon: '🌠',
     title: 'Transcendent',
     titleDe: 'Transzendent',
     desc: 'Own a Transcendent rarity pet',
@@ -167,7 +167,7 @@ export const ACHIEVEMENTS = {
   },
   socialSharer: {
     id: 'socialSharer',
-    icon: '\U0001f4e2',
+    icon: '📢',
     title: 'Social Sharer',
     titleDe: 'Teiler',
     desc: 'Share a pet or victory',
@@ -178,7 +178,7 @@ export const ACHIEVEMENTS = {
   },
   dailyDevotee: {
     id: 'dailyDevotee',
-    icon: '\U0001f525',
+    icon: '🔥',
     title: 'Daily Devotee',
     titleDe: 'Täglich Dabei',
     desc: 'Log in 7 days in a row',
@@ -189,7 +189,7 @@ export const ACHIEVEMENTS = {
   },
   fusionMaster: {
     id: 'fusionMaster',
-    icon: '\U0001f9ec',
+    icon: '🧬',
     title: 'Fusion Master',
     titleDe: 'Fusionsmeister',
     desc: 'Breed 3 different fusion types',
@@ -200,7 +200,7 @@ export const ACHIEVEMENTS = {
   },
   secretDiscoverer: {
     id: 'secretDiscoverer',
-    icon: '\U0001f52e',
+    icon: '🔮',
     title: 'Secret Discoverer',
     titleDe: 'Geheimnisfinder',
     desc: 'Find a secret hybrid fusion',
@@ -211,7 +211,7 @@ export const ACHIEVEMENTS = {
   },
   villageTycoon: {
     id: 'villageTycoon',
-    icon: '\U0001f4b0',
+    icon: '💰',
     title: 'Village Tycoon',
     titleDe: 'Dorf-Tycoon',
     desc: 'Collect 10,000 Gold total',
@@ -222,7 +222,7 @@ export const ACHIEVEMENTS = {
   },
   completionist: {
     id: 'completionist',
-    icon: '\U0001f396️',
+    icon: '🎖️',
     title: 'Completionist',
     titleDe: 'Perfektionist',
     desc: 'Unlock 15 achievements',
