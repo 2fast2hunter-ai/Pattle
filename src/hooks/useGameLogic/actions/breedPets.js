@@ -3,6 +3,7 @@ import { generatePet } from '../../../utils/gameMechanics';
 import { RARITIES } from '../../../data/gameData';
 import { getFusionRecipe } from '../../../data/fusionRecipes';
 import { trackPetBred } from '../../../utils/analytics';
+import { checkAchievements } from '../../../utils/checkAchievements';
 
 export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     const { user, myPets } = state;
@@ -94,8 +95,20 @@ export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     };
     if (cost > 0) updates.coins = user.coins - cost;
 
+    // Track distinct fusion types for Fusion Master achievement
+    if (isFusion && type) {
+        const existing = user.stats?.fusionTypesBred || [];
+        if (!existing.includes(type)) {
+            updates["stats.fusionTypesBred"] = [...existing, type];
+        }
+    }
+
     await updateUser(user.id, updates);
     trackQuestProgress(user, 'BREED_PET', 1, [`BREED_${type}`]);
+
+    const updatedUser = { ...user, stats: { ...user.stats, ...updates } };
+    const lang = state.settings?.language || 'de';
+    checkAchievements(updatedUser, 'breed', {}, showNotification, lang, myPets || []).catch(() => {});
 
     const msg = isFusion
         ? (isSecret ? "⭐ Geheimes Hybrid-Ei erhalten!" : `✨ Fusion-Ei erhalten!`)

@@ -80,13 +80,14 @@ export function usePetActions(state, showNotification) {
             trackEggHatched(pet.type, pet.rarity);
 
             // Achievement checks
-            const lang = state.settings?.language || 'en';
+            const lang = state.settings?.language || 'de';
             await checkAchievements(
                 user,
                 'egg_hatch',
                 { hatched: currentHatched + 1 },
                 showNotification,
-                lang
+                lang,
+                state.myPets || []
             );
 
             showNotification(`${updates.name} ist geschlüpft!`, "success");

@@ -1,12 +1,14 @@
 // src/hooks/useGameLogic.js
 import React, { useEffect, useState, useRef } from 'react';
-import { onAuthStateChanged } from 'firebase/auth'; 
-import { auth } from '../firebase.js'; 
-import { useGameLogicState } from './useGameLogic/useGameLogicState'; 
-import { useGameActions } from './useGameLogic/useGameActions'; 
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../firebase.js';
+import { useGameLogicState } from './useGameLogic/useGameLogicState';
+import { useGameActions } from './useGameLogic/useGameActions';
 import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB, deleteField } from '../utils/db'; // updatePetInDB hinzugefügt
 import { ABILITIES } from '../data/gameData'; // Import ABILITIES
 import { restoreEggNotifications, notifyStorageFull, scheduleDailyQuestReset } from '../utils/pushNotifications';
+import { checkAchievements as checkAchievementsState } from '../utils/checkAchievements';
+import { ACHIEVEMENT_TRIGGERS } from '../data/achievements';
 
 export function useGameLogic() {
     const [userId, setUserId] = useState(null); 
@@ -246,16 +248,24 @@ export function useGameLogic() {
     // --- C. LEVEL UP CHECK ---
     useEffect(() => {
         const { user, previousLevel, setShowLevelUpModal, setPreviousLevel } = gameLogicState;
-        if (!user) return; 
+        if (!user) return;
         if (!previousLevel || user.id !== previousLevel?.id) {
             setPreviousLevel({ level: user.level, id: user.id });
-            return; 
+            return;
         }
         if (user.level > previousLevel.level) {
             setShowLevelUpModal(true);
         }
         setPreviousLevel({ level: user.level, id: user.id });
     }, [gameLogicState.user?.level, gameLogicState.user?.id]);
+
+    // --- F. ACHIEVEMENT CHECK (state_change triggers) ---
+    useEffect(() => {
+        const { user, myPets, settings } = gameLogicState;
+        if (!user || !user.id) return;
+        const lang = settings?.language || 'de';
+        checkAchievementsState(user, ACHIEVEMENT_TRIGGERS.STATE_CHANGE, {}, actionsRef.current.showNotification, lang, myPets || []);
+    }, [gameLogicState.user, gameLogicState.myPets]);
 
     return { ...gameLogicState, ...actions };
 }

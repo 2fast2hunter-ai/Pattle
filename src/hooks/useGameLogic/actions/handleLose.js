@@ -134,6 +134,14 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
             // WICHTIG: NICHT rating überschreiben! Rating = PVP Elo, Highscore = Gauntlet.
         }
 
+        // Track best gauntlet round for Gauntlet Survivor achievement
+        const currentRound = activeBattle.gauntletRound || 1;
+        const clearedRounds = Math.max(0, currentRound - 1);
+        const currentBestRound = user?.stats?.gauntletBestRound || 0;
+        if (clearedRounds > currentBestRound) {
+            updates["stats.gauntletBestRound"] = clearedRounds;
+        }
+
         updates.coins = increment(reward?.coins || 0);
         updates.xp = increment(reward?.xp || 0);
 

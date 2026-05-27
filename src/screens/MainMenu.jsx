@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock, Flame } from 'lucide-react';
+import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock, Flame, Medal } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
 import DailyLoginModal from '../components/modals/DailyLoginModal';
 import { claimDailyLoginReward } from '../utils/db';
@@ -84,7 +84,7 @@ const MenuTile = ({ item, index, onClick, highlight }) => {
     );
 };
 
-export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, t, tutorialHighlight }) { // onVillage prop
+export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, onAchievements, t, tutorialHighlight }) {
   
   const [showDailyLogin, setShowDailyLogin] = useState(false);
   
@@ -146,7 +146,12 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           icon: User, color: 'from-pink-600 to-rose-600', shadow: 'shadow-pink-900/20',
           onClick: onProfile
       },
-      { 
+      {
+          id: 'achievements', title: translate('menu_achievements'), subtitle: 'Badges',
+          icon: Medal, color: 'from-yellow-500 to-amber-600', shadow: 'shadow-yellow-900/20',
+          onClick: onAchievements
+      },
+      {
           id: 'settings', title: translate('menu_settings'), subtitle: 'System',
           icon: Settings, color: 'from-slate-600 to-slate-700', shadow: 'shadow-slate-900/20',
           onClick: onSettings

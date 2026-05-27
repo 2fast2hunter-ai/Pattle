@@ -1,5 +1,6 @@
 import React from 'react';
 import MainMenu from '../../screens/MainMenu';
+import AchievementsScreen from '../../screens/AchievementsScreen';
 import ArenaHub from '../../screens/ArenaHub';
 import PetHub from '../../screens/PetHub';
 import ItemInventoryScreen from '../../screens/ItemInventoryScreen';
@@ -58,7 +59,8 @@ export default function ScreenRouter({
     const productionRates = gameLogic.calculateProductionRate ? gameLogic.calculateProductionRate : () => { };
 
     switch (currentView) {
-        case 'menu': return <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} tutorialHighlight={tutorialHighlight} />;
+        case 'menu': return <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} onAchievements={() => setCurrentView('achievements')} tutorialHighlight={tutorialHighlight} />;
+        case 'achievements': return <AchievementsScreen user={user} onBack={() => setCurrentView('menu')} t={t} />;
 
         case 'village': return <VillageScreen user={user} pets={myPets} t={t} onBack={() => setCurrentView('menu')} onCollect={handleCollectVillage} onSelectResource={handleOpenResource} productionRates={productionRates} onOpenMilestones={() => setCurrentView('village-milestones')} onOpenTrading={() => setCurrentView('village-trading')} onAddIdleTime={addIdleTime} onAddIdleTimeByAd={gameLogic.addIdleTimeByAd} onOpenCosmetics={() => setCurrentView('village-cosmetics')} onToggleTrainingPet={handleToggleTrainingPet} />;
         case 'village-detail': return selectedResource && <ResourceDetailScreen resourceId={selectedResource} user={user} pets={myPets} onBack={() => setCurrentView('village')} onAssignWorker={handleOpenVillageSelector} onRemoveWorker={gameLogic.removeWorker} onUpgradeBuilding={gameLogic.upgradeBuilding} productionRates={productionRates} onCollect={handleCollectVillage} />;
@@ -114,7 +116,7 @@ export default function ScreenRouter({
         case 'team-select-pet': return <InventoryScreen pets={getAvailablePets()} title="Wähle Pet für Team" onBack={() => setCurrentView('team-edit')} onSelectPet={(id) => addToTeam(id)} highlightMode={true} filterEggs={true} t={t} />;
 
         case 'inventory': return <InventoryScreen pets={myPets} title={t('pethub_inventory_btn')} onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }} filterEggs={true} t={t} />;
-        case 'pet-detail': return activePetDetail && <PetDetailScreen pet={activePetDetail} onBack={() => setCurrentView('inventory')} onRenamePet={renamePet} onReleasePet={releasePet} t={t} />;
+        case 'pet-detail': return activePetDetail && <PetDetailScreen pet={activePetDetail} user={user} onBack={() => setCurrentView('inventory')} onRenamePet={renamePet} onReleasePet={releasePet} t={t} />;
 
         case 'breeding': return <BreedingScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onBreed={breedPets} onReduceCooldown={handleReduceCooldownWrapper} user={user} t={t} />;
         case 'battle': return activeBattle && <BattleScreen battleState={activeBattle} setBattleState={setActiveBattle} user={user} onWin={handleWinWrapper} onLose={handleLose} isAutoBattle={autoBattleRemaining > 0} autoBattleRemaining={autoBattleRemaining} onCancelAutoBattle={cancelAutoBattle} t={t} />;

@@ -10,8 +10,9 @@ import { ACHIEVEMENTS } from '../data/achievements';
  * @param {object} projected - Projected stat changes, e.g. { pvpWins: 5, hatched: 3 }
  * @param {function} showNotification - UI notification callback
  * @param {string} lang - 'de' or 'en' for notification language
+ * @param {Array} pets - Optional pet array for pet-based checks
  */
-export async function checkAchievements(user, trigger, projected = {}, showNotification, lang = 'en') {
+export async function checkAchievements(user, trigger, projected = {}, showNotification, lang = 'en', pets = []) {
   if (!user?.id) return;
 
   const already = user.achievements || {};
@@ -21,7 +22,7 @@ export async function checkAchievements(user, trigger, projected = {}, showNotif
     if (achievement.trigger !== trigger) continue;
     if (already[achievement.id]) continue;
     try {
-      if (achievement.check(user, projected)) {
+      if (achievement.check(user, projected, pets)) {
         toUnlock.push(achievement);
       }
     } catch (e) { /* ignore check errors */ }

@@ -116,8 +116,29 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
         xp: increment(Math.floor(xpGain)),
         rating: increment(Math.floor(eloChange)),
         "stats.pvpWins": increment(1),
-        "stats.pvpTotal": increment(1)
+        "stats.pvpTotal": increment(1),
+        "stats.totalCoinsEarned": increment(Math.floor(coinsGain))
     };
+
+    // Track type advantage wins (log contains the effectiveness message, not the extra-turn message)
+    const effectiveMsg = t ? t('battle_log_effective') : '⚡ Sehr effektiv!';
+    if (activeBattle?.log?.some(entry => entry === effectiveMsg)) {
+        userUpdates["stats.typeAdvantageWins"] = increment(1);
+    }
+
+    // Track tower best progress
+    if (isTower && towerStage && towerStage >= (user.stats?.towerBestProgress || 1)) {
+        userUpdates["stats.towerBestProgress"] = towerStage;
+    }
+
+    // Track speed demon (no enemy damage taken)
+    if (!isFriendly && !isGauntlet && damageReport) {
+        const enemyIds = activeBattle?.enemyTeam?.map(p => p.id) || [];
+        const noEnemyDamage = enemyIds.length > 0 && enemyIds.every(id => !damageReport[id]);
+        if (noEnemyDamage) {
+            userUpdates["stats.speedDemonWins"] = increment(1);
+        }
+    }
 
     if (gemsGain > 0) userUpdates.gems = increment(gemsGain);
     if (itemsToAdd.length > 0) userUpdates.inventory = arrayUnion(...itemsToAdd);
@@ -137,16 +158,20 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     await updateDoc(userRef, userUpdates);
 
     // Achievement checks — pass projected new stat values
-    const lang = state.settings?.language || 'en';
+    const lang = state.settings?.language || 'de';
     const projectedWins = (user.stats?.pvpWins || 0) + 1;
-    const projectedTower = isTower ? (user.towerProgress || 0) + 1 : (user.towerProgress || 0);
+    const projectedTower = isTower ? Math.max((user.towerProgress || 0), towerStage || 0) : (user.towerProgress || 0);
+    const projectedTypeAdvantage = userUpdates["stats.typeAdvantageWins"] ? (user.stats?.typeAdvantageWins || 0) + 1 : (user.stats?.typeAdvantageWins || 0);
+    const projectedSpeedDemon = userUpdates["stats.speedDemonWins"] ? (user.stats?.speedDemonWins || 0) + 1 : (user.stats?.speedDemonWins || 0);
+    const projectedGauntlet = isGauntlet ? Math.max(user.stats?.gauntletBestRound || 0, activeBattle?.gauntletRound || 0) : (user.stats?.gauntletBestRound || 0);
     const achievementTrigger = isTower ? 'tower_win' : 'battle_win';
     await checkAchievements(
         user,
         achievementTrigger,
-        { pvpWins: projectedWins, towerProgress: projectedTower },
+        { pvpWins: projectedWins, towerProgress: projectedTower, typeAdvantageWins: projectedTypeAdvantage, speedDemonWins: projectedSpeedDemon, gauntletBestRound: projectedGauntlet },
         showNotification,
-        lang
+        lang,
+        myPets || []
     );
 
     // WICHTIG: Wenn Auto-Kampf weitergeht, NICHT isInBattle auf false setzen (macht DB Update oben schon richtig)

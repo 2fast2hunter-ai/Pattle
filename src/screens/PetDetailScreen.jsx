@@ -3,11 +3,12 @@ import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Spa
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import { getPetLevelProgress } from '../utils/mechanics/petStats'; // IMPORT HINZUGEFÜGT
 import { sharePet } from '../utils/shareUtils';
+import { updateUser } from '../utils/db';
 import PetAvatar from '../components/PetAvatar';
 import RenameModal from '../components/modals/RenameModal';
 import DeleteModal from '../components/modals/DeleteModal';
 
-export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet, t }) { // t prop added
+export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet, user, t }) {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -41,9 +42,14 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
   const handleShare = async () => {
       try {
           const result = await sharePet(pet, rarity.label, type.label);
-          if (result === 'copied') {
-              setShareCopied(true);
-              setTimeout(() => setShareCopied(false), 2000);
+          if (result === 'shared' || result === 'copied') {
+              if (user?.id) {
+                  updateUser(user.id, { "stats.sharedCount": (user.stats?.sharedCount || 0) + 1 });
+              }
+              if (result === 'copied') {
+                  setShareCopied(true);
+                  setTimeout(() => setShareCopied(false), 2000);
+              }
           }
       } catch (_) { /* share API unavailable or user cancelled */ }
   };
