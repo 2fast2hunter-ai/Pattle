@@ -42,5 +42,10 @@ service cloud.firestore {
       // Löschen erlauben wir allen eingeloggten Nutzern (nötig für Kauf)
       allow delete: if isSignedIn();
     }
+
+    // FEEDBACK:
+    match /feedback/{feedbackId} {
+      allow create: if isSignedIn();
+    }
   }
 }

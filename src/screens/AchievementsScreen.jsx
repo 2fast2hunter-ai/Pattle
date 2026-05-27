@@ -4,7 +4,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 
 const RARITY_ORDER = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC', 'DIVINE', 'ANCIENT', 'COSMIC', 'TRANSCENDENT'];
 
-export default function AchievementsScreen({ user, onBack, t }) {
+export default function AchievementsScreen({ user, onBack, t, lang = 'de' }) {
     const [selectedTab, setSelectedTab] = useState('all');
     const achievements = user?.achievements || {};
     const achievementList = Object.values(ACHIEVEMENTS);
@@ -89,6 +89,7 @@ export default function AchievementsScreen({ user, onBack, t }) {
                             isUnlocked={isUnlocked}
                             unlockedAt={unlockedAt}
                             t={t}
+                            lang={lang}
                         />
                     );
                 })}
@@ -105,8 +106,7 @@ export default function AchievementsScreen({ user, onBack, t }) {
     );
 }
 
-function AchievementCard({ achievement, isUnlocked, unlockedAt, t }) {
-    const lang = t?.lang || 'de';
+function AchievementCard({ achievement, isUnlocked, unlockedAt, t, lang = 'de' }) {
     const name = lang === 'de' ? (achievement.titleDe || achievement.title) : achievement.title;
     const desc = lang === 'de' ? (achievement.descDe || achievement.desc) : achievement.desc;
 
@@ -155,7 +155,7 @@ function AchievementCard({ achievement, isUnlocked, unlockedAt, t }) {
                     )}
                     {isUnlocked && unlockedAt && (
                         <span className="ml-auto text-[9px] text-slate-600 font-bold">
-                            {new Date(unlockedAt).toLocaleDateString()}
+                            {(unlockedAt?.toDate ? unlockedAt.toDate() : new Date(unlockedAt)).toLocaleDateString()}
                         </span>
                     )}
                 </div>
