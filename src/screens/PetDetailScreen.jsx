@@ -116,7 +116,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
             {/* XP BAR (ANGEPASST) */}
             <div className="w-64 px-4 py-2 bg-slate-900/60 backdrop-blur-md rounded-2xl border border-white/10 shadow-lg">
                 <div className="flex justify-between items-center mb-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Erfahrung</span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t ? t('pet_xp_label') : 'XP'}</span>
                     <span className="text-[10px] font-mono font-bold text-white">{levelXp} / {levelMaxXp}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-white/5">
@@ -139,7 +139,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
             <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 p-5 rounded-3xl border border-indigo-500/20 relative overflow-hidden mb-6">
                 <div className="absolute top-0 right-0 p-4 opacity-10"><Sparkles className="w-20 h-20 text-indigo-400" /></div>
                 <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-2"><div className="p-1.5 bg-indigo-500 rounded-lg text-white shadow-lg shadow-indigo-500/20"><Zap className="w-3.5 h-3.5 fill-current" /></div><span className="text-xs font-black text-indigo-300 uppercase tracking-widest">Spezialfähigkeit</span></div>
+                    <div className="flex items-center gap-2 mb-2"><div className="p-1.5 bg-indigo-500 rounded-lg text-white shadow-lg shadow-indigo-500/20"><Zap className="w-3.5 h-3.5 fill-current" /></div><span className="text-xs font-black text-indigo-300 uppercase tracking-widest">{t ? t('pet_ability_label') : 'Special Ability'}</span></div>
                     <h3 className="text-lg font-black text-white mb-1">{ability.name}</h3>
                     <p className="text-xs text-slate-400 leading-relaxed font-medium">{ability.desc}</p>
                 </div>

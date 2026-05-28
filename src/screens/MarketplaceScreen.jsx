@@ -51,7 +51,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
                 {activeTab === 'sell' && (
                     <div className="space-y-3">
-                        <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-xl flex items-center gap-3 mb-2"><Info className="w-5 h-5 text-blue-400 shrink-0" /><p className="text-xs text-blue-200">Gebühr: 100 Gold pro Angebot.</p></div>
+                        <div className="bg-blue-900/20 border border-blue-500/30 p-3 rounded-xl flex items-center gap-3 mb-2"><Info className="w-5 h-5 text-blue-400 shrink-0" /><p className="text-xs text-blue-200">{t ? t('market_fee_info') : 'Fee: 100 Gold per listing.'}</p></div>
                         {subTab === 'pets' && sellPetsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} onToggle={toggleSaleSelection} t={t} />)}
                         {subTab === 'items' && sellItemsList.map(item => <SellCard key={item.id} item={item} isSelected={selectedForSale?.id === item.id} onToggle={toggleSaleSelection} t={t} />)}
                         <MarketSellInput

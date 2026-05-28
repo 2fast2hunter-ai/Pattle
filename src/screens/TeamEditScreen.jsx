@@ -55,7 +55,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                  </div>
              </div>
              <div className="text-right">
-                 <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">Nächster Slot</div>
+                 <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t ? t('team_next_slot') : 'Next Slot'}</div>
                  <div className="text-xs font-bold text-indigo-300">Lvl {getRequiredLevel(unlockedSlots)}</div>
              </div>
         </div>
@@ -80,7 +80,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                </div>
                <div>
                   <div className="font-black text-slate-500 text-lg">Slot {index + 1}</div>
-                  <div className="text-xs font-bold text-slate-600 uppercase bg-black/20 px-2 py-0.5 rounded w-fit">Benötigt Level {requiredLevel}</div>
+                  <div className="text-xs font-bold text-slate-600 uppercase bg-black/20 px-2 py-0.5 rounded w-fit">{t ? t('team_requires_level', { level: requiredLevel }) : `Level ${requiredLevel}`}</div>
                </div>
             </div>
           );
