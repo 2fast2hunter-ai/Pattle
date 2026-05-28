@@ -236,6 +236,7 @@ export const TRANSLATIONS = {
         type_FIGHTING: "Kampf", type_METAL: "Metall", type_ROCK: "Gestein", type_POISON: "Gift",
         type_DRAGON: "Drache", type_FAIRY: "Fee", type_TECH: "Cyber", type_SOUND: "Schall",
         type_TIME: "Zeit", type_SPACE: "Raum", type_VOID: "Leere", type_CHAOS: "Chaos", type_ORDER: "Ordnung",
+        stat_atk: "ANGRIFF", stat_ap: "FÄHIGKEIT", stat_def: "ABWEHR", stat_res: "RESISTENZ", stat_speed: "TEMPO", stat_hp: "LEBEN",
 
         // Quests Descriptions
         quest_WIN_PVP: "Gewinne {target} Kämpfe in der Arena.",
@@ -618,6 +619,7 @@ export const TRANSLATIONS = {
         type_FIGHTING: "Fighting", type_METAL: "Metal", type_ROCK: "Rock", type_POISON: "Poison",
         type_DRAGON: "Dragon", type_FAIRY: "Fairy", type_TECH: "Tech", type_SOUND: "Sound",
         type_TIME: "Time", type_SPACE: "Space", type_VOID: "Void", type_CHAOS: "Chaos", type_ORDER: "Order",
+        stat_atk: "ATTACK", stat_ap: "ABILITY", stat_def: "DEFENSE", stat_res: "RESIST", stat_speed: "SPEED", stat_hp: "HEALTH",
 
         quest_WIN_PVP: "Win {target} battles in the Arena.",
         quest_HATCH_EGG: "Hatch {target} eggs in the Hatchery.",

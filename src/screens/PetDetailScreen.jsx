@@ -26,12 +26,12 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
   // ------------------------------------------------------------
 
   const stats = [
-      { icon: Swords, label: 'ANGRIFF', value: pet.atk, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-      { icon: Zap, label: 'FÄHIGKEIT', value: pet.ap, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
-      { icon: Shield, label: 'ABWEHR', value: pet.def, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20' },
-      { icon: Activity, label: 'RESISTENZ', value: pet.res, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
-      { icon: Wind, label: 'TEMPO', value: pet.speed, color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
-      { icon: Heart, label: 'LEBEN', value: pet.maxHp, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+      { icon: Swords, label: t ? t('stat_atk') : 'ATTACK', value: pet.atk, color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+      { icon: Zap, label: t ? t('stat_ap') : 'ABILITY', value: pet.ap, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
+      { icon: Shield, label: t ? t('stat_def') : 'DEFENSE', value: pet.def, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20' },
+      { icon: Activity, label: t ? t('stat_res') : 'RESIST', value: pet.res, color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
+      { icon: Wind, label: t ? t('stat_speed') : 'SPEED', value: pet.speed, color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/20' },
+      { icon: Heart, label: t ? t('stat_hp') : 'HEALTH', value: pet.maxHp, color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
   ];
 
   const handleRenameSubmit = async (newName) => {
