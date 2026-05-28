@@ -7,7 +7,7 @@ import ProfileStats from '../components/profile/ProfileStats';
 import ProfileFriends from '../components/profile/ProfileFriends';
 import { useProfileStats } from '../hooks/useProfileStats';
 
-export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, onBack, onUpdateProfile }) {
+export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, onBack, onUpdateProfile, t }) {
     const [activeTab, setActiveTab] = useState('stats');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -15,11 +15,11 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
     const statsData = useProfileStats(user, pets);
 
     const categories = [
-        { id: 'BATTLE', label: 'Kampf', icon: Swords, color: 'from-red-500 to-orange-600', textColor: 'text-red-400', value: `${statsData.battle.winRate}% WR` },
+        { id: 'BATTLE', label: t ? t('profile_cat_battle') : 'Battle', icon: Swords, color: 'from-red-500 to-orange-600', textColor: 'text-red-400', value: `${statsData.battle.winRate}% WR` },
         { id: 'GAUNTLET', label: 'Gauntlet', icon: Swords, color: 'from-purple-500 to-indigo-600', textColor: 'text-purple-400', value: `${user.stats?.gauntletHighscore || 0}` },
-        { id: 'COLLECTION', label: 'Sammlung', icon: LayoutGrid, color: 'from-blue-500 to-indigo-600', textColor: 'text-blue-400', value: `${statsData.collection.totalPets} Pets` },
-        { id: 'ECONOMY', label: 'Wirtschaft', icon: PieChart, color: 'from-yellow-500 to-amber-600', textColor: 'text-amber-400', value: `${user.coins}` },
-        { id: 'BREEDING', label: 'Zucht', icon: Dna, color: 'from-pink-500 to-rose-600', textColor: 'text-pink-400', value: `${statsData.breeding.hatched}` },
+        { id: 'COLLECTION', label: t ? t('profile_cat_collection') : 'Collection', icon: LayoutGrid, color: 'from-blue-500 to-indigo-600', textColor: 'text-blue-400', value: `${statsData.collection.totalPets} Pets` },
+        { id: 'ECONOMY', label: t ? t('profile_cat_economy') : 'Economy', icon: PieChart, color: 'from-yellow-500 to-amber-600', textColor: 'text-amber-400', value: `${user.coins}` },
+        { id: 'BREEDING', label: t ? t('profile_cat_breeding') : 'Breeding', icon: Dna, color: 'from-pink-500 to-rose-600', textColor: 'text-pink-400', value: `${statsData.breeding.hatched}` },
     ];
 
     const copyId = () => { alert(`ID kopiert: ${user.id}`); };

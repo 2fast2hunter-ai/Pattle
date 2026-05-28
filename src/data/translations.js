@@ -237,6 +237,7 @@ export const TRANSLATIONS = {
         type_DRAGON: "Drache", type_FAIRY: "Fee", type_TECH: "Cyber", type_SOUND: "Schall",
         type_TIME: "Zeit", type_SPACE: "Raum", type_VOID: "Leere", type_CHAOS: "Chaos", type_ORDER: "Ordnung",
         stat_atk: "ANGRIFF", stat_ap: "FÄHIGKEIT", stat_def: "ABWEHR", stat_res: "RESISTENZ", stat_speed: "TEMPO", stat_hp: "LEBEN",
+        profile_cat_battle: "Kampf", profile_cat_collection: "Sammlung", profile_cat_economy: "Wirtschaft", profile_cat_breeding: "Zucht",
 
         // Quests Descriptions
         quest_WIN_PVP: "Gewinne {target} Kämpfe in der Arena.",
@@ -620,6 +621,7 @@ export const TRANSLATIONS = {
         type_DRAGON: "Dragon", type_FAIRY: "Fairy", type_TECH: "Tech", type_SOUND: "Sound",
         type_TIME: "Time", type_SPACE: "Space", type_VOID: "Void", type_CHAOS: "Chaos", type_ORDER: "Order",
         stat_atk: "ATTACK", stat_ap: "ABILITY", stat_def: "DEFENSE", stat_res: "RESIST", stat_speed: "SPEED", stat_hp: "HEALTH",
+        profile_cat_battle: "Battle", profile_cat_collection: "Collection", profile_cat_economy: "Economy", profile_cat_breeding: "Breeding",
 
         quest_WIN_PVP: "Win {target} battles in the Arena.",
         quest_HATCH_EGG: "Hatch {target} eggs in the Hatchery.",
@@ -831,6 +833,8 @@ export const TRANSLATIONS = {
         village_rate: "速率/小时",
         village_paused: "暂停",
         village_lvl: "等级",
+        stat_atk: "攻击", stat_ap: "技能", stat_def: "防御", stat_res: "抗性", stat_speed: "速度", stat_hp: "生命",
+        profile_cat_battle: "战斗", profile_cat_collection: "收藏", profile_cat_economy: "经济", profile_cat_breeding: "繁殖",
         village_milestones: "里程碑",
         village_trading: "交易站",
         village_cosmetics: "裁缝",
@@ -1006,6 +1010,8 @@ export const TRANSLATIONS = {
         village_rate: "Taux/h",
         village_paused: "En pause",
         village_lvl: "Niv",
+        stat_atk: "ATTAQUE", stat_ap: "CAPACITÉ", stat_def: "DÉFENSE", stat_res: "RÉSIST.", stat_speed: "VITESSE", stat_hp: "VIE",
+        profile_cat_battle: "Combat", profile_cat_collection: "Collection", profile_cat_economy: "Économie", profile_cat_breeding: "Élevage",
         village_milestones: "Jalons",
         village_trading: "Comptoir",
         village_cosmetics: "Tailleur",
@@ -1181,6 +1187,8 @@ export const TRANSLATIONS = {
         village_rate: "Tasa/h",
         village_paused: "Pausado",
         village_lvl: "Nvl",
+        stat_atk: "ATAQUE", stat_ap: "HABILIDAD", stat_def: "DEFENSA", stat_res: "RESIST.", stat_speed: "VELOCIDAD", stat_hp: "VIDA",
+        profile_cat_battle: "Batalla", profile_cat_collection: "Colección", profile_cat_economy: "Economía", profile_cat_breeding: "Crianza",
         village_milestones: "Hitos",
         village_trading: "Puesto comercial",
         village_cosmetics: "Sastre",

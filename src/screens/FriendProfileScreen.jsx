@@ -7,7 +7,7 @@ import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import { findUserPublic, listenToPets } from '../utils/db';
 import StatDetailModal from '../components/modals/StatDetailModal';
 
-export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
+export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }) {
     const [fullProfile, setFullProfile] = useState(null);
     const [friendPets, setFriendPets] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -92,11 +92,11 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle }) {
     };
 
     const categories = [
-        { id: 'BATTLE', label: 'Kampf', icon: Swords, color: 'from-red-500 to-orange-600', textColor: 'text-red-400', value: `${statsData.battle.winRate}% WR` },
+        { id: 'BATTLE', label: t ? t('profile_cat_battle') : 'Battle', icon: Swords, color: 'from-red-500 to-orange-600', textColor: 'text-red-400', value: `${statsData.battle.winRate}% WR` },
         { id: 'GAUNTLET', label: 'Gauntlet', icon: Swords, color: 'from-purple-500 to-indigo-600', textColor: 'text-purple-400', value: `${displayUser.stats?.gauntletHighscore || 0}` },
-        { id: 'COLLECTION', label: 'Sammlung', icon: LayoutGrid, color: 'from-blue-500 to-indigo-600', textColor: 'text-blue-400', value: `${statsData.collection.totalPets} Pets` },
-        { id: 'ECONOMY', label: 'Wirtschaft', icon: PieChart, color: 'from-yellow-500 to-amber-600', textColor: 'text-amber-400', value: `${displayUser.coins}` },
-        { id: 'BREEDING', label: 'Zucht', icon: Dna, color: 'from-pink-500 to-rose-600', textColor: 'text-pink-400', value: `${statsData.breeding.hatched}` },
+        { id: 'COLLECTION', label: t ? t('profile_cat_collection') : 'Collection', icon: LayoutGrid, color: 'from-blue-500 to-indigo-600', textColor: 'text-blue-400', value: `${statsData.collection.totalPets} Pets` },
+        { id: 'ECONOMY', label: t ? t('profile_cat_economy') : 'Economy', icon: PieChart, color: 'from-yellow-500 to-amber-600', textColor: 'text-amber-400', value: `${displayUser.coins}` },
+        { id: 'BREEDING', label: t ? t('profile_cat_breeding') : 'Breeding', icon: Dna, color: 'from-pink-500 to-rose-600', textColor: 'text-pink-400', value: `${statsData.breeding.hatched}` },
     ];
 
     return (
