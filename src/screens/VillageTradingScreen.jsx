@@ -104,7 +104,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade, t }) { // 
                         </div>
                     ) : (
                         <div className="text-slate-500 text-xs text-center py-4 italic">
-                            {selectedOffer ? "Keine Tauschpartner verfügbar (Level zu niedrig?)" : "Wähle zuerst ein Angebot."}
+                            {selectedOffer ? (t ? t('trade_no_partners') : 'No trade partners (level too low?)') : (t ? t('trade_select_first') : 'Select an offer first.')}
                         </div>
                     )}
                 </div>
@@ -115,12 +115,12 @@ export default function VillageTradingScreen({ user, onBack, onTrade, t }) { // 
                         <div className="flex items-center justify-between mb-4">
                             <div className="text-center">
                                 <div className="text-xl font-black text-white">{currentRecipe.cost * tradesCount}</div>
-                                <div className="text-[10px] text-slate-500 uppercase">Geben</div>
+                                <div className="text-[10px] text-slate-500 uppercase">{t ? t('trade_give') : 'GIVE'}</div>
                             </div>
                             <ArrowRight className="w-5 h-5 text-slate-600" />
                             <div className="text-center">
                                 <div className={`text-xl font-black ${tradesCount > 0 ? 'text-green-400' : 'text-red-400'}`}>{currentRecipe.receive * tradesCount}</div>
-                                <div className="text-[10px] text-slate-500 uppercase">Erhalten</div>
+                                <div className="text-[10px] text-slate-500 uppercase">{t ? t('trade_receive') : 'RECEIVE'}</div>
                             </div>
                         </div>
                         
@@ -134,7 +134,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade, t }) { // 
                                 className="w-full accent-indigo-500 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer"
                                 disabled={maxTrades === 0}
                             />
-                            <div className="text-center text-xs text-slate-400 mt-1">{tradesCount} / {maxTrades} möglich</div>
+                            <div className="text-center text-xs text-slate-400 mt-1">{tradesCount} / {maxTrades} {t ? t('trade_possible') : 'available'}</div>
                         </div>
 
                         <button 
@@ -142,7 +142,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade, t }) { // 
                             disabled={maxTrades < 1}
                             className={`w-full py-3 rounded-xl font-black text-sm shadow-lg flex items-center justify-center gap-2 ${maxTrades >= 1 ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                         >
-                            <RefreshCw className="w-4 h-4" /> TAUSCHEN
+                            <RefreshCw className="w-4 h-4" /> {t ? t('trade_action') : 'TRADE'}
                         </button>
                     </div>
                 )}

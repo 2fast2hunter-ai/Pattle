@@ -110,29 +110,29 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
 
   const menuItems = [
       { 
-          id: 'arena', title: translate('menu_play'), subtitle: 'Kämpfe',
+          id: 'arena', title: translate('menu_play'), subtitle: translate('menu_sub_arena'),
           icon: Swords, color: 'from-red-600 to-orange-600', shadow: 'shadow-red-900/20',
           onClick: onArena
       },
       { 
-          id: 'pethub', title: translate('menu_collection'), subtitle: 'Sammlung',
+          id: 'pethub', title: translate('menu_collection'), subtitle: translate('menu_sub_pethub'),
           icon: Egg, color: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-900/20',
           onClick: onPetHub
       },
       // DORF BUTTON (JETZT AKTIV)
       { 
-          id: 'village', title: translate('menu_village'), subtitle: 'Ressourcen',
+          id: 'village', title: translate('menu_village'), subtitle: translate('menu_sub_village'),
           icon: Home, color: 'from-emerald-600 to-green-700', shadow: 'shadow-emerald-900/20',
           onClick: onVillage, // Action zugewiesen
           locked: false // Entsperrt
       },
       { 
-          id: 'quests', title: translate('menu_quests'), subtitle: 'Missionen',
+          id: 'quests', title: translate('menu_quests'), subtitle: translate('menu_sub_quests'),
           icon: ClipboardList, color: 'from-amber-500 to-orange-500', shadow: 'shadow-amber-900/20',
           onClick: onQuests
       },
       { 
-          id: 'marketplace', title: translate('menu_marketplace'), subtitle: 'Handel',
+          id: 'marketplace', title: translate('menu_marketplace'), subtitle: translate('menu_sub_market'),
           icon: Store, color: 'from-blue-600 to-cyan-600', shadow: 'shadow-cyan-900/20',
           onClick: onMarketplace
       },

@@ -41,14 +41,17 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim, t }) { 
                     if (milestone.type === 'TIME') {
                         displayValue = (displayProgress / 3600).toFixed(1);
                         displayMax = (milestone.target / 3600).toFixed(1);
-                        labelSuffix = "Std.";
+                        labelSuffix = t ? t('milestone_hours') : 'hrs';
                     }
 
                     // Consumable Info holen
                     const rewardItem = milestone.reward.type === 'CONSUMABLE' ? CONSUMABLES[milestone.reward.variant] : null;
                     
                     // Label übersetzen (wenn es ein Item-Meilenstein ist)
-                    const label = milestone.itemId ? `Sammle ${milestone.target}x ${t ? t('item_' + milestone.itemId) : milestone.label.split(' ').pop()}` : milestone.label;
+                    const itemName = t ? t('item_' + milestone.itemId) : milestone.label.split(' ').pop();
+                    const label = milestone.itemId
+                        ? (t ? t('milestone_collect', { count: milestone.target, item: itemName }) : `Collect ${milestone.target}x ${itemName}`)
+                        : milestone.label;
                     
                     return (
                         <div key={milestone.id} className={`relative p-4 rounded-2xl border ${isCompleted ? 'bg-slate-800 border-yellow-500/30' : 'bg-slate-900 border-white/5'} overflow-hidden shadow-lg`}>
@@ -57,7 +60,7 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim, t }) { 
                                 <div>
                                     <h3 className={`font-black text-sm uppercase ${isCompleted ? 'text-yellow-400' : 'text-slate-400'}`}>{label}</h3>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">{currentLevel}x Erreicht</span>
+                                        <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded">{t ? t('milestone_reached', { count: currentLevel }) : `Reached ${currentLevel}x`}</span>
                                     </div>
                                 </div>
                                 <span className="text-xs font-mono text-slate-500 font-bold">{displayValue} / {displayMax} {labelSuffix}</span>
