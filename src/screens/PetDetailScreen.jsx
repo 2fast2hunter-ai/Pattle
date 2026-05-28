@@ -4,6 +4,7 @@ import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import { getPetLevelProgress } from '../utils/mechanics/petStats'; // IMPORT HINZUGEFÜGT
 import { sharePet } from '../utils/shareUtils';
 import { updateUser } from '../utils/db';
+import { checkAchievements } from '../utils/checkAchievements';
 import PetAvatar from '../components/PetAvatar';
 import RenameModal from '../components/modals/RenameModal';
 import DeleteModal from '../components/modals/DeleteModal';
@@ -45,6 +46,8 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
           if (result === 'shared' || result === 'copied') {
               if (user?.id) {
                   updateUser(user.id, { "stats.sharedCount": (user.stats?.sharedCount || 0) + 1 });
+                  const lang = t?.('settings_language') === 'Language' ? 'en' : 'de';
+                  checkAchievements(user, 'share', {}, null, lang).catch(() => {});
               }
               if (result === 'copied') {
                   setShareCopied(true);

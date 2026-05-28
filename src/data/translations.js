@@ -456,6 +456,7 @@ export const TRANSLATIONS = {
         village_tickets: "Tickets",
         village_rate: "Rate/h",
         village_paused: "Paused",
+        village_cycle: "Production Cycle",
         village_lvl: "Lvl",
         village_milestones: "Milestones",
         village_trading: "Trading Post",
