@@ -213,17 +213,17 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
             startBattleFn(nextPets);
         } else {
             setAutoBattleRemaining(0);
-            showNotification("Auto-Kampf abgeschlossen!", "success");
+            showNotification(t ? t('notif_autobattle_done') : 'Auto-battle complete!', "success");
             setCurrentView('arena-hub');
             setActiveBattle(null);
         }
     } else if (isTower) {
-        showNotification(`Stufe ${towerStage} geschafft! ${towerRewardMsg}`, "success");
+        showNotification(t ? t('notif_tower_win', { stage: towerStage, reward: towerRewardMsg }) : `Stage ${towerStage} cleared! ${towerRewardMsg}`, "success");
         setCurrentView('tower');
         setActiveBattle(null);
     } else {
-        if (!isFriendly) showNotification(`Sieg! +${coinsGain} Gold, +${xpGain} XP`, "success");
-        else showNotification("Sieg! (Freundschaftsspiel)", "success");
+        if (!isFriendly) showNotification(t ? t('notif_win_pvp', { coins: Math.floor(coinsGain), xp: Math.floor(xpGain) }) : `Win! +${Math.floor(coinsGain)} Gold, +${Math.floor(xpGain)} XP`, "success");
+        else showNotification(t ? t('notif_friendly_win') : 'Win! (Friendly)', "success");
         setCurrentView('arena-hub');
         setActiveBattle(null);
     }

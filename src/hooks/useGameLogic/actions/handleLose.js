@@ -164,7 +164,7 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
     if (!isAuto) {
         playSound('lose');
         if (!isGauntlet) {
-            showNotification(isTower ? "Turm-Kampf verloren!" : "Niederlage!", "error");
+            showNotification(isTower ? (t ? t('notif_tower_lose') : 'Tower battle lost!') : (t ? t('notif_lose') : 'Defeat!'), "error");
         }
         setCurrentView(isTower ? 'tower' : 'arena-hub');
         setActiveBattle(null);
@@ -172,14 +172,14 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
         // Auto-Battle Logik wird im BattleScreen gehandhabt oder hier erweitert
         if (autoBattleRemaining <= 1) {
             setAutoBattleRemaining(0);
-            showNotification("Auto-Kampf beendet (Niederlage).", "info");
+            showNotification(t ? t('notif_autobattle_ended_lose') : 'Auto-battle ended (defeat).', "info");
             setCurrentView('arena-hub');
             setActiveBattle(null);
         } else {
             // Weiterkämpfen auch bei Niederlage
             const nextRemaining = autoBattleRemaining - 1;
             setAutoBattleRemaining(nextRemaining);
-            showNotification(`Niederlage! Nächster Kampf... (${nextRemaining} übrig)`, "info");
+            showNotification(t ? t('notif_autobattle_next', { remaining: nextRemaining }) : `Defeat! Next battle... (${nextRemaining} remaining)`, "info");
 
             setCurrentView('arena-hub');
             setActiveBattle(null);

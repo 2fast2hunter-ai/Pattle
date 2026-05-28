@@ -10,7 +10,7 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
     const qty = parseInt(quantity, 10);
 
     if (!qty || qty < 1) {
-        showNotification("Ungültige Menge.", "error");
+        showNotification(state.t ? state.t('notif_invalid_qty') : 'Invalid quantity.', "error");
         return;
     }
 
@@ -24,7 +24,7 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
 
         if (!pet || !item) {
             console.error("Pet oder Item nicht gefunden.", { petId, itemId });
-            showNotification("Pet oder Item nicht gefunden.", "error");
+            showNotification(state.t ? state.t('notif_pet_item_not_found') : 'Pet or item not found.', "error");
             return;
         }
 
@@ -34,7 +34,7 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
         if (!config) {
             console.error("Keine Config für Item gefunden:", item.variant);
             // This error now correctly triggers if you try to use a cosmetic or unknown item.
-            showNotification("Dieses Item kann nicht auf ein Pet angewendet werden.", "error");
+            showNotification(state.t ? state.t('notif_item_cannot_apply') : 'Item cannot be applied to pet.', "error");
             return;
         }
 
@@ -59,13 +59,13 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
             });
 
             await updateUser(user.id, { inventory: finalInventory });
-            showNotification(`${qty}x ${config.label} auf ${pet.name} angewendet! (+${xpToAdd} XP)`, "success");
+            showNotification(state.t ? state.t('notif_item_applied', { qty, item: config.label, name: pet.name, xp: xpToAdd }) : `${qty}x ${config.label} applied to ${pet.name}! (+${xpToAdd} XP)`, "success");
         } else {
             console.warn("Unbekannter Effekt:", config.effect);
-            showNotification("Dieses Item hat keinen bekannten Effekt.", "info");
+            showNotification(state.t ? state.t('notif_item_no_effect') : 'Item has no effect.', "info");
         }
     } catch (error) {
         console.error("Fehler bei der Anwendung des Items:", error);
-        showNotification("Ein Fehler ist aufgetreten.", "error");
+        showNotification(state.t ? state.t('notif_error_generic') : 'An error occurred.', "error");
     }
 };

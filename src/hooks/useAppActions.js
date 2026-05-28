@@ -25,7 +25,7 @@ export function useAppActions(gameLogic, user, setUser, tutorialStep) {
 
             setUser({ ...newUser, inventory: newInventory, adTickets: newAdTickets });
             gameLogic.handleUpdateProfile({ tutorialStep: 5, inventory: newInventory, adTickets: newAdTickets });
-            gameLogic.showNotification("Gratis Ticket für Tutorial erhalten!", "success");
+            gameLogic.showNotification(gameLogic.t ? gameLogic.t('notif_tutorial_ticket') : 'Free tutorial ticket received!', "success");
         }
     };
 
@@ -53,7 +53,7 @@ export function useAppActions(gameLogic, user, setUser, tutorialStep) {
             const newUser = { ...user, tutorialStep: 13 };
             setUser(newUser);
             gameLogic.handleUpdateProfile({ tutorialStep: 13 });
-            gameLogic.showNotification("Tutorial abgeschlossen! Viel Spaß!", "success");
+            gameLogic.showNotification(gameLogic.t ? gameLogic.t('notif_tutorial_done') : 'Tutorial complete! Have fun!', "success");
         }
     };
 

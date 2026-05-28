@@ -4,28 +4,28 @@ export const renamePet = async (state, showNotification, petId, newName) => {
     const { user } = state;
     const cost = 100;
     if (user.coins < cost) {
-        showNotification("Nicht genug Gold!", "error");
+        showNotification(state.t ? state.t('notif_not_enough_gold') : 'Not enough gold!', "error");
         return false;
     }
 
     // VALIDIERUNG
     const trimmedName = newName.trim();
     if (trimmedName.length < 3) {
-        showNotification("Name zu kurz (min. 3 Zeichen)!", "error");
+        showNotification(state.t ? state.t('notif_name_too_short') : 'Name too short!', "error");
         return false;
     }
     if (trimmedName.length > 12) {
-        showNotification("Name zu lang (max. 12 Zeichen)!", "error");
+        showNotification(state.t ? state.t('notif_name_too_long') : 'Name too long!', "error");
         return false;
     }
     // Einfacher Schimpfwort-Filter (Beispiel) oder Sonderzeichen-Check
     if (/[^a-zA-Z0-9 äöüÄÖÜß]/.test(trimmedName)) {
-        showNotification("Nur Buchstaben und Zahlen erlaubt!", "error");
+        showNotification(state.t ? state.t('notif_name_invalid_chars') : 'Only letters and numbers!', "error");
         return false;
     }
 
     await updatePetInDB(petId, { name: trimmedName });
     await updateUser(user.id, { coins: user.coins - cost });
-    showNotification("Name geändert!", "success");
+    showNotification(state.t ? state.t('notif_name_changed') : 'Name changed!', "success");
     return true;
 };

@@ -13,7 +13,7 @@ export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     const parent2 = typeof p2Arg === 'string' ? myPets.find(p => p.id === p2Arg) : p2Arg;
 
     if (!parent1 || !parent2) {
-        showNotification("Fehler: Eltern-Pets nicht gefunden.", "error");
+        showNotification(state.t ? state.t('notif_breed_parents_missing') : 'Parent pets not found.', "error");
         return;
     }
 
@@ -28,7 +28,7 @@ export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     } else {
         cost = 100;
         if (user.coins < cost) {
-            showNotification("Nicht genug Gold! (Benötigt: 100 oder Zucht-Ticket)", "error");
+            showNotification(state.t ? state.t('notif_breed_no_gold') : 'Not enough gold!', "error");
             return;
         }
     }
@@ -36,7 +36,7 @@ export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     // Cooldown check
     const now = Date.now();
     if (parent1.breedingCooldown > now || parent2.breedingCooldown > now) {
-        showNotification("Eltern sind noch nicht bereit!", "error");
+        showNotification(state.t ? state.t('notif_breed_not_ready') : 'Parents not ready!', "error");
         return;
     }
 
@@ -111,8 +111,8 @@ export const breedPets = async (state, showNotification, p1Arg, p2Arg) => {
     checkAchievements(updatedUser, 'breed', {}, showNotification, lang, myPets || []).catch(() => {});
 
     const msg = isFusion
-        ? (isSecret ? "⭐ Geheimes Hybrid-Ei erhalten!" : `✨ Fusion-Ei erhalten!`)
-        : (ticketIndex !== -1 ? "Zucht erfolgreich! (Ticket verwendet)" : "Zucht erfolgreich! (100 Gold)");
+        ? (isSecret ? (state.t ? state.t('notif_breed_secret') : '⭐ Secret hybrid egg obtained!') : (state.t ? state.t('notif_breed_fusion') : '✨ Fusion egg obtained!'))
+        : (ticketIndex !== -1 ? (state.t ? state.t('notif_breed_success_ticket') : 'Breeding successful! (Ticket used)') : (state.t ? state.t('notif_breed_success_gold') : 'Breeding successful! (100 Gold)'));
     showNotification(msg, "success");
 
     return baby;

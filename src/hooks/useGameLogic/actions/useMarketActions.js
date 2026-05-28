@@ -26,7 +26,7 @@ export function useMarketActions(state, showNotification) {
         // Filtere alle Listings, die mir gehören
         const myListingsCount = (marketListings || []).filter(l => l.sellerId === user.id).length;
         if (myListingsCount >= 10) {
-            showNotification("Limit erreicht! Du kannst maximal 10 Angebote gleichzeitig haben.", "error");
+            showNotification(state.t ? state.t('notif_market_limit') : 'Limit reached! Max 10 listings at a time.', "error");
             return;
         }
         // -------------------------
@@ -36,7 +36,7 @@ export function useMarketActions(state, showNotification) {
 
         const LISTING_FEE = 100;
         if (user.coins < LISTING_FEE) {
-            showNotification("Nicht genügend Münzen für die Einstellgebühr (100 Gold)!", "error");
+            showNotification(state.t ? state.t('notif_market_no_fee') : 'Not enough coins for the listing fee (100 Gold)!', "error");
             return;
         }
         
@@ -61,7 +61,7 @@ export function useMarketActions(state, showNotification) {
             }
         } 
         
-        showNotification(petArray.length > 1 ? `${petArray.length} Items eingestellt! (-100G)` : "Angebot erstellt! (-100G)", 'success'); 
+        showNotification(petArray.length > 1 ? (state.t ? state.t('notif_market_bundle_listed', { count: petArray.length }) : `${petArray.length} items listed! (-100G)`) : (state.t ? state.t('notif_market_listed') : 'Listing created! (-100G)'), 'success');
     };
 
     // SELL RESOURCE
@@ -71,20 +71,20 @@ export function useMarketActions(state, showNotification) {
         // --- LIMIT CHECK (NEU) ---
         const myListingsCount = (marketListings || []).filter(l => l.sellerId === user.id).length;
         if (myListingsCount >= 10) {
-            showNotification("Limit erreicht! Du kannst maximal 10 Angebote gleichzeitig haben.", "error");
+            showNotification(state.t ? state.t('notif_market_limit') : 'Limit reached! Max 10 listings at a time.', "error");
             return;
         }
         // -------------------------
 
         if (user.coins < 100) {
-            showNotification("Nicht genügend Münzen für die Einstellgebühr (100 Gold)!", "error");
+            showNotification(state.t ? state.t('notif_market_no_fee') : 'Not enough coins for the listing fee (100 Gold)!', "error");
             return;
         }
 
         const result = await createResourceListing(user, itemId, amount, totalPrice);
         
         if (result.success) {
-            showNotification("Materialien eingestellt! (-100G)", "success");
+            showNotification(state.t ? state.t('notif_market_resources_listed') : 'Materials listed! (-100G)', "success");
         } else {
             showNotification(result.message || "Fehler beim Erstellen.", "error");
         }

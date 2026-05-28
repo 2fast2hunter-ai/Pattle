@@ -7,7 +7,7 @@ export const addToTeam = async (state, showNotification, petId) => {
 
     const unlockedSlots = getUnlockedTeamSlots(user.level);
     if (selectedSlotForTeam >= unlockedSlots) {
-        showNotification("Slot noch gesperrt!", "error");
+        showNotification(state.t ? state.t('notif_slot_locked') : 'Slot still locked!', "error");
         return;
     }
 

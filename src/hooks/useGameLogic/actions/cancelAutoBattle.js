@@ -1,4 +1,4 @@
 export const cancelAutoBattle = (state, showNotification) => {
     state.setAutoBattleRemaining(0);
-    showNotification("Auto-Kampf wird nach diesem Kampf beendet.", "info");
+    showNotification(state.t ? state.t('notif_autobattle_stopping') : 'Auto-battle stopping.', "info");
 };

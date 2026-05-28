@@ -8,12 +8,12 @@ export const releasePet = async (state, showNotification, petId) => {
     if (!pet) return false;
 
     if ((user.team || []).includes(petId)) {
-        showNotification("Kann kein Team-Mitglied freilassen!", "error");
+        showNotification(state.t ? state.t('notif_cant_release_team') : 'Cannot release a team member!', "error");
         return false;
     }
 
     await removePetFromDB(petId);
     // Optional: Belohnung für Freilassen?
-    showNotification(`${pet.name} wurde freigelassen.`, "success");
+    showNotification(state.t ? state.t('notif_pet_released', { name: pet.name }) : `${pet.name} was released.`, "success");
     return true;
 };

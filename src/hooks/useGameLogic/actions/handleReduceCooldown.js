@@ -12,14 +12,14 @@ export const handleReduceCooldownByAd = async (state, showNotification, petId) =
     const newHatchAt = Math.max(Date.now() + 1000, pet.hatchAt - reduction);
 
     await updatePetInDB(petId, { hatchAt: newHatchAt });
-    showNotification('Brutzeit um 50% verkürzt! 🎉', 'success');
+    showNotification(state.t ? state.t('notif_hatch_time_reduced') : 'Hatch time reduced by 50%! 🎉', 'success');
 };
 
 export const handleReduceCooldown = async (state, showNotification, petId, type) => {
     const { user, myPets } = state;
     const ticketIndex = user.inventory.findIndex(i => i.type === 'TICKET');
     if (ticketIndex === -1) {
-        showNotification("Keine Tickets!", "error");
+        showNotification(state.t ? state.t('notif_no_tickets') : 'No tickets!', "error");
         return;
     }
 
@@ -38,5 +38,5 @@ export const handleReduceCooldown = async (state, showNotification, petId, type)
 
     await updatePetInDB(petId, updates);
     await updateUser(user.id, { inventory: newInventory });
-    showNotification("Zeit verkürzt!", "success");
+    showNotification(state.t ? state.t('notif_time_reduced') : 'Time reduced!', "success");
 };
