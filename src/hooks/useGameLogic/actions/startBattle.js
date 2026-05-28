@@ -8,9 +8,9 @@ export const startBattle = async (state, showNotification, overridePets = null) 
     if (!user) return;
 
     const sourcePets = overridePets || myPets;
-    const myTeam = user.team.map(id => sourcePets.find(p => p.id === id)).filter(Boolean);
+    const myTeam = (user.team || []).map(id => sourcePets.find(p => p.id === id)).filter(Boolean);
     if (myTeam.length === 0) {
-        showNotification("Dein Team ist leer!", "error");
+        showNotification(state.t ? state.t('notif_team_empty') : 'Your team is empty!', "error");
         return;
     }
 

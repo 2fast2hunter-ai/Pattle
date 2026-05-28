@@ -8,9 +8,9 @@ export const startGauntletBattle = async (state, showNotification) => {
     if (!user) return;
 
     // 1. Team Validate
-    const myTeam = user.team.map(id => myPets.find(p => p.id === id)).filter(Boolean);
+    const myTeam = (user.team || []).map(id => myPets.find(p => p.id === id)).filter(Boolean);
     if (myTeam.length === 0) {
-        showNotification("Dein Team ist leer!", "error");
+        showNotification(state.t ? state.t('notif_team_empty') : 'Your team is empty!', "error");
         return;
     }
 

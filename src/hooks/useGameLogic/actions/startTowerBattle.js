@@ -11,7 +11,7 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
     if (!stageConfig) return;
 
     // Team Validierung
-    const myTeam = user.team.map(id => {
+    const myTeam = (user.team || []).map(id => {
         const pet = myPets.find(p => p.id === id);
         if (!pet) return null;
         // WICHTIG: Pet klonen und Kampf-Werte initialisieren (hp = maxHp)
@@ -19,7 +19,7 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
     }).filter(Boolean);
 
     if (myTeam.length === 0) {
-        showNotification("Dein Team ist leer!", "error");
+        showNotification(state.t ? state.t('notif_team_empty') : 'Your team is empty!', "error");
         return;
     }
 

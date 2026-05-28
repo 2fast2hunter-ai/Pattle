@@ -245,6 +245,7 @@ export const TRANSLATIONS = {
         pet_xp_label: "Erfahrung", pet_ability_label: "Spezialfähigkeit",
         team_next_slot: "Nächster Slot", team_requires_level: "Benötigt Level {level}",
         market_fee_info: "Gebühr: 100 Gold pro Angebot.",
+        notif_team_empty: "Dein Team ist leer!",
 
         // Quests Descriptions
         quest_WIN_PVP: "Gewinne {target} Kämpfe in der Arena.",
@@ -636,6 +637,7 @@ export const TRANSLATIONS = {
         pet_xp_label: "Experience", pet_ability_label: "Special Ability",
         team_next_slot: "Next Slot", team_requires_level: "Requires Level {level}",
         market_fee_info: "Fee: 100 Gold per listing.",
+        notif_team_empty: "Your team is empty!",
 
         quest_WIN_PVP: "Win {target} battles in the Arena.",
         quest_HATCH_EGG: "Hatch {target} eggs in the Hatchery.",
@@ -856,6 +858,7 @@ export const TRANSLATIONS = {
         pet_xp_label: "经验", pet_ability_label: "特殊技能",
         team_next_slot: "下一格", team_requires_level: "需要等级 {level}",
         market_fee_info: "手续费：每条挂单 100 金币。",
+        notif_team_empty: "你的队伍是空的！",
         village_milestones: "里程碑",
         village_trading: "交易站",
         village_cosmetics: "裁缝",
@@ -1040,6 +1043,7 @@ export const TRANSLATIONS = {
         pet_xp_label: "Expérience", pet_ability_label: "Capacité spéciale",
         team_next_slot: "Prochain emplacement", team_requires_level: "Nécessite niveau {level}",
         market_fee_info: "Frais : 100 Or par annonce.",
+        notif_team_empty: "Ton équipe est vide !",
         village_milestones: "Jalons",
         village_trading: "Comptoir",
         village_cosmetics: "Tailleur",
@@ -1224,6 +1228,7 @@ export const TRANSLATIONS = {
         pet_xp_label: "Experiencia", pet_ability_label: "Habilidad especial",
         team_next_slot: "Siguiente ranura", team_requires_level: "Requiere nivel {level}",
         market_fee_info: "Tarifa: 100 de oro por anuncio.",
+        notif_team_empty: "¡Tu equipo está vacío!",
         village_milestones: "Hitos",
         village_trading: "Puesto comercial",
         village_cosmetics: "Sastre",
