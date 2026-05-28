@@ -71,7 +71,7 @@ export function useMarketplace(user, listings, myPets, onSell, onSellResource) {
         const eggStacks = {};
 
         myPets.forEach(p => {
-            if (user.team.includes(p.id)) return;
+            if ((user.team || []).includes(p.id)) return;
             if (!checkFilters(p)) return;
 
             if (p.isEgg) {

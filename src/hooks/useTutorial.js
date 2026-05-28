@@ -40,7 +40,7 @@ export function useTutorial(user, setUser, currentView, handleUpdateProfile) {
         if (tutorialStep === 3 && currentView === 'hatchery') advance(4);
         if (tutorialStep === 7 && currentView === 'arena-hub') advance(8);
         if (tutorialStep === 8 && currentView === 'team-edit') advance(9);
-        if (tutorialStep === 9 && user.team.filter(Boolean).length > 0) advance(10);
+        if (tutorialStep === 9 && (user.team || []).filter(Boolean).length > 0) advance(10);
         if (tutorialStep === 10 && currentView === 'battle') advance(11);
 
     }, [user, currentView, tutorialStep, setUser, handleUpdateProfile, isTutorialActive]);

@@ -60,7 +60,7 @@ export function useVillageActions(state, showNotification) {
         }
 
         // Prüfen ob im Team
-        if (user.team.includes(petId)) {
+        if ((user.team || []).includes(petId)) {
             showNotification(t('notif_worker_in_team', { name: pet.name }), 'error');
             return;
         }

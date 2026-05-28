@@ -14,7 +14,7 @@ const getRequiredLevel = (index) => {
 export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet, t, tutorialHighlight }) {
   const unlockedSlots = getUnlockedTeamSlots(user.level);
   const maxSlots = 10;
-  const teamCount = user.team.filter(Boolean).length;
+  const teamCount = (user.team || []).filter(Boolean).length;
   
   return (
     <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
@@ -66,7 +66,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {Array.from({ length: maxSlots }).map((_, index) => {
           const isUnlocked = index < unlockedSlots;
-          const petId = user.team[index];
+          const petId = (user.team || [])[index];
           const pet = petId ? pets.find(p => p.id === petId) : null;
           const requiredLevel = getRequiredLevel(index);
           

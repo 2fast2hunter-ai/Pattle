@@ -7,7 +7,7 @@ export const releasePet = async (state, showNotification, petId) => {
     const pet = myPets.find(p => p.id === petId);
     if (!pet) return false;
 
-    if (user.team.includes(petId)) {
+    if ((user.team || []).includes(petId)) {
         showNotification("Kann kein Team-Mitglied freilassen!", "error");
         return false;
     }
