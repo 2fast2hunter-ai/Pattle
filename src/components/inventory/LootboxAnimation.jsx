@@ -51,7 +51,7 @@ export default function LootboxAnimation({
                             {cycleRarity.label}
                         </h2>
                         <p className="text-white/50 text-sm font-bold uppercase tracking-[0.5em] mt-2">
-                            {animationStage === 'cycling' ? "Bestimme Seltenheit..." : "GEFUNDEN!"}
+                            {animationStage === 'cycling' ? (t ? t('lootbox_cycling') : 'Determining rarity...') : (t ? t('lootbox_found') : 'FOUND!')}
                         </p>
                     </div>
 
@@ -61,7 +61,7 @@ export default function LootboxAnimation({
                             onClick={finishAnimation}
                             className="mt-12 bg-white hover:bg-slate-200 text-black px-10 py-4 rounded-2xl font-black text-lg shadow-[0_0_30px_rgba(255,255,255,0.3)] hover:scale-105 active:scale-95 transition-all animate-in fade-in zoom-in duration-300 relative z-20"
                         >
-                            EINSAMMELN
+                            {t ? t('label_collect') : 'COLLECT'}
                         </button>
                     )}
                 </div>

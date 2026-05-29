@@ -122,7 +122,7 @@ export default function App() {
             {isTutorialActive && <TutorialOverlay message={tutorialMsg} step={tutorialStep} />}
             {notification && <div className="absolute top-0 left-0 w-full z-[9999] flex justify-center pt-4 pointer-events-none"><div className="pointer-events-auto w-full max-w-md px-4"><Notification notification={notification} /></div></div>}
             {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} t={t} />}
-            {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} />}
+            {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} t={t} />}
             {idleReturnResult && <IdleReturnModal result={idleReturnResult} onClose={() => setIdleReturnResult(null)} t={t} />}
 
             {currentView !== 'battle' && <div className="w-full"><HeaderHUD user={user} /></div>}

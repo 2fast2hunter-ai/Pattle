@@ -51,7 +51,7 @@ export default function GauntletSummary({
                             <Coins className="w-5 h-5 fill-current" />
                             <span className="text-lg font-black">+{(battleState.accumulatedRewards?.coins || 0) + displayCoins}</span>
                         </div>
-                        <span className="text-[9px] text-slate-500 font-bold uppercase">Münzen</span>
+                        <span className="text-[9px] text-slate-500 font-bold uppercase">{t ? t('reward_coins') : 'Coins'}</span>
                     </div>
                 </div>
             </div>

@@ -17,12 +17,12 @@ const REWARD_TIERS = [
     { label: 'Top 90%', coins: 1000, gems: 10, tickets: 0, adTickets: 1 },
 ];
 
-export default function RewardsInfoModal({ onClose }) {
+export default function RewardsInfoModal({ onClose, t }) {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
             <div className="bg-slate-900 border border-white/10 w-full max-w-md rounded-3xl flex flex-col shadow-2xl max-h-[80vh]">
                 <div className="p-4 border-b border-white/10 flex justify-between items-center bg-slate-950/50">
-                    <h3 className="font-black text-white text-lg flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" /> Saison-Belohnungen</h3>
+                    <h3 className="font-black text-white text-lg flex items-center gap-2"><Trophy className="w-5 h-5 text-yellow-400" /> {t ? t('label_season_rewards') : 'Season Rewards'}</h3>
                     <button onClick={onClose}><X className="w-5 h-5 text-slate-400" /></button>
                 </div>
                 <div className="flex-1 overflow-y-auto p-4 scrollbar-hide space-y-2">

@@ -59,7 +59,7 @@ export default function BreedingStation({
                                     </span>
                                 </div>
                                 {fusionRecipe.isSecret ? (
-                                    <span className="text-[9px] text-slate-400">Seltenheit: ???</span>
+                                    <span className="text-[9px] text-slate-400">{t ? t('breeding_rarity') : 'Rarity'}: ???</span>
                                 ) : (
                                     <>
                                         <span className="text-[9px] text-slate-300 font-bold">{fusionRecipe.label}</span>

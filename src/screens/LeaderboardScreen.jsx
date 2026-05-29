@@ -62,7 +62,7 @@ export default function LeaderboardScreen({ user, onBack, onViewPlayer, t }) {
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
 
             {showRewardsInfo && (
-                <RewardsInfoModal onClose={() => setShowRewardsInfo(false)} />
+                <RewardsInfoModal onClose={() => setShowRewardsInfo(false)} t={t} />
             )}
 
             {/* Background FX */}

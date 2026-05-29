@@ -526,7 +526,14 @@ export const TRANSLATIONS = {
         label_fusion_detected: "Fusion erkannt!",
         label_secret_hybrid_egg: "Geheimes Hybrid-Ei!",
         label_fusion_egg_received: "✨ Fusion-Ei erhalten!",
-        label_season_end: "Saison Ende"
+        label_season_end: "Saison Ende",
+        lootbox_cycling: "Seltenheit wird bestimmt...",
+        lootbox_found: "GEFUNDEN!",
+        label_collect: "EINSAMMELN",
+        modal_continue: "WEITER",
+        modal_level_up_msg: "Du bist jetzt Level {level}",
+        label_rewards: "Belohnungen",
+        label_season_rewards: "Saison-Belohnungen"
     },
     en: {
         settings_title: "SETTINGS",
@@ -1031,7 +1038,14 @@ export const TRANSLATIONS = {
         label_fusion_detected: "Fusion detected!",
         label_secret_hybrid_egg: "Secret Hybrid Egg!",
         label_fusion_egg_received: "✨ Fusion Egg received!",
-        label_season_end: "Season end"
+        label_season_end: "Season end",
+        lootbox_cycling: "Determining rarity...",
+        lootbox_found: "FOUND!",
+        label_collect: "COLLECT",
+        modal_continue: "CONTINUE",
+        modal_level_up_msg: "You are now Level {level}",
+        label_rewards: "Rewards",
+        label_season_rewards: "Season Rewards"
     },
     zh: {
         settings_title: "设置",
@@ -1231,7 +1245,7 @@ export const TRANSLATIONS = {
         achievement_full_roster_name: "Full Roster", achievement_full_roster_desc: "Own 25 or more pets.",
         achievement_transcendent_name: "Transcendent", achievement_transcendent_desc: "Own a Transcendent rarity pet.",
         achievement_completionist_name: "Completionist", achievement_completionist_desc: "Unlock 15 other achievements.",
-        label_secret_hybrid: "秘密杂交！", label_fusion_detected: "检测到融合！", label_secret_hybrid_egg: "秘密杂交蛋！", label_fusion_egg_received: "✨ 获得融合蛋！", label_season_end: "赛季结束"
+        label_secret_hybrid: "秘密杂交！", label_fusion_detected: "检测到融合！", label_secret_hybrid_egg: "秘密杂交蛋！", label_fusion_egg_received: "✨ 获得融合蛋！", label_season_end: "赛季结束", lootbox_cycling: "正在确定稀有度...", lootbox_found: "找到！", label_collect: "收集", modal_continue: "继续", modal_level_up_msg: "您现在是 {level} 级", label_rewards: "奖励", label_season_rewards: "赛季奖励"
     },
     fr: {
         settings_title: "PARAMÈTRES",
@@ -1431,7 +1445,7 @@ export const TRANSLATIONS = {
         achievement_full_roster_name: "Full Roster", achievement_full_roster_desc: "Own 25 or more pets.",
         achievement_transcendent_name: "Transcendent", achievement_transcendent_desc: "Own a Transcendent rarity pet.",
         achievement_completionist_name: "Completionist", achievement_completionist_desc: "Unlock 15 other achievements.",
-        label_secret_hybrid: "Hybride secret !", label_fusion_detected: "Fusion détectée !", label_secret_hybrid_egg: "Œuf hybride secret !", label_fusion_egg_received: "✨ Œuf de fusion reçu !", label_season_end: "Fin de saison"
+        label_secret_hybrid: "Hybride secret !", label_fusion_detected: "Fusion détectée !", label_secret_hybrid_egg: "Œuf hybride secret !", label_fusion_egg_received: "✨ Œuf de fusion reçu !", label_season_end: "Fin de saison", lootbox_cycling: "Détermination de la rareté...", lootbox_found: "TROUVÉ !", label_collect: "RÉCUPÉRER", modal_continue: "CONTINUER", modal_level_up_msg: "Vous êtes maintenant niveau {level}", label_rewards: "Récompenses", label_season_rewards: "Récompenses de saison"
     },
     es: {
         settings_title: "AJUSTES",
@@ -1598,7 +1612,7 @@ export const TRANSLATIONS = {
         achievement_full_roster_name: "Full Roster", achievement_full_roster_desc: "Own 25 or more pets.",
         achievement_transcendent_name: "Transcendent", achievement_transcendent_desc: "Own a Transcendent rarity pet.",
         achievement_completionist_name: "Completionist", achievement_completionist_desc: "Unlock 15 other achievements.",
-        label_secret_hybrid: "¡Híbrido secreto!", label_fusion_detected: "¡Fusión detectada!", label_secret_hybrid_egg: "¡Huevo híbrido secreto!", label_fusion_egg_received: "✨ ¡Huevo de fusión recibido!", label_season_end: "Fin de temporada"
+        label_secret_hybrid: "¡Híbrido secreto!", label_fusion_detected: "¡Fusión detectada!", label_secret_hybrid_egg: "¡Huevo híbrido secreto!", label_fusion_egg_received: "✨ ¡Huevo de fusión recibido!", label_season_end: "Fin de temporada", lootbox_cycling: "Determinando rareza...", lootbox_found: "¡ENCONTRADO!", label_collect: "RECOGER", modal_continue: "CONTINUAR", modal_level_up_msg: "¡Ahora eres Nivel {level}!", label_rewards: "Recompensas", label_season_rewards: "Recompensas de temporada"
     }
 };
 

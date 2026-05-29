@@ -3,7 +3,7 @@ import { Package, ChevronsUp, Coins, Gem, Sparkles } from 'lucide-react'; // Bat
 import { RARITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
-export function LevelUpModal({ level, onClose }) {
+export function LevelUpModal({ level, onClose, t }) {
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="bg-gradient-to-br from-indigo-900 to-slate-900 border-2 border-indigo-400 rounded-3xl p-8 text-center shadow-[0_0_50px_rgba(99,102,241,0.5)] max-w-sm w-full relative overflow-hidden">
@@ -13,9 +13,9 @@ export function LevelUpModal({ level, onClose }) {
             <ChevronsUp className="w-12 h-12 text-white" />
           </div>
           <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-white mb-2">LEVEL UP!</h2>
-          <p className="text-indigo-200 font-bold text-lg mb-6">Du bist jetzt Level {level}</p>
+          <p className="text-indigo-200 font-bold text-lg mb-6">{t ? t('modal_level_up_msg', { level }) : `You are now Level ${level}`}</p>
           <div className="bg-black/30 rounded-xl p-4 mb-6 border border-white/10">
-            <h3 className="text-xs uppercase font-bold text-slate-400 mb-3">Belohnungen</h3>
+            <h3 className="text-xs uppercase font-bold text-slate-400 mb-3">{t ? t('label_rewards') : 'Rewards'}</h3>
             <div className="flex justify-center gap-4">
               <div className="flex flex-col items-center">
                 <Coins className="w-6 h-6 text-yellow-400 mb-1" />
@@ -28,7 +28,7 @@ export function LevelUpModal({ level, onClose }) {
             </div>
           </div>
           <button onClick={onClose} className="w-full bg-white text-indigo-900 font-black py-4 rounded-xl hover:bg-indigo-50 transition-colors active:scale-95 shadow-lg">
-            WEITER
+            {t ? t('modal_continue') : 'CONTINUE'}
           </button>
         </div>
       </div>
@@ -125,7 +125,7 @@ export function LootboxModal({ pet, onClose, t }) {
                          {displayRarity.label}
                      </h2>
                      <p className="text-white/50 text-sm font-bold uppercase tracking-[0.5em] mt-2">
-                        {phase === 1 ? "Bestimme Seltenheit..." : "GEFUNDEN!"}
+                        {phase === 1 ? (t ? t('lootbox_cycling') : 'Determining rarity...') : (t ? t('lootbox_found') : 'FOUND!')}
                      </p>
                  </div>
 
@@ -133,7 +133,7 @@ export function LootboxModal({ pet, onClose, t }) {
                  {phase === 2 && showButton && (
                     <div className="mt-12 w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-20">
                         <button onClick={onClose} className="w-full bg-white hover:bg-slate-200 text-slate-900 font-black py-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.4)] active:scale-95 transition-all">
-                            EINSAMMELN
+                            {t ? t('label_collect') : 'COLLECT'}
                         </button>
                     </div>
                  )}
