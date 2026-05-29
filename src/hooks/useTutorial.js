@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export function useTutorial(user, setUser, currentView, handleUpdateProfile) {
+export function useTutorial(user, setUser, currentView, handleUpdateProfile, t) {
     const tutorialStep = user ? (user.tutorialStep !== undefined ? user.tutorialStep : (user.level === 1 && user.xp === 0 ? 0 : 13)) : 13;
     const isTutorialActive = tutorialStep < 13;
 
@@ -8,18 +8,18 @@ export function useTutorial(user, setUser, currentView, handleUpdateProfile) {
         if (!isTutorialActive) return { msg: null, highlight: null };
 
         switch (tutorialStep) {
-            case 0: return { msg: "Willkommen! Gehe zuerst zu deiner SAMMLUNG.", highlight: 'pethub', view: 'menu' };
-            case 1: return { msg: "Öffne deinen RUCKSACK.", highlight: 'items', view: 'pet-hub' };
-            case 2: return { msg: "Öffne die STARTER BOX!", highlight: 'STARTER', view: 'item-inventory' };
-            case 3: return { msg: "Gehe zurück zur BRUTSTÄTTE.", highlight: 'hatchery', view: 'pet-hub' };
-            case 4: return { msg: "Lege das Ei in den Inkubator.", highlight: 'slot-0', view: 'hatchery' };
-            case 5: return { msg: "Benutze ein Ticket, um das Ausbrüten zu beschleunigen!", highlight: 'speedup-btn', view: 'hatchery' };
-            case 6: return { msg: "Das Ei ist bereit! Lass es schlüpfen.", highlight: 'hatch-btn', view: 'hatchery' };
-            case 7: return { msg: "Gehe zurück ins Hauptmenü zur ARENA.", highlight: 'arena', view: 'menu' };
-            case 8: return { msg: "Verwalte dein TEAM.", highlight: 'team', view: 'arena-hub' };
-            case 9: return { msg: "Füge dein neues Pet hinzu.", highlight: 'slot-0', view: 'team-edit' };
-            case 10: return { msg: "Starte deinen ersten KAMPF!", highlight: 'battle', view: 'arena-hub' };
-            case 11: return { msg: "Gewinne den Kampf!", highlight: null, view: 'battle' };
+            case 0: return { msg: t ? t('tutorial_step_0') : 'Welcome! Go to your COLLECTION first.', highlight: 'pethub', view: 'menu' };
+            case 1: return { msg: t ? t('tutorial_step_1') : 'Open your BACKPACK.', highlight: 'items', view: 'pet-hub' };
+            case 2: return { msg: t ? t('tutorial_step_2') : 'Open the STARTER BOX!', highlight: 'STARTER', view: 'item-inventory' };
+            case 3: return { msg: t ? t('tutorial_step_3') : 'Go back to the HATCHERY.', highlight: 'hatchery', view: 'pet-hub' };
+            case 4: return { msg: t ? t('tutorial_step_4') : 'Place the egg in the incubator.', highlight: 'slot-0', view: 'hatchery' };
+            case 5: return { msg: t ? t('tutorial_step_5') : 'Use a ticket to speed up hatching!', highlight: 'speedup-btn', view: 'hatchery' };
+            case 6: return { msg: t ? t('tutorial_step_6') : 'The egg is ready! Let it hatch.', highlight: 'hatch-btn', view: 'hatchery' };
+            case 7: return { msg: t ? t('tutorial_step_7') : 'Go back to the main menu to the ARENA.', highlight: 'arena', view: 'menu' };
+            case 8: return { msg: t ? t('tutorial_step_8') : 'Manage your TEAM.', highlight: 'team', view: 'arena-hub' };
+            case 9: return { msg: t ? t('tutorial_step_9') : 'Add your new pet.', highlight: 'slot-0', view: 'team-edit' };
+            case 10: return { msg: t ? t('tutorial_step_10') : 'Start your first BATTLE!', highlight: 'battle', view: 'arena-hub' };
+            case 11: return { msg: t ? t('tutorial_step_11') : 'Win the battle!', highlight: null, view: 'battle' };
             default: return { msg: null, highlight: null };
         }
     };

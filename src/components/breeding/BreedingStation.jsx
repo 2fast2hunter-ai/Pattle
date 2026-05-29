@@ -55,7 +55,7 @@ export default function BreedingStation({
                                         : <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
                                     }
                                     <span className={`text-[10px] font-black uppercase tracking-widest ${fusionRecipe.isSecret ? 'text-yellow-300' : 'text-purple-300'}`}>
-                                        {fusionRecipe.isSecret ? 'Geheimes Hybrid!' : 'Fusion erkannt!'}
+                                        {fusionRecipe.isSecret ? (t ? t('label_secret_hybrid') : 'Secret Hybrid!') : (t ? t('label_fusion_detected') : 'Fusion detected!')}
                                     </span>
                                 </div>
                                 {fusionRecipe.isSecret ? (

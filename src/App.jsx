@@ -35,7 +35,7 @@ export default function App() {
     const [loadingProgress, setLoadingProgress] = useState(0);
     const [loadingPet, setLoadingPet] = useState(null);
 
-    const { tutorialStep, isTutorialActive, tutorialMsg, tutorialHighlight } = useTutorial(user, setUser, currentView, handleUpdateProfile);
+    const { tutorialStep, isTutorialActive, tutorialMsg, tutorialHighlight } = useTutorial(user, setUser, currentView, handleUpdateProfile, gameLogic.t);
     const appActions = useAppActions(gameLogic, user, setUser, tutorialStep);
 
     // Navigate to screen requested via notification click URL param

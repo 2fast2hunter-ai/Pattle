@@ -202,15 +202,14 @@ const checkAndResetLeaderboard = async (userData) => {
                     updates.inventory = [...(userData.inventory || []), ...ticketItems];
                 }
 
-                updates.seasonRewardMessage = `Saison Ende! Rang ${rank} (${reward.label}). Belohnung: ${reward.coins} Münzen, ${reward.gems} Edelsteine, ${reward.breedTickets} Zuchttickets, ${reward.adTickets} Werbetickets.`;
+                updates.seasonRewardMessage = `Season end! Rank ${rank} (${reward.label}). Reward: ${reward.coins} coins, ${reward.gems} gems, ${reward.breedTickets} breed tickets, ${reward.adTickets} ad tickets.`;
             } else {
-                updates.seasonRewardMessage = `Saison Ende! Rang ${rank}. Viel Glück im nächsten Monat!`;
+                updates.seasonRewardMessage = `Season end! Rank ${rank}. Good luck next month!`;
             }
 
         } catch (e) {
             console.error("[DB] Fehler beim Leaderboard Reset (Reward):", e);
-            // Fallback: Trotz Fehler beim Rang-Berechnen das Rating zurücksetzen!
-            updates.seasonRewardMessage = "Saison Ende! Elo wurde zurückgesetzt.";
+            updates.seasonRewardMessage = "Season end! Rating has been reset.";
         }
 
         // 3. Update durchführen (Reset + ggf. Belohnung)
@@ -266,14 +265,14 @@ const checkAndResetGauntletLeaderboard = async (userData) => {
                     updates.inventory = [...(userData.inventory || []), ...ticketItems];
                 }
 
-                updates.seasonRewardMessage = `Gauntlet Saison Ende! Rang ${rank} (${reward.label}). Belohnung: ${reward.coins} Münzen, ${reward.gems} Edelsteine.`;
+                updates.seasonRewardMessage = `Gauntlet Season end! Rank ${rank} (${reward.label}). Reward: ${reward.coins} coins, ${reward.gems} gems.`;
             } else {
-                updates.seasonRewardMessage = `Gauntlet Saison Ende! Rang ${rank}. Viel Glück!`;
+                updates.seasonRewardMessage = `Gauntlet Season end! Rank ${rank}. Good luck!`;
             }
 
         } catch (e) {
-            console.error("[DB] Fehler beim Gauntlet Reset:", e);
-            updates.seasonRewardMessage = "Gauntlet Saison Ende! Score wurde zurückgesetzt.";
+            console.error("[DB] Gauntlet reset error:", e);
+            updates.seasonRewardMessage = "Gauntlet Season end! Score has been reset.";
         }
 
         try {

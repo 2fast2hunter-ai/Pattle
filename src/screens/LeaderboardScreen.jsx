@@ -103,7 +103,7 @@ export default function LeaderboardScreen({ user, onBack, onViewPlayer, t }) {
                 <div className="flex items-center justify-center">
                     <div className="flex items-center gap-1.5 bg-black/40 px-3 py-1 rounded-full border border-white/5">
                         <Trophy className={`w-3.5 h-3.5 ${activeTab === 'gauntlet' ? 'text-red-500' : 'text-yellow-500'}`} />
-                        <span className="text-xs font-bold text-slate-400">Saison Ende: <span className="text-white">{timeLeft}</span></span>
+                        <span className="text-xs font-bold text-slate-400">{t ? t('label_season_end') : 'Season end'}: <span className="text-white">{timeLeft}</span></span>
                         {activeTab === 'gauntlet' && <span className="text-[9px] text-slate-500 ml-1">(+7d Offset)</span>}
                     </div>
                 </div>

@@ -53,14 +53,14 @@ export default function BreedingResultModal({ result, onClose, t }) {
                                     <h2 className="text-3xl font-black uppercase tracking-widest text-yellow-300 drop-shadow-lg">???</h2>
                                     <HelpCircle className="w-5 h-5 text-yellow-400 animate-pulse" />
                                 </div>
-                                <p className="text-yellow-200 text-sm font-bold opacity-80 mb-8">Geheimes Hybrid-Ei!</p>
+                                <p className="text-yellow-200 text-sm font-bold opacity-80 mb-8">{t ? t('label_secret_hybrid_egg') : 'Secret Hybrid Egg!'}</p>
                             </>
                         ) : egg.isFusion ? (
                             <>
                                 <h2 className={`text-3xl font-black uppercase tracking-widest ${rarity.color} mb-2 drop-shadow-lg`}>
                                     {t ? t('rarity_' + egg.rarity) : rarity.label}
                                 </h2>
-                                <p className="text-purple-300 text-sm font-bold opacity-80 mb-8">✨ Fusion-Ei erhalten!</p>
+                                <p className="text-purple-300 text-sm font-bold opacity-80 mb-8">{t ? t('label_fusion_egg_received') : '✨ Fusion Egg received!'}</p>
                             </>
                         ) : (
                             <>
