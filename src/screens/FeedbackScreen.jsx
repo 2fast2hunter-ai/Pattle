@@ -4,10 +4,10 @@ import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const CATEGORIES = [
-    { id: 'bug', label: '🐛 Bug melden' },
-    { id: 'suggestion', label: '💡 Vorschlag' },
-    { id: 'balance', label: '⚖️ Balance-Feedback' },
-    { id: 'other', label: '💬 Sonstiges' },
+    { id: 'bug', key: 'feedback_cat_bug', fallback: '🐛 Bug Report' },
+    { id: 'suggestion', key: 'feedback_cat_suggestion', fallback: '💡 Suggestion' },
+    { id: 'balance', key: 'feedback_cat_balance', fallback: '⚖️ Balance Feedback' },
+    { id: 'other', key: 'feedback_cat_other', fallback: '💬 Other' },
 ];
 
 export default function FeedbackScreen({ onBack, user, t }) {
@@ -33,7 +33,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
             setSubmitted(true);
         } catch (err) {
             console.error('Feedback error:', err);
-            setError('Fehler beim Senden. Bitte versuche es erneut.');
+            setError(t ? t('feedback_send_error') : 'Error sending. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -95,7 +95,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
                                                 : 'bg-slate-900 border-white/5 text-slate-400 hover:bg-slate-800 hover:text-white'
                                         }`}
                                     >
-                                        {cat.label}
+                                        {t ? t(cat.key) : cat.fallback}
                                     </button>
                                 ))}
                             </div>

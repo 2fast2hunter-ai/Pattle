@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
 import { Egg, Mail, Lock, User, AlertCircle } from 'lucide-react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase'; // Importiere unsere Auth-Instanz
+import { auth } from '../firebase';
 import { PageBackground } from '../components/GameLayout';
+import { TRANSLATIONS } from '../data/translations';
+
+const tr = (key) => {
+    try {
+        const saved = JSON.parse(localStorage.getItem('game_settings') || '{}');
+        const lang = saved.language || (navigator.language?.toLowerCase().startsWith('de') ? 'de' : 'en');
+        return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['de']?.[key] || key;
+    } catch {
+        return TRANSLATIONS['de']?.[key] || key;
+    }
+};
 
 export default function AuthScreen({ onLogin }) {
   const [isRegistering, setIsRegistering] = useState(false);
@@ -34,13 +45,13 @@ export default function AuthScreen({ onLogin }) {
       
     } catch (err) {
       console.error(err);
-      let msg = "Ein Fehler ist aufgetreten.";
-      if (err.code === 'auth/invalid-email') msg = "Ungültige E-Mail Adresse.";
-      if (err.code === 'auth/user-not-found') msg = "Benutzer nicht gefunden.";
-      if (err.code === 'auth/wrong-password') msg = "Falsches Passwort.";
-      if (err.code === 'auth/email-already-in-use') msg = "E-Mail wird bereits verwendet.";
-      if (err.code === 'auth/weak-password') msg = "Passwort muss mind. 6 Zeichen haben.";
-      if (err.code === 'auth/invalid-credential') msg = "Falsche Zugangsdaten.";
+      let msg = tr('auth_error_generic');
+      if (err.code === 'auth/invalid-email') msg = tr('auth_error_invalid_email');
+      if (err.code === 'auth/user-not-found') msg = tr('auth_error_user_not_found');
+      if (err.code === 'auth/wrong-password') msg = tr('auth_error_wrong_password');
+      if (err.code === 'auth/email-already-in-use') msg = tr('auth_error_email_in_use');
+      if (err.code === 'auth/weak-password') msg = tr('auth_error_weak_password');
+      if (err.code === 'auth/invalid-credential') msg = tr('auth_error_invalid_credential');
       setError(msg);
     } finally {
       setLoading(false);
