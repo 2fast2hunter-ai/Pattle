@@ -2,7 +2,7 @@ import React from 'react';
 import { X, ArrowUpCircle } from 'lucide-react';
 import { UPGRADE_COSTS, RESOURCE_ITEMS } from '../../data/gameData';
 
-export default function UpgradeModal({ resource, currentLevel, storage, onUpgrade, onClose }) {
+export default function UpgradeModal({ resource, currentLevel, storage, onUpgrade, onClose, t }) {
     const nextLevel = currentLevel + 1;
     const costData = UPGRADE_COSTS.find(u => u.level === nextLevel);
     
@@ -33,37 +33,37 @@ export default function UpgradeModal({ resource, currentLevel, storage, onUpgrad
                 
                 <div className="text-center mb-6">
                     <h3 className="text-xl font-black text-white uppercase">{resource.buildingLabel}</h3>
-                    <p className="text-indigo-400 font-bold text-sm">Auf Stufe {nextLevel} verbessern</p>
+                    <p className="text-indigo-400 font-bold text-sm">{t ? t('upgrade_to_level', { level: nextLevel }) : `Upgrade to Level ${nextLevel}`}</p>
                 </div>
                 
                 <div className="bg-black/20 rounded-xl p-4 mb-6 space-y-3">
                     <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">Dauer:</span>
+                        <span className="text-slate-400">{t ? t('label_duration') : 'Duration:'}</span>
                         <span className="text-white font-bold">{costData.time}s</span>
                     </div>
                     
                     <div className="border-t border-white/5 pt-2">
                         <div className="flex justify-between text-sm">
-                            <span className="text-slate-400">Kosten:</span>
+                            <span className="text-slate-400">{t ? t('label_cost') : 'Cost:'}</span>
                             <span className={`${enoughBase ? 'text-white' : 'text-red-400'} font-black`}>
                                 {baseCost.toLocaleString()} {baseItem.label}
                             </span>
                         </div>
                         <div className="flex justify-end text-[10px] text-slate-500">
-                            (Du hast: {haveBase.toLocaleString()})
+                            ({t ? t('label_you_have', { count: haveBase.toLocaleString() }) : `You have: ${haveBase.toLocaleString()}`})
                         </div>
                     </div>
 
                     {specialCost > 0 && (
                         <div className="border-t border-white/5 pt-2">
                             <div className="flex justify-between text-sm">
-                                <span className="text-purple-400 font-bold">Spezial:</span>
+                                <span className="text-purple-400 font-bold">{t ? t('label_special_cost') : 'Special:'}</span>
                                 <span className={`${enoughSpecial ? 'text-white' : 'text-red-400'} font-black`}>
                                     {specialCost.toLocaleString()} {rareItem.label}
                                 </span>
                             </div>
                             <div className="flex justify-end text-[10px] text-slate-500">
-                                (Du hast: {haveRare.toLocaleString()})
+                                ({t ? t('label_you_have', { count: haveRare.toLocaleString() }) : `You have: ${haveRare.toLocaleString()}`})
                             </div>
                         </div>
                     )}
@@ -75,7 +75,7 @@ export default function UpgradeModal({ resource, currentLevel, storage, onUpgrad
                     className={`w-full py-4 rounded-2xl font-black text-lg shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95 
                         ${canAfford ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
                 >
-                    <ArrowUpCircle className="w-5 h-5" /> VERBESSERN
+                    <ArrowUpCircle className="w-5 h-5" /> {t ? t('btn_upgrade') : 'UPGRADE'}
                 </button>
             </div>
         </div>

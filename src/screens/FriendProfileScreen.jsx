@@ -101,7 +101,7 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }
 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative">
-            {selectedCategory && (<StatDetailModal category={categories.find(c => c.id === selectedCategory)} data={statsData[selectedCategory.toLowerCase()]} onClose={() => setSelectedCategory(null)} />)}
+            {selectedCategory && (<StatDetailModal category={categories.find(c => c.id === selectedCategory)} data={statsData[selectedCategory.toLowerCase()]} onClose={() => setSelectedCategory(null)} t={t} />)}
             <div className="relative flex items-center justify-center mb-6 pt-6 px-4">
                 <h1 className="text-2xl font-black italic tracking-wide text-white">FREUND</h1>
                 <button onClick={onBack} className="absolute left-4 p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"><ArrowLeft className="w-5 h-5" /></button>

@@ -28,6 +28,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                     eggs={inventoryEggs}
                     onSelect={handleSelectEgg}
                     onClose={() => setShowSelector(false)}
+                    t={t}
                 />
             )}
 

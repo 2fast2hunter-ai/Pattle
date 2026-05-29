@@ -64,12 +64,13 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
             {showUpgrade && (
-                <UpgradeModal 
-                    resource={resource} 
-                    currentLevel={level} 
-                    storage={storage} 
-                    onUpgrade={onUpgradeBuilding} 
-                    onClose={() => setShowUpgrade(false)} 
+                <UpgradeModal
+                    resource={resource}
+                    currentLevel={level}
+                    storage={storage}
+                    onUpgrade={onUpgradeBuilding}
+                    onClose={() => setShowUpgrade(false)}
+                    t={t}
                 />
             )}
 

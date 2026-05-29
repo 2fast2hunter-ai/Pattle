@@ -1,6 +1,17 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
 import PetAvatar from '../PetAvatar';
+import { TRANSLATIONS } from '../../data/translations';
+
+const tl = (key, params) => {
+    try {
+        const saved = JSON.parse(localStorage.getItem('game_settings') || '{}');
+        const lang = saved.language || (navigator.language?.toLowerCase().startsWith('de') ? 'de' : 'en');
+        let str = TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en']?.[key] || key;
+        if (params) Object.entries(params).forEach(([k, v]) => { str = str.replace(`{${k}}`, v); });
+        return str;
+    } catch { return TRANSLATIONS['en']?.[key] || key; }
+};
 
 export default function LoadingScreen({ loadingPet, loadingProgress }) {
     return (
@@ -22,7 +33,7 @@ export default function LoadingScreen({ loadingPet, loadingProgress }) {
 
                 <div className="flex items-center gap-3 bg-slate-900/80 px-6 py-2 rounded-full border border-white/10 backdrop-blur-md shadow-xl">
                     <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] animate-pulse">Lade Welt... {Math.floor(loadingProgress)}%</p>
+                    <p className="text-slate-400 font-bold text-[10px] uppercase tracking-[0.2em] animate-pulse">{tl('loading_world', { progress: Math.floor(loadingProgress) })}</p>
                 </div>
             </div>
         </div>

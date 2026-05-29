@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Backpack, X, Dna, Egg } from 'lucide-react';
 import { RARITIES } from '../../data/gameData';
 
-export default function EggSelectionModal({ eggs, onSelect, onClose }) {
+export default function EggSelectionModal({ eggs, onSelect, onClose, t }) {
     const eggStacks = useMemo(() => {
         const stacks = {};
         
@@ -43,8 +43,8 @@ export default function EggSelectionModal({ eggs, onSelect, onClose }) {
                             <Backpack className="w-5 h-5" />
                         </div>
                         <div>
-                            <h3 className="font-black text-white text-lg leading-none">Ei auswählen</h3>
-                            <p className="text-xs text-slate-400 font-bold mt-1">{eggs.length} verfügbar</p>
+                            <h3 className="font-black text-white text-lg leading-none">{t ? t('egg_modal_title') : 'Select Egg'}</h3>
+                            <p className="text-xs text-slate-400 font-bold mt-1">{t ? t('egg_modal_available', { count: eggs.length }) : `${eggs.length} available`}</p>
                         </div>
                     </div>
                     <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition-colors">
@@ -56,8 +56,8 @@ export default function EggSelectionModal({ eggs, onSelect, onClose }) {
                     {eggStacks.length === 0 ? (
                         <div className="text-center py-10 text-slate-500 flex flex-col items-center">
                             <Egg className="w-12 h-12 mb-3 opacity-20" />
-                            <p className="font-bold">Keine Eier im Rucksack</p>
-                            <p className="text-xs mt-1">Besuche den Shop oder züchte Pets!</p>
+                            <p className="font-bold">{t ? t('egg_modal_no_eggs') : 'No eggs in backpack'}</p>
+                            <p className="text-xs mt-1">{t ? t('egg_modal_no_eggs_hint') : 'Visit the shop or breed pets!'}</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-2 gap-3">
@@ -88,7 +88,7 @@ export default function EggSelectionModal({ eggs, onSelect, onClose }) {
                                         <div className="relative z-10">
                                             <div className={`text-xs font-black ${rarity.color} uppercase mb-0.5`}>{rarity.label}</div>
                                             <div className="text-[9px] text-slate-500 font-bold">
-                                                {stack.isBreeding ? 'Zucht-Ei' : 'Bereit zum Ausbrüten'}
+                                                {stack.isBreeding ? (t ? t('egg_breed_type') : 'Breeding Egg') : (t ? t('egg_ready_type') : 'Ready to hatch')}
                                             </div>
                                         </div>
                                     </button>

@@ -33,6 +33,7 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
                     category={categories.find(c => c.id === selectedCategory)}
                     data={statsData[selectedCategory.toLowerCase()]}
                     onClose={() => setSelectedCategory(null)}
+                    t={t}
                 />
             )}
 
