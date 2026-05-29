@@ -2,16 +2,10 @@ import { db } from '../firebase';
 import { doc, updateDoc, serverTimestamp, increment } from 'firebase/firestore';
 import { ACHIEVEMENTS } from '../data/achievements';
 
-/**
- * Check and unlock achievements after a trigger event.
- *
- * @param {object} user - Current Firestore user doc
- * @param {string} trigger - Event trigger (use ACHIEVEMENT_TRIGGERS constants)
- * @param {object} projected - Projected stat changes, e.g. { pvpWins: 5, hatched: 3 }
- * @param {function} showNotification - UI notification callback
- * @param {string} lang - 'de' or 'en' for notification language
- * @param {Array} pets - Optional pet array for pet-based checks
- */
+// Session-level guard: prevents re-firing achievements during the window between
+// a Firestore write and the listener updating local state (fixes infinite loop on mobile).
+const sessionUnlocked = new Set();
+
 export async function checkAchievements(user, trigger, projected = {}, showNotification, lang = 'en', pets = []) {
   if (!user?.id) return;
 
@@ -21,6 +15,7 @@ export async function checkAchievements(user, trigger, projected = {}, showNotif
   for (const achievement of Object.values(ACHIEVEMENTS)) {
     if (achievement.trigger !== trigger) continue;
     if (already[achievement.id]) continue;
+    if (sessionUnlocked.has(achievement.id)) continue;
     try {
       if (achievement.check(user, projected, pets)) {
         toUnlock.push(achievement);
@@ -29,6 +24,9 @@ export async function checkAchievements(user, trigger, projected = {}, showNotif
   }
 
   if (toUnlock.length === 0) return;
+
+  // Mark in session set BEFORE the async Firestore write to prevent race-condition re-fires
+  toUnlock.forEach(a => sessionUnlocked.add(a.id));
 
   const updates = {};
   let bonusCoins = 0;

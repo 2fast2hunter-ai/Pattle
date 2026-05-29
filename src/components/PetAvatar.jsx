@@ -44,10 +44,8 @@ export default function PetAvatar({ pet, className = "w-16 h-16" }) {
       animalInfo = { id: 'UNKNOWN', label: 'Unbekannt', icon: <HelpCircle className="w-1/2 h-1/2 text-white/80" /> };
   }
 
-  // Bildpfad generieren: ID in Kleinbuchstaben (z.B. "fire_fox.png")
-  // Falls es ein Custom Pet ist (Zucht), nutzen wir 'custom.png' oder fallback
   const imageName = speciesKey.toLowerCase();
-  const imagePath = `/pets/${imageName}.png`; 
+  const imagePath = `${import.meta.env.BASE_URL}pets/${imageName}.png`;
 
   // --- INHALT LOGIK (BILD vs EMOJI) ---
   const renderContent = () => {
