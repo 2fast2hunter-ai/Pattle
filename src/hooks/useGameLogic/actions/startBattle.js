@@ -31,7 +31,7 @@ export const startBattle = async (state, showNotification, overridePets = null) 
         enemyTeam.push(enemy);
     }
 
-    const battleState = { myTeam, enemyTeam, myIndex: 0, enemyIndex: 0, turn: 'PLAYER', log: ["Kampf beginnt!"], isOver: false, round: 1, isFriendly: false };
+    const battleState = { myTeam, enemyTeam, myIndex: 0, enemyIndex: 0, turn: 'PLAYER', log: [state.t ? state.t('battle_log_start') : 'Battle begins!'], isOver: false, round: 1, isFriendly: false };
 
     trackBattleStarted('pvp');
     setActiveBattle(battleState);

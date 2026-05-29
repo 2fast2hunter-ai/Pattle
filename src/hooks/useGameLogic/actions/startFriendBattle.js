@@ -13,7 +13,7 @@ export const startFriendBattle = async (state, showNotification, friendTeam) => 
     // Bereite Freundes-Team vor (HP voll)
     const enemyTeam = friendTeam.map(p => ({ ...p, currentHp: p.maxHp, currentCd: 0 }));
 
-    const battleState = { myTeam, enemyTeam, myIndex: 0, enemyIndex: 0, turn: 'PLAYER', log: ["Freundschaftskampf beginnt!"], isOver: false, round: 1, isFriendly: true };
+    const battleState = { myTeam, enemyTeam, myIndex: 0, enemyIndex: 0, turn: 'PLAYER', log: [state.t ? state.t('battle_log_friendly_start') : 'Friendly battle begins!'], isOver: false, round: 1, isFriendly: true };
 
     setActiveBattle(battleState);
     setCurrentView('battle');

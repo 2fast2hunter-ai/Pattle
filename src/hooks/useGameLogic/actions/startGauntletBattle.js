@@ -30,7 +30,7 @@ export const startGauntletBattle = async (state, showNotification) => {
         myIndex: 0,
         enemyIndex: 0,
         turn: 'PLAYER',
-        log: [`Gauntlet Runde 1 beginnt!`],
+        log: [state.t ? state.t('battle_log_gauntlet_start') : 'Gauntlet Round 1 begins!'],
         isOver: false,
         round: 1,
         isGauntlet: true,

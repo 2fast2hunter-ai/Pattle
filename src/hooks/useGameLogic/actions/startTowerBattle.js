@@ -43,7 +43,7 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
         myIndex: 0, 
         enemyIndex: 0, 
         turn: 'PLAYER', 
-        log: [`Turm Stufe ${stageId} beginnt!`], 
+        log: [state.t ? state.t('battle_log_tower_start', { stage: stageId }) : `Tower Stage ${stageId} begins!`],
         isOver: false, 
         round: 1, 
         isTower: true, 
