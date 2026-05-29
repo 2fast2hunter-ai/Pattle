@@ -533,7 +533,10 @@ export const TRANSLATIONS = {
         modal_continue: "WEITER",
         modal_level_up_msg: "Du bist jetzt Level {level}",
         label_rewards: "Belohnungen",
-        label_season_rewards: "Saison-Belohnungen"
+        label_season_rewards: "Saison-Belohnungen",
+        label_select_worker: "Arbeiter wählen",
+        label_select_pet: "Wähle ein Pet",
+        label_select_team_pet: "Wähle Pet für Team"
     },
     en: {
         settings_title: "SETTINGS",
@@ -1045,7 +1048,10 @@ export const TRANSLATIONS = {
         modal_continue: "CONTINUE",
         modal_level_up_msg: "You are now Level {level}",
         label_rewards: "Rewards",
-        label_season_rewards: "Season Rewards"
+        label_season_rewards: "Season Rewards",
+        label_select_worker: "Select Worker",
+        label_select_pet: "Select a Pet",
+        label_select_team_pet: "Select Pet for Team"
     },
     zh: {
         settings_title: "设置",

@@ -82,7 +82,7 @@ export default function ScreenRouter({
                     if (isDuplicateType) return false;
                     return true;
                 })}
-                title="Arbeiter wählen"
+                title={t ? t('label_select_worker') : 'Select Worker'}
                 onBack={() => {
                     const isTraining = selectedVillageSlot.resourceId === 'training';
                     setCurrentView(isTraining ? 'village' : 'village-detail');
@@ -98,7 +98,7 @@ export default function ScreenRouter({
         case 'village-cosmetics': return <VillageCosmeticsScreen user={user} onBack={() => setCurrentView('village')} onBuy={buyCosmetic} onBuySpecial={buySpecialOffer} t={t} />;
 
         case 'item-inventory': return <ItemInventoryScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onRedeemTicket={gameLogic.handleRedeemTicket} onStartIncubation={handleStartIncubationWrapper} user={user} onUseConsumable={handleUseItemRequest} onOpenLootbox={handleOpenLootboxWrapper} t={t} tutorialHighlight={tutorialHighlight} />;
-        case 'item-use-select-pet': return <InventoryScreen pets={myPets.filter(p => !p.isEgg)} title="Wähle ein Pet" onBack={() => setCurrentView('item-inventory')} onSelectPet={handleApplyItemToPet} highlightMode={true} t={t} />;
+        case 'item-use-select-pet': return <InventoryScreen pets={myPets.filter(p => !p.isEgg)} title={t ? t('label_select_pet') : 'Select a Pet'} onBack={() => setCurrentView('item-inventory')} onSelectPet={handleApplyItemToPet} highlightMode={true} t={t} />;
 
         case 'shop': return <ShopScreen onBack={() => setCurrentView('menu')} onBuyBox={buyLootbox} onBuyTickets={buyTickets} onWatchAd={handleWatchAd} user={user} onClaimTimedReward={claimTimedReward} showNotification={gameLogic.showNotification} t={t} />;
         case 'marketplace': return <MarketplaceScreen user={user} listings={marketListings} onBack={() => setCurrentView('menu')} onBuy={handleBuyMarket} onSell={handleSellMarket} onSellResource={handleSellResource} onRemoveListing={handleRemoveListing} myPets={myPets} t={t} />;
@@ -113,7 +113,7 @@ export default function ScreenRouter({
         case 'hatchery': return <HatcheryScreen pets={myPets} user={user} onBack={() => setCurrentView('pet-hub')} onHatchEgg={handleHatchEggWrapper} onReduceCooldown={handleReduceCooldownWrapper} onStartIncubation={handleStartIncubationWrapper} onWatchAdForHatch={handleWatchAdForHatchWrapper} t={t} tutorialHighlight={tutorialHighlight} />;
 
         case 'team-edit': return <TeamEditScreen user={user} pets={myPets} onBack={() => setCurrentView('arena-hub')} onAddPet={(slotIndex) => { setSelectedSlotForTeam(slotIndex); setCurrentView('team-select-pet'); }} onRemovePet={removeFromTeam} t={t} tutorialHighlight={tutorialHighlight} />;
-        case 'team-select-pet': return <InventoryScreen pets={getAvailablePets()} title="Wähle Pet für Team" onBack={() => setCurrentView('team-edit')} onSelectPet={(id) => addToTeam(id)} highlightMode={true} filterEggs={true} t={t} />;
+        case 'team-select-pet': return <InventoryScreen pets={getAvailablePets()} title={t ? t('label_select_team_pet') : 'Select Pet for Team'} onBack={() => setCurrentView('team-edit')} onSelectPet={(id) => addToTeam(id)} highlightMode={true} filterEggs={true} t={t} />;
 
         case 'inventory': return <InventoryScreen pets={myPets} title={t('pethub_inventory_btn')} onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }} filterEggs={true} t={t} />;
         case 'pet-detail': return activePetDetail && <PetDetailScreen pet={activePetDetail} user={user} onBack={() => setCurrentView('inventory')} onRenamePet={renamePet} onReleasePet={releasePet} t={t} />;
