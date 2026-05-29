@@ -75,8 +75,8 @@ export default function AuthScreen({ onLogin }) {
         
         {/* Toggle Login / Register */}
         <div className="flex bg-slate-900/80 p-1 rounded-xl mb-6">
-          <button onClick={() => { setIsRegistering(false); setError(null); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isRegistering ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>ANMELDEN</button>
-          <button onClick={() => { setIsRegistering(true); setError(null); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isRegistering ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>REGISTRIEREN</button>
+          <button onClick={() => { setIsRegistering(false); setError(null); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${!isRegistering ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>{tr('auth_tab_login')}</button>
+          <button onClick={() => { setIsRegistering(true); setError(null); }} className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${isRegistering ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}>{tr('auth_tab_register')}</button>
         </div>
 
         {error && (
@@ -90,22 +90,22 @@ export default function AuthScreen({ onLogin }) {
           {isRegistering && (
              <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><User className="w-4 h-4" /></div>
-                <input type="text" placeholder="Spielername" value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-sm font-bold text-white outline-none focus:border-indigo-500 focus:bg-slate-900 transition-all placeholder:text-slate-600" required />
+                <input type="text" placeholder={tr('auth_placeholder_username')} value={username} onChange={(e) => setUsername(e.target.value)} className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-sm font-bold text-white outline-none focus:border-indigo-500 focus:bg-slate-900 transition-all placeholder:text-slate-600" required />
              </div>
           )}
           
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Mail className="w-4 h-4" /></div>
-            <input type="email" placeholder="E-Mail Adresse" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-sm font-bold text-white outline-none focus:border-indigo-500 focus:bg-slate-900 transition-all placeholder:text-slate-600" required />
+            <input type="email" placeholder={tr('auth_placeholder_email')} value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-sm font-bold text-white outline-none focus:border-indigo-500 focus:bg-slate-900 transition-all placeholder:text-slate-600" required />
           </div>
 
           <div className="relative">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"><Lock className="w-4 h-4" /></div>
-            <input type="password" placeholder="Passwort" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-sm font-bold text-white outline-none focus:border-indigo-500 focus:bg-slate-900 transition-all placeholder:text-slate-600" required />
+            <input type="password" placeholder={tr('auth_placeholder_password')} value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-slate-950/50 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-sm font-bold text-white outline-none focus:border-indigo-500 focus:bg-slate-900 transition-all placeholder:text-slate-600" required />
           </div>
 
           <button disabled={loading} type="submit" className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-500 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-500/25 transition-all active:scale-95 flex justify-center items-center gap-2 mt-6">
-            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : (isRegistering ? 'KONTO ERSTELLEN' : 'EINLOGGEN')}
+            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : (isRegistering ? tr('auth_btn_create_account') : tr('auth_btn_login'))}
           </button>
         </form>
 
