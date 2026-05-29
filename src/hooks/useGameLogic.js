@@ -124,7 +124,7 @@ export function useGameLogic() {
                          const resolution = await checkAndResolveInterruptedBattle(userData.id);
                          if (resolution && resolution.resolved) {
                              if (actionsRef.current.showNotification) {
-                                 actionsRef.current.showNotification(`Kampf wurde abgebrochen! Niederlage (-${resolution.ratingLoss} Rating).`, 'error');
+                                 actionsRef.current.showNotification(stateRef.current.t ? stateRef.current.t('notif_battle_interrupted', { loss: resolution.ratingLoss }) : `Battle interrupted! Defeat (-${resolution.ratingLoss} Rating).`, 'error');
                              }
                              stateRef.current.setCurrentView('arena-hub'); 
                          }

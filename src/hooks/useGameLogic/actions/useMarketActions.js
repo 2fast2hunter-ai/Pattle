@@ -14,7 +14,7 @@ export function useMarketActions(state, showNotification) {
             const result = await buyMarketItemFn({ listingId });
             showNotification(result.data.message, 'success');
         } catch (e) {
-            showNotification(e.message || 'Fehler beim Kauf.', 'error');
+            showNotification(e.message || (state.t ? state.t('notif_market_buy_error') : 'Purchase error.'), 'error');
         }
     };
 
@@ -86,7 +86,7 @@ export function useMarketActions(state, showNotification) {
         if (result.success) {
             showNotification(state.t ? state.t('notif_market_resources_listed') : 'Materials listed! (-100G)', "success");
         } else {
-            showNotification(result.message || "Fehler beim Erstellen.", "error");
+            showNotification(result.message || (state.t ? state.t('notif_market_create_error') : 'Listing creation error.'), "error");
         }
     };
 

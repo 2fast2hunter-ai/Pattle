@@ -18,7 +18,7 @@ export function useShopActions(state, showNotification) {
             }
             const newInv = [...(user.inventory || []), { id: `box_${Date.now()}`, type: 'LOOTBOX', variant: boxType }];
             await updateUser(user.id, { inventory: newInv, lastDailyBoxClaim: today });
-            showNotification(`${LOOTBOXES.DAILY.label} erhalten!`, 'success');
+            showNotification(state.t ? state.t('notif_daily_box_received') : 'Daily box received!', 'success');
             return;
         }
 
@@ -51,9 +51,9 @@ export function useShopActions(state, showNotification) {
 
         let boxLabel = boxType;
         if (LOOTBOXES[boxType]) boxLabel = LOOTBOXES[boxType].label;
-        else if (boxType === 'TYPE_DAILY') boxLabel = 'Elementar-Truhe';
+        else if (boxType === 'TYPE_DAILY') boxLabel = state.t ? state.t('label_elemental_chest') : 'Elemental Chest';
 
-        showNotification(`${quantity}x ${boxLabel} gekauft!`, 'success');
+        showNotification(state.t ? state.t('notif_lootbox_bought', { count: quantity, name: boxLabel }) : `${quantity}x ${boxLabel} bought!`, 'success');
     };
 
     const buyTickets = (item) => {
