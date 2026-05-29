@@ -140,7 +140,7 @@ export function useVillageActions(state, showNotification) {
         const newExpire = Math.max(now, currentExpire) + (60 * 60 * 1000);
 
         await updateUser(user.id, { "village.idleTimeExpiresAt": newExpire });
-        showNotification('Produktion um 1 Stunde verlängert! 🎉', 'success');
+        showNotification(t('notif_production_extended'), 'success');
     };
 
     // --- RESSOURCEN SAMMELN ---
@@ -171,7 +171,7 @@ export function useVillageActions(state, showNotification) {
             rareItem = { id: 'stone_rock', label: 'Stein' };
         } else {
             const categoryItems = RESOURCE_ITEMS[resourceId];
-            if (!categoryItems) { showNotification("Fehler: Ressource nicht gefunden.", 'error'); return; }
+            if (!categoryItems) { showNotification(t('notif_resource_not_found'), 'error'); return; }
 
             const sortedItems = [...categoryItems].sort((a, b) => b.chance - a.chance);
             baseItem = sortedItems[0];

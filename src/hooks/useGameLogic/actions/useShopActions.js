@@ -13,7 +13,7 @@ export function useShopActions(state, showNotification) {
         if (boxType === 'DAILY') {
             const today = new Date().toDateString();
             if (user.lastDailyBoxClaim === today) {
-                showNotification("Du hast die Daily Box heute schon abgeholt!", "error");
+                showNotification(state.t ? state.t('notif_daily_already_claimed') : 'Already claimed daily box today!', "error");
                 return;
             }
             const newInv = [...(user.inventory || []), { id: `box_${Date.now()}`, type: 'LOOTBOX', variant: boxType }];
@@ -25,7 +25,7 @@ export function useShopActions(state, showNotification) {
         const totalCost = singleCost * quantity;
 
         if (currency === 'COINS') {
-            if (user.coins < totalCost) { showNotification("Zu wenig Münzen!", 'error'); return; }
+            if (user.coins < totalCost) { showNotification(state.t ? state.t('notif_not_enough_gold') : 'Not enough coins!', 'error'); return; }
 
             const newItems = [];
             for (let i = 0; i < quantity; i++) {
@@ -38,7 +38,7 @@ export function useShopActions(state, showNotification) {
             setTimeout(() => trackQuestProgress(user, QUEST_TYPES.SPEND_COINS, totalCost), 500);
 
         } else {
-            if (user.gems < totalCost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
+            if (user.gems < totalCost) { showNotification(state.t ? state.t('notif_not_enough_gems') : 'Not enough gems!', 'error'); return; }
 
             const newItems = [];
             for (let i = 0; i < quantity; i++) {
@@ -61,8 +61,8 @@ export function useShopActions(state, showNotification) {
         let cost = item.costAmount;
         let currency = item.costCurrency;
 
-        if (currency === 'COINS' && (user.coins || 0) < cost) { showNotification("Zu wenig Münzen!", 'error'); return; }
-        if (currency === 'GEMS' && (user.gems || 0) < cost) { showNotification("Zu wenig Edelsteine!", 'error'); return; }
+        if (currency === 'COINS' && (user.coins || 0) < cost) { showNotification(state.t ? state.t('notif_not_enough_gold') : 'Not enough coins!', 'error'); return; }
+        if (currency === 'GEMS' && (user.gems || 0) < cost) { showNotification(state.t ? state.t('notif_not_enough_gems') : 'Not enough gems!', 'error'); return; }
 
         const newInventory = [...(user.inventory || [])];
         for (let i = 0; i < item.tickets; i++) { newInventory.push({ id: `ticket_${Date.now()}_${i}`, type: 'TICKET', variant: 'BREED' }); }
@@ -73,7 +73,7 @@ export function useShopActions(state, showNotification) {
 
         updateData.inventory = newInventory;
         updateUser(user.id, updateData);
-        showNotification(`${item.tickets} Zucht-Tickets gekauft und im Inventar abgelegt!`, 'success');
+        showNotification(state.t ? state.t('notif_tickets_bought', { count: item.tickets }) : `${item.tickets} breed tickets bought!`, 'success');
     };
 
     const watchAdForReward = async (reward) => {
@@ -102,7 +102,7 @@ export function useShopActions(state, showNotification) {
         }
 
         await updateUser(user.id, updateData);
-        showNotification(`${reward.label} + 1 Auto-Kampf Ticket erhalten!`, 'success');
+        showNotification(state.t ? state.t('notif_ad_reward_claimed', { label: reward.label }) : `${reward.label} + 1 auto-battle ticket received!`, 'success');
     };
 
     // --- NEU: GRATIS BELOHNUNG ABHOLEN ---
@@ -116,7 +116,7 @@ export function useShopActions(state, showNotification) {
         const lastClaim = user.timedClaims?.[rewardId] || 0;
         const now = Date.now();
         if (now - lastClaim < rewardConfig.cooldown) {
-            showNotification("Noch nicht bereit!", "error");
+            showNotification(state.t ? state.t('notif_not_ready') : 'Not ready yet!', "error");
             return;
         }
 
@@ -134,7 +134,7 @@ export function useShopActions(state, showNotification) {
         // Hier könnte man weitere Reward-Typen hinzufügen (Coins etc.)
 
         await updateUser(user.id, updates);
-        showNotification(`${rewardConfig.label} eingesammelt!`, "success");
+        showNotification(state.t ? state.t('notif_reward_collected', { item: rewardConfig.label }) : `${rewardConfig.label} collected!`, "success");
     };
 
     const openLootbox = async (boxId, boxVariant) => {
@@ -143,7 +143,7 @@ export function useShopActions(state, showNotification) {
         // SICHERHEITS-CHECK: Ist der User im Auth-Modul eingeloggt?
         if (!auth.currentUser) {
             console.error("Auth Error: User state ist da, aber Firebase Auth user fehlt.");
-            showNotification("Authentifizierungs-Fehler. Bitte neu einloggen.", "error");
+            showNotification(state.t ? state.t('notif_auth_error') : 'Authentication error. Please log in again.', "error");
             return null;
         }
 
@@ -157,7 +157,7 @@ export function useShopActions(state, showNotification) {
             const functions = getFunctions(getApp());
             const openLootboxFn = httpsCallable(functions, 'openLootbox');
 
-            showNotification("Öffne Box...", "info");
+            showNotification(state.t ? state.t('notif_opening_box') : 'Opening box...', "info");
 
             // DATE-MATCHING LOGIC (Client-Side Fix)
             let finalBoxVariant = boxVariant;
@@ -199,7 +199,7 @@ export function useShopActions(state, showNotification) {
             }
         } catch (error) {
             console.error("Lootbox Error (Cloud Function):", error);
-            showNotification("Fehler beim Öffnen.", "error");
+            showNotification(state.t ? state.t('notif_open_error') : 'Error opening box.', "error");
             return null;
         }
     };

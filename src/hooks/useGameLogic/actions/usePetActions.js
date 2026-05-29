@@ -19,15 +19,15 @@ export function usePetActions(state, showNotification) {
 
         const pet = myPets.find(p => p.id === petId);
         if (!pet) {
-            showNotification("Ei nicht gefunden!", "error");
+            showNotification(state.t ? state.t('notif_egg_not_found') : 'Egg not found!', "error");
             return;
         }
 
         const unlockedSlots = getUnlockedHatcherySlots(user.level);
         const incubatingCount = myPets.filter(p => p.isEgg && p.hatchAt > 0).length;
-        
+
         if (incubatingCount >= unlockedSlots) {
-            showNotification(`Brutstätte voll! (${incubatingCount}/${unlockedSlots})`, "error");
+            showNotification(state.t ? state.t('notif_hatchery_full', { count: incubatingCount, max: unlockedSlots }) : `Hatchery full! (${incubatingCount}/${unlockedSlots})`, "error");
             return;
         }
 
@@ -36,7 +36,7 @@ export function usePetActions(state, showNotification) {
         const hatchAt = Date.now() + duration;
 
         await updatePetInDB(pet.id, { hatchAt });
-        showNotification("Inkubation gestartet!", "success");
+        showNotification(state.t ? state.t('notif_incubation_started') : 'Incubation started!', "success");
 
         // Request permission on first incubation, then schedule notification
         await requestNotificationPermission();
@@ -49,7 +49,7 @@ export function usePetActions(state, showNotification) {
 
         const pet = myPets.find(p => p.id === petId);
         if (!pet) {
-            showNotification("Ei nicht gefunden!", "error");
+            showNotification(state.t ? state.t('notif_egg_not_found') : 'Egg not found!', "error");
             return;
         }
 
@@ -90,10 +90,10 @@ export function usePetActions(state, showNotification) {
                 state.myPets || []
             );
 
-            showNotification(`${updates.name} ist geschlüpft!`, "success");
+            showNotification(state.t ? state.t('notif_pet_hatched', { name: updates.name }) : `${updates.name} hatched!`, "success");
         } catch (error) {
             console.error("Hatch Error:", error);
-            showNotification("Fehler beim Schlüpfen.", "error");
+            showNotification(state.t ? state.t('notif_hatch_error') : 'Error while hatching.', "error");
         }
     };
 

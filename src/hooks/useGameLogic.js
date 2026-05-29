@@ -224,7 +224,7 @@ export function useGameLogic() {
                         lastIdleNotificationRef.current = expiresAt;
                     } else if (lastIdleNotificationRef.current !== expiresAt) {
                         if (actions?.showNotification) {
-                            actions.showNotification("Dorf-Produktion gestoppt! Idle-Zeit abgelaufen.", "error");
+                            actions.showNotification(stateRef.current.t ? stateRef.current.t('notif_village_production_stopped') : 'Village production stopped! Idle time expired.', "error");
                         }
                         lastIdleNotificationRef.current = expiresAt;
                     }

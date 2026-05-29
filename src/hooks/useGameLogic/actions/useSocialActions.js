@@ -9,10 +9,10 @@ export function useSocialActions(state, showNotification) {
         if (foundUser) { 
             const newFriends = [...(user.friends || []), { id: foundUser.id, username: foundUser.username, avatar: foundUser.avatar, level: foundUser.level, rating: foundUser.rating }]; 
             updateUser(user.id, { friends: newFriends }); 
-            showNotification(`${foundUser.username} hinzugefügt!`, 'success'); 
-        } else { 
-            showNotification("Spieler nicht gefunden.", 'error'); 
-        } 
+            showNotification(state.t ? state.t('notif_friend_added', { name: foundUser.username }) : `${foundUser.username} added!`, 'success');
+        } else {
+            showNotification(state.t ? state.t('notif_player_not_found') : 'Player not found.', 'error');
+        }
     };
 
     return { handleAddFriend };
