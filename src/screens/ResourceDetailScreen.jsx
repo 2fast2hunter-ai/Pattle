@@ -93,15 +93,15 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                 {/* PROGRESS & PRODUCTION */}
                 <div className="bg-slate-900 rounded-2xl p-4 border border-white/5 shadow-lg relative overflow-hidden">
                     <div className="flex justify-between items-center mb-2 relative z-10">
-                        <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">{rate > 0 && isProductionActive ? <Zap className="w-4 h-4 text-yellow-400 animate-pulse" /> : <Clock className="w-4 h-4 text-slate-600" />}{rate > 0 && isProductionActive ? 'Produktion läuft' : 'Produktion gestoppt'}</span>
-                        <span className="text-[10px] font-mono text-slate-500">{rate > 0 && isProductionActive ? `${cycleTime.toFixed(2)}s Zyklus` : ''}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">{rate > 0 && isProductionActive ? <Zap className="w-4 h-4 text-yellow-400 animate-pulse" /> : <Clock className="w-4 h-4 text-slate-600" />}{rate > 0 && isProductionActive ? (t ? t('production_running') : 'Production running') : (t ? t('production_stopped') : 'Production stopped')}</span>
+                        <span className="text-[10px] font-mono text-slate-500">{rate > 0 && isProductionActive ? `${cycleTime.toFixed(2)}s ${t ? t('label_cycle') : 'cycle'}` : ''}</span>
                     </div>
                     <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10 relative">{rate > 0 && isProductionActive && (<div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.6)] transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>)}</div>
                 </div>
 
                 {/* DROPS & STORAGE */}
                 <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 mb-3 text-slate-400 font-bold text-xs uppercase"><Backpack className="w-4 h-4" /> Mögliche Drops & Lager</div>
+                    <div className="flex items-center gap-2 mb-3 text-slate-400 font-bold text-xs uppercase"><Backpack className="w-4 h-4" /> {t ? t('label_drops_storage') : 'Possible Drops & Storage'}</div>
                     <div className="space-y-2">
                         {drops.map(item => {
                             const count = storage[item.id] || 0;
@@ -126,15 +126,15 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
 
                 {/* WORKERS */}
                 <div>
-                    <div className="flex items-center gap-2 mb-3 px-1"><Users className="w-4 h-4 text-indigo-400" /><h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Arbeiter ({workers.filter(Boolean).length}/{resource.slots})</h3></div>
+                    <div className="flex items-center gap-2 mb-3 px-1"><Users className="w-4 h-4 text-indigo-400" /><h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">{t ? t('label_workers') : 'Workers'} ({workers.filter(Boolean).length}/{resource.slots})</h3></div>
                     <div className="space-y-3">
                         {Array.from({ length: resource.slots }).map((_, idx) => {
                             const isSlotUnlocked = idx < user.village.level;
                             const petId = workers[idx];
                             const pet = petId ? pets.find(p => p.id === petId) : null;
-                            if (!isSlotUnlocked) return (<div key={idx} className="bg-slate-900/50 border border-dashed border-white/5 rounded-2xl p-4 flex items-center gap-4 opacity-50"><div className="w-12 h-12 bg-black/40 rounded-xl flex items-center justify-center"><Lock className="w-5 h-5 text-slate-600" /></div><div className="text-slate-600 text-xs font-bold uppercase">Benötigt Dorf Level {idx + 1}</div></div>);
+                            if (!isSlotUnlocked) return (<div key={idx} className="bg-slate-900/50 border border-dashed border-white/5 rounded-2xl p-4 flex items-center gap-4 opacity-50"><div className="w-12 h-12 bg-black/40 rounded-xl flex items-center justify-center"><Lock className="w-5 h-5 text-slate-600" /></div><div className="text-slate-600 text-xs font-bold uppercase">{t ? t('needs_village_level', { level: idx + 1 }) : `Requires Village Level ${idx + 1}`}</div></div>);
                             if (pet) return (<div key={idx} className="bg-slate-800 border border-white/10 rounded-2xl p-3 flex items-center justify-between shadow-lg group cursor-pointer" onClick={() => onRemoveWorker(resourceId, idx)}><div className="flex items-center gap-4"><div className="relative"><PetAvatar pet={pet} className="w-12 h-12" /><div className="absolute inset-0 bg-red-500/90 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><X className="w-5 h-5 text-white" /></div></div><div><div className="font-bold text-white">{pet.name}</div><div className="text-[10px] text-slate-400 uppercase font-bold">Lvl {pet.level} • {pet.rarity}</div></div></div>{rate > 0 && isProductionActive && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>}</div>);
-                            return (<button key={idx} onClick={() => onAssignWorker(resourceId, idx)} className="w-full bg-slate-800/30 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-3 flex items-center gap-4 group transition-all active:scale-98"><div className="w-12 h-12 bg-slate-900/80 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors"><Plus className="w-6 h-6 text-slate-500 group-hover:text-indigo-400" /></div><div className="text-slate-500 font-bold group-hover:text-indigo-300 transition-colors text-sm">Arbeiter zuweisen</div></button>);
+                            return (<button key={idx} onClick={() => onAssignWorker(resourceId, idx)} className="w-full bg-slate-800/30 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-3 flex items-center gap-4 group transition-all active:scale-98"><div className="w-12 h-12 bg-slate-900/80 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors"><Plus className="w-6 h-6 text-slate-500 group-hover:text-indigo-400" /></div><div className="text-slate-500 font-bold group-hover:text-indigo-300 transition-colors text-sm">{t ? t('btn_assign_worker') : 'Assign worker'}</div></button>);
                         })}
                     </div>
                 </div>
