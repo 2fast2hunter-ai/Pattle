@@ -55,7 +55,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
 
                 const prev = lastTimersRef.current[reward.id];
                 if (prev > 0 && remaining <= 0) {
-                    showNotification && showNotification(`${reward.label} ist wieder verfügbar!`, 'success');
+                    showNotification && showNotification(`${reward.label} is available again!`, 'success');
                 }
                 lastTimersRef.current[reward.id] = remaining;
             });

@@ -24,7 +24,7 @@ export function useBattleTurn(battleState, setBattleState, t) {
         } else {
             const useMagicAuto = (attacker.ap || 0) > (attacker.atk || 0);
             abilityToUse = {
-                name: useMagicAuto ? 'Magischer Stoß' : 'Angriff',
+                name: useMagicAuto ? 'Magic Strike' : 'Attack',
                 type: useMagicAuto ? 'SPECIAL' : 'PHYSICAL',
                 element: attacker.type,
                 dmgScale: 1.0,
