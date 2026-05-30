@@ -1,7 +1,7 @@
 import React from 'react';
 import { Shield, Sword } from 'lucide-react';
 
-export default function MyRankCard({ user, myRankData, loading, type = 'elo' }) {
+export default function MyRankCard({ user, myRankData, loading, type = 'elo', t }) {
     if (loading || !myRankData) return null;
 
     const label = type === 'gauntlet' ? 'Score' : 'Elo';
@@ -11,7 +11,7 @@ export default function MyRankCard({ user, myRankData, loading, type = 'elo' }) 
         <div className="px-4 mb-4 relative z-10">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 rounded-2xl border border-white/10 shadow-lg flex items-center justify-between">
                 <div>
-                    <div className="text-indigo-200 text-xs font-bold uppercase tracking-wider">Dein Rang</div>
+                    <div className="text-indigo-200 text-xs font-bold uppercase tracking-wider">{t ? t('leaderboard_your_rank') : 'Your Rank'}</div>
                     <div className="text-2xl font-black text-white flex items-center gap-2">
                         #{myRankData.rank}
                         <span className="text-sm font-bold text-indigo-300 bg-black/20 px-2 py-0.5 rounded-lg">

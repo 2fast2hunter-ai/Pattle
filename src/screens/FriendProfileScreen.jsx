@@ -114,7 +114,7 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative">
             {selectedCategory && (<StatDetailModal category={categories.find(c => c.id === selectedCategory)} data={statsData[selectedCategory.toLowerCase()]} onClose={() => setSelectedCategory(null)} t={t} />)}
             <div className="relative flex items-center justify-center mb-6 pt-6 px-4">
-                <h1 className="text-2xl font-black italic tracking-wide text-white">FREUND</h1>
+                <h1 className="text-2xl font-black italic tracking-wide text-white">{t ? t('friend_profile_title') : 'FRIEND'}</h1>
                 <button onClick={onBack} className="absolute left-4 p-2 bg-slate-800 rounded-full hover:bg-slate-700 transition-colors"><ArrowLeft className="w-5 h-5" /></button>
             </div>
             <div className="flex-1 overflow-y-auto pb-24 px-4 scrollbar-hide space-y-6">
@@ -133,7 +133,7 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }
                     </div>
                     <div className="mt-6 px-6">
                         <button onClick={handleBattleClick} disabled={loading || !friendPets.length} className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black py-3 rounded-2xl shadow-lg shadow-red-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <Swords className="w-5 h-5" /> FREUNDSCHAFTSKAMPF
+                            <Swords className="w-5 h-5" /> {t ? t('friendly_battle_btn') : 'FRIENDLY BATTLE'}
                         </button>
                         {battleError && <p className="text-xs text-red-400 mt-2 font-bold">{battleError}</p>}
                         <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase">Just for Fun • No Rewards</p>

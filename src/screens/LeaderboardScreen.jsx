@@ -110,7 +110,7 @@ export default function LeaderboardScreen({ user, onBack, onViewPlayer, t }) {
             </div>
 
             {/* MY RANK CARD */}
-            <MyRankCard user={user} myRankData={myRankData} loading={loading} type={activeTab} />
+            <MyRankCard user={user} myRankData={myRankData} loading={loading} type={activeTab} t={t} />
 
             {/* LIST */}
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-3 relative z-10">

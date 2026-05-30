@@ -90,7 +90,7 @@ export function useBattleTurn(battleState, setBattleState, t) {
 
         if (newHp > 0 && hasDoubleSpeed && !extraTurnTaken) {
             nextTurn = who; // Angreifer bleibt dran
-            newLog.push(t ? t('battle_log_extra_turn', { attacker: attacker.name }) : `⚡ ${attacker.name} ist so schnell! Extra Angriff!`);
+            newLog.push(t ? t('battle_log_extra_turn', { attacker: attacker.name }) : `⚡ ${attacker.name} is so fast! Extra turn!`);
             nextExtraTurnState = true;
         }
 

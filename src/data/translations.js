@@ -587,7 +587,13 @@ export const TRANSLATIONS = {
         market_remove_offer: "ANGEBOT ENTFERNEN",
         battle_team_xp: "Team Erfahrung",
         label_copied: "Kopiert!",
-        battle_share_victory: "Sieg teilen"
+        battle_share_victory: "Sieg teilen",
+        notif_ad_error: "Werbungsfehler. Bitte versuche es erneut.",
+        friend_no_team: "Dieser Freund hat noch kein Team.",
+        friend_team_pets_not_found: "Team-Pets konnten nicht geladen werden.",
+        leaderboard_your_rank: "Dein Rang",
+        friend_profile_title: "FREUND",
+        friendly_battle_btn: "FREUNDSCHAFTSKAMPF"
     },
     en: {
         settings_title: "SETTINGS",
@@ -1156,7 +1162,10 @@ export const TRANSLATIONS = {
         battle_share_victory: "Share victory",
         notif_ad_error: "Ad error. Please try again.",
         friend_no_team: "This friend has no team set up.",
-        friend_team_pets_not_found: "Could not find team pets."
+        friend_team_pets_not_found: "Could not find team pets.",
+        leaderboard_your_rank: "Your Rank",
+        friend_profile_title: "FRIEND",
+        friendly_battle_btn: "FRIENDLY BATTLE"
     },
     zh: {
         settings_title: "设置",

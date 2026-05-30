@@ -130,7 +130,7 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
 
         if (runScore > currentHighscore) {
             updates["stats.gauntletHighscore"] = runScore;
-            showNotification(t ? t('gauntlet_highscore_notif', { score: runScore }) : `Neuer Highscore! ${runScore} Punkte!`, "success");
+            showNotification(t ? t('gauntlet_highscore_notif', { score: runScore }) : `New Highscore! ${runScore} points!`, "success");
             // WICHTIG: NICHT rating überschreiben! Rating = PVP Elo, Highscore = Gauntlet.
         }
 
