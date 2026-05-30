@@ -61,9 +61,9 @@ const _checkAndMigratePet = async (pet) => {
 
 // --- HELPER: QUEST PATCHING (Für UI Anzeige) ---
 const getFixedQuestReward = (category) => {
-    if (category === 'DAILY') return { xp: 500, composite: { rewardType: 'GEMS', rewardAmount: 10, label: '10 Edelsteine' } };
-    if (category === 'WEEKLY') return { xp: 1000, composite: { rewardType: 'COINS', rewardAmount: 7500, label: '7.500 Münzen' } };
-    if (category === 'MONTHLY') return { xp: 5000, composite: { rewardType: 'LOOTBOX', variant: 'ELEMENTAL_RANDOM', label: 'Elementar-Truhe' } };
+    if (category === 'DAILY') return { xp: 500, composite: { rewardType: 'GEMS', rewardAmount: 10, label: '10 Gems' } };
+    if (category === 'WEEKLY') return { xp: 1000, composite: { rewardType: 'COINS', rewardAmount: 7500, label: '7,500 Coins' } };
+    if (category === 'MONTHLY') return { xp: 5000, composite: { rewardType: 'LOOTBOX', variant: 'ELEMENTAL_RANDOM', label: 'Elemental Chest' } };
     return { xp: 0, composite: null };
 };
 
@@ -590,18 +590,17 @@ export const claimCompositeReward = async (user, catKey) => {
             // --- NEUE LOGIK: Spezifische Belohnungen ---
             if (catKey === 'daily') {
                 newGems += 10;
-                rewardMessage = "Bonus: 10 Edelsteine";
+                rewardMessage = "Bonus: 10 Gems";
             } else if (catKey === 'weekly') {
                 newCoins += 7500;
-                rewardMessage = "Bonus: 7.500 Münzen";
+                rewardMessage = "Bonus: 7,500 Coins";
             } else if (catKey === 'monthly') {
-                // Zufällige Elementar-Truhe
                 const elements = ['FIRE', 'WATER', 'EARTH', 'WIND'];
                 const randomElement = elements[Math.floor(Math.random() * elements.length)];
                 const newBox = { id: Date.now(), type: 'LOOTBOX', variant: `ELEMENTAL_${randomElement}`, obtainedAt: new Date().toISOString() };
                 newInventory = [...newInventory, newBox];
                 updates['inventory'] = newInventory;
-                rewardMessage = `Bonus: Elementar-Truhe (${randomElement})`;
+                rewardMessage = `Bonus: Elemental Chest (${randomElement})`;
             }
             // -------------------------------------------
 

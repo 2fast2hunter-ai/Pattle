@@ -1,5 +1,33 @@
 const BASE = import.meta.env.BASE_URL;
 const STORAGE_KEY = 'pattle_scheduled_notifs';
+
+const NOTIF_STRINGS = {
+  de: {
+    egg_title: '🥚 Ei ist geschlüpft!',
+    egg_body: (name) => `${name} ist bereit zum Schlüpfen!`,
+    storage_title: '📦 Lager ist voll!',
+    storage_body: 'Dein Dorflager ist voll. Sammle deine Ressourcen!',
+    quest_title: '🎯 Tägliche Quests zurückgesetzt!',
+    quest_body: 'Neue Quests warten auf dich. Spiel jetzt!',
+  },
+  en: {
+    egg_title: '🥚 Egg has hatched!',
+    egg_body: (name) => `${name} is ready to hatch!`,
+    storage_title: '📦 Storage is full!',
+    storage_body: 'Your village storage is full. Collect your resources!',
+    quest_title: '🎯 Daily quests reset!',
+    quest_body: 'New quests are waiting for you. Play now!',
+  },
+};
+
+function getLang() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('game_settings') || '{}');
+    const lang = saved.language || (navigator.language?.toLowerCase().startsWith('de') ? 'de' : 'en');
+    return NOTIF_STRINGS[lang] ? lang : 'en';
+  } catch { return 'en'; }
+}
+function ns() { return NOTIF_STRINGS[getLang()]; }
 const STORAGE_FULL_KEY = 'pattle_storage_full_notified';
 const DAILY_RESET_KEY = 'pattle_daily_reset_notified';
 
@@ -63,8 +91,8 @@ export function scheduleEggNotification(petId, petName, hatchAt) {
     delete activeTimers[petId];
 
     await showNotification(
-      '🥚 Ei ist geschlüpft!',
-      `${petName} ist bereit zum Schlüpfen!`,
+      ns().egg_title,
+      ns().egg_body(petName),
       { screen: 'hatchery', petId, tag: `egg-${petId}` }
     );
   }, delay);
@@ -110,8 +138,8 @@ export async function notifyStorageFull() {
   if (Date.now() - lastNotified < 60 * 60 * 1000) return;
   localStorage.setItem(STORAGE_FULL_KEY, String(Date.now()));
   await showNotification(
-    '📦 Lager ist voll!',
-    'Dein Dorflager ist voll. Sammle deine Ressourcen!',
+    ns().storage_title,
+    ns().storage_body,
     { screen: 'village', tag: 'storage-full' }
   );
 }
@@ -132,8 +160,8 @@ export function scheduleDailyQuestReset() {
 
   setTimeout(async () => {
     await showNotification(
-      '🎯 Tägliche Quests zurückgesetzt!',
-      'Neue Quests warten auf dich. Spiel jetzt!',
+      ns().quest_title,
+      ns().quest_body,
       { screen: 'quests', tag: 'daily-reset' }
     );
     // Re-schedule for next midnight
