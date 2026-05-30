@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     ArrowLeft, Trophy, LayoutGrid, Dna,
-    PieChart, Swords, Loader2, Copy, ArrowUpRight, Sword
+    PieChart, Swords, Loader2, Copy, Check, ArrowUpRight, Sword
 } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS } from '../data/gameData';
 import { findUserPublic, listenToPets } from '../utils/db';
@@ -12,6 +12,8 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }
     const [friendPets, setFriendPets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedCategory, setSelectedCategory] = useState(null);
+    const [idCopied, setIdCopied] = useState(false);
+    const [battleError, setBattleError] = useState(null);
 
     useEffect(() => {
         const fetchProfile = async () => {
@@ -75,17 +77,26 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }
         };
     }, [displayUser, friendPets]);
 
-    const copyId = () => { alert(`ID kopiert: ${displayUser.id}`); };
+    const copyId = () => {
+        navigator.clipboard.writeText(displayUser.id).then(() => {
+            setIdCopied(true);
+            setTimeout(() => setIdCopied(false), 2000);
+        });
+    };
+
+    const showBattleError = (msg) => {
+        setBattleError(msg);
+        setTimeout(() => setBattleError(null), 3000);
+    };
 
     const handleBattleClick = () => {
         if (!displayUser.team || displayUser.team.length === 0) {
-            alert("Dieser Freund hat kein Team aufgestellt.");
+            showBattleError(t ? t('friend_no_team') : 'This friend has no team set up.');
             return;
         }
         const enemyTeamPets = friendPets.filter(p => displayUser.team.includes(p.id));
-
         if (enemyTeamPets.length === 0) {
-            alert("Konnte Team-Pets nicht finden.");
+            showBattleError(t ? t('friend_team_pets_not_found') : 'Could not find team pets.');
             return;
         }
         onStartBattle(enemyTeamPets);
@@ -117,14 +128,15 @@ export default function FriendProfileScreen({ friend, onBack, onStartBattle, t }
                         <div className="flex justify-center gap-2 mt-3">
                             <div className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-indigo-400 font-bold flex items-center gap-1.5 text-xs shadow-sm"><Trophy className="w-3.5 h-3.5" /> {displayUser.rating} Elo</div>
                             <div className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-red-400 font-bold flex items-center gap-1.5 text-xs shadow-sm"><Sword className="w-3.5 h-3.5" /> {displayUser.stats?.gauntletHighscore || 0} Score</div>
-                            <button onClick={copyId} className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors flex items-center gap-1.5 text-xs font-mono active:scale-95"><Copy className="w-3.5 h-3.5" /> ID</button>
+                            <button onClick={copyId} className={`bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5 text-xs font-mono active:scale-95 transition-colors ${idCopied ? 'text-green-400 border-green-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>{idCopied ? <><Check className="w-3.5 h-3.5" /> {t ? t('label_copied') : 'Copied!'}</> : <><Copy className="w-3.5 h-3.5" /> ID</>}</button>
                         </div>
                     </div>
                     <div className="mt-6 px-6">
                         <button onClick={handleBattleClick} disabled={loading || !friendPets.length} className="w-full bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-black py-3 rounded-2xl shadow-lg shadow-red-900/20 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                             <Swords className="w-5 h-5" /> FREUNDSCHAFTSKAMPF
                         </button>
-                        <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase">Just for Fun • Keine Belohnungen</p>
+                        {battleError && <p className="text-xs text-red-400 mt-2 font-bold">{battleError}</p>}
+                        <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase">Just for Fun • No Rewards</p>
                     </div>
                 </div>
                 {loading ? (<div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>) : (

@@ -1153,7 +1153,10 @@ export const TRANSLATIONS = {
         market_remove_offer: "REMOVE LISTING",
         battle_team_xp: "Team Experience",
         label_copied: "Copied!",
-        battle_share_victory: "Share victory"
+        battle_share_victory: "Share victory",
+        notif_ad_error: "Ad error. Please try again.",
+        friend_no_team: "This friend has no team set up.",
+        friend_team_pets_not_found: "Could not find team pets."
     },
     zh: {
         settings_title: "设置",

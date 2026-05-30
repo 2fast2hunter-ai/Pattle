@@ -113,7 +113,7 @@ export default function ShopScreen({ onBack, onBuyBox, onBuyTickets, onWatchAd, 
         setPendingReward(reward);
         showRewardedAd({
             onReward: () => { onWatchAd(reward); setPendingReward(null); },
-            onError: () => { alert("Werbung Error"); setPendingReward(null); },
+            onError: () => { showNotification && showNotification(t ? t('notif_ad_error') : 'Ad error. Please try again.', 'error'); setPendingReward(null); },
             onOpenDevModal: () => { setShowDevAdModal(true); }
         });
     };

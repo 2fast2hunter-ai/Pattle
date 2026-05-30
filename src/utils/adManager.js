@@ -25,9 +25,7 @@ export const showRewardedAd = ({ onReward, onError, onOpenDevModal }) => {
         // Öffne die Werbung in einem neuen Tab (Standard für Web-Ads)
         const adWindow = window.open(AD_URL, '_blank');
 
-        // Prüfen, ob der Popup-Blocker das Fenster verhindert hat
         if (!adWindow) {
-            alert("Please allow popups to receive your reward!");
             if (onError) onError();
             return;
         }

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Edit3, Trophy, Copy, Sword } from 'lucide-react';
+import { Edit3, Trophy, Copy, Check, Sword } from 'lucide-react';
 import { COSMETICS } from '../../data/gameData';
 
-export default function ProfileHeader({ user, setShowEditModal, copyId }) {
+export default function ProfileHeader({ user, setShowEditModal, copyId, idCopied, t }) {
     const getProfileBgClass = () => {
         if (user.profileBg && COSMETICS[user.profileBg]) return COSMETICS[user.profileBg].colorClass;
         return 'bg-gradient-to-br from-indigo-600 to-violet-700'; // Default
@@ -26,8 +26,8 @@ export default function ProfileHeader({ user, setShowEditModal, copyId }) {
                     <div className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-red-400 font-bold flex items-center gap-1.5 text-xs shadow-sm">
                         <Sword className="w-3.5 h-3.5" /> {user.stats?.gauntletHighscore || 0} Score
                     </div>
-                    <button onClick={copyId} className="bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors flex items-center gap-1.5 text-xs font-mono active:scale-95">
-                        <Copy className="w-3.5 h-3.5" /> ID
+                    <button onClick={copyId} className={`bg-slate-800/80 px-3 py-1.5 rounded-xl border border-white/5 flex items-center gap-1.5 text-xs font-mono active:scale-95 transition-colors ${idCopied ? 'text-green-400 border-green-500/30' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}>
+                        {idCopied ? <><Check className="w-3.5 h-3.5" /> {t ? t('label_copied') : 'Copied!'}</> : <><Copy className="w-3.5 h-3.5" /> ID</>}
                     </button>
                 </div>
             </div>

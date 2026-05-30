@@ -11,6 +11,7 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
     const [activeTab, setActiveTab] = useState('stats');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [idCopied, setIdCopied] = useState(false);
 
     const statsData = useProfileStats(user, pets);
 
@@ -22,7 +23,12 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
         { id: 'BREEDING', label: t ? t('profile_cat_breeding') : 'Breeding', icon: Dna, color: 'from-pink-500 to-rose-600', textColor: 'text-pink-400', value: `${statsData.breeding.hatched}` },
     ];
 
-    const copyId = () => { alert(`ID kopiert: ${user.id}`); };
+    const copyId = () => {
+        navigator.clipboard.writeText(user.id).then(() => {
+            setIdCopied(true);
+            setTimeout(() => setIdCopied(false), 2000);
+        });
+    };
 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-bottom duration-500 relative">
@@ -43,7 +49,7 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
             </div>
 
             <div className="flex-1 overflow-y-auto pb-24 space-y-6 px-4 scrollbar-hide">
-                <ProfileHeader user={user} setShowEditModal={setShowEditModal} copyId={copyId} />
+                <ProfileHeader user={user} setShowEditModal={setShowEditModal} copyId={copyId} idCopied={idCopied} t={t} />
 
                 <div className="flex p-1 bg-slate-800 rounded-xl border border-white/5">
                     <button onClick={() => setActiveTab('stats')} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>{t ? t('profile_tab_stats') : 'Statistics'}</button>
