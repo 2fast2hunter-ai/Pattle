@@ -20,7 +20,7 @@ export default function GauntletSummary({
             </div>
 
             <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-1">{t ? t('gauntlet_finished') : 'GAUNTLET BEENDET'}</h2>
-            <p className="text-red-200 font-bold mb-8 uppercase tracking-widest text-xs opacity-70">{t ? t('gauntlet_over') : 'Keine kampffähigen Pets mehr'}</p>
+            <p className="text-red-200 font-bold mb-8 uppercase tracking-widest text-xs opacity-70">{t ? t('gauntlet_over') : 'No combat-ready pets left'}</p>
 
             <div className="grid grid-cols-2 gap-4 w-full mb-8">
                 <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center">
@@ -62,7 +62,7 @@ export default function GauntletSummary({
                 onClick={() => onLose({ xp: baseXp }, myTeamIds)}
                 className="w-full py-4 rounded-2xl bg-white text-slate-950 font-black text-lg shadow-xl hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mt-auto"
             >
-                {t ? t('gauntlet_continue') : 'ZUR ÜBERSICHT'} <XCircle className="w-5 h-5" />
+                {t ? t('gauntlet_continue') : 'TO OVERVIEW'} <XCircle className="w-5 h-5" />
             </button>
         </div>
     );

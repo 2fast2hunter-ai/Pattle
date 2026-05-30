@@ -26,7 +26,7 @@ export default function AutoBattleCard({ ticketCount, onAutoBattle, t }) {
                     </div>
                     <div className="text-left">
                         <h4 className="font-black text-white text-lg leading-none">{t ? t('arena_auto_btn') : 'Auto-Kampf'}</h4>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{t ? t('arena_auto_desc') : '1 Ticket = 10 Kämpfe'}</p>
+                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{t ? t('arena_auto_desc') : '1 Ticket = 10 Battles'}</p>
                     </div>
                 </div>
 

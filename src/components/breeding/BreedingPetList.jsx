@@ -42,7 +42,7 @@ export default function BreedingPetList({
                                     <div className="absolute inset-0 bg-black/80 z-30 flex flex-col items-center justify-center backdrop-blur-[2px] p-2 text-center animate-in fade-in">
                                         <Lock className="w-5 h-5 text-slate-400 mb-1" />
                                         <span className="text-xs font-black text-slate-200 mb-1">{t ? t('village_lvl') : 'Lvl'} {minLevel}</span>
-                                        <span className="text-[9px] text-slate-500 font-bold uppercase">{t ? t('breeding_required') : 'Benötigt'}</span>
+                                        <span className="text-[9px] text-slate-500 font-bold uppercase">{t ? t('breeding_required') : 'Required'}</span>
                                     </div>
                                 )}
 

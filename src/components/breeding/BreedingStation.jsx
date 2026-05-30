@@ -118,7 +118,7 @@ export default function BreedingStation({
                     disabled={!canBreed || isBreeding}
                     className={`w-full mt-4 py-3 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all shadow-lg ${canBreed ? 'bg-pink-600 text-white hover:scale-[1.02] active:scale-95 shadow-pink-900/30' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                 >
-                    {isBreeding ? <Loader2 className="w-4 h-4 animate-spin" /> : (canBreed ? (t ? t('breeding_start_btn') : 'JETZT ZÜCHTEN') : (t ? t('breeding_select_2') : 'WÄHLE 2 PETS'))}
+                    {isBreeding ? <Loader2 className="w-4 h-4 animate-spin" /> : (canBreed ? (t ? t('breeding_start_btn') : 'BREED NOW') : (t ? t('breeding_select_2') : 'SELECT 2 PETS'))}
                 </button>
             </div>
         </div>

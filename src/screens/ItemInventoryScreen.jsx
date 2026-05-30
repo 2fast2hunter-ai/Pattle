@@ -110,7 +110,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
             <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-8">
                 {/* 1. VERBRAUCHSGÜTER */}
                 {potionItems.length > 0 && (
-                    <InventorySection title={t ? t('inv_consumables') : 'Verbrauchsgüter'} icon={FlaskConical}>
+                    <InventorySection title={t ? t('inv_consumables') : 'Consumables'} icon={FlaskConical}>
                         {potionItems.map((potion, idx) => {
                             const isCosmetic = !!COSMETICS[potion.variant];
                             return (
@@ -145,7 +145,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                                 footerButton={
                                     <button onClick={(e) => { e.stopPropagation(); onRedeemTicket(ticket.ids[0]); }}
                                         className='w-full bg-pink-600 hover:bg-pink-500 text-white text-[10px] font-black py-2 rounded-xl shadow-lg flex justify-center items-center gap-1 active:scale-95 transition-all'>
-                                        <Gift className='w-3 h-3' /> {t ? t('inv_redeem') : 'EINLÖSEN'}
+                                        <Gift className='w-3 h-3' /> {t ? t('inv_redeem') : 'REDEEM'}
                                     </button>
                                 }
                             />

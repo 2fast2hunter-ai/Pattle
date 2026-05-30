@@ -20,7 +20,7 @@ export default function QuestCompositeReward({
                             <Trophy className="w-4 h-4 text-yellow-400" /> {t ? t('quest_bonus_' + activeTab) : compositeReward.label}
                         </h3>
                         <p className="text-xs text-slate-400 mt-0.5 font-bold">
-                            {t ? t('quest_bonus_desc') : 'Erledige alle Aufgaben für den Bonus!'}
+                            {t ? t('quest_bonus_desc') : 'Complete all tasks for the bonus!'}
                         </p>
                     </div>
                     <div className="scale-90 origin-right">

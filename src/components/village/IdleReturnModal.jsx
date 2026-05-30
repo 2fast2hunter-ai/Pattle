@@ -39,7 +39,7 @@ export default function IdleReturnModal({ result, onClose, t }) {
                         </div>
                         <div>
                             <div className="text-xs uppercase font-bold text-slate-400 tracking-wider">
-                                {t ? t('idle_return_title') : 'Während du weg warst'}
+                                {t ? t('idle_return_title') : 'While you were away'}
                             </div>
                             {elapsedMs > 0 && (
                                 <div className="text-[11px] text-slate-500">

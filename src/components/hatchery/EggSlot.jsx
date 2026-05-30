@@ -69,7 +69,7 @@ export default function EggSlot({
                 <div className="w-full relative z-10">
                     {isReady ? (
                         <button onClick={() => startHatchingProcess(egg)} className={`w-full bg-emerald-500 hover:bg-emerald-400 text-white text-xs font-black py-2.5 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-1 ${tutorialHighlight === 'hatch-btn' ? 'ring-4 ring-yellow-400 z-50 animate-pulse' : ''}`}>
-                            {t ? t('hatchery_hatch_btn') : 'SCHLÜPFEN'}
+                            {t ? t('hatchery_hatch_btn') : 'HATCH'}
                         </button>
                     ) : (
                         <div className="flex gap-1">

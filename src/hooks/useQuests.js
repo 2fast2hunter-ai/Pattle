@@ -10,9 +10,9 @@ export function useQuests(user, t) {
     const [activeTab, setActiveTab] = useState('daily');
 
     const categories = {
-        daily: { id: 'daily', label: t ? t('quests_tab_daily') : 'Täglich', icon: RefreshCw, color: 'text-blue-400', data: user?.quests?.daily },
-        weekly: { id: 'weekly', label: t ? t('quests_tab_weekly') : 'Wöchentlich', icon: Calendar, color: 'text-purple-400', data: user?.quests?.weekly },
-        monthly: { id: 'monthly', label: t ? t('quests_tab_monthly') : 'Monatlich', icon: Star, color: 'text-amber-400', data: user?.quests?.monthly },
+        daily: { id: 'daily', label: t ? t('quests_tab_daily') : 'Daily', icon: RefreshCw, color: 'text-blue-400', data: user?.quests?.daily },
+        weekly: { id: 'weekly', label: t ? t('quests_tab_weekly') : 'Weekly', icon: Calendar, color: 'text-purple-400', data: user?.quests?.weekly },
+        monthly: { id: 'monthly', label: t ? t('quests_tab_monthly') : 'Monthly', icon: Star, color: 'text-amber-400', data: user?.quests?.monthly },
     };
 
     const currentCat = categories[activeTab];

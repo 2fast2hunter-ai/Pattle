@@ -45,7 +45,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
             {/* --- HEADER --- */}
             <div className="relative flex items-center justify-center mb-6 pt-2 px-4">
                 <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-white">
-                    {t ? t('hatchery_title') : 'BRUTSTÄTTE'}
+                    {t ? t('hatchery_title') : 'HATCHERY'}
                 </h1>
                 <button
                     onClick={onBack}
@@ -63,7 +63,7 @@ export default function HatcheryScreen({ pets, user, onBack, onHatchEgg, onReduc
                             <ThermometerSun className="w-5 h-5 text-emerald-400" />
                         </div>
                         <div>
-                            <div className="text-xs text-slate-400 font-bold uppercase">{t ? t('hatchery_capacity') : 'Kapazität'}</div>
+                            <div className="text-xs text-slate-400 font-bold uppercase">{t ? t('hatchery_capacity') : 'Capacity'}</div>
                             <div className="text-sm font-black text-white">{incubatingEggs.length} / {unlockedSlots} {t ? t('hatchery_eggs') : 'Eier'}</div>
                         </div>
                     </div>

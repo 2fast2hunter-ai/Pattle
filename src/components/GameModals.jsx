@@ -105,7 +105,7 @@ export function LootboxModal({ pet, onClose, t }) {
                     <Package className="w-48 h-48 text-yellow-400 drop-shadow-[0_0_50px_rgba(234,179,8,0.8)] brightness-125" />
                 </div>
                 <p className="text-white mt-12 font-black text-2xl tracking-[0.5em] animate-pulse">
-                    {t ? t('inv_status_opening') : 'ÖFFNEN'}
+                    {t ? t('inv_status_opening') : 'OPEN'}
                 </p>
             </div>
         )}

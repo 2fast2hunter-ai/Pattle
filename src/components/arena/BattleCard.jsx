@@ -24,7 +24,7 @@ export default function BattleCard({ onBattle, t, tutorialHighlight }) {
                 </div>
 
                 <div>
-                    <h3 className="text-4xl sm:text-5xl font-black italic text-white mb-2 drop-shadow-xl uppercase tracking-tighter group-hover:text-glow transition-all">{t ? t('arena_battle_btn') : 'Kämpfen'}</h3>
+                    <h3 className="text-4xl sm:text-5xl font-black italic text-white mb-2 drop-shadow-xl uppercase tracking-tighter group-hover:text-glow transition-all">{t ? t('arena_battle_btn') : 'Fight'}</h3>
                     <p className="text-red-100/90 text-xs sm:text-sm font-bold max-w-[200px] leading-tight">{t ? t('arena_pvp_desc') : 'Fordere Gegner heraus und erklimme die Rangliste!'}</p>
                 </div>
             </div>

@@ -37,7 +37,7 @@ export default function HatchingModal({ hatchingPet, nameInput, setNameInput, co
 
                     <div className="bg-slate-800/60 backdrop-blur rounded-2xl p-4 mb-6 border border-white/5">
                         <p className="text-slate-300 text-sm">
-                            {t ? t('hatchery_hatched_msg', { rarity: t('rarity_' + hatchingPet.rarity), type: TYPES[hatchingPet.type].label }) : `Ein ${RARITIES[hatchingPet.rarity].label}es ${TYPES[hatchingPet.type].label}-Monster ist geschlüpft!`}
+                            {t ? t('hatchery_hatched_msg', { rarity: t('rarity_' + hatchingPet.rarity), type: TYPES[hatchingPet.type].label }) : `A ${RARITIES[hatchingPet.rarity].label} ${TYPES[hatchingPet.type].label} monster hatched!`}
                         </p>
                     </div>
 

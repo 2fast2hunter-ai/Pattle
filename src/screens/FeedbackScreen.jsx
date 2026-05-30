@@ -61,16 +61,16 @@ export default function FeedbackScreen({ onBack, user, t }) {
                     <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                         <CheckCircle className="w-16 h-16 text-green-400" />
                         <h3 className="text-xl font-black text-white">
-                            {t ? t('feedback_success_title') : 'Danke für dein Feedback!'}
+                            {t ? t('feedback_success_title') : 'Thanks for your feedback!'}
                         </h3>
                         <p className="text-slate-400 text-sm max-w-xs">
-                            {t ? t('feedback_success_desc') : 'Dein Feedback wurde erfolgreich übermittelt und wird von uns geprüft.'}
+                            {t ? t('feedback_success_desc') : 'Your feedback was submitted successfully and will be reviewed.'}
                         </p>
                         <button
                             onClick={onBack}
                             className="mt-4 px-6 py-3 rounded-2xl bg-indigo-600 text-white font-black text-sm hover:bg-indigo-500 transition-colors"
                         >
-                            {t ? t('feedback_back') : 'ZURÜCK'}
+                            {t ? t('feedback_back') : 'BACK'}
                         </button>
                     </div>
                 ) : (

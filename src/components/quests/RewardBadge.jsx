@@ -12,7 +12,7 @@ const RewardBadge = ({ type, amount, label: customLabel, t }) => {
         Icon = Coins;
         color = 'text-yellow-400';
         bg = 'bg-yellow-500/10 border border-yellow-500/20';
-        label = t ? t('reward_coins') : 'Münzen';
+        label = t ? t('reward_coins') : 'Coins';
     } else if (type === 'GEMS') {
         Icon = Gem;
         color = 'text-pink-400';

@@ -32,7 +32,7 @@ export default function IdleTimerBanner({ isActive, timeLeftStr, onAddIdleTime, 
                 </div>
                 <div>
                     <div className="text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                        {isActive ? (t ? t('village_production_active') : 'Produktion läuft') : (t ? t('village_production_stopped') : 'Produktion gestoppt')}
+                        {isActive ? (t ? t('village_production_active') : 'Production running') : (t ? t('village_production_stopped') : 'Production stopped')}
                     </div>
                     <div className={`text-lg font-black ${isActive ? 'text-white' : 'text-red-400'}`}>
                         {timeLeftStr}

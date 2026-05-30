@@ -31,7 +31,7 @@ export default function ShopFreeSection({
                             <Calendar className="w-6 h-6 text-white" />
                         </div>
                         <div className="text-left">
-                            <div className="font-bold text-white text-sm">{t ? t('shop_daily_bonus') : 'Täglicher Bonus'}</div>
+                            <div className="font-bold text-white text-sm">{t ? t('shop_daily_bonus') : 'Daily Bonus'}</div>
                             <div className="text-[10px] text-indigo-100">{t ? t('shop_daily_bonus_desc') : 'Jeden Tag Belohnungen!'}</div>
                         </div>
                     </div>

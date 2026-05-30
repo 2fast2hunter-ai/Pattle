@@ -91,7 +91,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                 <div className="text-center">
                     <h2 className="text-xl font-black italic tracking-wide text-white flex items-center gap-2 justify-center">
                         <Swords className="w-5 h-5 text-orange-500" />
-                        {t ? t('training_title') : 'ÜBUNGSPLATZ'}
+                        {t ? t('training_title') : 'TRAINING GROUND'}
                     </h2>
                 </div>
             </div>
@@ -105,7 +105,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                     <div className="flex-1">
                         <h3 className="text-orange-200 font-bold text-sm mb-1">{t ? t('training_info_title') : 'Intensiv-Training'}</h3>
                         <p className="text-xs text-orange-200/70 leading-relaxed">
-                            {t ? t('training_info_desc') : 'Jedes Pet erhält 10 Erfahrungspunkte pro Zyklus, unabhängig von der Seltenheit.'}
+                            {t ? t('training_info_desc') : 'Each pet gains 10 XP per cycle, regardless of rarity.'}
                         </p>
                     </div>
                 </div>
@@ -117,7 +117,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                     <div className="flex justify-between items-center mb-2">
                         <span className="text-xs font-bold text-slate-400 flex items-center gap-2">
                             {isIdleActive ? <Zap className="w-3 h-3 text-green-400 animate-pulse" /> : <Zap className="w-3 h-3 text-red-500" />}
-                            {isIdleActive ? (t ? t('training_active') : 'Training läuft...') : (t ? t('training_paused') : 'Training pausiert')}
+                            {isIdleActive ? (t ? t('training_active') : 'Training running...') : (t ? t('training_paused') : 'Training paused')}
                         </span>
                         <span className="text-xs font-black text-white">
                             {rate > 0 ? `${(rate * 3600).toFixed(0)} ${t ? t('training_cycles') : 'Zyklen/h'}` : `0 ${t ? t('training_cycles') : 'Zyklen/h'}`}
@@ -175,7 +175,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                                 {isLocked ? (
                                     <div className="flex flex-col">
                                         <span className="text-slate-600 font-bold text-sm uppercase">{t ? t('training_locked') : 'Gesperrt'}</span>
-                                        <span className="text-[10px] text-slate-700 font-bold">{t ? t('training_needs_village_lvl') : 'Benötigt Dorf Level'} {index + 1}</span>
+                                        <span className="text-[10px] text-slate-700 font-bold">{t ? t('training_needs_village_lvl') : 'Requires Village Level'} {index + 1}</span>
                                     </div>
                                 ) : pet ? (
                                     <div className="flex flex-col">
@@ -194,7 +194,7 @@ export function TrainingScreen({ user, pets, onBack, onToggleTrainingPet, produc
                                     </div>
                                 ) : (
                                     <div className="flex flex-col">
-                                        <span className="text-slate-400 font-bold text-sm group-hover:text-white transition-colors">{t ? t('training_available') : 'Verfügbar'}</span>
+                                        <span className="text-slate-400 font-bold text-sm group-hover:text-white transition-colors">{t ? t('training_available') : 'Available'}</span>
                                         <span className="text-[10px] text-slate-600 font-bold group-hover:text-slate-500">{t ? t('training_assign') : 'Tippen zum Zuweisen'}</span>
                                     </div>
                                 )}

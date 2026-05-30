@@ -31,7 +31,7 @@ export default function LootboxAnimation({
                     </div>
 
                     <p className="text-yellow-200 mt-12 font-black text-2xl tracking-[0.3em] animate-pulse">
-                        {animationStage === 'charging' ? (t ? t('inv_status_ready') : 'BEREIT...') : (t ? t('inv_status_opening') : 'ÖFFNEN')}
+                        {animationStage === 'charging' ? (t ? t('inv_status_ready') : 'READY...') : (t ? t('inv_status_opening') : 'OPEN')}
                     </p>
                 </div>
             )}
