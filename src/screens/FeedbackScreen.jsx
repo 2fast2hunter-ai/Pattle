@@ -76,7 +76,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
                 ) : (
                     <div className="space-y-6">
                         <p className="text-slate-400 text-sm">
-                            {t ? t('feedback_desc') : 'Hilf uns Pattle zu verbessern! Dein Feedback wird direkt an unser Team weitergeleitet.'}
+                            {t ? t('feedback_desc') : 'Help us improve Pattle! Your feedback goes directly to our team.'}
                         </p>
 
                         {/* Kategorie */}

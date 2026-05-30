@@ -10,7 +10,7 @@ export default function BreedingPetList({
     return (
         <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide">
             {filteredPets.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-slate-500 opacity-50"><Ghost className="w-12 h-12 mb-2" /><p className="text-xs font-bold">{t ? t('breeding_no_pets') : 'Keine passenden Pets.'}</p></div>
+                <div className="flex flex-col items-center justify-center h-40 text-slate-500 opacity-50"><Ghost className="w-12 h-12 mb-2" /><p className="text-xs font-bold">{t ? t('breeding_no_pets') : 'No matching pets.'}</p></div>
             ) : (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
                     {filteredPets.map(pet => {
@@ -49,7 +49,7 @@ export default function BreedingPetList({
                                 {/* Rarity Mismatch Overlay */}
                                 {isRarityMismatch && (
                                     <div className="absolute inset-0 bg-black/60 z-30 flex flex-col items-center justify-center backdrop-blur-[1px] p-2 text-center animate-in fade-in">
-                                        <span className="text-[9px] text-slate-400 font-bold uppercase">{t ? t('breeding_wrong_rarity') : 'Falsche Seltenheit'}</span>
+                                        <span className="text-[9px] text-slate-400 font-bold uppercase">{t ? t('breeding_wrong_rarity') : 'Wrong Rarity'}</span>
                                     </div>
                                 )}
 
@@ -70,7 +70,7 @@ export default function BreedingPetList({
                                                 <Ticket className="w-3 h-3" /> -5m
                                             </button>
                                         ) : (
-                                            <span className="text-[9px] text-slate-500 font-bold">{t ? t('breeding_wait') : 'Warten...'}</span>
+                                            <span className="text-[9px] text-slate-500 font-bold">{t ? t('breeding_wait') : 'Wait...'}</span>
                                         )}
                                     </div>
                                 )}
