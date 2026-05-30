@@ -25,7 +25,7 @@ export default function AutoBattleCard({ ticketCount, onAutoBattle, t }) {
                         <Zap className="w-6 h-6" />
                     </div>
                     <div className="text-left">
-                        <h4 className="font-black text-white text-lg leading-none">{t ? t('arena_auto_btn') : 'Auto-Kampf'}</h4>
+                        <h4 className="font-black text-white text-lg leading-none">{t ? t('arena_auto_btn') : 'AUTO BATTLE'}</h4>
                         <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">{t ? t('arena_auto_desc') : '1 Ticket = 10 Battles'}</p>
                     </div>
                 </div>
@@ -70,9 +70,9 @@ export default function AutoBattleCard({ ticketCount, onAutoBattle, t }) {
                 `}
                 >
                     {ticketCount >= 1 ? (
-                        <>{t ? t('arena_start_btn') : 'STARTEN'} ({ticketsToUse * 10}) <Play className="w-4 h-4 fill-current" /></>
+                        <>{t ? t('arena_start_btn') : 'START'} ({ticketsToUse * 10}) <Play className="w-4 h-4 fill-current" /></>
                     ) : (
-                        (t ? t('arena_no_tickets') : "KEINE TICKETS")
+                        (t ? t('arena_no_tickets') : "NO TICKETS")
                     )}
                 </button>
             </div>

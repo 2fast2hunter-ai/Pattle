@@ -53,7 +53,7 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
         return (
             <div className="flex flex-col h-full items-center justify-center bg-slate-900 text-white">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-500 mb-4" />
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t ? t('village_init') : "Initialisiere Dorf..."}</p>
+                <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">{t ? t('village_init') : "Initializing Village..."}</p>
             </div>
         );
     }

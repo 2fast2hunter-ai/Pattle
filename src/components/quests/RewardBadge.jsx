@@ -17,7 +17,7 @@ const RewardBadge = ({ type, amount, label: customLabel, t }) => {
         Icon = Gem;
         color = 'text-pink-400';
         bg = 'bg-pink-500/10 border border-pink-500/20';
-        label = t ? t('reward_gems') : 'Edelsteine';
+        label = t ? t('reward_gems') : 'Gems';
     } else if (type === 'XP') {
         Icon = Sparkles;
         color = 'text-green-400';
@@ -29,12 +29,12 @@ const RewardBadge = ({ type, amount, label: customLabel, t }) => {
         const rarity = RARITIES[rarityStr] || RARITIES.COMMON;
         color = rarity.color;
         bg = `bg-slate-800 border ${rarity.border}`;
-        label = t ? `${t('rarity_' + rarityStr)} ${t('reward_egg')}` : `${rarity.label} Ei`;
+        label = t ? `${t('rarity_' + rarityStr)} ${t('reward_egg')}` : `${rarity.label} Egg`;
     } else if (type === 'LOOTBOX') {
         Icon = Package;
         color = 'text-amber-400';
         bg = 'bg-amber-500/10 border border-amber-500/20';
-        label = customLabel || (t ? t('reward_lootbox') : 'Truhe');
+        label = customLabel || (t ? t('reward_lootbox') : 'Chest');
     }
 
     return (

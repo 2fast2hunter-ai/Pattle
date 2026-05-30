@@ -12,7 +12,7 @@ export default function BattleRoundIndicator({ isGauntlet, gauntletRound, round,
                 </div>
             )}
             <div className="bg-black/60 backdrop-blur-md px-6 py-1.5 rounded-full border border-white/10 shadow-lg">
-                <span className="text-xs font-black text-white uppercase tracking-[0.2em]">{t ? t('battle_round') : 'Runde'} {round}</span>
+                <span className="text-xs font-black text-white uppercase tracking-[0.2em]">{t ? t('battle_round') : 'Round'} {round}</span>
             </div>
         </div>
     );
