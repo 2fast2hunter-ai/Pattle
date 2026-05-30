@@ -73,7 +73,7 @@ export default function TowerScreen({ user, onBack, onStartStage }) {
 
                             {isCurrent ? (
                                 <button onClick={() => onStartStage(stage.id)} className="bg-white text-indigo-900 px-4 py-2 rounded-xl font-black text-xs hover:bg-indigo-50 active:scale-95 transition-all flex items-center gap-2 shadow-lg">
-                                    <Swords className="w-4 h-4" /> KÄMPFEN
+                                    <Swords className="w-4 h-4" /> FIGHT
                                 </button>
                             ) : (
                                 isLocked && <Lock className="w-5 h-5 text-slate-600" />

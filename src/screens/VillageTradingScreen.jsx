@@ -82,7 +82,7 @@ export default function VillageTradingScreen({ user, onBack, onTrade, t }) { // 
 
                 {/* WANT SECTION (Was ich haben will - Gefiltert!) */}
                 <div>
-                    <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 pl-1">Du erhältst</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase mb-2 pl-1">{t ? t('trade_you_receive') : 'You receive'}</h3>
                     {availableTargets.length > 0 ? (
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1">
                             {availableTargets.map(item => {
