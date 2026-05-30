@@ -81,7 +81,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                                     </div>
                                     <div className="p-3 flex-1 flex flex-col justify-between">
                                         <div>
-                                            <h3 className="text-xs font-bold text-white mb-1 truncate">{cosmetic.label.replace('Hintergrund: ', '')}</h3>
+                                            <h3 className="text-xs font-bold text-white mb-1 truncate">{cosmetic.label}</h3>
                                             <div className="text-[9px] text-slate-400 flex items-center gap-1 mb-2">
                                                 <span>Cost:</span>
                                                 <span className={canAfford ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>{cosmetic.costAmount}x {getItemLabel(cosmetic.costItem, t)}</span>
