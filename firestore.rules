@@ -37,10 +37,10 @@ service cloud.firestore {
     // MARKET:
     match /market/{listingId} {
       allow read: if isSignedIn();
-      // Nur erstellen, wenn man seine eigene ID als 'sellerId' angibt
       allow create: if isSignedIn() && request.resource.data.sellerId == request.auth.uid;
-      // Löschen erlauben wir allen eingeloggten Nutzern (nötig für Kauf)
-      allow delete: if isSignedIn();
+      // Only the seller can delete their own listing via client SDK.
+      // Purchases are handled server-side by the buyMarketItem Cloud Function (admin SDK bypasses this rule).
+      allow delete: if isSignedIn() && resource.data.sellerId == request.auth.uid;
     }
 
     // FEEDBACK:
