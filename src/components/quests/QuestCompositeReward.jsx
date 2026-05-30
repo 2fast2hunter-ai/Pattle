@@ -59,7 +59,7 @@ export default function QuestCompositeReward({
                                     : 'bg-slate-800 text-slate-600 cursor-not-allowed border border-white/5'}
                             `}
                         >
-                            {claimingComposite ? <Loader2 className="w-3 h-3 animate-spin" /> : (isCompositeReady ? <><Gift className="w-3 h-3" /> {t ? t('quests_claim_btn') : 'ABHOLEN'}</> : 'LOCKED')}
+                            {claimingComposite ? <Loader2 className="w-3 h-3 animate-spin" /> : (isCompositeReady ? <><Gift className="w-3 h-3" /> {t ? t('quests_claim_btn') : 'CLAIM'}</> : 'LOCKED')}
                         </button>
                     )}
                 </div>

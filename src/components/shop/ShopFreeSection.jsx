@@ -64,7 +64,7 @@ export default function ShopFreeSection({
                             </div>
 
                             <div className={`px-4 py-2 rounded-xl text-xs font-black uppercase ${isReady ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' : 'bg-slate-900 text-slate-500 border border-white/5'}`}>
-                                {isReady ? (t ? t('shop_claim') : 'ABHOLEN') : formatTime(cooldown)}
+                                {isReady ? (t ? t('shop_claim') : 'CLAIM') : formatTime(cooldown)}
                             </div>
                         </button>
                     );

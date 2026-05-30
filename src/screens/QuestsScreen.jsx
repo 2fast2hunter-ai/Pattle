@@ -20,7 +20,7 @@ export default function QuestsScreen({ user, onBack, t }) {
         return (
             <div className="flex flex-col h-full items-center justify-center text-center animate-in fade-in">
                 <Loader2 className="w-12 h-12 text-amber-500 animate-spin mb-4" />
-                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Lade Aufgaben...</p>
+                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest">Loading...</p>
             </div>
         );
     }
@@ -31,7 +31,7 @@ export default function QuestsScreen({ user, onBack, t }) {
             {/* --- HEADER --- */}
             <div className="relative flex items-center justify-center mb-4 pt-2 px-4">
                 <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-                    {t ? t('quests_title') : 'AUFGABEN'}
+                    {t ? t('quests_title') : 'QUESTS'}
                 </h1>
                 <button
                     onClick={onBack}

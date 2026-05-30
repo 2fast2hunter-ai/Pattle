@@ -10,7 +10,7 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim, t }) { 
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
             <div className="relative flex items-center justify-center mb-4 pt-2 px-4 shrink-0 z-10">
-                <h2 className="text-2xl font-black italic tracking-wide text-white">MEILENSTEINE</h2>
+                <h2 className="text-2xl font-black italic tracking-wide text-white">{t ? t('village_milestones_title') : 'MILESTONES'}</h2>
                 <button onClick={onBack} className="absolute left-4 p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md"><ArrowLeft className="w-5 h-5" /></button>
             </div>
 
@@ -104,7 +104,7 @@ export default function VillageMilestonesScreen({ user, onBack, onClaim, t }) { 
                                         }
                                     `}
                                 >
-                                    {isCompleted ? 'ABHOLEN' : 'SAMMELN...'}
+                                    {isCompleted ? (t ? t('quests_claim_btn') : 'CLAIM') : 'COLLECTING...'}
                                     {isCompleted && <RefreshCw className="w-3 h-3" />}
                                 </button>
                             </div>

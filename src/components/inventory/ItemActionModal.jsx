@@ -37,7 +37,7 @@ export default function ItemActionModal({ title, icon: MainIcon, count, descript
                         <div className="flex justify-center items-center gap-4 mb-6 bg-slate-800/50 p-2 rounded-2xl border border-white/5 w-fit mx-auto">
                             <button onClick={decrement} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all border border-white/10"><Minus className="w-4 h-4 text-white" /></button>
                             <div className="text-center w-12">
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Menge</span>
+                                <span className="block text-[10px] text-slate-400 font-bold uppercase">Amount</span>
                                 <span className="block text-xl font-black text-white">{quantity}</span>
                             </div>
                             <button onClick={increment} className="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all border border-white/10"><Plus className="w-4 h-4 text-white" /></button>

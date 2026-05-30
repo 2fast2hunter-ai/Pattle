@@ -117,7 +117,7 @@ export default function LeaderboardScreen({ user, onBack, onViewPlayer, t }) {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center h-64 text-slate-500 gap-3">
                         <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-                        <span className="text-xs font-bold uppercase tracking-wider">Lade Daten...</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">Loading...</span>
                     </div>
                 ) : (
                     leaders.map((player, index) => (

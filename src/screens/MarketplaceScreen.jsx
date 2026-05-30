@@ -28,8 +28,8 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
                 {/* MAIN TABS (BUY / SELL) */}
                 <div className="flex p-1 bg-slate-800 rounded-xl border border-white/5 mb-3">
-                    <button onClick={() => setActiveTab('buy')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'buy' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500'}`}>KAUFEN</button>
-                    <button onClick={() => setActiveTab('sell')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'sell' ? 'bg-green-600 text-white shadow-lg' : 'text-slate-500'}`}>VERKAUFEN</button>
+                    <button onClick={() => setActiveTab('buy')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'buy' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-500'}`}>{t ? t('market_buy_btn') : 'BUY'}</button>
+                    <button onClick={() => setActiveTab('sell')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === 'sell' ? 'bg-green-600 text-white shadow-lg' : 'text-slate-500'}`}>{t ? t('market_sell_btn') : 'SELL'}</button>
                 </div>
 
                 {/* SUB TABS (PETS / ITEMS) */}

@@ -55,7 +55,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                                             disabled={!canAfford} 
                                             className={`w-full py-1.5 rounded-lg text-[9px] font-black uppercase transition-all active:scale-95 ${canAfford ? 'bg-indigo-600 text-white hover:bg-indigo-500 shadow-lg' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                                         >
-                                            Kaufen
+                                            {t ? t('shop_buy') : 'BUY'}
                                         </button>
                                     </div>
                                 </div>
@@ -68,7 +68,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                 <div>
                     <div className="bg-slate-900/50 p-3 rounded-2xl border border-white/5 flex items-center gap-3 mb-3">
                         <Scissors className="w-5 h-5 text-pink-400" />
-                        <p className="text-slate-400 text-xs font-bold uppercase">Exklusive Hintergründe</p>
+                        <p className="text-slate-400 text-xs font-bold uppercase">Exclusive Backgrounds</p>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -83,7 +83,7 @@ export default function VillageCosmeticsScreen({ user, onBack, onBuy, onBuySpeci
                                         <div>
                                             <h3 className="text-xs font-bold text-white mb-1 truncate">{cosmetic.label.replace('Hintergrund: ', '')}</h3>
                                             <div className="text-[9px] text-slate-400 flex items-center gap-1 mb-2">
-                                                <span>Kosten:</span>
+                                                <span>Cost:</span>
                                                 <span className={canAfford ? 'text-green-400 font-bold' : 'text-red-400 font-bold'}>{cosmetic.costAmount}x {getItemLabel(cosmetic.costItem, t)}</span>
                                             </div>
                                         </div>

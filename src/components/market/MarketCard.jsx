@@ -54,8 +54,8 @@ export default function MarketCard({ listing, isOwner, onClickAction, onRemoveLi
             </div>
             <div className="flex-1">
                 <div className={`font-black text-sm ${resInfo.color}`}>{t ? t('item_' + resInfo.id) : resInfo.label}</div>
-                <div className="text-xs text-slate-400">Menge: {listing.amount}</div>
-                <div className="text-xs text-slate-600">{isOwner ? "Dein Angebot" : listing.sellerName}</div>
+                <div className="text-xs text-slate-400">Amount: {listing.amount}</div>
+                <div className="text-xs text-slate-600">{isOwner ? (t ? t('market_your_listing') : 'Your listing') : listing.sellerName}</div>
             </div>
             {isOwner ? (
                 <button onClick={() => onRemoveListing(listing.id)} className="bg-red-600 p-2 rounded-xl text-white"><Trash2 className="w-4 h-4" /></button>
