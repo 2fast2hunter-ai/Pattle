@@ -6,89 +6,89 @@ const PATCHES = [
         version: 'v1.6.0',
         date: '2026-05-28',
         changes: [
-            { type: 'new', text: 'Erfolge: 20 freischaltbare Badges mit Gold- und Edelstein-Belohnungen' },
-            { type: 'new', text: 'Tägliche Login-Serie: Erscheine 7 Tage in Folge für Boni-Belohnungen' },
-            { type: 'new', text: 'Achievements-Übersicht im Hauptmenü mit Fortschrittsanzeige' },
-            { type: 'fixed', text: 'Pet-Bild für NATURE_BEAR-Spezies wurde nicht geladen (Dateiname-Tippfehler)' },
-            { type: 'fixed', text: 'Feedback-Formular: Firestore-Berechtigungsregel für feedback-Sammlung hinzugefügt' },
-            { type: 'fixed', text: 'Errungenschafts-Karten zeigten immer Deutsch unabhängig von Spracheinstellung' },
-            { type: 'fixed', text: 'Freischaltzeitpunkt der Errungenschaften zeigte Invalid Date statt korrektem Datum' },
+            { type: 'new', text: 'Achievements: 20 unlockable badges with gold and gem rewards' },
+            { type: 'new', text: 'Daily login streak: Log in 7 days in a row for bonus rewards' },
+            { type: 'new', text: 'Achievements overview in main menu with progress tracking' },
+            { type: 'fixed', text: 'Pet image for NATURE_BEAR species failed to load (filename typo)' },
+            { type: 'fixed', text: 'Feedback form: Added Firestore permission rule for feedback collection' },
+            { type: 'fixed', text: 'Achievement cards always showed German regardless of language setting' },
+            { type: 'fixed', text: 'Achievement unlock time showed Invalid Date instead of correct date' },
         ]
     },
     {
         version: 'v1.5.0',
         date: '2026-05-25',
         changes: [
-            { type: 'new', text: 'Push-Benachrichtigungen für Ei-Schlüpfen, vollen Speicher und tägliche Quests' },
-            { type: 'new', text: 'Sicherheit: Marktplatz-Transaktionen werden jetzt serverseitig validiert' },
-            { type: 'fixed', text: 'Turm-Fortschritt wird jetzt korrekt in Firestore gespeichert' },
-            { type: 'fixed', text: 'Firebase Offline-Fallback hinzugefügt' },
+            { type: 'new', text: 'Push notifications for egg hatching, full storage and daily quests' },
+            { type: 'new', text: 'Security: Marketplace transactions are now validated server-side' },
+            { type: 'fixed', text: 'Tower progress is now correctly saved to Firestore' },
+            { type: 'fixed', text: 'Added Firebase offline fallback' },
         ]
     },
     {
         version: 'v1.4.0',
         date: '2026-05-24',
         changes: [
-            { type: 'new', text: 'Season 1 Inhalte: 10 neue Pets (TECH, VOID, DIVINE, CHAOS, TIME Typen)' },
-            { type: 'new', text: '20 neue tägliche Quest-Vorlagen' },
-            { type: 'new', text: 'Turm-Etagen 31-40 mit CHAOS-Zwischen-Boss und DIVINE-Champion' },
-            { type: 'new', text: 'Google Analytics 4 zur Analyse des Spielerverhaltens' },
-            { type: 'new', text: 'Android PWA – aus Chrome-Browser installierbar' },
-            { type: 'new', text: 'Belohnte Video-Anzeigen + Banner-Ads (AdSense-bereit)' },
-            { type: 'new', text: 'Spieler-Feedback-Meldesystem' },
+            { type: 'new', text: 'Season 1 content: 10 new pets (TECH, VOID, DIVINE, CHAOS, TIME types)' },
+            { type: 'new', text: '20 new daily quest templates' },
+            { type: 'new', text: 'Tower floors 31-40 with CHAOS mini-boss and DIVINE champion' },
+            { type: 'new', text: 'Google Analytics 4 for player behavior analysis' },
+            { type: 'new', text: 'Android PWA – installable from Chrome browser' },
+            { type: 'new', text: 'Rewarded video ads + banner ads (AdSense-ready)' },
+            { type: 'new', text: 'Player feedback reporting system' },
         ]
     },
     {
         version: 'v1.3.0',
         date: '2026-05-24',
         changes: [
-            { type: 'new', text: 'Patches-Bereich hinzugefügt' },
-            { type: 'new', text: 'Feedback-Funktion: Spieler können Bugs und Vorschläge melden' },
-            { type: 'new', text: 'Offline-Ertrag: Dorf produziert während du weg bist' },
-            { type: 'new', text: 'Fusion-Rezepte und geheime Hybrid-Arten im Zuchtlabor' },
-            { type: 'changed', text: 'Seltenheits-Filter und Sortierung nach Level in der Sammlung' },
+            { type: 'new', text: 'Patch notes screen added' },
+            { type: 'new', text: 'Feedback feature: Players can report bugs and suggestions' },
+            { type: 'new', text: 'Idle earnings: Village produces resources while you are away' },
+            { type: 'new', text: 'Fusion recipes and secret hybrid species in the breeding lab' },
+            { type: 'changed', text: 'Rarity filter and sort by level in the collection' },
         ]
     },
     {
         version: 'v1.2.0',
         date: '2026-05-22',
         changes: [
-            { type: 'new', text: 'Arena-Turm: Steige Etage für Etage auf' },
-            { type: 'new', text: 'Auto-Kampf: Lass dein Team automatisch kämpfen' },
-            { type: 'new', text: 'Gauntlet-Modus: 5 Kämpfe hintereinander' },
-            { type: 'changed', text: 'Verbessertes Battle-UI mit Rundenanzeige und Kampflog' },
-            { type: 'changed', text: 'CI/CD: Lint- und Test-Gates für automatisches Deployment' },
+            { type: 'new', text: 'Arena Tower: Climb floor by floor' },
+            { type: 'new', text: 'Auto-battle: Let your team fight automatically' },
+            { type: 'new', text: 'Gauntlet mode: 5 battles in a row' },
+            { type: 'changed', text: 'Improved battle UI with round display and combat log' },
+            { type: 'changed', text: 'CI/CD: Lint and test gates for automatic deployment' },
         ]
     },
     {
         version: 'v1.1.0',
         date: '2026-05-20',
         changes: [
-            { type: 'new', text: 'Dorf-System: Ressourcenproduktion und Gebäude-Upgrades' },
-            { type: 'new', text: 'Zucht-System: Kombiniere Pets für neue Arten' },
-            { type: 'new', text: 'Tages-Login mit wöchentlichen Belohnungen' },
-            { type: 'new', text: 'Marktplatz: Kaufe und verkaufe Pets mit anderen Spielern' },
-            { type: 'changed', text: 'Überarbeitetes Design: Modernes dunkles Theme' },
+            { type: 'new', text: 'Village system: Resource production and building upgrades' },
+            { type: 'new', text: 'Breeding system: Combine pets to discover new species' },
+            { type: 'new', text: 'Daily login with weekly rewards' },
+            { type: 'new', text: 'Marketplace: Buy and sell pets with other players' },
+            { type: 'changed', text: 'Redesigned UI: Modern dark theme' },
         ]
     },
     {
         version: 'v1.0.0',
         date: '2026-05-19',
         changes: [
-            { type: 'new', text: 'Erstes Release: Pattle ist live!' },
-            { type: 'new', text: '25 Elementtypen mit einzigartigen Pets pro Typ' },
-            { type: 'new', text: 'Kampfsystem: Rundenbasierte Kämpfe mit Team-Mechanik' },
-            { type: 'new', text: 'Lootboxen: Sammle Pets durch tägliche Belohnungen' },
-            { type: 'new', text: 'Rangliste: Miss dich mit anderen Spielern weltweit' },
+            { type: 'new', text: 'First release: Pattle is live!' },
+            { type: 'new', text: '25 element types with unique pets per type' },
+            { type: 'new', text: 'Battle system: Turn-based fights with team mechanics' },
+            { type: 'new', text: 'Lootboxes: Collect pets through daily rewards' },
+            { type: 'new', text: 'Leaderboard: Compete against players worldwide' },
         ]
     }
 ];
 
 const BADGE = {
-    new: { label: 'NEU', className: 'bg-green-500/20 text-green-400 border border-green-500/30' },
-    changed: { label: 'GEÄNDERT', className: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
-    fixed: { label: 'BEHOBEN', className: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' },
-    removed: { label: 'ENTFERNT', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
+    new: { label: 'NEW', className: 'bg-green-500/20 text-green-400 border border-green-500/30' },
+    changed: { label: 'CHANGED', className: 'bg-blue-500/20 text-blue-400 border border-blue-500/30' },
+    fixed: { label: 'FIXED', className: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' },
+    removed: { label: 'REMOVED', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
 };
 
 export default function PatchesScreen({ onBack, t }) {

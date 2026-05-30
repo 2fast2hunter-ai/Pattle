@@ -51,7 +51,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                     icon={Egg} count={selectedItem.count}
                     description={
                         <div className="flex flex-col items-center gap-1">
-                            <span className="mb-2">{t ? (selectedItem.isBreeding ? t('inv_egg_desc_breed') : t('inv_egg_desc_mystery')) : `Ein ${selectedItem.isBreeding ? 'durch Zucht entstandenes' : 'mysteriöses'} Ei.`}</span>
+                            <span className="mb-2">{t ? (selectedItem.isBreeding ? t('inv_egg_desc_breed') : t('inv_egg_desc_mystery')) : `A ${selectedItem.isBreeding ? 'bred' : 'mysterious'} egg.`}</span>
                             {selectedItem.base.parents && selectedItem.base.parents.length > 0 ? (
                                 <div className="w-full bg-slate-950/40 rounded-xl p-3 border border-white/5">
                                     <div className="text-[10px] text-slate-500 font-bold uppercase text-center mb-2 flex items-center justify-center gap-1">
