@@ -73,7 +73,7 @@ export default function QuestItem({ quest, handleClaim, claiming, displayXp, t }
             <div className="flex justify-end pt-2 border-t border-white/5 mt-2">
                 {quest.claimed ? (
                     <span className="text-[10px] font-bold text-slate-600 flex items-center gap-1 uppercase tracking-wider">
-                        <CheckCircle2 className="w-3 h-3" /> {t ? t('quests_completed') : 'Fertig'}
+                        <CheckCircle2 className="w-3 h-3" /> {t ? t('quests_completed') : 'Completed'}
                     </span>
                 ) : isComplete ? (
                     <button
@@ -81,11 +81,11 @@ export default function QuestItem({ quest, handleClaim, claiming, displayXp, t }
                         disabled={claiming === quest.id}
                         className="bg-green-600 hover:bg-green-500 text-white text-[10px] font-black uppercase py-1.5 px-4 rounded-lg shadow-md shadow-green-900/20 active:scale-95 transition-all flex items-center gap-1.5 animate-pulse"
                     >
-                        {claiming === quest.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> {t ? t('quests_claim_btn') : 'BELOHNUNG'}</>}
+                        {claiming === quest.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> {t ? t('quests_claim_btn') : 'CLAIM'}</>}
                     </button>
                 ) : (
                     <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1 uppercase tracking-wider bg-slate-900/50 px-2 py-1 rounded">
-                        <Play className="w-2.5 h-2.5" /> {t ? t('quests_in_progress') : 'In Arbeit'}
+                        <Play className="w-2.5 h-2.5" /> {t ? t('quests_in_progress') : 'In Progress'}
                     </span>
                 )}
             </div>
