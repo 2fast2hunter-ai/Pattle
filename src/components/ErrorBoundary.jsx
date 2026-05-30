@@ -1,5 +1,14 @@
 import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
+import { TRANSLATIONS } from '../data/translations';
+
+const tl = (key) => {
+    try {
+        const saved = JSON.parse(localStorage.getItem('game_settings') || '{}');
+        const lang = saved.language || (navigator.language?.toLowerCase().startsWith('de') ? 'de' : 'en');
+        return TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en']?.[key] || key;
+    } catch { return TRANSLATIONS['en']?.[key] || key; }
+};
 
 export default class ErrorBoundary extends React.Component {
     constructor(props) {
@@ -13,9 +22,9 @@ export default class ErrorBoundary extends React.Component {
         return (
           <div className="flex flex-col items-center justify-center h-screen bg-slate-900 text-white p-6 text-center">
             <AlertTriangle className="w-16 h-16 text-red-500 mb-4" />
-            <h1 className="text-2xl font-bold mb-2">Ups, ein Fehler ist aufgetreten!</h1>
+            <h1 className="text-2xl font-bold mb-2">{tl('error_title')}</h1>
             <p className="text-slate-400 mb-6 text-sm">{this.state.error?.toString()}</p>
-            <button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2"><RefreshCw className="w-5 h-5"/> Spiel neu laden</button>
+            <button onClick={() => window.location.reload()} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl font-bold transition-all active:scale-95 flex items-center gap-2"><RefreshCw className="w-5 h-5"/> {tl('error_reload')}</button>
           </div>
         );
       }

@@ -69,7 +69,7 @@ export function useGameLogic() {
                 
                 // Wenn wir eine bessere Fähigkeit finden, updaten wir das Pet in der DB
                 if (matchingAbilityKey && matchingAbilityKey !== 'tackle') {
-                    console.log(`[AutoFix] Aktualisiere Fähigkeit für ${pet.name} (${pet.type}): Tackle -> ${ABILITIES[matchingAbilityKey].name}`);
+                    console.log(`[AutoFix] Updating ability for ${pet.name} (${pet.type}): Tackle -> ${ABILITIES[matchingAbilityKey].name}`);
                     updatePetInDB(pet.id, { abilityId: matchingAbilityKey });
                 }
             }
@@ -85,7 +85,7 @@ export function useGameLogic() {
             return;
         }
         
-        console.log(">>> START: Datenbank-Verbindung für", userId);
+        console.log(">>> START: Database connection for", userId);
 
         const unsubUser = listenToUser(userId, async (userData) => {
             stateRef.current.setUser(userData);
@@ -93,7 +93,7 @@ export function useGameLogic() {
             const today = new Date().toISOString().split('T')[0];
             
             if (userData.lastEloDate !== today) {
-                console.log("[Logic] Neuer Tag erkannt! Setze Elo-Startwert zurück.");
+                console.log("[Logic] New day detected! Resetting Elo start value.");
                 updateUser(userId, {
                     lastEloDate: today,
                     startEloToday: userData.rating || 1000

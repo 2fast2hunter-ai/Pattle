@@ -32,7 +32,7 @@ export const applyItem = async (state, showNotification, petId, itemId, quantity
         // If it's not there, it's not an item that can be "applied" in this way.
         const config = CONSUMABLES[item.variant];
         if (!config) {
-            console.error("Keine Config für Item gefunden:", item.variant);
+            console.error("No config found for item:", item.variant);
             // This error now correctly triggers if you try to use a cosmetic or unknown item.
             showNotification(state.t ? state.t('notif_item_cannot_apply') : 'Item cannot be applied to pet.', "error");
             return;

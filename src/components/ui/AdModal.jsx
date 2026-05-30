@@ -32,13 +32,13 @@ export default function AdModal({ onClose, onReward }) {
                 {timeLeft > 0 ? (
                     <>
                         <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mb-4" />
-                        <p className="text-white font-bold text-lg animate-pulse">Werbung läuft...</p>
+                        <p className="text-white font-bold text-lg animate-pulse">Ad playing...</p>
                     </>
                 ) : (
                     <div className="text-center animate-in zoom-in">
                         <Play className="w-16 h-16 text-green-500 mx-auto mb-2 fill-current" />
-                        <p className="text-white font-black text-2xl">DANKE!</p>
-                        <p className="text-slate-400 text-sm">Unterstützung erhalten</p>
+                        <p className="text-white font-black text-2xl">THANKS!</p>
+                        <p className="text-slate-400 text-sm">Support received</p>
                     </div>
                 )}
 
@@ -63,7 +63,7 @@ export default function AdModal({ onClose, onReward }) {
             </div>
 
             <p className="text-slate-500 text-xs mt-8 text-center max-w-xs">
-                Dies ist eine Simulation. In der Produktion würde hier ein echtes Werbevideo eines Anbieters (z.B. Google AdSense oder Applixir) laufen.
+                This is a simulation. In production, a real video ad from a provider (e.g. Google AdSense or Applixir) would play here.
             </p>
         </div>
     );

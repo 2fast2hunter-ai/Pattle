@@ -68,8 +68,8 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
   return (
     <div className="h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300 relative bg-slate-950">
         
-        {showRenameModal && (<RenameModal currentName={pet.name} cost={100} onClose={() => setShowRenameModal(false)} onConfirm={handleRenameSubmit} />)}
-        {showDeleteModal && (<DeleteModal petName={pet.name} onClose={() => setShowDeleteModal(false)} onConfirm={handleReleaseSubmit} />)}
+        {showRenameModal && (<RenameModal currentName={pet.name} cost={100} onClose={() => setShowRenameModal(false)} onConfirm={handleRenameSubmit} t={t} />)}
+        {showDeleteModal && (<DeleteModal petName={pet.name} onClose={() => setShowDeleteModal(false)} onConfirm={handleReleaseSubmit} t={t} />)}
 
         <div className={`absolute top-0 left-0 w-full h-2/5 ${type.bg} opacity-20 rounded-b-[40px] blur-3xl`}></div>
         

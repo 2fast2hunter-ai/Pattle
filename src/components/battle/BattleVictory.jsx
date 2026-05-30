@@ -55,7 +55,7 @@ export default function BattleVictory({
 
             {isAutoBattle && !isLastAuto && (
                 <div className="w-full max-w-xs mx-auto mb-8 shrink-0">
-                    <div className="flex justify-between text-[10px] text-purple-300 font-bold mb-1 uppercase"><span>{t ? t('battle_next_fight') : 'Nächster Kampf'}</span><span>{(3 - (autoProgress / 33.3)).toFixed(1)}s</span></div>
+                    <div className="flex justify-between text-[10px] text-purple-300 font-bold mb-1 uppercase"><span>{t ? t('battle_next_fight') : 'Next Fight'}</span><span>{(3 - (autoProgress / 33.3)).toFixed(1)}s</span></div>
                     <div className="h-2 bg-slate-800 rounded-full overflow-hidden border border-purple-500/30"><div className="h-full bg-purple-500 transition-all duration-100 ease-linear" style={{ width: `${autoProgress}%` }}></div></div>
                 </div>
             )}
@@ -68,20 +68,20 @@ export default function BattleVictory({
                     </div>
                     <div className="w-px h-12 bg-white/10"></div>
                     <div className="flex flex-col items-center">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t ? t('reward_coins') : 'Münzen'}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">{t ? t('reward_coins') : 'Coins'}</span>
                         <div className="flex items-center gap-2 text-yellow-400"><Coins className="w-6 h-6 fill-current" /><span className="font-black text-2xl">+{displayCoins}</span></div>
                     </div>
                 </div>
             ) : isFriendly ? (
                 <div className="bg-blue-900/40 backdrop-blur-md p-4 rounded-2xl border border-blue-500/30 mb-8 text-center w-full max-w-sm shrink-0">
-                    <p className="text-blue-200 font-black text-sm">{t ? t('battle_friendly_title') : 'FREUNDSCHAFTSKAMPF'}</p>
-                    <p className="text-blue-300/70 text-xs">{t ? t('battle_friendly_desc') : 'Keine Belohnungen erhalten'}</p>
+                    <p className="text-blue-200 font-black text-sm">{t ? t('battle_friendly_title') : 'FRIENDLY BATTLE'}</p>
+                    <p className="text-blue-300/70 text-xs">{t ? t('battle_friendly_desc') : 'No rewards earned'}</p>
                 </div>
             ) : null}
 
             {!isFriendly && won && myTeam && !battleState.isGauntlet && (
                 <div className="w-full max-w-sm space-y-2 mb-6 shrink-0">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 text-center">Team Erfahrung</h3>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 text-center">{t ? t('battle_team_xp') : 'Team Experience'}</h3>
                     {myTeam.map(pet => {
                         const progress = getPetLevelProgress(pet);
                         const gainedPercent = (xpPerPet / progress.max) * 100;
@@ -119,20 +119,20 @@ export default function BattleVictory({
                 <div className="bg-slate-800/80 px-8 py-4 rounded-xl border border-white/10 animate-pulse">
                     <span className="text-white font-bold text-lg flex items-center gap-2">
                         <Flame className="w-5 h-5 text-red-500 animate-fire" />
-                        {t ? t('battle_next_round') : 'Nächste Runde...'}
+                        {t ? t('battle_next_round') : 'Next round...'}
                     </span>
                 </div>
             ) : (
                 <div className="flex flex-col gap-3 w-full max-w-sm shrink-0 pb-6">
                     {won && (
                         <button onClick={handleShareVictory} className="w-full py-3 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold text-sm flex justify-center items-center gap-2 hover:bg-indigo-500 hover:text-white transition-all active:scale-95">
-                            {victoryCopied ? <><Check className="w-4 h-4" /> Kopiert!</> : <><Share2 className="w-4 h-4" /> Sieg teilen</>}
+                            {victoryCopied ? <><Check className="w-4 h-4" /> {t ? t('label_copied') : 'Copied!'}</> : <><Share2 className="w-4 h-4" /> {t ? t('battle_share_victory') : 'Share victory'}</>}
                         </button>
                     )}
                     <button onClick={() => won ? onWin({ coins: baseCoins, xp: baseXp }, myTeamIds, null, damageDealt) : onLose({ xp: baseXp }, myTeamIds)} className={`w-full py-4 rounded-2xl font-black text-lg shadow-xl flex justify-center items-center gap-2 transition-all ${isAutoBattle && !isLastAuto ? 'bg-purple-600 text-white animate-pulse' : (isLastAuto ? 'bg-green-600 text-white hover:scale-[1.02]' : 'bg-white text-slate-950 hover:scale-[1.02] active:scale-95')}`}>
-                        {isLastAuto ? <><CheckCircle className="w-5 h-5" /> {t ? t('battle_finish') : 'ABSCHLIESSEN'}</> : isAutoBattle ? <><Repeat className="w-5 h-5" /> {t ? t('battle_continue') : 'WEITER'} ({autoBattleRemaining})</> : (isFriendly ? (t ? t('battle_back') : "ZURÜCK") : (t ? t('battle_continue') : "WEITER"))}
+                        {isLastAuto ? <><CheckCircle className="w-5 h-5" /> {t ? t('battle_finish') : 'FINISH'}</> : isAutoBattle ? <><Repeat className="w-5 h-5" /> {t ? t('battle_continue') : 'NEXT'} ({autoBattleRemaining})</> : (isFriendly ? (t ? t('battle_back') : "BACK") : (t ? t('battle_continue') : "NEXT"))}
                     </button>
-                    {isAutoBattle && !isLastAuto && (<button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><XCircle className="w-4 h-4" /> {t ? t('battle_cancel_auto') : 'AUTO-KAMPF ABBRECHEN'}</button>)}
+                    {isAutoBattle && !isLastAuto && (<button onClick={onCancelAutoBattle} className="w-full py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs border border-red-500/30 flex items-center justify-center gap-2 active:scale-95 transition-all"><XCircle className="w-4 h-4" /> {t ? t('battle_cancel_auto') : 'CANCEL AUTO-BATTLE'}</button>)}
                 </div>
             )}
         </>

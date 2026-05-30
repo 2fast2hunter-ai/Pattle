@@ -80,7 +80,7 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
                         }
 
                         if (newLevel < currentLvl) {
-                            console.error(`[HandleLose] Level regression für ${petId}. Korrigiere auf ${currentLvl}.`);
+                            console.error(`[HandleLose] Level regression for ${petId}. Correcting to ${currentLvl}.`);
                             newLevel = currentLvl;
                         }
 
@@ -108,7 +108,7 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
                             updates.speed = Number(newStats.speed) || 1;
                         }
 
-                        console.log(`[HandleLose] Update für ${petId}:`, updates);
+                        console.log(`[HandleLose] Update for ${petId}:`, updates);
                         transaction.update(petRef, updates);
                     });
                 } catch (e) { console.error("Lose XP Error:", e); }

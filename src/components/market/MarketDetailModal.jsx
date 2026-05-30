@@ -3,7 +3,7 @@ import { X, Swords, Heart, Shield, Zap, Trash2, Coins } from 'lucide-react';
 import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES } from '../../data/gameData';
 import PetAvatar from '../PetAvatar';
 
-export default function MarketDetailModal({ pet, onClose, price, onBuy, isOwner, onRemove }) {
+export default function MarketDetailModal({ pet, onClose, price, onBuy, isOwner, onRemove, t }) {
     if (!pet || pet.isEgg) return null;
     const typeInfo = TYPES[pet.type] || TYPES.FIRE;
     const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
@@ -33,16 +33,16 @@ export default function MarketDetailModal({ pet, onClose, price, onBuy, isOwner,
                         <div className="bg-slate-950/50 p-2 rounded-xl border border-white/5 flex items-center gap-2"><div className="p-1.5 bg-slate-500/10 rounded-lg text-slate-400"><Shield className="w-4 h-4" /></div><div><div className="text-[9px] text-slate-500 font-bold uppercase">DEF</div><div className="text-sm font-black text-white">{pet.def}</div></div></div>
                          <div className="bg-slate-950/50 p-2 rounded-xl border border-white/5 flex items-center gap-2"><div className="p-1.5 bg-purple-500/10 rounded-lg text-purple-400"><Zap className="w-4 h-4" /></div><div><div className="text-[9px] text-slate-500 font-bold uppercase">AP</div><div className="text-sm font-black text-white">{pet.ap}</div></div></div>
                     </div>
-                    <div className="bg-slate-800/50 p-3 rounded-xl border border-white/5"><div className="flex items-center gap-2 mb-1"><span className="text-[10px] font-bold text-slate-500 uppercase">Fähigkeit</span><span className="text-[10px] font-bold text-indigo-400 uppercase">{ability.name}</span></div><p className="text-xs text-slate-400 leading-relaxed">{ability.desc}</p></div>
+                    <div className="bg-slate-800/50 p-3 rounded-xl border border-white/5"><div className="flex items-center gap-2 mb-1"><span className="text-[10px] font-bold text-slate-500 uppercase">{t ? t('label_ability') : 'Ability'}</span><span className="text-[10px] font-bold text-indigo-400 uppercase">{ability.name}</span></div><p className="text-xs text-slate-400 leading-relaxed">{ability.desc}</p></div>
                 </div>
                 <div className="p-4 bg-slate-900 border-t border-white/10 shrink-0">
                     {isOwner ? (
                         <button onClick={onRemove} className="w-full bg-red-600 hover:bg-red-500 text-white font-black py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                            <Trash2 className="w-4 h-4" /> ANGEBOT ENTFERNEN
+                            <Trash2 className="w-4 h-4" /> {t ? t('market_remove_offer') : 'REMOVE LISTING'}
                         </button>
                     ) : (
                         <button onClick={onBuy} className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-black py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                            <Coins className="w-4 h-4 fill-black/20" /> KAUFEN FÜR {price}
+                            <Coins className="w-4 h-4 fill-black/20" /> {t ? t('market_buy_for', { price }) : `BUY FOR ${price}`}
                         </button>
                     )}
                 </div>

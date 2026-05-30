@@ -17,7 +17,7 @@ export default function MarketplaceScreen({ user, listings, onBack, onBuy, onSel
 
     return (
         <div className="h-full flex flex-col animate-in fade-in relative">
-            {viewingPetDetails && (<MarketDetailModal pet={viewingPetDetails.pet} price={viewingPetDetails.price} isOwner={viewingPetDetails.isOwner} onBuy={viewingPetDetails.onBuy} onRemove={() => { onRemoveListing(viewingPetDetails.listingId); setViewingPetDetails(null); }} onClose={() => setViewingPetDetails(null)} />)}
+            {viewingPetDetails && (<MarketDetailModal pet={viewingPetDetails.pet} price={viewingPetDetails.price} isOwner={viewingPetDetails.isOwner} onBuy={viewingPetDetails.onBuy} onRemove={() => { onRemoveListing(viewingPetDetails.listingId); setViewingPetDetails(null); }} onClose={() => setViewingPetDetails(null)} t={t} />)}
 
             {/* HEADER & TABS */}
             <div className="px-4 pt-4 pb-2">

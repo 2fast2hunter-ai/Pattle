@@ -38,7 +38,7 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
             )}
 
             <div className="relative flex items-center justify-center mb-6 pt-6 px-4">
-                <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-600">PROFIL</h1>
+                <h1 className="text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-rose-600">{t ? t('menu_profile') : 'PROFILE'}</h1>
                 <button onClick={onBack} className="absolute right-4 p-2 bg-red-500/20 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-colors active:scale-95"><X className="w-5 h-5" /></button>
             </div>
 
@@ -46,16 +46,16 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
                 <ProfileHeader user={user} setShowEditModal={setShowEditModal} copyId={copyId} />
 
                 <div className="flex p-1 bg-slate-800 rounded-xl border border-white/5">
-                    <button onClick={() => setActiveTab('stats')} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>Statistiken</button>
-                    <button onClick={() => setActiveTab('friends')} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'friends' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>Freunde</button>
+                    <button onClick={() => setActiveTab('stats')} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'stats' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>{t ? t('profile_tab_stats') : 'Statistics'}</button>
+                    <button onClick={() => setActiveTab('friends')} className={`flex-1 py-2.5 rounded-lg text-xs font-bold transition-all ${activeTab === 'friends' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:text-white'}`}>{t ? t('profile_tab_friends') : 'Friends'}</button>
                 </div>
 
                 {activeTab === 'stats' ? (
                     <ProfileStats categories={categories} setSelectedCategory={setSelectedCategory} />
                 ) : (
-                    <ProfileFriends user={user} onAddFriend={onAddFriend} onViewFriend={onViewFriend} />
+                    <ProfileFriends user={user} onAddFriend={onAddFriend} onViewFriend={onViewFriend} t={t} />
                 )}
-                <div className="text-center pt-4"><p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">Mitglied seit 2025</p></div>
+                <div className="text-center pt-4"><p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">{t ? t('profile_member_since') : 'Member since 2025'}</p></div>
             </div>
         </div>
     );

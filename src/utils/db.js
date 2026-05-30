@@ -166,7 +166,7 @@ const checkAndResetLeaderboard = async (userData) => {
     const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
 
     if (userData.leaderboardResetDate !== currentMonthKey) {
-        console.log("[DB] Neuer Monat! Prüfe Rangliste...");
+        console.log("[DB] New month! Checking leaderboard...");
 
         // Standard-Updates für den Reset VORBEREITEN (Rating auf 1000)
         let updates = {
@@ -233,7 +233,7 @@ const checkAndResetGauntletLeaderboard = async (userData) => {
     const currentGauntletMonthKey = `${offsetDate.getFullYear()}-${offsetDate.getMonth()}`;
 
     if (userData.gauntletResetDate !== currentGauntletMonthKey) {
-        console.log("[DB] Neue Gauntlet Saison! Prüfe Rangliste...");
+        console.log("[DB] New Gauntlet season! Checking leaderboard...");
 
         let updates = {
             gauntletResetDate: currentGauntletMonthKey,
@@ -615,10 +615,10 @@ export const claimCompositeReward = async (user, catKey) => {
         return { message: rewardMessage };
     } catch (e) { console.error("Fehler beim Abholen der Gesamt-Belohnung:", e); return { message: null }; }
 };
-export const adminResetQuests = async (userId) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await updateDoc(userRef, { quests: { daily: generatePatchedQuests('DAILY'), weekly: generatePatchedQuests('WEEKLY'), monthly: generatePatchedQuests('MONTHLY') } }); console.log("Quests wurden zurückgesetzt!"); return true; } catch (e) { console.error("Fehler beim Quest-Reset:", e); return false; } };
+export const adminResetQuests = async (userId) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await updateDoc(userRef, { quests: { daily: generatePatchedQuests('DAILY'), weekly: generatePatchedQuests('WEEKLY'), monthly: generatePatchedQuests('MONTHLY') } }); console.log("Quests reset successfully!"); return true; } catch (e) { console.error("Quest reset error:", e); return false; } };
 export const clearMarketplace = async () => { try { const q = query(collection(db, "market")); const snapshot = await getDocs(q); const deletePromises = []; snapshot.forEach((doc) => { deletePromises.push(deleteDoc(doc.ref)); }); await Promise.all(deletePromises); return true; } catch (e) { return false; } };
 export const setBattleActive = async (userId, isActive) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await setDoc(userRef, { isInBattle: isActive }, { merge: true }); } catch (e) { console.error("[DB] Fehler beim Setzen des Kampf-Status:", e); } };
-export const checkAndResolveInterruptedBattle = async (userId) => { if (!userId) return null; const userRef = doc(db, "users", userId); try { return await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return null; const userData = userDoc.data(); if (userData.isInBattle === true) { const newStats = { ...(userData.stats || {}) }; newStats.pvpTotal = (newStats.pvpTotal || 0) + 1; const newRating = Math.max(0, (userData.rating || 1000) - 25); transaction.update(userRef, { isInBattle: false, stats: newStats, rating: newRating }); return { resolved: true, ratingLoss: 25 }; } return { resolved: false }; }); } catch (e) { if (e.code === 'failed-precondition') { console.warn("[DB] Transaction precondition failed - Kampfstatus hat sich geändert (OK)."); } else { console.error("[DB] Fehler beim Check:", e); } return null; } };
+export const checkAndResolveInterruptedBattle = async (userId) => { if (!userId) return null; const userRef = doc(db, "users", userId); try { return await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return null; const userData = userDoc.data(); if (userData.isInBattle === true) { const newStats = { ...(userData.stats || {}) }; newStats.pvpTotal = (newStats.pvpTotal || 0) + 1; const newRating = Math.max(0, (userData.rating || 1000) - 25); transaction.update(userRef, { isInBattle: false, stats: newStats, rating: newRating }); return { resolved: true, ratingLoss: 25 }; } return { resolved: false }; }); } catch (e) { if (e.code === 'failed-precondition') { console.warn("[DB] Transaction precondition failed - battle status changed concurrently (OK)."); } else { console.error("[DB] Check error:", e); } return null; } };
 export const calculateEloChange = (ratingA, ratingB, isWin) => {
     const K = 32;
     const expected = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
