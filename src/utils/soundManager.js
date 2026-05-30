@@ -1,35 +1,27 @@
-// src/utils/soundManager.js
+const BASE = import.meta.env.BASE_URL;
 
-// Mapping von Sound-Namen zu Dateipfaden (im public Ordner)
 const SOUNDS = {
-    // UI & Allgemein
-    'click': '/sounds/click.mp3',
-    'notification': '/sounds/notification.mp3',
-    'success': '/sounds/success.mp3',
-    'error': '/sounds/error.mp3',
-    
-    // Dorf
-    'collect': '/sounds/collect.mp3',
-    'build': '/sounds/build.mp3',
-    'assign': '/sounds/assign.mp3',
-    'levelup': '/sounds/levelup.mp3',
-    'pop': '/sounds/pop.mp3', // Für XP im Training
-    
-    // Shop
-    'kaching': '/sounds/kaching.mp3', // Kaufen
-    'open_box': '/sounds/open_box.mp3',
-    
-    // Kampf
-    'battle_start': '/sounds/battle_start.mp3',
-    'win': '/sounds/win.mp3',
-    'lose': '/sounds/lose.mp3',
-    'hit': '/sounds/hit.mp3',
+    'click': `${BASE}sounds/click.mp3`,
+    'notification': `${BASE}sounds/notification.mp3`,
+    'success': `${BASE}sounds/success.mp3`,
+    'error': `${BASE}sounds/error.mp3`,
+    'collect': `${BASE}sounds/collect.mp3`,
+    'build': `${BASE}sounds/build.mp3`,
+    'assign': `${BASE}sounds/assign.mp3`,
+    'levelup': `${BASE}sounds/levelup.mp3`,
+    'pop': `${BASE}sounds/pop.mp3`,
+    'kaching': `${BASE}sounds/kaching.mp3`,
+    'open_box': `${BASE}sounds/open_box.mp3`,
+    'battle_start': `${BASE}sounds/battle_start.mp3`,
+    'win': `${BASE}sounds/win.mp3`,
+    'lose': `${BASE}sounds/lose.mp3`,
+    'hit': `${BASE}sounds/hit.mp3`,
 };
 
 const MUSIC = {
-    'menu': '/sounds/music_menu.mp3',
-    'village': '/sounds/music_village.mp3',
-    'battle': '/sounds/music_battle.mp3',
+    'menu': `${BASE}sounds/music_menu.mp3`,
+    'village': `${BASE}sounds/music_village.mp3`,
+    'battle': `${BASE}sounds/music_battle.mp3`,
 };
 
 let currentBgm = null;

@@ -2,20 +2,20 @@
   "name": "Pattle - Pet Battle Game",
   "short_name": "Pattle",
   "description": "Collect, train, and battle pets in this exciting RPG game",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#1e1b4b",
   "background_color": "#1e1b4b",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512x512.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

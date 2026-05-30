@@ -1,3 +1,4 @@
+const BASE = import.meta.env.BASE_URL;
 const STORAGE_KEY = 'pattle_scheduled_notifs';
 const STORAGE_FULL_KEY = 'pattle_storage_full_notified';
 const DAILY_RESET_KEY = 'pattle_daily_reset_notified';
@@ -21,14 +22,14 @@ async function showNotification(title, body, data = {}) {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification(title, {
       body,
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/icon-192x192.png',
+      icon: `${BASE}icons/icon-192x192.png`,
+      badge: `${BASE}icons/icon-192x192.png`,
       data,
       tag: data.tag || 'pattle-notif',
       renotify: true,
     });
   } catch {
-    try { new Notification(title, { body, icon: '/icons/icon-192x192.png' }); } catch (_e) { /* fallback failed silently */ }
+    try { new Notification(title, { body, icon: `${BASE}icons/icon-192x192.png` }); } catch (_e) { /* fallback failed silently */ }
   }
 }
 
