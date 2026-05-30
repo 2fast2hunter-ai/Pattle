@@ -43,8 +43,8 @@ export function useBattleTurn(battleState, setBattleState, t) {
         // 2. Schaden berechnen
         const { damage, isCrit, effectiveness } = calculateDamage(attacker, defender, abilityToUse);
 
-        if (effectiveness > 1) newLog.push(t ? t('battle_log_effective') : "⚡ Sehr effektiv!");
-        else if (effectiveness < 1) newLog.push(t ? t('battle_log_not_effective') : "🛡️ Nicht sehr effektiv...");
+        if (effectiveness > 1) newLog.push(t ? t('battle_log_effective') : "⚡ Super effective!");
+        else if (effectiveness < 1) newLog.push(t ? t('battle_log_not_effective') : "🛡️ Not very effective...");
 
         const effectiveDamage = Math.min(damage, defender.hp);
         setDamageDealt(prev => ({ ...prev, [attacker.id]: (prev[attacker.id] || 0) + effectiveDamage }));
@@ -95,7 +95,7 @@ export function useBattleTurn(battleState, setBattleState, t) {
         }
 
         if (newHp === 0) {
-            newLog.push(t ? t('battle_log_defeated', { defender: updatedDefender.name }) : `💀 ${updatedDefender.name} besiegt!`);
+            newLog.push(t ? t('battle_log_defeated', { defender: updatedDefender.name }) : `💀 ${updatedDefender.name} defeated!`);
             if (who === 'PLAYER') {
                 if (enemyIndex + 1 < enemyTeam.length) {
                     nextEnemyIndex++;

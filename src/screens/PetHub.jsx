@@ -104,8 +104,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
 
         {/* 4. BRUTSTÄTTE (Emerald/Teal) */}
         <HubCard 
-            title={t ? t('pethub_hatchery_btn') : "BRUTSTÄTTE"} 
-            subtitle={t ? t('pethub_hatchery_desc') : "Eier ausbrüten"} 
+            title={t ? t('pethub_hatchery_btn') : "HATCHERY"}
+            subtitle={t ? t('pethub_hatchery_desc') : "Hatch eggs"}
             icon={ThermometerSun} 
             colorFrom="from-emerald-500" 
             colorTo="to-teal-600" 

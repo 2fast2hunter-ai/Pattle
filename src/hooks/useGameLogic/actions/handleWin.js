@@ -42,7 +42,7 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
                 myIndex: 0,
                 enemyIndex: 0,
                 turn: 'PLAYER',
-                log: [t ? t('gauntlet_round_start_log', { round: nextRound }) : `Gauntlet Runde ${nextRound} beginnt!`],
+                log: [t ? t('gauntlet_round_start_log', { round: nextRound }) : `Gauntlet Round ${nextRound} begins!`],
                 isOver: false,
                 round: 1,
                 gauntletRound: nextRound,
@@ -52,7 +52,7 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
             };
 
             setActiveBattle(nextBattleState);
-            showNotification(t ? t('gauntlet_round_start_notif', { round: nextRound }) : `Sieg! Runde ${nextRound} startet...`, "success");
+            showNotification(t ? t('gauntlet_round_start_notif', { round: nextRound }) : `Victory! Round ${nextRound} starting...`, "success");
             return;
 
         } catch (e) {
@@ -86,7 +86,7 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
             if (r.type === 'COINS') coinsGain += r.amount;
             else if (r.type === 'GEMS') {
                 gemsGain += r.amount;
-                towerRewardMsg = `+${r.amount} Edelsteine`;
+                towerRewardMsg = `+${r.amount} Gems`;
             }
             else if (r.type === 'CONSUMABLE' || r.type === 'LOOTBOX') {
                 for (let i = 0; i < r.amount; i++) {
@@ -121,7 +121,7 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     };
 
     // Track type advantage wins (log contains the effectiveness message, not the extra-turn message)
-    const effectiveMsg = t ? t('battle_log_effective') : '⚡ Sehr effektiv!';
+    const effectiveMsg = t ? t('battle_log_effective') : '⚡ Super effective!';
     if (activeBattle?.log?.some(entry => entry === effectiveMsg)) {
         userUpdates["stats.typeAdvantageWins"] = increment(1);
     }
