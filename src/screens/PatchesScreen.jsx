@@ -3,6 +3,20 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 const PATCHES = [
     {
+        version: 'v1.8.0',
+        date: '2026-05-31',
+        changes: [
+            { type: 'fixed', text: 'Battle log: "nutzt"→"uses", "greift an"→"attacks", "KRIT!"→"CRIT!" in EN fallbacks' },
+            { type: 'fixed', text: 'TowerScreen/ArenaHub: "Stufe"→"Stage", "Monatlicher Reset"→"Monthly Reset"' },
+            { type: 'fixed', text: 'Team screen: "Verwaltung"→"Management", "Belegt"→"Used", "Leerer Slot"→"Empty Slot"' },
+            { type: 'fixed', text: 'Currency: all remaining "Gold" labels replaced with "Coins"' },
+            { type: 'fixed', text: 'GauntletSummary: "GAUNTLET BEENDET"→"GAUNTLET OVER", "Belohnungen"→"Rewards"' },
+            { type: 'fixed', text: 'EggSlot, IdleReturnModal, PetHub, ItemInventory: remaining German fallbacks translated' },
+            { type: 'fixed', text: 'db.js: all German console.error messages translated to English' },
+            { type: 'fixed', text: 'battleLogic: PvE enemy prefix "Wildes"→"Wild"' },
+        ]
+    },
+    {
         version: 'v1.7.0',
         date: '2026-05-31',
         changes: [
