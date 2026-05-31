@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Lock, Trash2, Plus, Shield, Users } from 'lucide-react';
+import { ArrowLeft, Lock, Trash2, Plus, Shield, Users, Zap } from 'lucide-react';
 import { TYPES, RARITIES } from '../data/gameData'; // RARITIES hinzugefügt
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import PetAvatar from '../components/PetAvatar';
@@ -11,7 +11,7 @@ const getRequiredLevel = (index) => {
     return 3 + (index - 1) * 5;
 };
 
-export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet, t, tutorialHighlight }) {
+export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemovePet, onAutoFill, t, tutorialHighlight }) {
   const unlockedSlots = getUnlockedTeamSlots(user.level);
   const maxSlots = 10;
   const teamCount = (user.team || []).filter(Boolean).length;
@@ -54,9 +54,21 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                      <div className="text-xl font-black text-white">{teamCount} <span className="text-slate-600 text-sm">/ {unlockedSlots}</span></div>
                  </div>
              </div>
-             <div className="text-right">
-                 <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t ? t('team_next_slot') : 'Next Slot'}</div>
-                 <div className="text-xs font-bold text-indigo-300">Lvl {getRequiredLevel(unlockedSlots)}</div>
+             <div className="flex items-center gap-3">
+                 <div className="text-right">
+                     <div className="text-[10px] font-bold text-slate-500 uppercase mb-1">{t ? t('team_next_slot') : 'Next Slot'}</div>
+                     <div className="text-xs font-bold text-indigo-300">Lvl {getRequiredLevel(unlockedSlots)}</div>
+                 </div>
+                 {onAutoFill && (
+                     <button
+                         onClick={onAutoFill}
+                         className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 text-indigo-300 rounded-xl text-xs font-black uppercase tracking-wide transition-all active:scale-95"
+                         title="Auto-fill empty slots with your strongest pets"
+                     >
+                         <Zap className="w-3.5 h-3.5" />
+                         {t ? t('team_autofill') : 'Auto'}
+                     </button>
+                 )}
              </div>
         </div>
       </div>

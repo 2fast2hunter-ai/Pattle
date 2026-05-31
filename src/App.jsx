@@ -146,7 +146,7 @@ export default function App() {
                         handleReduceCooldownWrapper={appActions.handleReduceCooldownWrapper} handleHatchEggWrapper={appActions.handleHatchEggWrapper}
                         handleWinWrapper={appActions.handleWinWrapper} handleLose={gameLogic.handleLose} handleWatchAd={appActions.handleWatchAd} handleWatchAdForHatchWrapper={appActions.handleWatchAdForHatchWrapper}
                         handleAutoBattle={gameLogic.handleAutoBattle} cancelAutoBattle={gameLogic.cancelAutoBattle}
-                        renamePet={gameLogic.renamePet} releasePet={gameLogic.releasePet} addToTeam={gameLogic.addToTeam} removeFromTeam={gameLogic.removeFromTeam}
+                        renamePet={gameLogic.renamePet} releasePet={gameLogic.releasePet} addToTeam={gameLogic.addToTeam} removeFromTeam={gameLogic.removeFromTeam} autoFillTeam={gameLogic.autoFillTeam}
                         handleBuyMarket={gameLogic.handleBuyMarket} handleSellMarket={gameLogic.handleSellMarket} handleSellResource={gameLogic.handleSellResource} handleRemoveListing={gameLogic.handleRemoveListing}
                         startBattle={gameLogic.startBattle} startGauntletBattle={gameLogic.startGauntletBattle} startTowerBattle={gameLogic.startTowerBattle} startFriendBattle={gameLogic.startFriendBattle}
                         handleAddFriend={gameLogic.handleAddFriend} handleUpdateProfile={handleUpdateProfile} handleLogout={gameLogic.handleLogout}

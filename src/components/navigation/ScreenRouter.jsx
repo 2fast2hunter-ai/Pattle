@@ -49,7 +49,7 @@ export default function ScreenRouter({
     handleOpenLootboxWrapper, handleStartIncubationWrapper, handleReduceCooldownWrapper,
     handleHatchEggWrapper, handleWinWrapper, handleLose,
     handleWatchAd, handleWatchAdForHatchWrapper, handleAutoBattle, cancelAutoBattle,
-    renamePet, releasePet, addToTeam, removeFromTeam,
+    renamePet, releasePet, addToTeam, removeFromTeam, autoFillTeam,
     handleBuyMarket, handleSellMarket, handleSellResource, handleRemoveListing,
     startBattle, startGauntletBattle, startTowerBattle, startFriendBattle,
     handleAddFriend, handleUpdateProfile, handleLogout,
@@ -120,7 +120,7 @@ export default function ScreenRouter({
         case 'pet-hub': screen = <PetHub onBack={() => setCurrentView('menu')} onInventory={() => setCurrentView('inventory')} onItemInventory={() => setCurrentView('item-inventory')} onBreed={() => setCurrentView('breeding')} onHatchery={() => setCurrentView('hatchery')} t={t} tutorialHighlight={tutorialHighlight} />; break;
         case 'hatchery': screen = <HatcheryScreen pets={myPets} user={user} onBack={() => setCurrentView('pet-hub')} onHatchEgg={handleHatchEggWrapper} onReduceCooldown={handleReduceCooldownWrapper} onStartIncubation={handleStartIncubationWrapper} onWatchAdForHatch={handleWatchAdForHatchWrapper} t={t} tutorialHighlight={tutorialHighlight} />; break;
 
-        case 'team-edit': screen = <TeamEditScreen user={user} pets={myPets} onBack={() => setCurrentView('arena-hub')} onAddPet={(slotIndex) => { setSelectedSlotForTeam(slotIndex); setCurrentView('team-select-pet'); }} onRemovePet={removeFromTeam} t={t} tutorialHighlight={tutorialHighlight} />; break;
+        case 'team-edit': screen = <TeamEditScreen user={user} pets={myPets} onBack={() => setCurrentView('arena-hub')} onAddPet={(slotIndex) => { setSelectedSlotForTeam(slotIndex); setCurrentView('team-select-pet'); }} onRemovePet={removeFromTeam} onAutoFill={autoFillTeam} t={t} tutorialHighlight={tutorialHighlight} />; break;
         case 'team-select-pet': screen = <InventoryScreen pets={getAvailablePets()} title={t ? t('label_select_team_pet') : 'Select Pet for Team'} onBack={() => setCurrentView('team-edit')} onSelectPet={(id) => addToTeam(id)} highlightMode={true} filterEggs={true} t={t} />; break;
 
         case 'inventory': screen = <InventoryScreen pets={myPets} title={t('pethub_inventory_btn')} onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }} filterEggs={true} t={t} />; break;

@@ -2,6 +2,7 @@ import { releasePet } from './releasePet';
 import { handleReduceCooldown, handleReduceCooldownByAd } from './handleReduceCooldown';
 import { addToTeam } from './addToTeam';
 import { removeFromTeam } from './removeFromTeam';
+import { autoFillTeam } from './autoFillTeam';
 import { breedPets } from './breedPets';
 import { renamePet } from './renamePet';
 import { applyItem } from './applyItem';
@@ -102,6 +103,7 @@ export function usePetActions(state, showNotification) {
         handleReduceCooldownByAd: (petId) => handleReduceCooldownByAd(state, showNotification, petId),
         addToTeam: (petId) => addToTeam(state, showNotification, petId),
         removeFromTeam: (index) => removeFromTeam(state, showNotification, index),
+        autoFillTeam: () => autoFillTeam(state, showNotification),
         hatchEgg,
         startIncubation,
         breedPets: (p1, p2) => breedPets(state, showNotification, p1, p2),
