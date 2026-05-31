@@ -1,13 +1,13 @@
 // src/data/villageData.js
 
 export const RESOURCES = {
-    WOOD: { id: 'wood', label: 'Holz', buildingLabel: 'Sägewerk', desc: 'Verarbeitet Holz aus den umliegenden Wäldern.', slots: 5, unlockLevel: 5, color: 'text-amber-700', bg: 'bg-amber-700' },
-    STONE: { id: 'stone', label: 'Stein', buildingLabel: 'Steinbruch', desc: 'Baut wertvolle Mineralien und Gestein ab.', slots: 5, unlockLevel: 5, color: 'text-stone-500', bg: 'bg-stone-500' },
-    SEAFOOD: { id: 'seafood', label: 'Meeresfrüchte', buildingLabel: 'Fischerei', desc: 'Fängt frischen Fisch und sammelt Muscheln.', slots: 5, unlockLevel: 20, color: 'text-blue-400', bg: 'bg-blue-500' },
-    STARDUST: { id: 'stardust', label: 'Sternenstaub', buildingLabel: 'Sternenwarte', desc: 'Sammelt kosmische Energie aus dem All.', slots: 5, unlockLevel: 15, color: 'text-purple-400', bg: 'bg-purple-600' },
-    COMPUTER_PARTS: { id: 'computer_parts', label: 'Computerteile', buildingLabel: 'Tech-Fabrik', desc: 'Produziert hochkomplexe Bauteile.', slots: 5, unlockLevel: 10, color: 'text-cyan-400', bg: 'bg-cyan-700' },
-    SPECIAL: { id: 'special', label: 'Spezial', buildingLabel: 'Alchemielabor', desc: 'Experimentiert mit seltenen Materien.', slots: 5, unlockLevel: 30, color: 'text-pink-500', bg: 'bg-pink-600' },
-    TRAINING: { id: 'training', label: 'Training', buildingLabel: 'Übungsplatz', desc: 'Deine Pets trainieren hier intensiv für Erfahrungspunkte.', slots: 5, unlockLevel: 30, color: 'text-red-500', bg: 'bg-red-600' }
+    WOOD: { id: 'wood', label: 'Wood', buildingLabel: 'Sawmill', desc: 'Processes wood from the surrounding forests.', slots: 5, unlockLevel: 5, color: 'text-amber-700', bg: 'bg-amber-700' },
+    STONE: { id: 'stone', label: 'Stone', buildingLabel: 'Quarry', desc: 'Mines valuable minerals and stone.', slots: 5, unlockLevel: 5, color: 'text-stone-500', bg: 'bg-stone-500' },
+    SEAFOOD: { id: 'seafood', label: 'Seafood', buildingLabel: 'Fishery', desc: 'Catches fresh fish and collects shells.', slots: 5, unlockLevel: 20, color: 'text-blue-400', bg: 'bg-blue-500' },
+    STARDUST: { id: 'stardust', label: 'Stardust', buildingLabel: 'Observatory', desc: 'Collects cosmic energy from the stars.', slots: 5, unlockLevel: 15, color: 'text-purple-400', bg: 'bg-purple-600' },
+    COMPUTER_PARTS: { id: 'computer_parts', label: 'Computer Parts', buildingLabel: 'Tech Factory', desc: 'Produces highly complex components.', slots: 5, unlockLevel: 10, color: 'text-cyan-400', bg: 'bg-cyan-700' },
+    SPECIAL: { id: 'special', label: 'Special', buildingLabel: 'Alchemy Lab', desc: 'Experiments with rare matter.', slots: 5, unlockLevel: 30, color: 'text-pink-500', bg: 'bg-pink-600' },
+    TRAINING: { id: 'training', label: 'Training', buildingLabel: 'Training Ground', desc: 'Your pets train intensively here for experience points.', slots: 5, unlockLevel: 30, color: 'text-red-500', bg: 'bg-red-600' }
 };
 
 export const ALLOWED_TYPES = {
@@ -30,37 +30,37 @@ export const RARITY_MULTIPLIERS = {
 
 export const RESOURCE_ITEMS = {
     wood: [
-        { id: 'wood_oak', label: 'Eiche', rarity: 'COMMON', chance: 75.0, color: 'text-amber-800' },
-        { id: 'wood_beech', label: 'Buche', rarity: 'RARE', chance: 24.85, color: 'text-green-600' },
-        { id: 'wood_mahogany', label: 'Mahagoni', rarity: 'ANCIENT', chance: 0.15, color: 'text-red-900' }
+        { id: 'wood_oak', label: 'Oak', rarity: 'COMMON', chance: 75.0, color: 'text-amber-800' },
+        { id: 'wood_beech', label: 'Beech', rarity: 'RARE', chance: 24.85, color: 'text-green-600' },
+        { id: 'wood_mahogany', label: 'Mahogany', rarity: 'ANCIENT', chance: 0.15, color: 'text-red-900' }
     ],
     stone: [
-        { id: 'stone_rock', label: 'Stein', rarity: 'COMMON', chance: 52.0, color: 'text-stone-400' },
-        { id: 'stone_coal', label: 'Kohle', rarity: 'UNCOMMON', chance: 40.0, color: 'text-slate-800' },
-        { id: 'stone_iron', label: 'Eisen', rarity: 'EPIC', chance: 7.5, color: 'text-slate-500' },
-        { id: 'stone_diamond', label: 'Diamant', rarity: 'MYTHIC', chance: 0.4, color: 'text-cyan-400' },
-        { id: 'stone_emerald', label: 'Smaragd', rarity: 'COSMIC', chance: 0.1, color: 'text-emerald-500' }
+        { id: 'stone_rock', label: 'Rock', rarity: 'COMMON', chance: 52.0, color: 'text-stone-400' },
+        { id: 'stone_coal', label: 'Coal', rarity: 'UNCOMMON', chance: 40.0, color: 'text-slate-800' },
+        { id: 'stone_iron', label: 'Iron', rarity: 'EPIC', chance: 7.5, color: 'text-slate-500' },
+        { id: 'stone_diamond', label: 'Diamond', rarity: 'MYTHIC', chance: 0.4, color: 'text-cyan-400' },
+        { id: 'stone_emerald', label: 'Emerald', rarity: 'COSMIC', chance: 0.1, color: 'text-emerald-500' }
     ],
     seafood: [
-        { id: 'seafood_shells', label: 'Muscheln', rarity: 'COMMON', chance: 82.5, color: 'text-orange-200' },
-        { id: 'seafood_shrimp', label: 'Garnelen', rarity: 'EPIC', chance: 15.0, color: 'text-red-400' },
-        { id: 'seafood_pearl', label: 'Perlen', rarity: 'LEGENDARY', chance: 2.5, color: 'text-white' }
+        { id: 'seafood_shells', label: 'Shells', rarity: 'COMMON', chance: 82.5, color: 'text-orange-200' },
+        { id: 'seafood_shrimp', label: 'Shrimp', rarity: 'EPIC', chance: 15.0, color: 'text-red-400' },
+        { id: 'seafood_pearl', label: 'Pearls', rarity: 'LEGENDARY', chance: 2.5, color: 'text-white' }
     ],
     stardust: [
-        { id: 'stardust_hydrogen', label: 'Wasserstoff', rarity: 'UNCOMMON', chance: 60.0, color: 'text-blue-200' },
-        { id: 'stardust_crystal', label: 'Kristall', rarity: 'RARE', chance: 39.925, color: 'text-purple-300' },
-        { id: 'stardust_star', label: 'Stern', rarity: 'TRANSCENDENT', chance: 0.075, color: 'text-yellow-100' }
+        { id: 'stardust_hydrogen', label: 'Hydrogen', rarity: 'UNCOMMON', chance: 60.0, color: 'text-blue-200' },
+        { id: 'stardust_crystal', label: 'Crystal', rarity: 'RARE', chance: 39.925, color: 'text-purple-300' },
+        { id: 'stardust_star', label: 'Star', rarity: 'TRANSCENDENT', chance: 0.075, color: 'text-yellow-100' }
     ],
     computer_parts: [
-        { id: 'comp_cable', label: 'Kabel', rarity: 'COMMON', chance: 98.0, color: 'text-gray-400' },
-        { id: 'comp_ram', label: 'RAM-Modul', rarity: 'LEGENDARY', chance: 1.8, color: 'text-green-400' },
-        { id: 'comp_gpu', label: 'Grafikkarte', rarity: 'DIVINE', chance: 0.2, color: 'text-red-500' }
+        { id: 'comp_cable', label: 'Cable', rarity: 'COMMON', chance: 98.0, color: 'text-gray-400' },
+        { id: 'comp_ram', label: 'RAM Module', rarity: 'LEGENDARY', chance: 1.8, color: 'text-green-400' },
+        { id: 'comp_gpu', label: 'Graphics Card', rarity: 'DIVINE', chance: 0.2, color: 'text-red-500' }
     ],
     special: [
-        { id: 'special_watch', label: 'Uhr', rarity: 'UNCOMMON', chance: 55.0, color: 'text-amber-200' },
-        { id: 'special_area', label: 'Fläche m²', rarity: 'RARE', chance: 43.75, color: 'text-green-300' },
+        { id: 'special_watch', label: 'Watch', rarity: 'UNCOMMON', chance: 55.0, color: 'text-amber-200' },
+        { id: 'special_area', label: 'Plot m²', rarity: 'RARE', chance: 43.75, color: 'text-green-300' },
         { id: 'special_plutonium', label: 'Plutonium', rarity: 'MYTHIC', chance: 1.0, color: 'text-green-500' },
-        { id: 'special_antimatter', label: 'Antimaterie', rarity: 'COSMIC', chance: 0.25, color: 'text-purple-600' }
+        { id: 'special_antimatter', label: 'Antimatter', rarity: 'COSMIC', chance: 0.25, color: 'text-purple-600' }
     ]
 };
 
@@ -158,10 +158,10 @@ const generateMilestones = () => {
                 if (isHighestChance) { target = 1000; reward = { type: 'COINS', amount: 50 }; } 
                 else { target = Math.ceil(1000 * (item.chance / 100)); const potionVariant = RARITY_POTION_MAP[item.rarity] || 'XP_POTION_SMALL'; reward = { type: 'CONSUMABLE', variant: potionVariant, amount: 1 }; }
             }
-            milestones.push({ id: `ms_${item.id}`, resourceId: resKey, itemId: item.id, target: target, reward: reward, label: `Sammle ${target}x ${item.label}` });
+            milestones.push({ id: `ms_${item.id}`, resourceId: resKey, itemId: item.id, target: target, reward: reward, label: `Collect ${target}x ${item.label}` });
         });
     });
-    milestones.push({ id: 'ms_time_3h', type: 'TIME', target: 10800, reward: { type: 'VILLAGE_XP', amount: 15000 }, label: 'Verbringe 3 Stunden im Dorf' });
+    milestones.push({ id: 'ms_time_3h', type: 'TIME', target: 10800, reward: { type: 'VILLAGE_XP', amount: 15000 }, label: 'Spend 3 hours in the village' });
     return milestones;
 };
 
@@ -170,32 +170,32 @@ export const MILESTONES = generateMilestones();
 export const SPECIAL_OFFERS = [
     {
         id: 'OFFER_AD_TICKET',
-        label: 'Werbeticket',
-        description: 'Füllt Idle-Zeit auf',
+        label: 'Ad Ticket',
+        description: 'Fills up idle time',
         costItem: 'special_watch',
         costAmount: 100,
         reward: { type: 'AD_TICKET', amount: 1 }
     },
     {
         id: 'OFFER_BREED_TICKET',
-        label: 'Zucht-Ticket',
-        description: 'Erlaubt eine Zucht',
+        label: 'Breed Ticket',
+        description: 'Allows one breeding',
         costItem: 'special_area',
         costAmount: 100,
         reward: { type: 'ITEM', itemType: 'TICKET', itemVariant: 'BREED', amount: 1 }
     },
     {
         id: 'OFFER_XP_LARGE',
-        label: 'Große XP-Flasche',
-        description: '5000 XP für ein Pet',
+        label: 'Large XP Potion',
+        description: '5000 XP for a pet',
         costItem: 'special_plutonium',
         costAmount: 50,
         reward: { type: 'CONSUMABLE', variant: 'XP_POTION_LARGE', amount: 1 }
     },
     {
         id: 'OFFER_SHINY',
-        label: 'Shiny-Flasche',
-        description: 'Macht ein Pet Shiny',
+        label: 'Shiny Potion',
+        description: 'Makes a pet Shiny',
         costItem: 'special_antimatter',
         costAmount: 1,
         reward: { type: 'CONSUMABLE', variant: 'SHINY_POTION', amount: 1 }

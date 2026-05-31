@@ -23,14 +23,14 @@ export const TOWER_STAGES = Array.from({ length: 100 }, (_, i) => {
     // Season 1 Boss-Stufen: 35 (CHAOS-Wächter) und 40 (DIVINE-Champion)
     if (stage === 35) {
         return {
-            id: 35, label: 'Stufe 35 – Chaos-Wächter', enemyCount: 1,
+            id: 35, label: 'Stage 35 – Chaos Guardian', enemyCount: 1,
             enemyLevel: 40, enemyRarity: 'EPIC', bossType: 'CHAOS', isBoss: true,
             reward: { type: 'LOOTBOX', variant: 'RARE', amount: 1 }
         };
     }
     if (stage === 40) {
         return {
-            id: 40, label: 'Stufe 40 – Göttlicher Champion', enemyCount: 1,
+            id: 40, label: 'Stage 40 – Divine Champion', enemyCount: 1,
             enemyLevel: 48, enemyRarity: 'EPIC', bossType: 'DIVINE', isBoss: true,
             reward: { type: 'LOOTBOX', variant: 'PREMIUM', amount: 1 }
         };

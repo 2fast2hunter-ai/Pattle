@@ -35,7 +35,7 @@ export const LOOTBOXES = {
     },
     MASTER: {
         id: 'MASTER',
-        label: 'Meister Box',
+        label: 'Master Box',
         cost: 15000,
         currency: 'COINS',
         drops: {
@@ -53,7 +53,7 @@ export const LOOTBOXES = {
     },
     DIVINE: {
         id: 'DIVINE',
-        label: 'Göttliche Box',
+        label: 'Divine Box',
         cost: 50000,
         currency: 'COINS',
         drops: {
@@ -69,25 +69,25 @@ export const LOOTBOXES = {
 };
 
 export const SHOP_ITEMS = {
-    TICKET_BUNDLE_COINS: { costCurrency: 'COINS', costAmount: 500, tickets: 1, label: "1 Zucht-Ticket" },
-    TICKET_BUNDLE_GEMS: { costCurrency: 'GEMS', costAmount: 10, tickets: 5, label: "5 Zucht-Tickets" },
-   AD_REWARD: { rewardType: 'GEMS', rewardAmount: 5, label: "5 Edelsteine" }
+    TICKET_BUNDLE_COINS: { costCurrency: 'COINS', costAmount: 500, tickets: 1, label: "1 Breed Ticket" },
+    TICKET_BUNDLE_GEMS: { costCurrency: 'GEMS', costAmount: 10, tickets: 5, label: "5 Breed Tickets" },
+   AD_REWARD: { rewardType: 'GEMS', rewardAmount: 5, label: "5 Gems" }
 };
 
 // --- AD REWARDS DEFINITION ---
 export const AD_REWARDS = [
-    { id: 'GEMS_5', type: 'GEMS', amount: 5, label: '5 Edelsteine', probability: 25 },
-    { id: 'COINS_250', type: 'COINS', amount: 250, label: '250 Münzen', probability: 25 },
-    { id: 'BUFF_COINS', type: 'BUFF', buffType: 'COIN_BOOST', amount: 10, label: '2x Münzen (10 Kämpfe)', probability: 25 },
-    { id: 'BUFF_XP', type: 'BUFF', buffType: 'XP_BOOST', amount: 10, label: '2x XP (10 Kämpfe)', probability: 25 }
+    { id: 'GEMS_5', type: 'GEMS', amount: 5, label: '5 Gems', probability: 25 },
+    { id: 'COINS_250', type: 'COINS', amount: 250, label: '250 Coins', probability: 25 },
+    { id: 'BUFF_COINS', type: 'BUFF', buffType: 'COIN_BOOST', amount: 10, label: '2x Coins (10 Battles)', probability: 25 },
+    { id: 'BUFF_XP', type: 'BUFF', buffType: 'XP_BOOST', amount: 10, label: '2x XP (10 Battles)', probability: 25 }
 ];
 
 // --- NEU: ZEITBASIERTE BELOHNUNGEN (OHNE AD) ---
 export const TIMED_REWARDS = [
     {
         id: 'FREE_IDLE_TICKET',
-        label: 'Gratis Ticket',
-        description: 'Ein Idle-Ticket geschenkt!',
+        label: 'Free Ticket',
+        description: 'A free idle ticket!',
         cooldown: 20 * 60 * 1000, // 20 Minuten in Millisekunden
         reward: { type: 'AD_TICKET', amount: 1 }
     }
