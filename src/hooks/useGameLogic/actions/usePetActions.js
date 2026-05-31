@@ -56,7 +56,7 @@ export function usePetActions(state, showNotification) {
         try {
             // Wenn kein Custom Name, versuche den Spezies-Namen zu nehmen, falls der aktuelle Name generisch ist
             let finalName = customName || pet.name;
-            if (!customName && pet.name.startsWith('Wildes')) {
+            if (!customName && pet.name.startsWith('Wild')) {
                  const speciesInfo = ZODIAC_ANIMALS[pet.species];
                  if (speciesInfo) finalName = speciesInfo.label;
             }

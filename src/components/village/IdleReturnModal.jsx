@@ -55,7 +55,7 @@ export default function IdleReturnModal({ result, onClose, t }) {
 
                 {grouped.length === 0 ? (
                     <div className="text-center py-6 text-slate-500 text-sm">
-                        {t ? t('idle_return_nothing') : 'Nichts produziert.'}
+                        {t ? t('idle_return_nothing') : 'Nothing produced.'}
                     </div>
                 ) : (
                     <div className="space-y-2 max-h-64 overflow-y-auto">

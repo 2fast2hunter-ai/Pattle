@@ -53,19 +53,19 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                     <HubTile
                         title={t ? t('arena_tower_btn') : "Battle Tower"}
-                        subtitle={t ? t('arena_tower_desc') : "PvE Herausforderung"}
+                        subtitle={t ? t('arena_tower_desc') : "PvE Challenge"}
                         icon={Castle}
                         colorFrom="from-indigo-700"
                         colorTo="to-purple-800"
                         iconColor="text-indigo-300"
                         onClick={onTower}
-                        extraInfo={`${t ? t('arena_stage') : 'Stufe'} ${user?.towerProgress || 1}`}
+                        extraInfo={`${t ? t('arena_stage') : 'Stage'} ${user?.towerProgress || 1}`}
                         delay={100}
                     />
 
                     <HubTile
                         title={t ? t('arena_team_btn') : "Team"}
-                        subtitle={t ? t('arena_team_desc') : "Verwalten"}
+                        subtitle={t ? t('arena_team_desc') : "Manage"}
                         icon={Shield}
                         colorFrom="from-slate-700"
                         colorTo="to-slate-800"

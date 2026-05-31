@@ -32,11 +32,11 @@ export default function TowerScreen({ user, onBack, onStartStage }) {
                     </button>
                     <div>
                         <h2 className="text-2xl font-black italic tracking-wide text-white uppercase">BATTLE TOWER</h2>
-                        <p className="text-xs font-bold text-slate-400">Monatlicher Reset</p>
+                        <p className="text-xs font-bold text-slate-400">Monthly Reset</p>
                     </div>
                 </div>
                 <div className="bg-indigo-600 px-3 py-1 rounded-lg text-xs font-black text-white shadow-lg">
-                    Stufe {currentStage} / 100
+                    Stage {currentStage} / 100
                 </div>
             </div>
 

@@ -115,7 +115,7 @@ export default function EggSlot({
             <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner border border-white/5">
                 <Plus className="w-6 h-6 text-slate-500 group-hover:text-emerald-400" />
             </div>
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-emerald-400">{t ? t('hatchery_assign_btn') : 'Belegen'}</div>
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider group-hover:text-emerald-400">{t ? t('hatchery_assign_btn') : 'Assign'}</div>
         </button>
     );
 }

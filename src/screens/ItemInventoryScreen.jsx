@@ -138,9 +138,9 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
 
                 {/* 3. TICKETS */}
                 {ticketItems.length > 0 && (
-                    <InventorySection title={t ? t('inv_special') : 'Spezial-Items'} icon={Ticket} className="delay-150">
+                    <InventorySection title={t ? t('inv_special') : 'Special Items'} icon={Ticket} className="delay-150">
                         {ticketItems.map((ticket, idx) => (
-                            <InventoryCard key={idx} icon={Ticket} count={ticket.count} label={t ? t('inv_ticket_breed') : "Zucht-Ticket"}
+                            <InventoryCard key={idx} icon={Ticket} count={ticket.count} label={t ? t('inv_ticket_breed') : "Breed Ticket"}
                                 colorColor="text-pink-400" bgColor="bg-pink-600" ringColor="ring-pink-500/50"
                                 footerButton={
                                     <button onClick={(e) => { e.stopPropagation(); onRedeemTicket(ticket.ids[0]); }}

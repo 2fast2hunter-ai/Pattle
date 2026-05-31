@@ -19,7 +19,7 @@ export default function GauntletSummary({
                 <Flame className="w-12 h-12 text-white fill-current animate-pulse" />
             </div>
 
-            <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-1">{t ? t('gauntlet_finished') : 'GAUNTLET BEENDET'}</h2>
+            <h2 className="text-4xl font-black text-white uppercase tracking-tighter mb-1">{t ? t('gauntlet_finished') : 'GAUNTLET OVER'}</h2>
             <p className="text-red-200 font-bold mb-8 uppercase tracking-widest text-xs opacity-70">{t ? t('gauntlet_over') : 'No combat-ready pets left'}</p>
 
             <div className="grid grid-cols-2 gap-4 w-full mb-8">
@@ -35,7 +35,7 @@ export default function GauntletSummary({
 
             <div className="w-full bg-slate-800/80 rounded-2xl p-4 border border-white/5 mb-6 shrink-0">
                 <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-slate-300 uppercase">{t ? t('gauntlet_rewards') : 'Belohnungen'}</span>
+                    <span className="text-xs font-bold text-slate-300 uppercase">{t ? t('gauntlet_rewards') : 'Rewards'}</span>
                 </div>
                 <div className="flex justify-around items-center">
                     <div className="flex flex-col items-center">

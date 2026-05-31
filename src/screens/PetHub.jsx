@@ -67,8 +67,8 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
 
         {/* 1. PET SAMMLUNG (Blau) */}
         <HubCard 
-            title={t ? t('pethub_inventory_btn') : "SAMMLUNG"} 
-            subtitle={t ? t('pethub_inventory_desc') : "Alle deine Monster"} 
+            title={t ? t('pethub_inventory_btn') : "COLLECTION"} 
+            subtitle={t ? t('pethub_inventory_desc') : "All your pets"}
             icon={LayoutGrid} 
             colorFrom="from-blue-600" 
             colorTo="to-indigo-600" 
