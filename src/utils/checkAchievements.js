@@ -52,15 +52,10 @@ export async function checkAchievements(user, trigger, projected = {}, showNotif
     for (const a of toUnlock) {
       const title = lang === 'de' ? a.titleDe : a.title;
       const rewardText = [
-        a.reward?.coins ? `+${a.reward.coins} Gold` : '',
+        a.reward?.coins ? `+${a.reward.coins} Coins` : '',
         a.reward?.gems ? `+${a.reward.gems} Gems` : '',
       ].filter(Boolean).join(', ');
-      showNotification(
-        lang === 'de'
-          ? `Achievement freigeschaltet: ${title}! ${rewardText}`
-          : `Achievement unlocked: ${title}! ${rewardText}`,
-        'success'
-      );
+      showNotification(`Achievement unlocked: ${title}! ${rewardText}`, 'success');
     }
   }
 }

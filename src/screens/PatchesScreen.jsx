@@ -3,6 +3,16 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 const PATCHES = [
     {
+        version: 'v1.7.0',
+        date: '2026-05-31',
+        changes: [
+            { type: 'fixed', text: 'Full German→English translation pass: all UI labels, data files, quest names, rarity names, type names, village buildings, and shop items are now in English' },
+            { type: 'fixed', text: 'Leaderboard: player name fallback and daily diff label now in English' },
+            { type: 'fixed', text: 'Inventory: rarity filter "All" button was showing German' },
+            { type: 'fixed', text: 'Achievement notification now shows "Coins" instead of "Gold"' },
+        ]
+    },
+    {
         version: 'v1.6.0',
         date: '2026-05-28',
         changes: [

@@ -24,7 +24,7 @@ export default function GauntletSummary({
 
             <div className="grid grid-cols-2 gap-4 w-full mb-8">
                 <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center">
-                    <span className="text-[10px] uppercase font-bold text-slate-400 mb-1">{t ? t('gauntlet_stage') : 'Erreichte Stufe'}</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 mb-1">{t ? t('gauntlet_stage') : 'Stage Reached'}</span>
                     <span className="text-3xl font-black text-white">{battleState.gauntletRound || 1}</span>
                 </div>
                 <div className="bg-slate-800/50 p-4 rounded-2xl border border-white/5 flex flex-col items-center">

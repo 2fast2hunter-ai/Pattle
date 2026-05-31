@@ -41,7 +41,7 @@ export default function PetAvatar({ pet, className = "w-16 h-16" }) {
   let animalInfo = ZODIAC_ANIMALS[speciesKey];
   
   if (!animalInfo) {
-      animalInfo = { id: 'UNKNOWN', label: 'Unbekannt', icon: <HelpCircle className="w-1/2 h-1/2 text-white/80" /> };
+      animalInfo = { id: 'UNKNOWN', label: 'Unknown', icon: <HelpCircle className="w-1/2 h-1/2 text-white/80" /> };
   }
 
   const imageName = speciesKey.toLowerCase();

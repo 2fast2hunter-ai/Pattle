@@ -195,7 +195,7 @@ export function useShopActions(state, showNotification) {
             if (result.data.success) {
                 return result.data.pet;
             } else {
-                throw new Error(result.data.message || "Unbekannter Server Fehler");
+                throw new Error(result.data.message || "Unknown server error");
             }
         } catch (error) {
             console.error("Lootbox Error (Cloud Function):", error);

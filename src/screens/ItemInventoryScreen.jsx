@@ -60,7 +60,7 @@ export default function ItemInventoryScreen({ pets, onBack, onStartIncubation, u
                                     <div className="grid grid-cols-2 gap-2">
                                         {selectedItem.base.parents.map((p, i) => {
                                             const pType = TYPES[p.type] || TYPES.FIRE;
-                                            const pSpecies = ZODIAC_ANIMALS[p.species] || { label: 'Unbekannt' };
+                                            const pSpecies = ZODIAC_ANIMALS[p.species] || { label: 'Unknown' };
                                             return (
                                                 <div key={i} className="bg-slate-900 rounded-lg p-2 flex flex-col items-center border border-white/5 shadow-sm">
                                                     <div className="font-bold text-xs text-white mb-0.5 truncate w-full text-center">{p.name}</div>

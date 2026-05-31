@@ -81,7 +81,7 @@ export default function InventoryScreen({ pets, title = "Inventar", onBack, onSe
 
                 {/* Rarity Filter Pills */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                    <button onClick={() => setFilterRarity('ALL')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filterRarity === 'ALL' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400 border border-white/5'}`}>Alle</button>
+                    <button onClick={() => setFilterRarity('ALL')} className={`px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap transition-all ${filterRarity === 'ALL' ? 'bg-white text-slate-950' : 'bg-slate-800 text-slate-400 border border-white/5'}`}>{t ? t('filter_all') : 'All'}</button>
                     {Object.keys(RARITIES).map(rKey => {
                         const rar = RARITIES[rKey];
                         return (

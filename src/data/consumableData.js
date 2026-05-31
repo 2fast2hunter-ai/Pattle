@@ -32,7 +32,7 @@ export const CONSUMABLES = {
         label: 'Shiny Potion',
         value: 0, 
         rarity: 'MYTHIC',
-        desc: 'Macht ein Pet SHINY! Alle Stats +1, HP +10.',
+        desc: 'Makes a pet SHINY! All stats +1, HP +10.',
         color: 'text-cyan-300',
         bg: 'bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500' 
     }

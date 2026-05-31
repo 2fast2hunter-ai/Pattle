@@ -26,7 +26,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
                 category,
                 message: message.trim(),
                 userId: user?.id || user?.uid || 'anonymous',
-                userName: user?.displayName || user?.username || 'Unbekannt',
+                userName: user?.displayName || user?.username || 'Anonymous',
                 status: 'new',
                 createdAt: serverTimestamp(),
             });

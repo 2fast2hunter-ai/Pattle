@@ -56,7 +56,7 @@ export default function LeaderboardItem({ player, index, isMe, onViewPlayer, typ
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className={`font-black text-sm truncate ${isMe ? 'text-indigo-200' : 'text-slate-200'}`}>
-                        {player.username || 'Unbekannt'} {isMe && '(Du)'}
+                        {player.username || 'Unknown'} {isMe && '(Me)'}
                     </span>
                     {player.level && <span className="text-[9px] font-bold text-slate-500 bg-slate-950 px-1.5 py-0.5 rounded border border-white/5">Lvl {player.level}</span>}
                 </div>
@@ -71,7 +71,7 @@ export default function LeaderboardItem({ player, index, isMe, onViewPlayer, typ
                     {type === 'elo' && (
                         <div className={`text-[10px] font-bold flex items-center gap-0.5 ${isNeutral ? 'text-slate-500' : (isPositive ? 'text-green-400' : 'text-red-400')}`}>
                             {isNeutral ? <Minus className="w-3 h-3" /> : (isPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />)}
-                            {!isNeutral && (isPositive ? '+' : '')}{diff} heute
+                            {!isNeutral && (isPositive ? '+' : '')}{diff} today
                         </div>
                     )}
                     {type === 'gauntlet' && (

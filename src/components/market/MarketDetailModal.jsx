@@ -8,7 +8,7 @@ export default function MarketDetailModal({ pet, onClose, price, onBuy, isOwner,
     const typeInfo = TYPES[pet.type] || TYPES.FIRE;
     const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
     const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
-    const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt' };
+    const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unknown' };
 
     return (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in zoom-in-50">

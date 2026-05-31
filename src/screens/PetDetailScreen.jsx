@@ -19,7 +19,7 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
   const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
   const type = TYPES[pet.type] || TYPES.FIRE;
   const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
-  const species = ZODIAC_ANIMALS[pet.species] || { label: 'Unbekannt' };
+  const species = ZODIAC_ANIMALS[pet.species] || { label: 'Unknown' };
   
   // --- NEU: Benutze die Helper-Funktion für korrekten Balken ---
   const { current: levelXp, max: levelMaxXp, percent: xpPercent } = getPetLevelProgress(pet);

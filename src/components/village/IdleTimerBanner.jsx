@@ -58,7 +58,7 @@ export default function IdleTimerBanner({ isActive, timeLeftStr, onAddIdleTime, 
                     <button
                         onClick={handleWatchAdForIdle}
                         className="flex flex-col items-center justify-center px-3 py-2 rounded-xl border bg-indigo-900/60 border-indigo-500/30 hover:bg-indigo-800/60 transition-all active:scale-95"
-                        title="Werbung schauen: +1 Stunde Produktion"
+                        title="Watch ad: +1 hour production"
                     >
                         <div className="flex items-center gap-1 text-xs font-bold text-indigo-300 mb-0.5">
                             <Tv className="w-3 h-3" /> +1h
