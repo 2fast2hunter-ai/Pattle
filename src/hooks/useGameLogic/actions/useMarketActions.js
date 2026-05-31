@@ -36,7 +36,7 @@ export function useMarketActions(state, showNotification) {
 
         const LISTING_FEE = 100;
         if (user.coins < LISTING_FEE) {
-            showNotification(state.t ? state.t('notif_market_no_fee') : 'Not enough coins for the listing fee (100 Gold)!', "error");
+            showNotification(state.t ? state.t('notif_market_no_fee') : 'Not enough coins for the listing fee (100 Coins)!', "error");
             return;
         }
         
@@ -77,7 +77,7 @@ export function useMarketActions(state, showNotification) {
         // -------------------------
 
         if (user.coins < 100) {
-            showNotification(state.t ? state.t('notif_market_no_fee') : 'Not enough coins for the listing fee (100 Gold)!', "error");
+            showNotification(state.t ? state.t('notif_market_no_fee') : 'Not enough coins for the listing fee (100 Coins)!', "error");
             return;
         }
 

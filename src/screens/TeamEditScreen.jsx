@@ -30,7 +30,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
             </h2>
             <div className="flex items-center gap-1.5 mt-1">
                   <Shield className="w-3.5 h-3.5 text-indigo-400" />
-                  <span className="text-xs font-bold text-slate-400">Verwaltung</span>
+                  <span className="text-xs font-bold text-slate-400">Management</span>
              </div>
           </div>
           
@@ -50,7 +50,7 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                      <Users className="w-5 h-5" />
                  </div>
                  <div>
-                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Belegt</div>
+                     <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">Used</div>
                      <div className="text-xl font-black text-white">{teamCount} <span className="text-slate-600 text-sm">/ {unlockedSlots}</span></div>
                  </div>
              </div>
@@ -96,8 +96,8 @@ export default function TeamEditScreen({ user, pets, onBack, onAddPet, onRemoveP
                     <Plus className="w-6 h-6 text-slate-500 group-hover:text-indigo-400 transition-colors" />
                 </div>
                 <div className="text-left">
-                    <div className="font-bold text-slate-400 group-hover:text-indigo-300 transition-colors">Leerer Slot {index + 1}</div>
-                    <div className="text-xs text-slate-600 font-bold uppercase">Tippen zum Belegen</div>
+                    <div className="font-bold text-slate-400 group-hover:text-indigo-300 transition-colors">Empty Slot {index + 1}</div>
+                    <div className="text-xs text-slate-600 font-bold uppercase">Tap to fill</div>
                 </div>
             </button>
           );

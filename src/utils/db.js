@@ -24,7 +24,7 @@ const checkAndMigrateLevel = async (userData) => {
                 level: correctLevel,
                 xpToNextLevel: correctXpToNext
             });
-        } catch (e) { console.error("[DB] Fehler bei Level-Migration:", e); }
+        } catch (e) { console.error("[DB] Error during level migration:", e); }
     }
 };
 
@@ -55,7 +55,7 @@ const _checkAndMigratePet = async (pet) => {
                 maxXp: correctMaxXp,
                 level: currentLevel
             });
-        } catch (e) { console.error("Fehler bei Pet Migration:", e); }
+        } catch (e) { console.error("Error during pet migration:", e); }
     }
 };
 
@@ -208,7 +208,7 @@ const checkAndResetLeaderboard = async (userData) => {
             }
 
         } catch (e) {
-            console.error("[DB] Fehler beim Leaderboard Reset (Reward):", e);
+            console.error("[DB] Error during leaderboard reset (reward):", e);
             updates.seasonRewardMessage = "Season end! Rating has been reset.";
         }
 
@@ -216,7 +216,7 @@ const checkAndResetLeaderboard = async (userData) => {
         try {
             await updateDoc(doc(db, "users", userData.id), updates);
         } catch (e) {
-            console.error("[DB] Kritischer Fehler beim Speichern des Resets:", e);
+            console.error("[DB] Critical error saving reset:", e);
         }
     }
 };
@@ -278,7 +278,7 @@ const checkAndResetGauntletLeaderboard = async (userData) => {
         try {
             await updateDoc(doc(db, "users", userData.id), updates);
         } catch (e) {
-            console.error("[DB] Kritischer Fehler beim Speichern des Gauntlet Resets:", e);
+            console.error("[DB] Critical error saving gauntlet reset:", e);
         }
     }
 };
@@ -459,7 +459,7 @@ export const batchUpdatePetsXp = async (updatesList) => {
         await batch.commit();
         return { success: true, results };
     } catch (e) {
-        console.error("[DB] Fehler bei Batch XP Update:", e);
+        console.error("[DB] Error in batch XP update:", e);
         return { success: false, error: e };
     }
 };
@@ -515,17 +515,17 @@ export const addPetXp = async (pet, xpAmount) => {
         console.log(`[DB] addPetXp: ${pet.name} +${xpAmount} XP -> Lvl ${currentLevel}`);
         return { success: true, levelUp, newLevel: currentLevel };
     } catch (e) {
-        console.error("[DB] Fehler beim Speichern der Pet-XP:", e);
+        console.error("[DB] Error saving pet XP:", e);
         return { success: false, error: e };
     }
 };
 
 export const removePetFromDB = async (petId) => { await deleteDoc(doc(db, "pets", petId)); };
 export const createMarketListing = async (listing) => { const docRef = await addDoc(collection(db, "market"), listing); return docRef.id; };
-export const createResourceListing = async (user, itemId, amount, price) => { if (!user || !user.id) throw new Error("User not found."); const userRef = doc(db, "users", user.id); const LISTING_FEE = 100; try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) throw new Error("User does not exist."); const userData = userDoc.data(); if (userData.coins < LISTING_FEE) throw new Error("Not enough Gold for the listing fee (100)."); const storage = userData.village?.storage || {}; if ((storage[itemId] || 0) < amount) throw new Error("Not enough resources in storage."); const newStorage = { ...storage }; newStorage[itemId] -= amount; if (newStorage[itemId] <= 0) delete newStorage[itemId]; transaction.update(userRef, { coins: userData.coins - LISTING_FEE, "village.storage": newStorage }); const newListingRef = doc(collection(db, "market")); const listingData = { type: 'RESOURCE', itemId: itemId, amount: amount, price: price, sellerId: user.id, sellerName: user.username, createdAt: Date.now() }; transaction.set(newListingRef, listingData); }); return { success: true }; } catch (e) { console.error("Fehler beim Erstellen des Ressourcen-Angebots:", e); return { success: false, message: e.message }; } };
+export const createResourceListing = async (user, itemId, amount, price) => { if (!user || !user.id) throw new Error("User not found."); const userRef = doc(db, "users", user.id); const LISTING_FEE = 100; try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) throw new Error("User does not exist."); const userData = userDoc.data(); if (userData.coins < LISTING_FEE) throw new Error("Not enough Coins for the listing fee (100)."); const storage = userData.village?.storage || {}; if ((storage[itemId] || 0) < amount) throw new Error("Not enough resources in storage."); const newStorage = { ...storage }; newStorage[itemId] -= amount; if (newStorage[itemId] <= 0) delete newStorage[itemId]; transaction.update(userRef, { coins: userData.coins - LISTING_FEE, "village.storage": newStorage }); const newListingRef = doc(collection(db, "market")); const listingData = { type: 'RESOURCE', itemId: itemId, amount: amount, price: price, sellerId: user.id, sellerName: user.username, createdAt: Date.now() }; transaction.set(newListingRef, listingData); }); return { success: true }; } catch (e) { console.error("Error creating resource listing:", e); return { success: false, message: e.message }; } };
 export const deleteMarketListing = async (listingId) => { await deleteDoc(doc(db, "market", listingId)); };
-export const buyMarketItem = async (user, listingId) => { const listingRef = doc(db, "market", listingId); const buyerRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Listing no longer available."); const listing = listingSnap.data(); const price = listing.price; const sellerId = listing.sellerId; if (sellerId === user.id) throw new Error("You cannot buy your own listing."); const buyerSnap = await transaction.get(buyerRef); if (!buyerSnap.exists()) throw new Error("Buyer profile error."); const currentCoins = buyerSnap.data().coins || 0; if (currentCoins < price) throw new Error("Not enough coins!"); const fee = Math.floor(price * 0.05); const payout = price - fee; const sellerRef = doc(db, "users", sellerId); transaction.update(buyerRef, { coins: increment(-price), "stats.marketSpent": increment(price) }); transaction.update(sellerRef, { coins: increment(payout), "stats.marketEarned": increment(payout) }); if (listing.type === 'RESOURCE') { transaction.update(buyerRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p, index) => { const newId = `${Date.now()}_${index}_${Math.floor(Math.random() * 1000)}`; const newPet = { ...p, id: newId, ownerId: user.id }; const newPetRef = doc(db, "pets", newId); transaction.set(newPetRef, newPet); }); } else { const newId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`; const newPet = { ...listing.pet, id: newId, ownerId: user.id }; transaction.set(doc(db, "pets", newId), newPet); } } transaction.delete(listingRef); }); return { success: true, message: `Purchase successful!` }; } catch (e) { console.error("Marktplatz Fehler:", e); return { success: false, message: e.message }; } };
-export const cancelMarketListing = async (user, listingId) => { const listingRef = doc(db, "market", listingId); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Listing no longer exists."); const listing = listingSnap.data(); if (listing.sellerId !== user.id) throw new Error("This is not your listing!"); if (listing.type === 'RESOURCE') { const userRef = doc(db, "users", user.id); transaction.update(userRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p) => { const petRef = doc(db, "pets", p.id); transaction.set(petRef, { ...p, ownerId: user.id }); }); } else if (listing.pet) { const petRef = doc(db, "pets", listing.pet.id); transaction.set(petRef, { ...listing.pet, ownerId: user.id }); } } transaction.delete(listingRef); }); return { success: true, message: "Listing removed. Items returned!" }; } catch (e) { console.error("Cancel Listing Fehler:", e); return { success: false, message: e.message }; } };
+export const buyMarketItem = async (user, listingId) => { const listingRef = doc(db, "market", listingId); const buyerRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Listing no longer available."); const listing = listingSnap.data(); const price = listing.price; const sellerId = listing.sellerId; if (sellerId === user.id) throw new Error("You cannot buy your own listing."); const buyerSnap = await transaction.get(buyerRef); if (!buyerSnap.exists()) throw new Error("Buyer profile error."); const currentCoins = buyerSnap.data().coins || 0; if (currentCoins < price) throw new Error("Not enough coins!"); const fee = Math.floor(price * 0.05); const payout = price - fee; const sellerRef = doc(db, "users", sellerId); transaction.update(buyerRef, { coins: increment(-price), "stats.marketSpent": increment(price) }); transaction.update(sellerRef, { coins: increment(payout), "stats.marketEarned": increment(payout) }); if (listing.type === 'RESOURCE') { transaction.update(buyerRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p, index) => { const newId = `${Date.now()}_${index}_${Math.floor(Math.random() * 1000)}`; const newPet = { ...p, id: newId, ownerId: user.id }; const newPetRef = doc(db, "pets", newId); transaction.set(newPetRef, newPet); }); } else { const newId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`; const newPet = { ...listing.pet, id: newId, ownerId: user.id }; transaction.set(doc(db, "pets", newId), newPet); } } transaction.delete(listingRef); }); return { success: true, message: `Purchase successful!` }; } catch (e) { console.error("Marketplace error:", e); return { success: false, message: e.message }; } };
+export const cancelMarketListing = async (user, listingId) => { const listingRef = doc(db, "market", listingId); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Listing no longer exists."); const listing = listingSnap.data(); if (listing.sellerId !== user.id) throw new Error("This is not your listing!"); if (listing.type === 'RESOURCE') { const userRef = doc(db, "users", user.id); transaction.update(userRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p) => { const petRef = doc(db, "pets", p.id); transaction.set(petRef, { ...p, ownerId: user.id }); }); } else if (listing.pet) { const petRef = doc(db, "pets", listing.pet.id); transaction.set(petRef, { ...listing.pet, ownerId: user.id }); } } transaction.delete(listingRef); }); return { success: true, message: "Listing removed. Items returned!" }; } catch (e) { console.error("Error cancelling listing:", e); return { success: false, message: e.message }; } };
 export const checkAndInitVillage = async (user) => { if (!user || !user.id) return; const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt; if (needsUpdate) { const oldVillage = user.village || {}; const oldStats = oldVillage.stats || {}; const oldWorkers = oldVillage.workers || {}; const fillSlots = (arr) => { const newArr = arr ? [...arr] : []; while (newArr.length < 5) newArr.push(null); return newArr; }; const villageData = { level: oldVillage.level || 1, xp: oldVillage.xp || 0, xpToNext: oldVillage.xpToNext || 16000, lastCollectionTime: oldVillage.lastCollectionTime || Date.now(), idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, storage: oldVillage.storage || {}, buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 }, workers: { wood: fillSlots(oldWorkers.wood), stone: fillSlots(oldWorkers.stone), seafood: fillSlots(oldWorkers.seafood), stardust: fillSlots(oldWorkers.stardust), computer_parts: fillSlots(oldWorkers.computer_parts), special: fillSlots(oldWorkers.special) }, milestones: oldVillage.milestones || {}, stats: { totalCollected: oldStats.totalCollected || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, totalItemsCollected: oldStats.totalItemsCollected || {}, totalIdleTime: oldStats.totalIdleTime || 0 } }; const userRef = doc(db, "users", user.id); await updateDoc(userRef, { village: villageData }); } };
 export const getLeaderboard = async (type = 'elo') => {
     const orderByField = type === 'gauntlet' ? 'stats.gauntletHighscore' : 'rating';
@@ -535,7 +535,7 @@ export const getLeaderboard = async (type = 'elo') => {
 };
 export const findUserPublic = async (targetId) => { try { const docRef = doc(db, "users", targetId); const docSnap = await getDoc(docRef); if (docSnap.exists()) return { id: docSnap.id, ...docSnap.data() }; return null; } catch (e) { return null; } }
 export const checkAndResetQuests = async (user) => { if (!user || !user.id) return; const now = Date.now(); let updates = {}; let hasUpdates = false; const checkCategory = (catKey, catName) => { const current = user.quests?.[catKey]; if (!current || !current.expiresAt || now > current.expiresAt) { const newData = generatePatchedQuests(catName); updates[`quests.${catKey}`] = newData; hasUpdates = true; } }; checkCategory('daily', 'DAILY'); checkCategory('weekly', 'WEEKLY'); checkCategory('monthly', 'MONTHLY'); if (hasUpdates) await updateDoc(doc(db, "users", user.id), updates); };
-export const trackQuestProgress = async (user, actionType, amount = 1, subTypes = []) => { if (!user || !user.id || amount === 0) return; const userRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return; const userData = userDoc.data(); if (!userData.quests) return; let updates = {}; let hasUpdates = false;['daily', 'weekly', 'monthly'].forEach(catKey => { const categoryData = userData.quests[catKey]; if (!categoryData || !categoryData.quests) return; let categoryChanged = false; const updatedList = categoryData.quests.map(quest => { const isMatch = (quest.type === actionType) || (subTypes && subTypes.includes(quest.type)); if (isMatch && !quest.claimed && quest.progress < quest.target) { const newProgress = Math.min(quest.target, quest.progress + amount); if (newProgress !== quest.progress) { categoryChanged = true; return { ...quest, progress: newProgress }; } } return quest; }); if (categoryChanged) { updates[`quests.${catKey}.quests`] = updatedList; hasUpdates = true; } }); if (hasUpdates) { transaction.update(userRef, updates); } }); } catch (e) { console.error("Fehler beim Quest-Tracking:", e); } };
+export const trackQuestProgress = async (user, actionType, amount = 1, subTypes = []) => { if (!user || !user.id || amount === 0) return; const userRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return; const userData = userDoc.data(); if (!userData.quests) return; let updates = {}; let hasUpdates = false;['daily', 'weekly', 'monthly'].forEach(catKey => { const categoryData = userData.quests[catKey]; if (!categoryData || !categoryData.quests) return; let categoryChanged = false; const updatedList = categoryData.quests.map(quest => { const isMatch = (quest.type === actionType) || (subTypes && subTypes.includes(quest.type)); if (isMatch && !quest.claimed && quest.progress < quest.target) { const newProgress = Math.min(quest.target, quest.progress + amount); if (newProgress !== quest.progress) { categoryChanged = true; return { ...quest, progress: newProgress }; } } return quest; }); if (categoryChanged) { updates[`quests.${catKey}.quests`] = updatedList; hasUpdates = true; } }); if (hasUpdates) { transaction.update(userRef, updates); } }); } catch (e) { console.error("Error in quest tracking:", e); } };
 export const claimQuestReward = async (user, catKey, questId) => {
     const userRef = doc(db, "users", user.id);
     let rewardMessage = null;
@@ -570,7 +570,7 @@ export const claimQuestReward = async (user, catKey, questId) => {
             transaction.update(userRef, updates);
         });
         return { message: rewardMessage };
-    } catch (e) { console.error("Fehler beim Abholen der Quest-Belohnung:", e); return { message: null }; }
+    } catch (e) { console.error("Error claiming quest reward:", e); return { message: null }; }
 };
 export const claimCompositeReward = async (user, catKey) => {
     const userRef = doc(db, "users", user.id);
@@ -612,11 +612,11 @@ export const claimCompositeReward = async (user, catKey) => {
             transaction.update(userRef, updates);
         });
         return { message: rewardMessage };
-    } catch (e) { console.error("Fehler beim Abholen der Gesamt-Belohnung:", e); return { message: null }; }
+    } catch (e) { console.error("Error claiming composite reward:", e); return { message: null }; }
 };
 export const adminResetQuests = async (userId) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await updateDoc(userRef, { quests: { daily: generatePatchedQuests('DAILY'), weekly: generatePatchedQuests('WEEKLY'), monthly: generatePatchedQuests('MONTHLY') } }); console.log("Quests reset successfully!"); return true; } catch (e) { console.error("Quest reset error:", e); return false; } };
 export const clearMarketplace = async () => { try { const q = query(collection(db, "market")); const snapshot = await getDocs(q); const deletePromises = []; snapshot.forEach((doc) => { deletePromises.push(deleteDoc(doc.ref)); }); await Promise.all(deletePromises); return true; } catch (e) { return false; } };
-export const setBattleActive = async (userId, isActive) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await setDoc(userRef, { isInBattle: isActive }, { merge: true }); } catch (e) { console.error("[DB] Fehler beim Setzen des Kampf-Status:", e); } };
+export const setBattleActive = async (userId, isActive) => { if (!userId) return; try { const userRef = doc(db, "users", userId); await setDoc(userRef, { isInBattle: isActive }, { merge: true }); } catch (e) { console.error("[DB] Error setting battle status:", e); } };
 export const checkAndResolveInterruptedBattle = async (userId) => { if (!userId) return null; const userRef = doc(db, "users", userId); try { return await runTransaction(db, async (transaction) => { const userDoc = await transaction.get(userRef); if (!userDoc.exists()) return null; const userData = userDoc.data(); if (userData.isInBattle === true) { const newStats = { ...(userData.stats || {}) }; newStats.pvpTotal = (newStats.pvpTotal || 0) + 1; const newRating = Math.max(0, (userData.rating || 1000) - 25); transaction.update(userRef, { isInBattle: false, stats: newStats, rating: newRating }); return { resolved: true, ratingLoss: 25 }; } return { resolved: false }; }); } catch (e) { if (e.code === 'failed-precondition') { console.warn("[DB] Transaction precondition failed - battle status changed concurrently (OK)."); } else { console.error("[DB] Check error:", e); } return null; } };
 export const calculateEloChange = (ratingA, ratingB, isWin) => {
     const K = 32;
@@ -708,7 +708,7 @@ export const getUserRankAndPercent = async (user, type = 'elo') => {
         const percent = total > 0 ? (rank / total) * 100 : 100;
         return { rank, percent, total };
     } catch (e) {
-        console.error("Fehler beim Abrufen des Rangs:", e);
+        console.error("Error fetching rank:", e);
         return null;
     }
 };

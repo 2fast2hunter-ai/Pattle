@@ -222,7 +222,7 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
         setCurrentView('tower');
         setActiveBattle(null);
     } else {
-        if (!isFriendly) showNotification(t ? t('notif_win_pvp', { coins: Math.floor(coinsGain), xp: Math.floor(xpGain) }) : `Win! +${Math.floor(coinsGain)} Gold, +${Math.floor(xpGain)} XP`, "success");
+        if (!isFriendly) showNotification(t ? t('notif_win_pvp', { coins: Math.floor(coinsGain), xp: Math.floor(xpGain) }) : `Win! +${Math.floor(coinsGain)} Coins, +${Math.floor(xpGain)} XP`, "success");
         else showNotification(t ? t('notif_friendly_win') : 'Win! (Friendly)', "success");
         setCurrentView('arena-hub');
         setActiveBattle(null);

@@ -34,8 +34,8 @@ export function useBattleTurn(battleState, setBattleState, t) {
 
         // --- ANIMATION START ---
         setAnimatingUnit({ side: who, type: abilityToUse.type });
-        if (shouldUseAbility) newLog.push(t ? t('battle_log_uses', { attacker: attacker.name, ability: abilityToUse.name }) : `${attacker.name} nutzt ${abilityToUse.name}!`);
-        else newLog.push(t ? t('battle_log_attacks', { attacker: attacker.name }) : `${attacker.name} greift an.`);
+        if (shouldUseAbility) newLog.push(t ? t('battle_log_uses', { attacker: attacker.name, ability: abilityToUse.name }) : `${attacker.name} uses ${abilityToUse.name}!`);
+        else newLog.push(t ? t('battle_log_attacks', { attacker: attacker.name }) : `${attacker.name} attacks.`);
 
         // Warte auf Angriffs-Animation
         await new Promise(r => setTimeout(r, 400));
@@ -61,7 +61,7 @@ export function useBattleTurn(battleState, setBattleState, t) {
         else if (effectiveness < 1) floatCol = 'text-slate-400';
         else if (abilityToUse.type === 'SPECIAL' && !shouldUseAbility) floatCol = 'text-purple-300';
 
-        const displayVal = isCrit ? (t ? t('battle_log_crit', { damage }) : `KRIT! ${damage}`) : `${damage}`;
+        const displayVal = isCrit ? (t ? t('battle_log_crit', { damage }) : `CRIT! ${damage}`) : `${damage}`;
         setFloatingDamage({ val: displayVal, col: floatCol, target: targetSide });
 
         // Warte auf Hit-Animation

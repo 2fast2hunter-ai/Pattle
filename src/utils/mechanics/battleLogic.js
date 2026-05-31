@@ -64,13 +64,13 @@ export const executeTurn = (attacker, defender, ability) => {
     const { damage, isCrit, effectiveness } = calculateDamage(attacker, defender, ability);
     const newHp = Math.max(0, (defender.currentHp || defender.maxHp) - damage);
     
-    let logMessage = `${attacker.name} nutzt ${ability.name}!`;
-    if (isCrit) logMessage += " Kritischer Treffer!";
-    
-    if (effectiveness > 1) logMessage += " Sehr effektiv!";
-    else if (effectiveness < 1) logMessage += " Nicht sehr effektiv...";
-    
-    logMessage += ` (${damage} Schaden)`;
+    let logMessage = `${attacker.name} uses ${ability.name}!`;
+    if (isCrit) logMessage += " Critical hit!";
+
+    if (effectiveness > 1) logMessage += " Super effective!";
+    else if (effectiveness < 1) logMessage += " Not very effective...";
+
+    logMessage += ` (${damage} damage)`;
     
     return { damage, newHp, isCrit, effectiveness, log: logMessage };
 };
@@ -87,7 +87,7 @@ export const generateBattleTeam = (playerLevel) => {
         if (rarityRoll > 0.9) rarity = 'RARE';
         else if (rarityRoll > 0.6) rarity = 'UNCOMMON';
         const pet = generatePet(level, type, rarity, null, 'PVE_ENEMY');
-        pet.name = `Wildes ${pet.name}`;
+        pet.name = `Wild ${pet.name}`;
         pet.currentHp = pet.maxHp;
         pet.energy = 0;
         team.push(pet);
