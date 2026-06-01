@@ -3,6 +3,14 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 const PATCHES = [
     {
+        version: 'v1.9.0',
+        date: '2026-06-01',
+        changes: [
+            { type: 'new', text: 'Battle speed toggle: tap ⚡ button during combat to switch between 1x and 2x speed (preference saved)' },
+            { type: 'fixed', text: 'BattleScreen: remaining German strings (Wiederbelebung, Werbung schauen, Fertig) now in English' },
+        ]
+    },
+    {
         version: 'v1.8.0',
         date: '2026-05-31',
         changes: [
