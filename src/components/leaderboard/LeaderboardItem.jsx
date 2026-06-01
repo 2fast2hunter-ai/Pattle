@@ -1,5 +1,6 @@
 import React from 'react';
 import { Crown, Medal, Shield, TrendingUp, TrendingDown, Minus, Sword } from 'lucide-react';
+import { getRankTier } from '../../utils/rankUtils';
 
 const getRankStyle = (index) => {
     if (index === 0) return 'bg-yellow-500 text-yellow-950 border-yellow-400 shadow-[0_0_15px_rgba(234,179,8,0.5)]'; // Gold
@@ -34,6 +35,7 @@ export default function LeaderboardItem({ player, index, isMe, onViewPlayer, typ
 
     const _label = type === 'gauntlet' ? 'Score' : 'Elo';
     const val = type === 'gauntlet' ? (player.stats?.gauntletHighscore || 0) : (player.rating || 1000);
+    const rankInfo = type === 'elo' ? getRankTier(player.rating) : null;
 
     return (
         <div
@@ -66,6 +68,9 @@ export default function LeaderboardItem({ player, index, isMe, onViewPlayer, typ
                     <div className="text-xs font-bold text-yellow-500 flex items-center gap-1">
                         {type === 'gauntlet' ? <Sword className="w-3 h-3 text-red-400" /> : <Shield className="w-3 h-3" />} {val}
                     </div>
+                    {rankInfo && (
+                        <span className={`text-[9px] font-black px-1 py-0.5 rounded border ${rankInfo.badgeClass}`}>{rankInfo.emoji} {rankInfo.name}</span>
+                    )}
 
                     {/* TAGES-BILANZ (Nur bei Elo anzeigen oder auch bei Gauntlet? Erstmal nur bei Elo lassen oder immer?) */}
                     {type === 'elo' && (

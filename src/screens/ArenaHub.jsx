@@ -5,10 +5,12 @@ import { PageBackground } from '../components/GameLayout';
 import HubTile from '../components/arena/HubTile';
 import BattleCard from '../components/arena/BattleCard';
 import AutoBattleCard from '../components/arena/AutoBattleCard';
+import { getRankTier } from '../utils/rankUtils';
 
 export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, onGauntlet, t, tutorialHighlight }) {
 
     const rank = user?.rating || 1000;
+    const rankInfo = getRankTier(rank);
     const teamCount = user?.team?.filter(Boolean).length || 0;
     const unlockedSlots = getUnlockedTeamSlots(user?.level || 1);
     const ticketCount = user?.adTickets || 0;
@@ -25,6 +27,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                     <div className="flex items-center gap-1.5 mt-1">
                         <Trophy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-500" />
                         <span className="text-xs font-bold text-slate-400">{rank} {t ? t('arena_elo') : 'Elo'}</span>
+                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded border ${rankInfo.badgeClass}`}>{rankInfo.emoji} {rankInfo.name}</span>
                     </div>
                 </div>
 
@@ -77,8 +80,8 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                     />
 
                     <HubTile
-                        title={t ? t('arena_leaderboard_btn') : "Rangliste"}
-                        subtitle={t ? t('arena_leaderboard_desc') : "Top Spieler"}
+                        title={t ? t('arena_leaderboard_btn') : "Leaderboard"}
+                        subtitle={t ? t('arena_leaderboard_desc') : "Top Players"}
                         icon={Crown}
                         colorFrom="from-slate-700"
                         colorTo="to-slate-800"
@@ -89,7 +92,7 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
 
                     <HubTile
                         title={t ? t('arena_gauntlet_btn') : "Gauntlet"}
-                        subtitle={t ? t('arena_gauntlet_desc') : "Endlos Survival"}
+                        subtitle={t ? t('arena_gauntlet_desc') : "Endless Survival"}
                         icon={Flame}
                         colorFrom="from-red-900"
                         colorTo="to-orange-900"

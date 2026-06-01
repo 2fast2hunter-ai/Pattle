@@ -3,6 +3,15 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 const PATCHES = [
     {
+        version: 'v1.10.0',
+        date: '2026-06-01',
+        changes: [
+            { type: 'new', text: 'Arena rank tiers: Stone → Bronze → Silver → Gold → Platinum → Diamond → Master based on Elo rating' },
+            { type: 'new', text: 'Rank badge shown next to Elo in Arena Hub and on every Leaderboard entry' },
+            { type: 'fixed', text: 'LeaderboardScreen/ArenaHub: remaining German strings (RANGLISTE, Bald..., Top Spieler, Endlos Survival) now in English' },
+        ]
+    },
+    {
         version: 'v1.9.0',
         date: '2026-06-01',
         changes: [

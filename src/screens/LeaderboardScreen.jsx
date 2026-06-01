@@ -37,7 +37,7 @@ export default function LeaderboardScreen({ user, onBack, onViewPlayer, t }) {
                 const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 setTimeLeft(`${d}d ${h}h ${m}m`);
-            } else setTimeLeft("Bald...");
+            } else setTimeLeft(t ? t('label_soon') : 'Soon...');
         };
         updateTimer();
         const interval = setInterval(updateTimer, 60000);
@@ -76,7 +76,7 @@ export default function LeaderboardScreen({ user, onBack, onViewPlayer, t }) {
                             <ArrowLeft className="w-5 h-5" />
                         </button>
                         <div>
-                            <h2 className="text-2xl font-black italic tracking-wide text-white uppercase">RANGLISTE</h2>
+                            <h2 className="text-2xl font-black italic tracking-wide text-white uppercase">{t ? t('leaderboard_title') : 'LEADERBOARD'}</h2>
                         </div>
                     </div>
                     <button onClick={() => setShowRewardsInfo(true)} className="p-2 bg-slate-800/50 text-slate-400 rounded-full hover:bg-slate-800 hover:text-white transition-colors border border-white/5 backdrop-blur-md">
