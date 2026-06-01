@@ -6,7 +6,7 @@ import BattleVictory from '../components/battle/BattleVictory';
 import BattleRoundIndicator from '../components/battle/BattleRoundIndicator';
 import BattleLog from '../components/battle/BattleLog';
 import BattleArena from '../components/battle/BattleArena';
-import { Repeat, CheckCircle, Tv } from 'lucide-react';
+import { Repeat, CheckCircle, Tv, Zap } from 'lucide-react';
 import { useBattleTurn } from '../hooks/useBattleTurn';
 import { useAutoBattleLoop } from '../hooks/useAutoBattleLoop';
 import { showRewardedAd } from '../utils/adManager';
@@ -18,6 +18,16 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
     const enemyPet = enemyTeam[enemyIndex];
     const [reviveUsed, setReviveUsed] = useState(false);
     const [showDevAdModal, setShowDevAdModal] = useState(false);
+    const [battleSpeed, setBattleSpeed] = useState(() => {
+        const saved = localStorage.getItem('pattle_battle_speed');
+        return saved === '2' ? 2 : 1;
+    });
+
+    const toggleSpeed = () => {
+        const next = battleSpeed === 1 ? 2 : 1;
+        setBattleSpeed(next);
+        localStorage.setItem('pattle_battle_speed', String(next));
+    };
 
     // --- HOOKS ---
     const {
@@ -26,7 +36,7 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
         hitUnit,
         floatingDamage,
         damageDealt
-    } = useBattleTurn(battleState, setBattleState, t);
+    } = useBattleTurn(battleState, setBattleState, t, battleSpeed);
 
     // Auto Battle Logic
     const { autoProgress } = useAutoBattleLoop(
@@ -45,9 +55,9 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
             if (animatingUnit || hitUnit) return;
             if (turn === 'PLAYER') executeTurn(myPet, enemyPet, 'PLAYER');
             else executeTurn(enemyPet, myPet, 'ENEMY');
-        }, 800);
+        }, Math.round(800 / battleSpeed));
         return () => clearTimeout(timer);
-    }, [turn, isOver, animatingUnit, hitUnit, myPet, enemyPet, executeTurn]);
+    }, [turn, isOver, animatingUnit, hitUnit, myPet, enemyPet, executeTurn, battleSpeed]);
 
 
     const handleReviveByAd = () => {
@@ -106,18 +116,18 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
                 <ArenaBackground enemyType={won ? 'LIGHT' : 'DARK'} />
 
                 <div className="relative z-10 flex-1 w-full overflow-y-auto p-6 flex flex-col items-center justify-center scrollbar-hide">
-                    {isAutoBattle && (<div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>{isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}{isLastAuto ? (t ? t('battle_auto_done') : 'Fertig') : `${t ? t('battle_auto_remaining') : 'Auto: Noch'} ${autoBattleRemaining}`}</div>)}
+                    {isAutoBattle && (<div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>{isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}{isLastAuto ? (t ? t('battle_auto_done') : 'Done') : `${t ? t('battle_auto_remaining') : 'Auto'}: ${autoBattleRemaining}`}</div>)}
 
                     {!won && !reviveUsed && !isAutoBattle && !isFriendly && !battleState.isGauntlet && (
                         <div className="w-full max-w-sm mb-6 bg-indigo-900/40 border border-indigo-500/30 rounded-2xl p-4 text-center animate-in fade-in slide-in-from-bottom">
-                            <p className="text-white font-black text-lg mb-1">Wiederbelebung!</p>
-                            <p className="text-slate-400 text-xs mb-4">Schau eine kurze Werbung und dein Team wird auf 50% HP wiederbelebt.</p>
+                            <p className="text-white font-black text-lg mb-1">{t ? t('battle_revive_title') : 'Revive!'}</p>
+                            <p className="text-slate-400 text-xs mb-4">{t ? t('battle_revive_desc') : 'Watch a short ad and your team will be revived to 50% HP.'}</p>
                             <button
                                 onClick={handleReviveByAd}
                                 className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-black py-3 rounded-xl active:scale-95 transition-all shadow-lg shadow-indigo-500/20"
                             >
                                 <Tv className="w-5 h-5" />
-                                Werbung schauen — Wiederbeleben
+                                {t ? t('battle_revive_btn') : 'Watch Ad — Revive'}
                             </button>
                         </div>
                     )}
@@ -165,6 +175,14 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
             <ArenaBackground enemyType={enemyPet?.type} />
 
             {isAutoBattle && (<div className="absolute top-14 right-4 z-20 bg-purple-600/80 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg"><Repeat className="w-3 h-3 animate-spin-slow" />{t ? t('battle_auto_remaining') : 'Auto'}: {autoBattleRemaining}</div>)}
+
+            <button
+                onClick={toggleSpeed}
+                className={`absolute top-4 right-4 z-20 flex items-center gap-1 px-2.5 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-wide transition-all active:scale-95 shadow-lg ${battleSpeed === 2 ? 'bg-yellow-500/20 border-yellow-400/40 text-yellow-300' : 'bg-slate-800/60 border-white/10 text-slate-400'}`}
+            >
+                <Zap className="w-3 h-3" />
+                {battleSpeed}x
+            </button>
 
             <BattleRoundIndicator
                 isGauntlet={battleState.isGauntlet}

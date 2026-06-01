@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ABILITIES } from '../data/gameData';
 import { calculateDamage } from '../utils/mechanics/battleLogic';
 
-export function useBattleTurn(battleState, setBattleState, t) {
+export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
     const [animatingUnit, setAnimatingUnit] = useState(null); // { side: 'PLAYER'|'ENEMY', type: 'PHYSICAL'|'SPECIAL' }
     const [hitUnit, setHitUnit] = useState(null);
     const [floatingDamage, setFloatingDamage] = useState(null);
@@ -37,8 +37,7 @@ export function useBattleTurn(battleState, setBattleState, t) {
         if (shouldUseAbility) newLog.push(t ? t('battle_log_uses', { attacker: attacker.name, ability: abilityToUse.name }) : `${attacker.name} uses ${abilityToUse.name}!`);
         else newLog.push(t ? t('battle_log_attacks', { attacker: attacker.name }) : `${attacker.name} attacks.`);
 
-        // Warte auf Angriffs-Animation
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, Math.round(400 / speed)));
 
         // 2. Schaden berechnen
         const { damage, isCrit, effectiveness } = calculateDamage(attacker, defender, abilityToUse);
@@ -64,8 +63,7 @@ export function useBattleTurn(battleState, setBattleState, t) {
         const displayVal = isCrit ? (t ? t('battle_log_crit', { damage }) : `CRIT! ${damage}`) : `${damage}`;
         setFloatingDamage({ val: displayVal, col: floatCol, target: targetSide });
 
-        // Warte auf Hit-Animation
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, Math.round(500 / speed)));
 
         // Reset Animations
         setAnimatingUnit(null);
