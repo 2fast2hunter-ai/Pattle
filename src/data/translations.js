@@ -307,6 +307,9 @@ export const TRANSLATIONS = {
         notif_production_extended: "Produktion um 1 Stunde verlängert! 🎉",
         notif_resource_not_found: "Fehler: Ressource nicht gefunden.",
         notif_friend_added: "{name} hinzugefügt!",
+        notif_friend_request_sent: "Anfrage an {name} gesendet!",
+        notif_already_friends: "Ihr seid bereits befreundet.",
+        notif_request_already_sent: "Anfrage bereits gesendet.",
         notif_player_not_found: "Spieler nicht gefunden.",
         notif_village_production_stopped: "Dorf-Produktion gestoppt! Idle-Zeit abgelaufen.",
         notif_daily_box_received: "Daily-Box erhalten!",
@@ -574,6 +577,8 @@ export const TRANSLATIONS = {
         profile_tab_friends: "Freunde",
         profile_add_friend: "Freund hinzufügen",
         profile_player_id_placeholder: "Spieler-ID eingeben...",
+        profile_username_placeholder: "Benutzernamen eingeben...",
+        profile_friend_requests: "Freundschaftsanfragen",
         profile_no_friends: "Noch keine Freunde.",
         profile_member_since: "Mitglied seit 2025",
         modal_delete_are_you_sure: "Bist du sicher?",
@@ -601,7 +606,12 @@ export const TRANSLATIONS = {
         leaderboard_title: "BESTENLISTE",
         label_soon: "Bald...",
         friend_profile_title: "FREUND",
-        friendly_battle_btn: "FREUNDSCHAFTSKAMPF"
+        friendly_battle_btn: "FREUNDSCHAFTSKAMPF",
+        menu_chat: "CHAT",
+        menu_sub_chat: "Global",
+        chat_title: "GLOBALER CHAT",
+        chat_placeholder: "Nachricht eingeben...",
+        chat_no_messages: "Noch keine Nachrichten. Sag was!"
     },
     en: {
         settings_title: "SETTINGS",
@@ -892,6 +902,9 @@ export const TRANSLATIONS = {
         notif_production_extended: "Production extended by 1 hour! 🎉",
         notif_resource_not_found: "Error: Resource not found.",
         notif_friend_added: "{name} added!",
+        notif_friend_request_sent: "Request sent to {name}!",
+        notif_already_friends: "Already friends.",
+        notif_request_already_sent: "Request already sent.",
         notif_player_not_found: "Player not found.",
         notif_village_production_stopped: "Village production stopped! Idle time expired.",
         notif_daily_box_received: "Daily box received!",
@@ -1154,6 +1167,8 @@ export const TRANSLATIONS = {
         profile_tab_friends: "Friends",
         profile_add_friend: "Add friend",
         profile_player_id_placeholder: "Enter player ID...",
+        profile_username_placeholder: "Enter username...",
+        profile_friend_requests: "Friend Requests",
         profile_no_friends: "No friends yet.",
         profile_member_since: "Member since 2025",
         modal_delete_are_you_sure: "Are you sure?",
@@ -1181,7 +1196,12 @@ export const TRANSLATIONS = {
         leaderboard_title: "LEADERBOARD",
         label_soon: "Soon...",
         friend_profile_title: "FRIEND",
-        friendly_battle_btn: "FRIENDLY BATTLE"
+        friendly_battle_btn: "FRIENDLY BATTLE",
+        menu_chat: "CHAT",
+        menu_sub_chat: "Global",
+        chat_title: "GLOBAL CHAT",
+        chat_placeholder: "Type a message...",
+        chat_no_messages: "No messages yet. Say something!"
     },
     zh: {
         settings_title: "设置",
@@ -1761,7 +1781,7 @@ export const TRANSLATIONS = {
         // Kopiere Ressourcen/Items von EN als Fallback, falls nicht übersetzt
         // In einer echten App würde man diese natürlich auch übersetzen
         Object.keys(TRANSLATIONS.en).forEach(key => {
-            if (!TRANSLATIONS[lang][key] && (key.startsWith('res_') || key.startsWith('item_') || key.startsWith('notif_') || key.startsWith('achievement_'))) {
+            if (!TRANSLATIONS[lang][key] && (key.startsWith('res_') || key.startsWith('item_') || key.startsWith('notif_') || key.startsWith('achievement_') || key.startsWith('chat_') || key === 'menu_chat' || key === 'menu_sub_chat')) {
                 TRANSLATIONS[lang][key] = TRANSLATIONS.en[key];
             }
         });

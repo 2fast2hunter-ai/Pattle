@@ -7,7 +7,7 @@ import ProfileStats from '../components/profile/ProfileStats';
 import ProfileFriends from '../components/profile/ProfileFriends';
 import { useProfileStats } from '../hooks/useProfileStats';
 
-export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, onBack, onUpdateProfile, t }) {
+export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, onAcceptFriendRequest, onDeclineFriendRequest, onBack, onUpdateProfile, t }) {
     const [activeTab, setActiveTab] = useState('stats');
     const [selectedCategory, setSelectedCategory] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -59,7 +59,7 @@ export default function ProfileScreen({ user, pets, onViewFriend, onAddFriend, o
                 {activeTab === 'stats' ? (
                     <ProfileStats categories={categories} setSelectedCategory={setSelectedCategory} />
                 ) : (
-                    <ProfileFriends user={user} onAddFriend={onAddFriend} onViewFriend={onViewFriend} t={t} />
+                    <ProfileFriends user={user} onAddFriend={onAddFriend} onAcceptFriendRequest={onAcceptFriendRequest} onDeclineFriendRequest={onDeclineFriendRequest} onViewFriend={onViewFriend} t={t} />
                 )}
                 <div className="text-center pt-4"><p className="text-[10px] text-slate-600 font-mono uppercase tracking-widest">{t ? t('profile_member_since') : 'Member since 2025'}</p></div>
             </div>

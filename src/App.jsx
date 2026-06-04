@@ -149,7 +149,7 @@ export default function App() {
                         renamePet={gameLogic.renamePet} releasePet={gameLogic.releasePet} addToTeam={gameLogic.addToTeam} removeFromTeam={gameLogic.removeFromTeam} autoFillTeam={gameLogic.autoFillTeam}
                         handleBuyMarket={gameLogic.handleBuyMarket} handleSellMarket={gameLogic.handleSellMarket} handleSellResource={gameLogic.handleSellResource} handleRemoveListing={gameLogic.handleRemoveListing}
                         startBattle={gameLogic.startBattle} startGauntletBattle={gameLogic.startGauntletBattle} startTowerBattle={gameLogic.startTowerBattle} startFriendBattle={gameLogic.startFriendBattle}
-                        handleAddFriend={gameLogic.handleAddFriend} handleUpdateProfile={handleUpdateProfile} handleLogout={gameLogic.handleLogout}
+                        handleAddFriend={gameLogic.handleAddFriend} handleAcceptFriendRequest={gameLogic.handleAcceptFriendRequest} handleDeclineFriendRequest={gameLogic.handleDeclineFriendRequest} handleUpdateProfile={handleUpdateProfile} handleLogout={gameLogic.handleLogout}
                         settings={settings} setSettings={gameLogic.setSettings}
                         claimMilestone={gameLogic.claimMilestone} tradeResources={gameLogic.tradeResources} buyCosmetic={gameLogic.buyCosmetic} buySpecialOffer={gameLogic.buySpecialOffer} addIdleTime={gameLogic.addIdleTime}
                         buyLootbox={gameLogic.buyLootbox} buyTickets={gameLogic.buyTickets} claimTimedReward={gameLogic.claimTimedReward} breedPets={gameLogic.breedPets}
