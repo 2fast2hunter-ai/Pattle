@@ -12,7 +12,7 @@ import { useAutoBattleLoop } from '../hooks/useAutoBattleLoop';
 import { showRewardedAd } from '../utils/adManager';
 import AdModal from '../components/ui/AdModal';
 
-export default function BattleScreen({ battleState, setBattleState, user, onWin, onLose, isAutoBattle, autoBattleRemaining, onCancelAutoBattle, t }) {
+export default function BattleScreen({ battleState, setBattleState, user, onWin, onLose, isAutoBattle, autoBattleRemaining, onCancelAutoBattle, t, lowPowerMode = false }) {
     const { myTeam, enemyTeam, myIndex, enemyIndex, turn, isOver, round, isFriendly, log } = battleState;
     const myPet = myTeam[myIndex];
     const enemyPet = enemyTeam[enemyIndex];
@@ -113,7 +113,7 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
         return (
             <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col">
                 <BattleStyles />
-                <ArenaBackground enemyType={won ? 'LIGHT' : 'DARK'} />
+                <ArenaBackground enemyType={won ? 'LIGHT' : 'DARK'} lowPower={lowPowerMode} />
 
                 <div className="relative z-10 flex-1 w-full overflow-y-auto p-6 flex flex-col items-center justify-center scrollbar-hide">
                     {isAutoBattle && (<div className={`absolute top-4 right-4 backdrop-blur px-3 py-1 rounded-full border text-[10px] font-bold flex items-center gap-2 shadow-lg z-50 ${isLastAuto ? 'bg-green-600/90 border-green-400/30 text-white' : 'bg-purple-600/90 border-purple-400/30 text-white animate-pulse'}`}>{isLastAuto ? <CheckCircle className="w-3 h-3" /> : <Repeat className="w-3 h-3" />}{isLastAuto ? (t ? t('battle_auto_done') : 'Done') : `${t ? t('battle_auto_remaining') : 'Auto'}: ${autoBattleRemaining}`}</div>)}
@@ -172,7 +172,7 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
     return (
         <div className="h-full flex flex-col relative overflow-hidden">
             <BattleStyles />
-            <ArenaBackground enemyType={enemyPet?.type} />
+            <ArenaBackground enemyType={enemyPet?.type} lowPower={lowPowerMode} />
 
             {isAutoBattle && (<div className="absolute top-14 right-4 z-20 bg-purple-600/80 backdrop-blur px-3 py-1 rounded-full border border-purple-400/30 text-[10px] font-bold text-white flex items-center gap-1 shadow-lg"><Repeat className="w-3 h-3 animate-spin-slow" />{t ? t('battle_auto_remaining') : 'Auto'}: {autoBattleRemaining}</div>)}
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Globe, LogOut, Music, Volume2, Scale, ChevronRight, ScrollText, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Globe, LogOut, Music, Volume2, Scale, ChevronRight, ScrollText, MessageSquare, Zap } from 'lucide-react';
 import { playSound } from '../utils/soundManager';
 
 export default function SettingsScreen({ settings, setSettings, onLogout, onBack, onNavigate, t }) {
@@ -7,6 +7,7 @@ export default function SettingsScreen({ settings, setSettings, onLogout, onBack
     const language = currentSettings.language || 'de'; // Standard: Deutsch
     const musicEnabled = currentSettings.musicEnabled !== false; // Default: true
     const soundEnabled = currentSettings.soundEnabled !== false; // Default: true
+    const lowPowerMode = currentSettings.lowPowerMode === true; // Default: false
 
     const toggleMusic = () => {
         setSettings({ ...currentSettings, musicEnabled: !musicEnabled });
@@ -15,6 +16,11 @@ export default function SettingsScreen({ settings, setSettings, onLogout, onBack
 
     const toggleSound = () => {
         setSettings({ ...currentSettings, soundEnabled: !soundEnabled });
+        playSound('click');
+    };
+
+    const toggleLowPower = () => {
+        setSettings({ ...currentSettings, lowPowerMode: !lowPowerMode });
         playSound('click');
     };
 
@@ -67,7 +73,7 @@ export default function SettingsScreen({ settings, setSettings, onLogout, onBack
                     </button>
 
                     {/* Sound Toggle */}
-                    <button 
+                    <button
                         onClick={toggleSound}
                         className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-white/5 hover:bg-slate-800 transition-all active:scale-[0.98]"
                     >
@@ -78,6 +84,23 @@ export default function SettingsScreen({ settings, setSettings, onLogout, onBack
                             <span className="font-bold text-white text-sm">{t ? t('settings_sound') : 'Soundeffekte'}</span>
                         </div>
                         <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${soundEnabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>{soundEnabled ? (t ? t('settings_on') : 'AN') : (t ? t('settings_off') : 'AUS')}</span>
+                    </button>
+
+                    {/* Low Power Mode */}
+                    <button
+                        onClick={toggleLowPower}
+                        className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-white/5 hover:bg-slate-800 transition-all active:scale-[0.98]"
+                    >
+                        <div className="flex items-center gap-4">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${lowPowerMode ? 'bg-amber-600 text-white' : 'bg-slate-800 text-slate-500'}`}>
+                                <Zap className="w-5 h-5" />
+                            </div>
+                            <div className="flex flex-col items-start">
+                                <span className="font-bold text-white text-sm">{t ? t('settings_low_power') : 'Low-Power Mode'}</span>
+                                <span className="text-xs text-slate-500">{t ? t('settings_low_power_desc') : 'Reduces battle background animations'}</span>
+                            </div>
+                        </div>
+                        <span className={`text-xs font-black uppercase px-3 py-1 rounded-lg ${lowPowerMode ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>{lowPowerMode ? (t ? t('settings_on') : 'AN') : (t ? t('settings_off') : 'AUS')}</span>
                     </button>
                 </div>
 
