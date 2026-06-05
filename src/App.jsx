@@ -15,9 +15,11 @@ import IdleReturnModal from './components/village/IdleReturnModal';
 import { playSound, playBGM, setMusicEnabled, setSoundEnabled } from './utils/soundManager';
 import { TRANSLATIONS } from './data/translations';
 import { trackScreenView, trackSessionDuration } from './utils/analytics';
+import WhatsNewModal, { CURRENT_VERSION, getLastSeenVersion, markVersionSeen } from './components/ui/WhatsNewModal';
 
 export default function App() {
     const gameLogic = useGameLogic();
+    const [showWhatsNew, setShowWhatsNew] = useState(false);
     const {
         user, setUser, currentView, setCurrentView, authLoading, handleLogin, notification,
         lootResult, setLootResult, showLevelUpModal, setShowLevelUpModal, myPets, activeBattle,
@@ -37,6 +39,13 @@ export default function App() {
 
     const { tutorialStep, isTutorialActive, tutorialMsg, tutorialHighlight } = useTutorial(user, setUser, currentView, handleUpdateProfile, gameLogic.t);
     const appActions = useAppActions(gameLogic, user, setUser, tutorialStep);
+
+    // Show What's New modal once per version after login
+    useEffect(() => {
+        if (user && !authLoading && getLastSeenVersion() !== CURRENT_VERSION) {
+            setShowWhatsNew(true);
+        }
+    }, [user, authLoading]);
 
     // Navigate to screen requested via notification click URL param
     useEffect(() => {
@@ -124,6 +133,7 @@ export default function App() {
             {lootResult && <GameModals.LootboxModal pet={lootResult} onClose={() => setLootResult(null)} t={t} />}
             {showLevelUpModal && <GameModals.LevelUpModal level={user.level} onClose={() => setShowLevelUpModal(false)} t={t} />}
             {idleReturnResult && <IdleReturnModal result={idleReturnResult} onClose={() => setIdleReturnResult(null)} t={t} />}
+            {showWhatsNew && <WhatsNewModal onClose={() => { markVersionSeen(CURRENT_VERSION); setShowWhatsNew(false); }} />}
 
             {currentView !== 'battle' && <div className="w-full"><HeaderHUD user={user} /></div>}
 

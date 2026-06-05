@@ -1,7 +1,42 @@
 import React from 'react';
 import { ArrowLeft, ScrollText } from 'lucide-react';
 
-const PATCHES = [
+export const PATCHES = [
+    {
+        version: 'v1.14.0',
+        date: '2026-06-05',
+        changes: [
+            { type: 'new', text: 'What\'s New modal: shows the latest patch notes once per version after login' },
+            { type: 'new', text: 'Daily auto-deploy: game automatically re-deploys every day at 8am UTC to pick up fresh assets' },
+            { type: 'changed', text: 'Build toolchain updated: Vite 5.4 + @vitejs/plugin-react 4.7 for faster builds' },
+        ]
+    },
+    {
+        version: 'v1.13.0',
+        date: '2026-06-04',
+        changes: [
+            { type: 'new', text: 'Animated battle backgrounds: each element type (Fire, Water, Nature, etc.) has its own themed battle scene' },
+            { type: 'new', text: 'Low-power toggle: disable animated backgrounds to save battery on mobile' },
+        ]
+    },
+    {
+        version: 'v1.12.0',
+        date: '2026-06-03',
+        changes: [
+            { type: 'new', text: 'Dungeon mode: roguelike runs with permanent death and scaling floor difficulty' },
+            { type: 'new', text: 'Each dungeon run is unique — floors grow harder, rewards grow larger' },
+            { type: 'new', text: 'Permadeath: if your team wipes, the run ends and you start fresh' },
+        ]
+    },
+    {
+        version: 'v1.11.0',
+        date: '2026-06-02',
+        changes: [
+            { type: 'new', text: 'Guild system: create or join a guild, chat with members, earn contribution points' },
+            { type: 'new', text: 'Guild leaderboard: see top guilds ranked by total contribution' },
+            { type: 'new', text: 'Guild arena tag shown on your profile and leaderboard entries' },
+        ]
+    },
     {
         version: 'v1.10.0',
         date: '2026-06-01',
