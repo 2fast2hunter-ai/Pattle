@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Crown, Shield, Flame, X, Castle, Hash } from 'lucide-react';
+import { Trophy, Crown, Shield, Flame, X, Castle, Hash, Skull } from 'lucide-react';
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import { PageBackground } from '../components/GameLayout';
 import HubTile from '../components/arena/HubTile';
@@ -7,7 +7,7 @@ import BattleCard from '../components/arena/BattleCard';
 import AutoBattleCard from '../components/arena/AutoBattleCard';
 import { getRankTier } from '../utils/rankUtils';
 
-export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, onGauntlet, t, tutorialHighlight }) {
+export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, onGauntlet, onDungeon, t, tutorialHighlight }) {
 
     const rank = user?.rating || 1000;
     const rankInfo = getRankTier(rank);
@@ -105,6 +105,18 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                         onClick={onGauntlet}
                         extraInfo={`High: ${user?.stats?.gauntletHighscore || 0}`}
                         delay={400}
+                    />
+
+                    <HubTile
+                        title={t ? t('arena_dungeon_btn') : "Dungeon"}
+                        subtitle={t ? t('arena_dungeon_desc') : "Roguelike Runs"}
+                        icon={Skull}
+                        colorFrom="from-purple-900"
+                        colorTo="to-slate-900"
+                        iconColor="text-purple-400"
+                        onClick={onDungeon}
+                        extraInfo={`Best: ${user?.stats?.dungeonBestFloor || 0}`}
+                        delay={500}
                     />
                 </div>
             </div>

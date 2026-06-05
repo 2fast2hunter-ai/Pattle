@@ -31,6 +31,8 @@ const FeedbackScreen = lazy(() => import('../../screens/FeedbackScreen'));
 const GuildScreen = lazy(() => import('../../screens/GuildScreen'));
 const GuildChatScreen = lazy(() => import('../../screens/GuildChatScreen'));
 const GuildLeaderboardScreen = lazy(() => import('../../screens/GuildLeaderboardScreen'));
+const DungeonScreen = lazy(() => import('../../screens/DungeonScreen'));
+const DungeonRunScreen = lazy(() => import('../../screens/DungeonRunScreen'));
 
 const ScreenFallback = () => (
     <div className="h-full flex items-center justify-center">
@@ -55,6 +57,7 @@ export default function ScreenRouter({
     renamePet, releasePet, addToTeam, removeFromTeam, autoFillTeam,
     handleBuyMarket, handleSellMarket, handleSellResource, handleRemoveListing,
     startBattle, startGauntletBattle, startTowerBattle, startFriendBattle,
+    startDungeonRun, startDungeonRoomBattle, collectDungeonLoot,
     handleAddFriend, handleUpdateProfile, handleLogout,
     settings, setSettings,
     claimMilestone, tradeResources, buyCosmetic, buySpecialOffer, addIdleTime,
@@ -118,8 +121,10 @@ export default function ScreenRouter({
         case 'leaderboard-player-profile': screen = selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('leaderboard')} onStartBattle={startFriendBattle} t={t} />; break;
 
         case 'quests': screen = <QuestsScreen user={user} onBack={() => setCurrentView('menu')} t={t} />; break;
-        case 'arena-hub': screen = <ArenaHub user={user} onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')} onLeaderboard={() => setCurrentView('leaderboard')} onAutoBattle={handleAutoBattle} onTower={() => setCurrentView('tower')} onGauntlet={startGauntletBattle} t={t} tutorialHighlight={tutorialHighlight} />; break;
+        case 'arena-hub': screen = <ArenaHub user={user} onBack={() => setCurrentView('menu')} onBattle={startBattle} onTeam={() => setCurrentView('team-edit')} onLeaderboard={() => setCurrentView('leaderboard')} onAutoBattle={handleAutoBattle} onTower={() => setCurrentView('tower')} onGauntlet={startGauntletBattle} onDungeon={() => setCurrentView('dungeon')} t={t} tutorialHighlight={tutorialHighlight} />; break;
         case 'tower': screen = <TowerScreen user={user} onBack={() => setCurrentView('arena-hub')} onStartStage={startTowerBattle} t={t} />; break;
+        case 'dungeon': screen = <DungeonScreen user={user} onBack={() => setCurrentView('arena-hub')} onStartRun={startDungeonRun} t={t} />; break;
+        case 'dungeon-run': screen = activeBattle?.isDungeon && <DungeonRunScreen battleState={activeBattle} onEnterBattle={startDungeonRoomBattle} onCollectLoot={collectDungeonLoot} t={t} />; break;
         case 'pet-hub': screen = <PetHub onBack={() => setCurrentView('menu')} onInventory={() => setCurrentView('inventory')} onItemInventory={() => setCurrentView('item-inventory')} onBreed={() => setCurrentView('breeding')} onHatchery={() => setCurrentView('hatchery')} t={t} tutorialHighlight={tutorialHighlight} />; break;
         case 'hatchery': screen = <HatcheryScreen pets={myPets} user={user} onBack={() => setCurrentView('pet-hub')} onHatchEgg={handleHatchEggWrapper} onReduceCooldown={handleReduceCooldownWrapper} onStartIncubation={handleStartIncubationWrapper} onWatchAdForHatch={handleWatchAdForHatchWrapper} t={t} tutorialHighlight={tutorialHighlight} />; break;
 

@@ -149,6 +149,7 @@ export default function App() {
                         renamePet={gameLogic.renamePet} releasePet={gameLogic.releasePet} addToTeam={gameLogic.addToTeam} removeFromTeam={gameLogic.removeFromTeam} autoFillTeam={gameLogic.autoFillTeam}
                         handleBuyMarket={gameLogic.handleBuyMarket} handleSellMarket={gameLogic.handleSellMarket} handleSellResource={gameLogic.handleSellResource} handleRemoveListing={gameLogic.handleRemoveListing}
                         startBattle={gameLogic.startBattle} startGauntletBattle={gameLogic.startGauntletBattle} startTowerBattle={gameLogic.startTowerBattle} startFriendBattle={gameLogic.startFriendBattle}
+                        startDungeonRun={gameLogic.startDungeonRun} startDungeonRoomBattle={gameLogic.startDungeonRoomBattle} collectDungeonLoot={gameLogic.collectDungeonLoot}
                         handleAddFriend={gameLogic.handleAddFriend} handleUpdateProfile={handleUpdateProfile} handleLogout={gameLogic.handleLogout}
                         settings={settings} setSettings={gameLogic.setSettings}
                         claimMilestone={gameLogic.claimMilestone} tradeResources={gameLogic.tradeResources} buyCosmetic={gameLogic.buyCosmetic} buySpecialOffer={gameLogic.buySpecialOffer} addIdleTime={gameLogic.addIdleTime}

@@ -5,12 +5,19 @@ import { db } from '../../../firebase';
 import { doc, increment, arrayUnion, updateDoc } from 'firebase/firestore';
 import { addGuildPoints } from '../../../utils/guildDb';
 import { handleGauntletWin, generateGauntletEnemies } from './handleGauntletWin';
+import { handleDungeonWin } from './handleDungeonWin';
 import { distributeXP } from './distributeXP';
 import { checkAchievements } from '../../../utils/checkAchievements';
 
 export const handleWin = async (state, showNotification, startBattleFn, reward, winningTeamIds, enemyRating, damageReport) => {
     const { user, myPets, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView, t } = state;
     if (!user) return;
+
+    // --- DUNGEON OVERRIDE ---
+    if (activeBattle?.isDungeon) {
+        return await handleDungeonWin(state, showNotification, activeBattle, winningTeamIds);
+    }
+    // -------------------------
 
     const isAuto = autoBattleRemaining > 0;
     const isFriendly = activeBattle?.isFriendly;

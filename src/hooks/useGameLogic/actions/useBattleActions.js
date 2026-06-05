@@ -7,17 +7,22 @@ import { handleLose } from './handleLose';
 import { handleAutoBattle } from './handleAutoBattle';
 import { cancelAutoBattle } from './cancelAutoBattle';
 import { startTowerBattle } from './startTowerBattle';
-import { startGauntletBattle } from './startGauntletBattle'; // NEU
+import { startGauntletBattle } from './startGauntletBattle';
+import { startDungeonRun } from './startDungeonRun';
+import { startDungeonRoomBattle } from './startDungeonRoomBattle';
+import { collectDungeonLoot } from './collectDungeonLoot';
 
 export function useBattleActions(state, showNotification) {
-    // Wrapper functions to inject state and showNotification
     const startBattleFn = (overridePets) => startBattle(state, showNotification, overridePets);
 
     return {
         startBattle: startBattleFn,
-        startGauntletBattle: () => startGauntletBattle(state, showNotification), // NEU
+        startGauntletBattle: () => startGauntletBattle(state, showNotification),
         startTowerBattle: (stageId) => startTowerBattle(state, showNotification, stageId),
         startFriendBattle: (friendTeam) => startFriendBattle(state, showNotification, friendTeam),
+        startDungeonRun: () => startDungeonRun(state, showNotification),
+        startDungeonRoomBattle: () => startDungeonRoomBattle(state, showNotification),
+        collectDungeonLoot: () => collectDungeonLoot(state, showNotification),
         handleWin: (reward, winningTeamIds, enemyRating, damageReport) =>
             handleWin(state, showNotification, startBattleFn, reward, winningTeamIds, enemyRating, damageReport),
         handleLose: (reward, teamIds, enemyRating) =>

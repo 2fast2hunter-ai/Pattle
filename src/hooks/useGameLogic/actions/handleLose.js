@@ -13,7 +13,35 @@ export const handleLose = async (state, showNotification, startBattleFn, reward,
 
     const isFriendly = activeBattle?.isFriendly;
     const isTower = activeBattle?.isTower;
-    const isGauntlet = activeBattle?.isGauntlet; // NEU
+    const isGauntlet = activeBattle?.isGauntlet;
+
+    // --- DUNGEON OVERRIDE ---
+    if (activeBattle?.isDungeon) {
+        const acc = activeBattle.accumulatedRewards || { coins: 0, xp: 0, gems: 0 };
+        const floorsCleared = activeBattle.dungeonFloor - 1;
+        const userRef = doc(db, 'users', user.id);
+        const loseUpdates = {
+            isInBattle: false,
+            'stats.dungeonRuns': increment(1),
+        };
+        if (acc.coins > 0) loseUpdates.coins = increment(Math.floor(acc.coins));
+        if (acc.xp > 0) loseUpdates.xp = increment(Math.floor(acc.xp));
+        if (acc.gems > 0) loseUpdates.gems = increment(acc.gems);
+        const currentBest = user.stats?.dungeonBestFloor || 0;
+        if (floorsCleared > currentBest) loseUpdates['stats.dungeonBestFloor'] = floorsCleared;
+        await updateDoc(userRef, loseUpdates);
+        await setBattleActive(user.id, false);
+        setActiveBattle(null);
+        playSound('lose');
+        showNotification(
+            t ? t('dungeon_lose_notif', { floor: activeBattle.dungeonFloor, coins: Math.floor(acc.coins) })
+              : `Dungeon ended on floor ${activeBattle.dungeonFloor}. Kept ${Math.floor(acc.coins)} Gold.`,
+            'error'
+        );
+        setCurrentView('dungeon');
+        return;
+    }
+    // -------------------------
 
     // --- GAUNTLET OVERRIDE ---
     if (isGauntlet) {
