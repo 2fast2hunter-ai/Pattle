@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Sparkles } from 'lucide-react';
-import { PATCHES } from '../../screens/PatchesScreen';
+import { PATCHES } from '../../data/patchData';
 
 const BADGE = {
     new: { label: 'NEW', className: 'bg-green-500/20 text-green-400 border border-green-500/30' },
@@ -8,17 +8,6 @@ const BADGE = {
     fixed: { label: 'FIXED', className: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' },
     removed: { label: 'REMOVED', className: 'bg-red-500/20 text-red-400 border border-red-500/30' },
 };
-
-export const CURRENT_VERSION = PATCHES[0]?.version ?? 'v1.0.0';
-const STORAGE_KEY = 'pattle_last_seen_version';
-
-export function getLastSeenVersion() {
-    return localStorage.getItem(STORAGE_KEY) ?? null;
-}
-
-export function markVersionSeen(version) {
-    localStorage.setItem(STORAGE_KEY, version);
-}
 
 export default function WhatsNewModal({ onClose }) {
     const latest = PATCHES[0];

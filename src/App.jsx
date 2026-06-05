@@ -15,7 +15,8 @@ import IdleReturnModal from './components/village/IdleReturnModal';
 import { playSound, playBGM, setMusicEnabled, setSoundEnabled } from './utils/soundManager';
 import { TRANSLATIONS } from './data/translations';
 import { trackScreenView, trackSessionDuration } from './utils/analytics';
-import WhatsNewModal, { CURRENT_VERSION, getLastSeenVersion, markVersionSeen } from './components/ui/WhatsNewModal';
+import WhatsNewModal from './components/ui/WhatsNewModal';
+import { CURRENT_VERSION, getLastSeenVersion, markVersionSeen } from './utils/patchVersion';
 
 export default function App() {
     const gameLogic = useGameLogic();
