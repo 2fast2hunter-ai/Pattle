@@ -1,9 +1,9 @@
 import { db } from '../firebase';
 import {
-    doc, getDoc, setDoc, updateDoc, collection, addDoc,
-    onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
-    runTransaction, increment, arrayUnion, arrayRemove, serverTimestamp,
-    deleteField, writeBatch, getCountFromServer
+    doc, getDoc, collection, addDoc,
+    onSnapshot, query, where, orderBy, limit, getDocs,
+    runTransaction, increment, arrayUnion,
+    deleteField, writeBatch
 } from 'firebase/firestore';
 
 export const MAX_GUILD_MEMBERS = 30;

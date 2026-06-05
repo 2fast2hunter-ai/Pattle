@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import {
     createGuild, joinGuild, leaveGuild, kickMember,
-    getGuild, listenToGuild, listGuilds, searchGuilds
+    listenToGuild, listGuilds, searchGuilds
 } from '../utils/guildDb';
 
 // --- Sub-views: 'overview' | 'create' | 'browse' | 'manage' ---
