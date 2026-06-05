@@ -3,6 +3,16 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 
 export const PATCHES = [
     {
+        version: 'v1.15.0',
+        date: '2026-06-05',
+        changes: [
+            { type: 'new', text: 'Global Chat: real-time chat with all players, accessible from the main menu' },
+            { type: 'new', text: 'Friend requests: send friend requests by username (instead of ID), accept or decline in-profile' },
+            { type: 'new', text: 'Admin dashboard: owner-only analytics screen (DAU/MAU, retention funnel, rank distribution, top pets)' },
+            { type: 'changed', text: 'Social actions upgraded: friend requests now use Firestore batch writes for atomic mutual-friend creation' },
+        ]
+    },
+    {
         version: 'v1.14.0',
         date: '2026-06-05',
         changes: [

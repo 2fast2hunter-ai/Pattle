@@ -48,6 +48,16 @@ service cloud.firestore {
       allow create: if isSignedIn();
     }
 
+    // GLOBAL CHAT:
+    match /globalChat/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && request.resource.data.senderId == request.auth.uid
+        && request.resource.data.text is string
+        && request.resource.data.text.size() <= 200;
+      allow update, delete: if false;
+    }
+
     // GUILDS:
     match /guilds/{guildId} {
       allow read: if isSignedIn();

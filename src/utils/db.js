@@ -3,7 +3,7 @@ import { db } from '../firebase';
 import {
     doc, getDoc, setDoc, updateDoc, collection, addDoc,
     onSnapshot, query, where, deleteDoc, orderBy, limit, getDocs,
-    runTransaction, increment, getCountFromServer, deleteField, writeBatch
+    runTransaction, increment, getCountFromServer, deleteField, writeBatch, arrayUnion
 } from 'firebase/firestore';
 import { generateQuests } from './gameMechanics';
 import { calculatePlayerLevel, getXpToNextPlayerLevel } from './mechanics/progression';
@@ -710,5 +710,162 @@ export const getUserRankAndPercent = async (user, type = 'elo') => {
     } catch (e) {
         console.error("Error fetching rank:", e);
         return null;
+    }
+};
+
+export const findUserByUsername = async (username) => {
+    if (!username) return null;
+    try {
+        const q = query(collection(db, 'users'), where('username', '==', username), limit(1));
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        return { id: snap.docs[0].id, ...snap.docs[0].data() };
+    } catch (e) {
+        console.error('[DB] findUserByUsername error:', e);
+        return null;
+    }
+};
+
+export const sendFriendRequest = async (fromUser, toUserId) => {
+    if (!fromUser || !toUserId) return { success: false };
+    try {
+        const toRef = doc(db, 'users', toUserId);
+        const toSnap = await getDoc(toRef);
+        if (!toSnap.exists()) return { success: false };
+        const toData = toSnap.data();
+
+        if ((toData.friends || []).some(f => f.id === fromUser.id)) return { success: false, reason: 'already_friends' };
+        if ((toData.friendRequests || []).some(r => r.fromId === fromUser.id)) return { success: false, reason: 'already_sent' };
+
+        await updateDoc(toRef, {
+            friendRequests: arrayUnion({
+                fromId: fromUser.id,
+                fromUsername: fromUser.username,
+                fromAvatar: fromUser.avatar || '🛡️',
+                fromLevel: fromUser.level || 1,
+                fromRating: fromUser.rating || 1000,
+            })
+        });
+        return { success: true };
+    } catch (e) {
+        console.error('[DB] sendFriendRequest error:', e);
+        return { success: false };
+    }
+};
+
+export const respondFriendRequest = async (userId, request, accept) => {
+    const userRef = doc(db, 'users', userId);
+    try {
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) return { success: false };
+        const userData = userSnap.data();
+        const updatedRequests = (userData.friendRequests || []).filter(r => r.fromId !== request.fromId);
+
+        if (accept) {
+            const fromUserRef = doc(db, 'users', request.fromId);
+            const newFriendEntry = {
+                id: request.fromId,
+                username: request.fromUsername,
+                avatar: request.fromAvatar,
+                level: request.fromLevel,
+                rating: request.fromRating
+            };
+            const reverseEntry = {
+                id: userId,
+                username: userData.username,
+                avatar: userData.avatar || '🛡️',
+                level: userData.level || 1,
+                rating: userData.rating || 1000
+            };
+            const batch = writeBatch(db);
+            batch.update(userRef, {
+                friends: arrayUnion(newFriendEntry),
+                friendRequests: updatedRequests
+            });
+            batch.update(fromUserRef, { friends: arrayUnion(reverseEntry) });
+            await batch.commit();
+        } else {
+            await updateDoc(userRef, { friendRequests: updatedRequests });
+        }
+        return { success: true };
+    } catch (e) {
+        console.error('[DB] respondFriendRequest error:', e);
+        return { success: false };
+    }
+};
+
+export const getAdminAnalytics = async () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const monthStart = `${year}-${month}-01`;
+    const nextMonth = now.getMonth() === 11
+        ? `${year + 1}-01-01`
+        : `${year}-${String(now.getMonth() + 2).padStart(2, '0')}-01`;
+
+    try {
+        const usersRef = collection(db, 'users');
+        const petsRef = collection(db, 'pets');
+
+        const [dauSnap, mauSnap, totalSnap] = await Promise.all([
+            getCountFromServer(query(usersRef, where('lastLoginDate', '==', today))),
+            getCountFromServer(query(usersRef, where('lastLoginDate', '>=', monthStart), where('lastLoginDate', '<', nextMonth))),
+            getCountFromServer(usersRef),
+        ]);
+        const dau = dauSnap.data().count;
+        const mau = mauSnap.data().count;
+        const totalUsers = totalSnap.data().count;
+
+        const [r1, r3, r7, r14, r30] = await Promise.all([
+            getCountFromServer(query(usersRef, where('loginStreak', '>=', 1))),
+            getCountFromServer(query(usersRef, where('loginStreak', '>=', 3))),
+            getCountFromServer(query(usersRef, where('loginStreak', '>=', 7))),
+            getCountFromServer(query(usersRef, where('loginStreak', '>=', 14))),
+            getCountFromServer(query(usersRef, where('loginStreak', '>=', 30))),
+        ]);
+        const retention = {
+            day1: r1.data().count,
+            day3: r3.data().count,
+            week1: r7.data().count,
+            week2: r14.data().count,
+            month1: r30.data().count,
+        };
+
+        const leaderboardSnap = await getDocs(query(usersRef, orderBy('rating', 'desc'), limit(200)));
+        const rankDist = { Stone: 0, Bronze: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Master: 0 };
+        let totalBattles = 0;
+        let totalWins = 0;
+        leaderboardSnap.forEach(d => {
+            const data = d.data();
+            totalBattles += (data.stats?.pvpTotal || 0);
+            totalWins += (data.stats?.pvpWins || 0);
+            const r = data.rating || 1000;
+            if (r >= 2300) rankDist.Master++;
+            else if (r >= 2000) rankDist.Diamond++;
+            else if (r >= 1700) rankDist.Platinum++;
+            else if (r >= 1400) rankDist.Gold++;
+            else if (r >= 1100) rankDist.Silver++;
+            else if (r >= 850) rankDist.Bronze++;
+            else rankDist.Stone++;
+        });
+
+        const petsSnap = await getDocs(query(petsRef, limit(500)));
+        const speciesCounts = {};
+        petsSnap.forEach(d => {
+            const pet = d.data();
+            if (pet.isEgg) return;
+            const key = pet.species || pet.type || 'Unknown';
+            speciesCounts[key] = (speciesCounts[key] || 0) + 1;
+        });
+        const topPets = Object.entries(speciesCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 10)
+            .map(([species, count]) => ({ species, count }));
+
+        return { dau, mau, totalUsers, totalBattles, totalWins, topPets, retention, rankDist };
+    } catch (e) {
+        console.error('[Admin] Error fetching analytics:', e);
+        throw e;
     }
 };
