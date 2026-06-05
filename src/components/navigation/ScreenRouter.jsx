@@ -28,6 +28,9 @@ const TowerScreen = lazy(() => import('../../screens/TowerScreen'));
 const LegalScreen = lazy(() => import('../../screens/LegalScreen'));
 const PatchesScreen = lazy(() => import('../../screens/PatchesScreen'));
 const FeedbackScreen = lazy(() => import('../../screens/FeedbackScreen'));
+const GuildScreen = lazy(() => import('../../screens/GuildScreen'));
+const GuildChatScreen = lazy(() => import('../../screens/GuildChatScreen'));
+const GuildLeaderboardScreen = lazy(() => import('../../screens/GuildLeaderboardScreen'));
 
 const ScreenFallback = () => (
     <div className="h-full flex items-center justify-center">
@@ -67,7 +70,7 @@ export default function ScreenRouter({
 
     let screen;
     switch (currentView) {
-        case 'menu': screen = <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} onAchievements={() => setCurrentView('achievements')} tutorialHighlight={tutorialHighlight} />; break;
+        case 'menu': screen = <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} onAchievements={() => setCurrentView('achievements')} onGuild={() => setCurrentView('guild')} tutorialHighlight={tutorialHighlight} />; break;
         case 'achievements': screen = <AchievementsScreen user={user} onBack={() => setCurrentView('menu')} t={t} lang={settings?.language || 'de'} />; break;
 
         case 'village': screen = <VillageScreen user={user} pets={myPets} t={t} onBack={() => setCurrentView('menu')} onCollect={handleCollectVillage} onSelectResource={handleOpenResource} productionRates={productionRates} onOpenMilestones={() => setCurrentView('village-milestones')} onOpenTrading={() => setCurrentView('village-trading')} onAddIdleTime={addIdleTime} onAddIdleTimeByAd={gameLogic.addIdleTimeByAd} onOpenCosmetics={() => setCurrentView('village-cosmetics')} onToggleTrainingPet={handleToggleTrainingPet} />; break;
@@ -135,6 +138,10 @@ export default function ScreenRouter({
         case 'legal-privacy': screen = <LegalScreen type='privacy' onBack={() => setCurrentView('settings')} t={t} />; break;
         case 'patches': screen = <PatchesScreen onBack={() => setCurrentView('settings')} t={t} />; break;
         case 'feedback': screen = <FeedbackScreen onBack={() => setCurrentView('settings')} user={user} t={t} />; break;
+
+        case 'guild': screen = <GuildScreen user={user} onBack={() => setCurrentView('menu')} onOpenChat={() => setCurrentView('guild-chat')} onOpenLeaderboard={() => setCurrentView('guild-leaderboard')} showNotification={gameLogic.showNotification} />; break;
+        case 'guild-chat': screen = <GuildChatScreen user={user} onBack={() => setCurrentView('guild')} />; break;
+        case 'guild-leaderboard': screen = <GuildLeaderboardScreen user={user} onBack={() => setCurrentView('guild')} />; break;
 
         default: screen = null;
     }

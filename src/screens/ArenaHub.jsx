@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Crown, Shield, Flame, X, Castle } from 'lucide-react';
+import { Trophy, Crown, Shield, Flame, X, Castle, Hash } from 'lucide-react';
 import { getUnlockedTeamSlots } from '../utils/gameMechanics';
 import { PageBackground } from '../components/GameLayout';
 import HubTile from '../components/arena/HubTile';
@@ -24,10 +24,15 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
                     <h2 className="text-2xl sm:text-3xl font-black italic tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-500 drop-shadow-sm">
                         {t ? t('arena_title') : 'ARENA'}
                     </h2>
-                    <div className="flex items-center gap-1.5 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         <Trophy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-500" />
                         <span className="text-xs font-bold text-slate-400">{rank} {t ? t('arena_elo') : 'Elo'}</span>
                         <span className={`text-[10px] font-black px-1.5 py-0.5 rounded border ${rankInfo.badgeClass}`}>{rankInfo.emoji} {rankInfo.name}</span>
+                        {user?.guildTag && (
+                            <span className="inline-flex items-center gap-0.5 bg-indigo-900/60 border border-indigo-500/40 text-indigo-300 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md tracking-wider">
+                                <Hash className="w-2.5 h-2.5" />{user.guildTag}
+                            </span>
+                        )}
                     </div>
                 </div>
 

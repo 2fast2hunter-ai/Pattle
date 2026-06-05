@@ -47,5 +47,23 @@ service cloud.firestore {
     match /feedback/{feedbackId} {
       allow create: if isSignedIn();
     }
+
+    // GUILDS:
+    match /guilds/{guildId} {
+      allow read: if isSignedIn();
+      // Only authenticated users can create guilds
+      allow create: if isSignedIn() && request.resource.data.leaderId == request.auth.uid;
+      // Members can update (join/leave handled via transactions server-side)
+      allow update: if isSignedIn();
+      // Only leader can delete
+      allow delete: if isSignedIn() && resource.data.leaderId == request.auth.uid;
+
+      // Guild chat messages subcollection
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow delete: if false; // Messages are permanent
+      }
+    }
   }
 }
