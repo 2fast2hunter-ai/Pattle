@@ -2,13 +2,18 @@ import { generatePet } from '../../../utils/gameMechanics';
 import { setBattleActive } from '../../../utils/db';
 import { TYPES } from '../../../data/gameData';
 import { trackBattleStarted } from '../../../utils/analytics';
+import { applyGearToPet } from '../../../utils/mechanics/gearUtils';
 
 export const startBattle = async (state, showNotification, overridePets = null) => {
     const { user, myPets, setActiveBattle, setCurrentView } = state;
     if (!user) return;
 
     const sourcePets = overridePets || myPets;
-    const myTeam = (user.team || []).map(id => sourcePets.find(p => p.id === id)).filter(Boolean);
+    const gearInventory = user.gearInventory || [];
+    const myTeam = (user.team || [])
+        .map(id => sourcePets.find(p => p.id === id))
+        .filter(Boolean)
+        .map(p => applyGearToPet(p, gearInventory));
     if (myTeam.length === 0) {
         showNotification(state.t ? state.t('notif_team_empty') : 'Your team is empty!', "error");
         return;

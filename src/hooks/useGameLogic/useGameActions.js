@@ -5,6 +5,7 @@ import { useBattleActions } from './actions/useBattleActions';
 import { useMarketActions } from './actions/useMarketActions';
 import { useSocialActions } from './actions/useSocialActions';
 import { useVillageActions } from './actions/useVillageActions'; // <--- NEU
+import { useGearActions } from './actions/useGearActions';
 
 export function useGameActions(state, setUserId) {
     const showNotification = (msg, type = 'error') => {
@@ -20,6 +21,7 @@ export function useGameActions(state, setUserId) {
     const marketActions = useMarketActions(state, showNotification);
     const socialActions = useSocialActions(state, showNotification);
     const villageActions = useVillageActions(state, showNotification); // <--- NEU
+    const gearActions = useGearActions(state, showNotification);
 
     return {
         showNotification,
@@ -29,6 +31,7 @@ export function useGameActions(state, setUserId) {
         ...battleActions,
         ...marketActions,
         ...socialActions,
-        ...villageActions // <--- NEU
+        ...villageActions, // <--- NEU
+        ...gearActions,
     };
 }

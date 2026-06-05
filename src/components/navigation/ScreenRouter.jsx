@@ -35,6 +35,7 @@ const DungeonScreen = lazy(() => import('../../screens/DungeonScreen'));
 const DungeonRunScreen = lazy(() => import('../../screens/DungeonRunScreen'));
 const ChatScreen = lazy(() => import('../../screens/ChatScreen'));
 const AdminDashboardScreen = lazy(() => import('../../screens/AdminDashboardScreen'));
+const GearInventoryScreen = lazy(() => import('../../screens/GearInventoryScreen'));
 
 const ScreenFallback = () => (
     <div className="h-full flex items-center justify-center">
@@ -134,7 +135,8 @@ export default function ScreenRouter({
         case 'team-select-pet': screen = <InventoryScreen pets={getAvailablePets()} title={t ? t('label_select_team_pet') : 'Select Pet for Team'} onBack={() => setCurrentView('team-edit')} onSelectPet={(id) => addToTeam(id)} highlightMode={true} filterEggs={true} t={t} />; break;
 
         case 'inventory': screen = <InventoryScreen pets={myPets} title={t('pethub_inventory_btn')} onBack={() => setCurrentView('pet-hub')} onSelectPet={(id) => { const p = myPets.find(p => p.id === id); if (p.isEgg) return; setSelectedPetDetail(p); setCurrentView('pet-detail'); }} filterEggs={true} t={t} />; break;
-        case 'pet-detail': screen = activePetDetail && <PetDetailScreen pet={activePetDetail} user={user} onBack={() => setCurrentView('inventory')} onRenamePet={renamePet} onReleasePet={releasePet} t={t} />; break;
+        case 'pet-detail': screen = activePetDetail && <PetDetailScreen pet={activePetDetail} user={user} onBack={() => setCurrentView('inventory')} onRenamePet={renamePet} onReleasePet={releasePet} onOpenGear={() => setCurrentView('gear-inventory')} t={t} />; break;
+        case 'gear-inventory': screen = activePetDetail && <GearInventoryScreen pet={activePetDetail} user={user} onBack={() => setCurrentView('pet-detail')} onEquipGear={gameLogic.equipGear} onUnequipGear={gameLogic.unequipGear} onSellGear={gameLogic.sellGear} t={t} />; break;
 
         case 'breeding': screen = <BreedingScreen pets={myPets} onBack={() => setCurrentView('pet-hub')} onBreed={breedPets} onReduceCooldown={handleReduceCooldownWrapper} user={user} t={t} />; break;
         case 'battle': screen = activeBattle && <BattleScreen battleState={activeBattle} setBattleState={setActiveBattle} user={user} onWin={handleWinWrapper} onLose={handleLose} isAutoBattle={autoBattleRemaining > 0} autoBattleRemaining={autoBattleRemaining} onCancelAutoBattle={cancelAutoBattle} t={t} lowPowerMode={settings?.lowPowerMode === true} />; break;

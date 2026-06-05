@@ -1,7 +1,9 @@
 import { setBattleActive } from '../../../utils/db';
 import { db } from '../../../firebase';
-import { doc, increment, updateDoc } from 'firebase/firestore';
+import { doc, increment, updateDoc, arrayUnion } from 'firebase/firestore';
 import { distributeXP } from './distributeXP';
+import { rollGearDrop } from '../../../utils/mechanics/gearUtils';
+import { GEAR_DROP_CHANCE_DUNGEON } from '../../../data/gearData';
 
 export const handleDungeonWin = async (state, showNotification, activeBattle, winningTeamIds) => {
     const { user, setActiveBattle, setCurrentView, t } = state;
@@ -41,6 +43,15 @@ export const handleDungeonWin = async (state, showNotification, activeBattle, wi
             'stats.dungeonBestFloor': Math.max(user.stats?.dungeonBestFloor || 0, activeBattle.dungeonRooms.length),
         };
         if (totalGems > 0) userUpdates.gems = increment(totalGems);
+        const gearDrop = rollGearDrop(GEAR_DROP_CHANCE_DUNGEON);
+        if (gearDrop) {
+            userUpdates.gearInventory = arrayUnion(gearDrop);
+            showNotification(
+                t ? t('notif_gear_drop', { item: gearDrop.key, rarity: gearDrop.rarity })
+                  : `Gear drop! ${gearDrop.rarity} ${gearDrop.key.replace(/_/g, ' ')}`,
+                'success'
+            );
+        }
         await updateDoc(userRef, userUpdates);
 
         setActiveBattle(null);

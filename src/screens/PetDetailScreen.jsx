@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Sparkles, Trash2, Share2, Check } from 'lucide-react';
+import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Sparkles, Trash2, Share2, Check, Package } from 'lucide-react';
 import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
 import { getPetLevelProgress } from '../utils/mechanics/petStats'; // IMPORT HINZUGEFÜGT
 import { sharePet } from '../utils/shareUtils';
@@ -9,7 +9,7 @@ import PetAvatar from '../components/PetAvatar';
 import RenameModal from '../components/modals/RenameModal';
 import DeleteModal from '../components/modals/DeleteModal';
 
-export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet, user, t }) {
+export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet, onOpenGear, user, t }) {
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
@@ -145,6 +145,15 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
                 </div>
             </div>
             
+            {onOpenGear && (
+                <button
+                    onClick={onOpenGear}
+                    className="w-full py-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-amber-500 hover:text-white transition-all active:scale-95 mb-3"
+                >
+                    <Package className="w-5 h-5" /> {t ? t('pet_detail_gear_btn') : 'Manage Gear'}
+                </button>
+            )}
+
             <button
                 onClick={handleShare}
                 className="w-full py-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 font-bold uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-indigo-500 hover:text-white transition-all active:scale-95 mb-3"

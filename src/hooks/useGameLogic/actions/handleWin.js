@@ -8,6 +8,8 @@ import { handleGauntletWin, generateGauntletEnemies } from './handleGauntletWin'
 import { handleDungeonWin } from './handleDungeonWin';
 import { distributeXP } from './distributeXP';
 import { checkAchievements } from '../../../utils/checkAchievements';
+import { rollGearDrop } from '../../../utils/mechanics/gearUtils';
+import { GEAR_DROP_CHANCE_BATTLE } from '../../../data/gearData';
 
 export const handleWin = async (state, showNotification, startBattleFn, reward, winningTeamIds, enemyRating, damageReport) => {
     const { user, myPets, activeBattle, setActiveBattle, autoBattleRemaining, setAutoBattleRemaining, setCurrentView, t } = state;
@@ -151,6 +153,22 @@ export const handleWin = async (state, showNotification, startBattleFn, reward, 
     if (gemsGain > 0) userUpdates.gems = increment(gemsGain);
     if (itemsToAdd.length > 0) userUpdates.inventory = arrayUnion(...itemsToAdd);
     if (!isAuto || autoBattleRemaining <= 1) userUpdates.isInBattle = false;
+
+    // Gear drop roll (skip for friendly / gauntlet mid-rounds)
+    if (!isFriendly && !isGauntlet) {
+        const gearDrop = rollGearDrop(GEAR_DROP_CHANCE_BATTLE);
+        if (gearDrop) {
+            userUpdates.gearInventory = arrayUnion(gearDrop);
+            if (!isAuto) {
+                const t = state.t;
+                showNotification(
+                    t ? t('notif_gear_drop', { item: gearDrop.key, rarity: gearDrop.rarity })
+                      : `Gear drop! ${gearDrop.rarity} ${gearDrop.key.replace(/_/g, ' ')}`,
+                    'success'
+                );
+            }
+        }
+    }
 
     if (isTower) {
         const currentProgress = user.towerProgress || 1;
