@@ -114,5 +114,18 @@ export const BattleStyles = () => (
         .animate-tech-scan { animation: tech-scan 4s linear infinite; }
         .animate-magic-orb { animation: magic-orb-float 5s ease-in-out infinite; }
         .animate-bg-breathe { animation: bg-breathe 4s ease-in-out infinite; }
+
+        /* MYTHIC GOLD AURA */
+        @keyframes mythic-gold-rise {
+            0%   { transform: translateY(0) translateX(0) scale(0.4); opacity: 0; }
+            20%  { opacity: 0.9; }
+            100% { transform: translateY(-70px) translateX(var(--tx, 0px)) scale(0.1); opacity: 0; }
+        }
+        @keyframes mythic-gold-pulse {
+            0%, 100% { box-shadow: 0 0 12px 4px rgba(234,179,8,0.35), 0 0 30px 8px rgba(234,179,8,0.15); }
+            50%       { box-shadow: 0 0 20px 8px rgba(234,179,8,0.55), 0 0 50px 16px rgba(234,179,8,0.25); }
+        }
+        .animate-mythic-particle { animation: mythic-gold-rise 1.8s ease-out infinite; }
+        .animate-mythic-glow     { animation: mythic-gold-pulse 2s ease-in-out infinite; }
     `}</style>
 );

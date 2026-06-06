@@ -48,6 +48,24 @@ export default function BattleUnit({ pet, isEnemy, attackState, isHit, damageTex
                 <div className="relative">
                     <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 sm:w-32 sm:h-32 ${typeInfo.bg} opacity-20 blur-[40px] rounded-full transition-opacity duration-500 ${attackState?.type === 'SPECIAL' ? 'opacity-60 scale-125' : ''}`}></div>
 
+                    {pet.rarity === 'MYTHIC' && (
+                        <>
+                            {[...Array(8)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="absolute animate-mythic-particle pointer-events-none w-2 h-2 rounded-full bg-yellow-400"
+                                    style={{
+                                        bottom: `${10 + (i % 3) * 15}%`,
+                                        left: `${10 + (i * 11) % 80}%`,
+                                        animationDelay: `${i * 0.22}s`,
+                                        '--tx': `${(i % 2 === 0 ? 1 : -1) * (8 + i * 4)}px`,
+                                    }}
+                                />
+                            ))}
+                            <div className="absolute inset-0 rounded-full animate-mythic-glow pointer-events-none" />
+                        </>
+                    )}
+
                     <div className="drop-shadow-2xl filter transition-transform">
                         <div className="w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center">
                             <PetAvatar pet={pet} className="w-full h-full object-contain" />

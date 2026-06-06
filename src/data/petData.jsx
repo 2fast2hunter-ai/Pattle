@@ -162,6 +162,11 @@ export const BASE_ANIMALS = {
 
   DIVINE_ANGEL: { id: 'DIVINE_ANGEL', label: 'Archangel', icon: '👼', type: 'DIVINE' },
   DIVINE_SERAPH: { id: 'DIVINE_SERAPH', label: 'Seraphim', icon: '✨', type: 'DIVINE' },
+
+  // MYTHIC — apex species, one per top element, only reachable at Mythic rarity
+  MYTHIC_INFERNO_DRAKE: { id: 'MYTHIC_INFERNO_DRAKE', label: 'Inferno Drake', icon: '🐲', type: 'FIRE' },
+  MYTHIC_ABYSSAL_TITAN: { id: 'MYTHIC_ABYSSAL_TITAN', label: 'Abyssal Titan', icon: '🌊', type: 'WATER' },
+  MYTHIC_WORLD_SERPENT: { id: 'MYTHIC_WORLD_SERPENT', label: 'World Serpent', icon: '🐍', type: 'NATURE' },
 };
 
 // --- 2. GEHEIME ZUCHT-HYBRIDEN ---
@@ -189,6 +194,9 @@ export const SPECIES_BY_TYPE = {};
 Object.keys(TYPES).forEach(typeKey => {
     SPECIES_BY_TYPE[typeKey] = Object.keys(BASE_ANIMALS).filter(key => BASE_ANIMALS[key].type === typeKey);
 });
+
+// Canonical list of Mythic-only species for the Dex
+export const MYTHIC_SPECIES = ['MYTHIC_INFERNO_DRAKE', 'MYTHIC_ABYSSAL_TITAN', 'MYTHIC_WORLD_SERPENT'];
 
 export const FUSION_RECIPES = {
     'FIRE_WATER': { label: 'Steam Wraith', icon: '♨️', type: 'WIND' },

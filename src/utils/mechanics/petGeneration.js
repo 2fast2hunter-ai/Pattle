@@ -49,20 +49,29 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
       abilityKey = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : Object.keys(ABILITIES)[0]; 
   }
 
-  if (!speciesKey) { 
-      const validSpeciesKeys = SPECIES_BY_TYPE[type] || []; 
-      if (validSpeciesKeys.length > 0) { 
-          const rollSpecies = Math.random() * 100; 
-          // Chance auf seltene Spezies (letztes in der Liste)
-          if (rollSpecies <= 5 && validSpeciesKeys.length >= 2) {
-             speciesKey = validSpeciesKeys[validSpeciesKeys.length - 1]; 
-          } else { 
-             const remainingSpecies = validSpeciesKeys.slice(0, validSpeciesKeys.length - 1); 
-             speciesKey = remainingSpecies[Math.floor(Math.random() * remainingSpecies.length)]; 
-          } 
-      } else { 
-          speciesKey = Object.keys(ZODIAC_ANIMALS)[0]; 
-      } 
+  if (!speciesKey) {
+      const validSpeciesKeys = SPECIES_BY_TYPE[type] || [];
+      if (validSpeciesKeys.length > 0) {
+          // At MYTHIC rarity, strongly prefer the MYTHIC_ apex species (85% chance)
+          if (rarity === 'MYTHIC') {
+              const mythicMatch = validSpeciesKeys.find(k => k.startsWith('MYTHIC_'));
+              if (mythicMatch && Math.random() <= 0.85) {
+                  speciesKey = mythicMatch;
+              }
+          }
+          if (!speciesKey) {
+              const rollSpecies = Math.random() * 100;
+              // Chance auf seltene Spezies (letztes in der Liste)
+              if (rollSpecies <= 5 && validSpeciesKeys.length >= 2) {
+                  speciesKey = validSpeciesKeys[validSpeciesKeys.length - 1];
+              } else {
+                  const remainingSpecies = validSpeciesKeys.slice(0, validSpeciesKeys.length - 1);
+                  speciesKey = remainingSpecies[Math.floor(Math.random() * remainingSpecies.length)];
+              }
+          }
+      } else {
+          speciesKey = Object.keys(ZODIAC_ANIMALS)[0];
+      }
   }
 
   const speciesData = ZODIAC_ANIMALS[speciesKey];

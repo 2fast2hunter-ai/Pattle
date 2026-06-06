@@ -1,8 +1,8 @@
 import React from 'react';
-import { LayoutGrid, Backpack, ThermometerSun, Heart, X, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Backpack, ThermometerSun, Heart, X, ChevronRight, BookOpen } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
 
-export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory, t, tutorialHighlight }) {
+export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onItemInventory, onDex, t, tutorialHighlight }) {
   
   // Helper Komponente für die modernen Kacheln
   const HubCard = ({ title, subtitle, icon: Icon, colorFrom, colorTo, iconColor, onClick, delay, highlight }) => (
@@ -103,16 +103,28 @@ export default function PetHub({ onBack, onInventory, onBreed, onHatchery, onIte
         />
 
         {/* 4. BRUTSTÄTTE (Emerald/Teal) */}
-        <HubCard 
+        <HubCard
             title={t ? t('pethub_hatchery_btn') : "HATCHERY"}
             subtitle={t ? t('pethub_hatchery_desc') : "Hatch eggs"}
-            icon={ThermometerSun} 
-            colorFrom="from-emerald-500" 
-            colorTo="to-teal-600" 
+            icon={ThermometerSun}
+            colorFrom="from-emerald-500"
+            colorTo="to-teal-600"
             iconColor="text-emerald-400"
             onClick={onHatchery}
             delay={300}
             highlight={tutorialHighlight === 'hatchery'}
+        />
+
+        {/* 5. DEX (Yellow/Amber) */}
+        <HubCard
+            title="DEX"
+            subtitle="Species collection"
+            icon={BookOpen}
+            colorFrom="from-yellow-500"
+            colorTo="to-amber-600"
+            iconColor="text-yellow-300"
+            onClick={onDex}
+            delay={400}
         />
 
       </div>
