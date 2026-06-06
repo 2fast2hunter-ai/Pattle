@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X, Lock } from 'lucide-react';
 import { RARITIES } from '../data/rarities';
 import { BASE_ANIMALS, MYTHIC_SPECIES, ZODIAC_ANIMALS } from '../data/petData';
@@ -63,7 +63,7 @@ function DexCard({ entry, t }) {
 }
 
 export default function DexScreen({ myPets = [], onBack, t }) {
-    const { mythicEntries, owned } = buildDexSections(myPets);
+    const { mythicEntries } = buildDexSections(myPets);
     const mythicOwned = mythicEntries.filter(e => e.owned).length;
 
     return (
