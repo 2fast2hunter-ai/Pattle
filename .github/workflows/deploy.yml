@@ -45,15 +45,3 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
-  deploy-firebase-rules:
-    runs-on: ubuntu-latest
-    if: ${{ secrets.FIREBASE_TOKEN != '' }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Deploy Firestore rules
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: npx firebase-tools deploy --only firestore:rules --project pattle-6edea --token "$FIREBASE_TOKEN"
