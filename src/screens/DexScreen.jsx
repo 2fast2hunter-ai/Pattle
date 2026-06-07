@@ -1,7 +1,6 @@
 import React from 'react';
 import { X, Lock } from 'lucide-react';
-import { RARITIES } from '../data/rarities';
-import { BASE_ANIMALS, MYTHIC_SPECIES, ZODIAC_ANIMALS } from '../data/petData';
+import { RARITIES, BASE_ANIMALS, MYTHIC_SPECIES, ZODIAC_ANIMALS } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 
 const RARITY_ORDER = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC', 'DIVINE', 'ANCIENT', 'COSMIC', 'TRANSCENDENT'];

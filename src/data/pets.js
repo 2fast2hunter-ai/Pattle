@@ -176,6 +176,11 @@ export const BASE_ANIMALS = {
   ORDER_LION: { id: 'ORDER_LION', label: 'Lion', icon: '🦁', type: 'ORDER' },
   ORDER_DINO: { id: 'ORDER_DINO', label: 'Dinosaur', icon: '🦖', type: 'ORDER' },
   ORDER_ANGEL: { id: 'ORDER_ANGEL', label: 'Angel', icon: '👼', type: 'ORDER' },
+
+  // MYTHIC — apex species, one per top element, only reachable at Mythic rarity
+  MYTHIC_INFERNO_DRAKE: { id: 'MYTHIC_INFERNO_DRAKE', label: 'Inferno Drake', icon: '🐲', type: 'FIRE' },
+  MYTHIC_ABYSSAL_TITAN: { id: 'MYTHIC_ABYSSAL_TITAN', label: 'Abyssal Titan', icon: '🌊', type: 'WATER' },
+  MYTHIC_WORLD_SERPENT: { id: 'MYTHIC_WORLD_SERPENT', label: 'World Serpent', icon: '🐍', type: 'NATURE' },
 };
 
 // --- 2. GEHEIME ZUCHT-HYBRIDEN ---
@@ -196,6 +201,8 @@ export const SECRET_ANIMALS = {
     SECRET_FROST_GIANT: { id: 'SECRET_FROST_GIANT', label: 'Frost Giant', icon: '🥶', type: 'ICE' },
     SECRET_POISON_IVY: { id: 'SECRET_POISON_IVY', label: 'Death Blossom', icon: '🌺☠️', type: 'POISON' },
 };
+
+export const MYTHIC_SPECIES = ['MYTHIC_INFERNO_DRAKE', 'MYTHIC_ABYSSAL_TITAN', 'MYTHIC_WORLD_SERPENT'];
 
 export const ZODIAC_ANIMALS = { ...BASE_ANIMALS, ...SECRET_ANIMALS };
 
