@@ -22,6 +22,9 @@ jobs:
         working-directory: functions
 
       - name: Deploy Cloud Functions
-        run: npx -y firebase-tools@13 deploy --only functions --project pattle-6edea --non-interactive --debug 2>&1 | tail -80
+        run: |
+          # Strip any whitespace/newlines that may have been included when copying the token
+          CLEAN_TOKEN=$(printf '%s' "$RAW_FIREBASE_TOKEN" | tr -d '[:space:]')
+          FIREBASE_TOKEN="$CLEAN_TOKEN" npx -y firebase-tools@13 deploy --only functions --project pattle-6edea --non-interactive
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          RAW_FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
