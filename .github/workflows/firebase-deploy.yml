@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths:
-      - 'firestore.rules'
       - 'functions/**'
   workflow_dispatch:
 
@@ -17,11 +16,6 @@ jobs:
       - name: Install function dependencies
         run: npm ci
         working-directory: functions
-
-      - name: Deploy Firestore rules
-        run: npx -y firebase-tools@latest deploy --only firestore:rules --project pattle-6edea --non-interactive
-        env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
       - name: Deploy Cloud Functions
         run: npx -y firebase-tools@latest deploy --only functions --project pattle-6edea --non-interactive
