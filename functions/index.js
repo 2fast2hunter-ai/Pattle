@@ -1,5 +1,9 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
+
+const paperclipWebhookSecret = defineSecret("PAPERCLIP_WEBHOOK_SECRET");
 
 if (admin.apps.length === 0) {
     admin.initializeApp();
@@ -268,3 +272,69 @@ exports.openLootbox = onCall({ cors: true }, async (request) => {
         throw new HttpsError('internal', error.message || 'Internal Server Error');
     }
 });
+
+const PAPERCLIP_WEBHOOK_URL =
+    "https://paperclip-afsc.srv1732766.hstgr.cloud/api/routine-triggers/public/01839bc18e6ed7db976d2f6a/fire";
+
+const CATEGORY_LABELS = {
+    bug: "🐛 Bug Report",
+    suggestion: "💡 Suggestion",
+    balance: "⚖️ Balance Feedback",
+    other: "💬 Other",
+};
+
+const CATEGORY_PRIORITIES = {
+    bug: "high",
+    suggestion: "medium",
+    balance: "medium",
+    other: "low",
+};
+
+exports.createPaperclipIssueFromFeedback = onDocumentCreated(
+    { document: "feedback/{feedbackId}", secrets: [paperclipWebhookSecret] },
+    async (event) => {
+        const feedback = event.data.data();
+        const feedbackId = event.params.feedbackId;
+
+        const categoryLabel = CATEGORY_LABELS[feedback.category] || "💬 Other";
+        const priority = CATEGORY_PRIORITIES[feedback.category] || "medium";
+        const shortMessage = (feedback.message || "").substring(0, 80).replace(/\n/g, " ");
+        const title = `[Player Feedback] ${categoryLabel}: ${shortMessage}`;
+
+        const issueBody = {
+            title,
+            priority,
+            payload: {
+                feedbackId,
+                category: feedback.category,
+                message: feedback.message,
+                userId: feedback.userId || "anonymous",
+                userName: feedback.userName || "Anonymous",
+                submittedAt: feedback.createdAt ? feedback.createdAt.toDate().toISOString() : new Date().toISOString(),
+            },
+        };
+
+        try {
+            const response = await fetch(PAPERCLIP_WEBHOOK_URL, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${paperclipWebhookSecret.value()}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(issueBody),
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error(`[FeedbackWebhook] Failed to fire webhook: ${response.status} ${text}`);
+                return;
+            }
+
+            console.log(`[FeedbackWebhook] Paperclip issue created for feedback ${feedbackId}`);
+
+            await event.data.ref.update({ paperclipIssueCreated: true, paperclipIssueFiredAt: admin.firestore.FieldValue.serverTimestamp() });
+        } catch (err) {
+            console.error("[FeedbackWebhook] Error firing Paperclip webhook:", err);
+        }
+    }
+);
