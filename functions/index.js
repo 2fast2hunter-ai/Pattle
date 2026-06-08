@@ -1,13 +1,13 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
-const { defineSecret } = require("firebase-functions/params");
 const admin = require("firebase-admin");
-
-const paperclipWebhookSecret = defineSecret("PAPERCLIP_WEBHOOK_SECRET");
 
 if (admin.apps.length === 0) {
     admin.initializeApp();
 }
+
+// Webhook auth token for the Paperclip routine trigger (bearer mode)
+const PAPERCLIP_WEBHOOK_BEARER = "424b8d1274070325e5d2c5a814004d55389740b2c5ea0c4f";
 
 // --- KONFIGURATION ---
 const LOOTBOX_ODDS = {
@@ -291,7 +291,7 @@ const CATEGORY_PRIORITIES = {
 };
 
 exports.createPaperclipIssueFromFeedback = onDocumentCreated(
-    { document: "feedback/{feedbackId}", secrets: [paperclipWebhookSecret] },
+    "feedback/{feedbackId}",
     async (event) => {
         const feedback = event.data.data();
         const feedbackId = event.params.feedbackId;
@@ -322,7 +322,7 @@ exports.createPaperclipIssueFromFeedback = onDocumentCreated(
                 const response = await fetch(PAPERCLIP_WEBHOOK_URL, {
                     method: "POST",
                     headers: {
-                        "Authorization": `Bearer ${paperclipWebhookSecret.value()}`,
+                        "Authorization": `Bearer ${PAPERCLIP_WEBHOOK_BEARER}`,
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(issueBody),

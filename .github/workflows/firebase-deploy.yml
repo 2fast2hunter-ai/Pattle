@@ -21,19 +21,6 @@ jobs:
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Provision Paperclip webhook secret in GCP Secret Manager
-        if: ${{ secrets.PAPERCLIP_WEBHOOK_SECRET != '' }}
-        run: |
-          PROJECT_ID="pattle-6edea"
-          SECRET_NAME="PAPERCLIP_WEBHOOK_SECRET"
-          # Create secret if it doesn't exist
-          gcloud secrets describe "$SECRET_NAME" --project="$PROJECT_ID" 2>/dev/null \
-            || gcloud secrets create "$SECRET_NAME" --project="$PROJECT_ID" --replication-policy="automatic"
-          # Set/update the secret value
-          echo -n "${{ secrets.PAPERCLIP_WEBHOOK_SECRET }}" \
-            | gcloud secrets versions add "$SECRET_NAME" --project="$PROJECT_ID" --data-file=-
-          echo "Secret $SECRET_NAME updated."
-
       - name: Deploy Firestore rules
         run: npx -y firebase-tools@latest deploy --only firestore:rules --project pattle-6edea --non-interactive
 
