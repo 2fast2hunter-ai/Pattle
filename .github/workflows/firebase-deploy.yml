@@ -17,14 +17,14 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
       - name: Install function dependencies
         run: npm ci
         working-directory: functions
 
       - name: Deploy Cloud Functions
-        run: |
-          # Strip any whitespace/newlines that may have been included when copying the token
-          CLEAN_TOKEN=$(printf '%s' "$RAW_FIREBASE_TOKEN" | tr -d '[:space:]')
-          FIREBASE_TOKEN="$CLEAN_TOKEN" npx -y firebase-tools@13 deploy --only functions --project pattle-6edea --non-interactive
-        env:
-          RAW_FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        run: npx -y firebase-tools@13 deploy --only functions --project pattle-6edea --non-interactive
