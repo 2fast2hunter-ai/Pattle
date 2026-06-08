@@ -27,4 +27,4 @@ jobs:
         working-directory: functions
 
       - name: Deploy Cloud Functions
-        run: npx -y firebase-tools@13 deploy --only functions --project pattle-6edea --non-interactive
+        run: npx -y firebase-tools@13 deploy --only functions:createPaperclipIssueFromFeedback --project pattle-6edea --non-interactive

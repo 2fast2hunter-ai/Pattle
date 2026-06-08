@@ -1,5 +1,5 @@
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 
 if (admin.apps.length === 0) {
@@ -290,11 +290,11 @@ const CATEGORY_PRIORITIES = {
     other: "low",
 };
 
-exports.createPaperclipIssueFromFeedback = onDocumentCreated(
-    "feedback/{feedbackId}",
-    async (event) => {
-        const feedback = event.data.data();
-        const feedbackId = event.params.feedbackId;
+exports.createPaperclipIssueFromFeedback = functions.firestore
+    .document("feedback/{feedbackId}")
+    .onCreate(async (snap, context) => {
+        const feedback = snap.data();
+        const feedbackId = context.params.feedbackId;
 
         const categoryLabel = CATEGORY_LABELS[feedback.category] || "💬 Other";
         const priority = CATEGORY_PRIORITIES[feedback.category] || "medium";
@@ -336,7 +336,7 @@ exports.createPaperclipIssueFromFeedback = onDocumentCreated(
                 }
 
                 console.log(`[FeedbackWebhook] Paperclip issue created for feedback ${feedbackId} (attempt ${attempt})`);
-                await event.data.ref.update({ paperclipIssueCreated: true, paperclipIssueFiredAt: admin.firestore.FieldValue.serverTimestamp() });
+                await snap.ref.update({ paperclipIssueCreated: true, paperclipIssueFiredAt: admin.firestore.FieldValue.serverTimestamp() });
                 return;
             } catch (err) {
                 console.error(`[FeedbackWebhook] Attempt ${attempt}/${MAX_RETRIES} error:`, err);
