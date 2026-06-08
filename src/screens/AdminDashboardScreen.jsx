@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, BarChart2, Users, Swords, TrendingUp, Shield, RefreshCw, Lock } from 'lucide-react';
-import { auth } from '../firebase';
+import { ArrowLeft, BarChart2, Users, Swords, TrendingUp, Shield, RefreshCw, Lock, MessageSquare, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle } from 'lucide-react';
+import { auth, db } from '../firebase';
+import { collection, query, orderBy, limit, getDocs, updateDoc, doc, where } from 'firebase/firestore';
 import { getAdminAnalytics } from '../utils/db';
 import { RANK_TIERS } from '../utils/rankUtils';
 
@@ -92,11 +93,54 @@ function RetentionFunnel({ retention, totalUsers }) {
     );
 }
 
+const CATEGORY_ICONS = {
+    bug: { icon: Bug, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
+    suggestion: { icon: Lightbulb, color: 'text-yellow-400', bg: 'bg-yellow-500/10 border-yellow-500/20' },
+    balance: { icon: Scale, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
+    other: { icon: MessageCircle, color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/20' },
+};
+
+function FeedbackItem({ item, onMarkReviewed }) {
+    const cfg = CATEGORY_ICONS[item.category] || CATEGORY_ICONS.other;
+    const Icon = cfg.icon;
+    const date = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt || 0);
+    return (
+        <div className={`rounded-2xl border p-4 space-y-2 ${item.status === 'reviewed' ? 'opacity-50' : ''} ${cfg.bg}`}>
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <Icon className={`w-4 h-4 shrink-0 ${cfg.color}`} />
+                    <span className={`text-xs font-bold uppercase ${cfg.color}`}>{item.category}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">{item.userName}</span>
+                    {item.status === 'reviewed' ? (
+                        <span className="flex items-center gap-1 text-xs text-green-400 font-bold">
+                            <CheckCircle className="w-3 h-3" /> Done
+                        </span>
+                    ) : (
+                        <button
+                            onClick={() => onMarkReviewed(item.id)}
+                            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+                        >
+                            <CheckCircle className="w-3 h-3" /> Mark reviewed
+                        </button>
+                    )}
+                </div>
+            </div>
+            <p className="text-sm text-slate-200 leading-relaxed">{item.message}</p>
+            <p className="text-xs text-slate-600">{date.toLocaleString()}</p>
+        </div>
+    );
+}
+
 export default function AdminDashboardScreen({ onBack }) {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [feedback, setFeedback] = useState([]);
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+    const [feedbackFilter, setFeedbackFilter] = useState('new');
 
     const checkAdmin = () => {
         const email = auth.currentUser?.email;
@@ -116,12 +160,40 @@ export default function AdminDashboardScreen({ onBack }) {
         }
     };
 
+    const loadFeedback = async () => {
+        setFeedbackLoading(true);
+        try {
+            const q = feedbackFilter === 'all'
+                ? query(collection(db, 'feedback'), orderBy('createdAt', 'desc'), limit(50))
+                : query(collection(db, 'feedback'), where('status', '==', feedbackFilter), orderBy('createdAt', 'desc'), limit(50));
+            const snap = await getDocs(q);
+            setFeedback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+        } catch (e) {
+            console.error('Feedback load error:', e);
+        } finally {
+            setFeedbackLoading(false);
+        }
+    };
+
+    const markReviewed = async (id) => {
+        try {
+            await updateDoc(doc(db, 'feedback', id), { status: 'reviewed' });
+            setFeedback(prev => prev.map(f => f.id === id ? { ...f, status: 'reviewed' } : f));
+        } catch (e) {
+            console.error('Mark reviewed error:', e);
+        }
+    };
+
     useEffect(() => {
         const admin = checkAdmin();
         setIsAdmin(admin);
-        if (admin) loadData();
+        if (admin) { loadData(); loadFeedback(); }
         else setLoading(false);
     }, []);
+
+    useEffect(() => {
+        if (isAdmin) loadFeedback();
+    }, [feedbackFilter]);
 
     if (!isAdmin) {
         return (
@@ -252,6 +324,45 @@ export default function AdminDashboardScreen({ onBack }) {
                         </section>
                     </>
                 )}
+
+                {/* Feedback Review */}
+                <section className="space-y-3">
+                    <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" /> Player Feedback
+                    </h3>
+                    <div className="flex gap-2">
+                        {['new', 'reviewed', 'all'].map(f => (
+                            <button
+                                key={f}
+                                onClick={() => setFeedbackFilter(f)}
+                                className={`px-3 py-1.5 rounded-xl text-xs font-bold uppercase transition-colors ${feedbackFilter === f ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}
+                            >
+                                {f}
+                            </button>
+                        ))}
+                        <button
+                            onClick={loadFeedback}
+                            className="ml-auto p-1.5 bg-slate-800 text-slate-400 rounded-xl hover:text-white transition-colors"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${feedbackLoading ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
+                    {feedbackLoading ? (
+                        <div className="flex items-center justify-center h-20 text-slate-500 gap-2 text-xs font-bold">
+                            <RefreshCw className="w-4 h-4 animate-spin" /> Loading feedback...
+                        </div>
+                    ) : feedback.length === 0 ? (
+                        <div className="flex items-center justify-center h-20 text-slate-600 gap-2 text-xs font-bold">
+                            <Clock className="w-4 h-4" /> No {feedbackFilter} feedback
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {feedback.map(item => (
+                                <FeedbackItem key={item.id} item={item} onMarkReviewed={markReviewed} />
+                            ))}
+                        </div>
+                    )}
+                </section>
             </div>
         </div>
     );
