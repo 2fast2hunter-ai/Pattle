@@ -314,27 +314,36 @@ exports.createPaperclipIssueFromFeedback = onDocumentCreated(
             },
         };
 
-        try {
-            const response = await fetch(PAPERCLIP_WEBHOOK_URL, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${paperclipWebhookSecret.value()}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(issueBody),
-            });
+        const MAX_RETRIES = 2;
+        let lastError = null;
 
-            if (!response.ok) {
-                const text = await response.text();
-                console.error(`[FeedbackWebhook] Failed to fire webhook: ${response.status} ${text}`);
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                const response = await fetch(PAPERCLIP_WEBHOOK_URL, {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${paperclipWebhookSecret.value()}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(issueBody),
+                });
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error(`[FeedbackWebhook] Attempt ${attempt}/${MAX_RETRIES} failed: ${response.status} ${text}`);
+                    lastError = new Error(`HTTP ${response.status}`);
+                    continue;
+                }
+
+                console.log(`[FeedbackWebhook] Paperclip issue created for feedback ${feedbackId} (attempt ${attempt})`);
+                await event.data.ref.update({ paperclipIssueCreated: true, paperclipIssueFiredAt: admin.firestore.FieldValue.serverTimestamp() });
                 return;
+            } catch (err) {
+                console.error(`[FeedbackWebhook] Attempt ${attempt}/${MAX_RETRIES} error:`, err);
+                lastError = err;
             }
-
-            console.log(`[FeedbackWebhook] Paperclip issue created for feedback ${feedbackId}`);
-
-            await event.data.ref.update({ paperclipIssueCreated: true, paperclipIssueFiredAt: admin.firestore.FieldValue.serverTimestamp() });
-        } catch (err) {
-            console.error("[FeedbackWebhook] Error firing Paperclip webhook:", err);
         }
+
+        console.error(`[FeedbackWebhook] All ${MAX_RETRIES} attempts failed for feedback ${feedbackId}:`, lastError);
     }
 );
