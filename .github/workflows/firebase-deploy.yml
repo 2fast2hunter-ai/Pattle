@@ -13,11 +13,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
       - name: Install function dependencies
         run: npm ci
         working-directory: functions
 
       - name: Deploy Cloud Functions
-        run: npx -y firebase-tools@latest deploy --only functions --project pattle-6edea --non-interactive --debug 2>&1 | tail -60
+        run: npx -y firebase-tools@13 deploy --only functions --project pattle-6edea --non-interactive --debug 2>&1 | tail -80
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
