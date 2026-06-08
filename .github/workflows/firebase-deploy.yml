@@ -18,6 +18,6 @@ jobs:
         working-directory: functions
 
       - name: Deploy Cloud Functions
-        run: npx -y firebase-tools@latest deploy --only functions --project pattle-6edea --non-interactive
+        run: npx -y firebase-tools@latest deploy --only functions --project pattle-6edea --non-interactive --debug 2>&1 | tail -60
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
