@@ -44,6 +44,9 @@ jobs:
             --region us-central1 \
             --project pattle-6edea \
             --no-gen2 \
-            --verbosity=debug 2>&1; EXIT_CODE=$?
-          echo "gcloud exit code: $EXIT_CODE"
+            --verbosity=info 2>&1 | tee /tmp/gcloud_output.txt; EXIT_CODE=${PIPESTATUS[0]}
+          echo "## gcloud deploy output" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/gcloud_output.txt >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Exit code: $EXIT_CODE**" >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
