@@ -32,12 +32,15 @@ jobs:
 
       - name: Deploy Cloud Functions
         run: |
+          # Derive the service account email from the credentials JSON so it can act as itself
+          SA_EMAIL=$(echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' | node -e "const c=[]; process.stdin.on('data',x=>c.push(x)); process.stdin.on('end',()=>console.log(JSON.parse(Buffer.concat(c).toString()).client_email));")
           gcloud functions deploy createPaperclipIssueFromFeedback \
             --runtime nodejs20 \
             --trigger-event providers/cloud.firestore/eventTypes/document.create \
             --trigger-resource "projects/pattle-6edea/databases/(default)/documents/feedback/{feedbackId}" \
             --source ./functions \
             --entry-point createPaperclipIssueFromFeedback \
+            --service-account "$SA_EMAIL" \
             --region us-central1 \
             --project pattle-6edea \
             --no-gen2 \
