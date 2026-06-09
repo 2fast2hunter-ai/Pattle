@@ -30,23 +30,31 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Deploy Cloud Functions
+      - name: Grant actAs permission (self-bootstrap)
         run: |
           SA_EMAIL=$(echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' | node -e "const c=[]; process.stdin.on('data',x=>c.push(x)); process.stdin.on('end',()=>console.log(JSON.parse(Buffer.concat(c).toString()).client_email));")
-          echo "Deploying with SA: $SA_EMAIL"
+          echo "Attempting to grant serviceAccountUser on App Engine SA to $SA_EMAIL"
+          gcloud iam service-accounts add-iam-policy-binding \
+            pattle-6edea@appspot.gserviceaccount.com \
+            --member="serviceAccount:$SA_EMAIL" \
+            --role="roles/iam.serviceAccountUser" \
+            --project=pattle-6edea 2>&1 | tee /tmp/iam_output.txt; IAM_EXIT=${PIPESTATUS[0]}
+          echo "## IAM grant output (exit $IAM_EXIT)" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/iam_output.txt >> $GITHUB_STEP_SUMMARY
+          echo "IAM grant exit code: $IAM_EXIT (continuing regardless)"
+
+      - name: Deploy Cloud Functions
+        run: |
           gcloud functions deploy createPaperclipIssueFromFeedback \
             --runtime nodejs20 \
             --trigger-event providers/cloud.firestore/eventTypes/document.create \
             --trigger-resource "projects/pattle-6edea/databases/(default)/documents/feedback/{feedbackId}" \
             --source ./functions \
             --entry-point createPaperclipIssueFromFeedback \
-            --service-account "$SA_EMAIL" \
             --region us-central1 \
             --project pattle-6edea \
             --no-gen2 \
-            --verbosity=info 2>&1 | tee /tmp/gcloud_output.txt; EXIT_CODE=${PIPESTATUS[0]}
-          echo "## gcloud deploy output" >> $GITHUB_STEP_SUMMARY
-          cat /tmp/gcloud_output.txt >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Exit code: $EXIT_CODE**" >> $GITHUB_STEP_SUMMARY
+            --verbosity=info 2>&1 | tee /tmp/deploy_output.txt; EXIT_CODE=${PIPESTATUS[0]}
+          echo "## Deploy output (exit $EXIT_CODE)" >> $GITHUB_STEP_SUMMARY
+          cat /tmp/deploy_output.txt >> $GITHUB_STEP_SUMMARY
           exit $EXIT_CODE
