@@ -32,8 +32,8 @@ jobs:
 
       - name: Deploy Cloud Functions
         run: |
-          # Derive the service account email from the credentials JSON so it can act as itself
           SA_EMAIL=$(echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' | node -e "const c=[]; process.stdin.on('data',x=>c.push(x)); process.stdin.on('end',()=>console.log(JSON.parse(Buffer.concat(c).toString()).client_email));")
+          echo "Deploying with SA: $SA_EMAIL"
           gcloud functions deploy createPaperclipIssueFromFeedback \
             --runtime nodejs20 \
             --trigger-event providers/cloud.firestore/eventTypes/document.create \
@@ -44,4 +44,6 @@ jobs:
             --region us-central1 \
             --project pattle-6edea \
             --no-gen2 \
-            --quiet
+            --verbosity=debug 2>&1; EXIT_CODE=$?
+          echo "gcloud exit code: $EXIT_CODE"
+          exit $EXIT_CODE
