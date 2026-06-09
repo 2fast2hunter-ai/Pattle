@@ -5,6 +5,7 @@
   "functions": {
     "source": "functions"
   },
+  "extensions": {},
   "hosting": {
     "public": "dist",
     "ignore": [
