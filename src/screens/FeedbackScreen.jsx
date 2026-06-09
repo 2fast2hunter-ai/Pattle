@@ -1,25 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, MessageSquare, Send, CheckCircle } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
-
-const PAPERCLIP_WEBHOOK_URL =
-    "https://paperclip-afsc.srv1732766.hstgr.cloud/api/routine-triggers/public/01839bc18e6ed7db976d2f6a/fire";
-const PAPERCLIP_WEBHOOK_BEARER = "424b8d1274070325e5d2c5a814004d55389740b2c5ea0c4f";
-
-const CATEGORY_LABELS = {
-    bug: "🐛 Bug Report",
-    suggestion: "💡 Suggestion",
-    balance: "⚖️ Balance Feedback",
-    other: "💬 Other",
-};
-
-const CATEGORY_PRIORITIES = {
-    bug: "high",
-    suggestion: "medium",
-    balance: "medium",
-    other: "low",
-};
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const CATEGORIES = [
     { id: 'bug', key: 'feedback_cat_bug', fallback: '🐛 Bug Report' },
@@ -43,9 +25,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
             const trimmedMessage = message.trim();
             const userId = user?.id || user?.uid || 'anonymous';
             const userName = user?.displayName || user?.username || 'Anonymous';
-            const now = new Date().toISOString();
-
-            const docRef = await addDoc(collection(db, 'feedback'), {
+            await addDoc(collection(db, 'feedback'), {
                 category,
                 message: trimmedMessage,
                 userId,
@@ -54,37 +34,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
                 createdAt: serverTimestamp(),
             });
 
-            // Fire Paperclip webhook to create a tracking issue (best-effort, non-blocking)
-            const categoryLabel = CATEGORY_LABELS[category] || "💬 Other";
-            const priority = CATEGORY_PRIORITIES[category] || "medium";
-            const shortMessage = trimmedMessage.substring(0, 80).replace(/\n/g, " ");
-            try {
-                const response = await fetch(PAPERCLIP_WEBHOOK_URL, {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${PAPERCLIP_WEBHOOK_BEARER}`,
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        title: `[Player Feedback] ${categoryLabel}: ${shortMessage}`,
-                        priority,
-                        payload: {
-                            feedbackId: docRef.id,
-                            category,
-                            message: trimmedMessage,
-                            userId,
-                            userName,
-                            submittedAt: now,
-                        },
-                    }),
-                });
-                if (response.ok) {
-                    await updateDoc(docRef, { paperclipIssueCreated: true });
-                }
-            } catch (webhookErr) {
-                console.warn('[Feedback] Paperclip webhook failed (non-critical):', webhookErr);
-            }
-
+            // Paperclip issue is created server-side by the Cloud Function trigger
             setSubmitted(true);
         } catch (err) {
             console.error('Feedback error:', err);
