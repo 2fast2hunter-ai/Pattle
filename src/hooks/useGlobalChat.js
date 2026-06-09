@@ -12,6 +12,7 @@ const MAX_MSG_LENGTH = 200;
 export function useGlobalChat(user) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [sending, setSending] = useState(false);
   const lastSentAt = useRef(0);
 
@@ -26,9 +27,11 @@ export function useGlobalChat(user) {
         .map(d => ({ id: d.id, ...d.data() }))
         .reverse();
       setMessages(msgs);
+      setError(null);
       setLoading(false);
     }, err => {
       console.error('[Chat] listener error:', err);
+      setError(err.code === 'permission-denied' ? 'permission' : 'load');
       setLoading(false);
     });
     return () => unsub();
@@ -59,11 +62,11 @@ export function useGlobalChat(user) {
       return { success: true };
     } catch (e) {
       console.error('[Chat] send error:', e);
-      return { success: false };
+      return { success: false, reason: e.code === 'permission-denied' ? 'permission' : 'error' };
     } finally {
       setSending(false);
     }
   }, [user]);
 
-  return { messages, loading, sending, sendMessage };
+  return { messages, loading, error, sending, sendMessage };
 }

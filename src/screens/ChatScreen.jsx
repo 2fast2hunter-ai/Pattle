@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, MessageCircle, Send, Loader2 } from 'lucide-react';
+import { ArrowLeft, MessageCircle, Send, Loader2, AlertCircle } from 'lucide-react';
 import { useGlobalChat } from '../hooks/useGlobalChat';
 import { findUserPublic } from '../utils/db';
 
 const MAX_LENGTH = 200;
 
 export default function ChatScreen({ user, onBack, onViewPlayer, t }) {
-  const { messages, loading, sending, sendMessage } = useGlobalChat(user);
+  const { messages, loading, error, sending, sendMessage } = useGlobalChat(user);
   const [text, setText] = useState('');
+  const [sendError, setSendError] = useState(null);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -20,8 +21,13 @@ export default function ChatScreen({ user, onBack, onViewPlayer, t }) {
   const handleSend = async () => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
+    setSendError(null);
     setText('');
-    await sendMessage(trimmed);
+    const result = await sendMessage(trimmed);
+    if (!result.success && result.reason !== 'cooldown') {
+      setSendError(result.reason === 'permission' ? 'no_permission' : 'send_failed');
+      setText(trimmed);
+    }
     inputRef.current?.focus();
   };
 
@@ -70,6 +76,15 @@ export default function ChatScreen({ user, onBack, onViewPlayer, t }) {
           <div className="flex items-center justify-center h-32 text-slate-500">
             <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
           </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-32 text-rose-400 gap-2">
+            <AlertCircle className="w-8 h-8 opacity-60" />
+            <p className="text-sm font-bold text-center px-4">
+              {error === 'permission'
+                ? 'Chat unavailable — please reload the app.'
+                : 'Failed to load messages. Check your connection.'}
+            </p>
+          </div>
         ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-32 text-slate-500 gap-2">
             <MessageCircle className="w-8 h-8 opacity-30" />
@@ -89,6 +104,18 @@ export default function ChatScreen({ user, onBack, onViewPlayer, t }) {
         )}
         <div ref={bottomRef} />
       </div>
+
+      {/* SEND ERROR */}
+      {sendError && (
+        <div className="px-4 py-2 shrink-0 relative z-10">
+          <div className="flex items-center gap-2 bg-rose-900/40 border border-rose-500/30 rounded-xl px-3 py-2 text-rose-300 text-xs font-bold">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {sendError === 'no_permission'
+              ? 'Could not send — chat is temporarily unavailable.'
+              : 'Message failed to send. Please try again.'}
+          </div>
+        </div>
+      )}
 
       {/* INPUT */}
       <div className="px-4 pb-4 pt-2 shrink-0 border-t border-white/5 relative z-10">
