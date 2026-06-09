@@ -39,23 +39,23 @@ export const createGuild = async (user, name, tag, description) => {
             joinedAt: Date.now()
         };
 
-        await writeBatch(db)
-            .set(guildRef, {
-                id: guildRef.id,
-                name: trimmedName,
-                tag: trimmedTag,
-                description: (description || '').trim().slice(0, 120),
-                leaderId: user.id,
-                members: [memberEntry],
-                totalPoints: 0,
-                createdAt: Date.now()
-            })
-            .update(doc(db, 'users', user.id), {
-                guildId: guildRef.id,
-                guildTag: trimmedTag,
-                guildPoints: 0
-            })
-            .commit();
+        const batch = writeBatch(db);
+        batch.set(guildRef, {
+            id: guildRef.id,
+            name: trimmedName,
+            tag: trimmedTag,
+            description: (description || '').trim().slice(0, 120),
+            leaderId: user.id,
+            members: [memberEntry],
+            totalPoints: 0,
+            createdAt: Date.now()
+        });
+        batch.update(doc(db, 'users', user.id), {
+            guildId: guildRef.id,
+            guildTag: trimmedTag,
+            guildPoints: 0
+        });
+        await batch.commit();
 
         return { success: true, guildId: guildRef.id, tag: trimmedTag };
     } catch (e) {
