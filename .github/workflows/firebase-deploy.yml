@@ -26,5 +26,18 @@ jobs:
         run: npm ci
         working-directory: functions
 
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Deploy Cloud Functions
-        run: npx -y firebase-tools@13 deploy --only functions:createPaperclipIssueFromFeedback --project pattle-6edea --non-interactive
+        run: |
+          gcloud functions deploy createPaperclipIssueFromFeedback \
+            --runtime nodejs20 \
+            --trigger-event providers/cloud.firestore/eventTypes/document.create \
+            --trigger-resource "projects/pattle-6edea/databases/(default)/documents/feedback/{feedbackId}" \
+            --source ./functions \
+            --entry-point createPaperclipIssueFromFeedback \
+            --region us-central1 \
+            --project pattle-6edea \
+            --no-gen2 \
+            --quiet
