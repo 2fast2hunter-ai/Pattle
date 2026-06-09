@@ -28,4 +28,4 @@ jobs:
         working-directory: functions
 
       - name: Deploy Cloud Functions
-        run: npx -y firebase-tools@12 deploy --only functions:createPaperclipIssueFromFeedback --project pattle-6edea --non-interactive
+        run: npx -y firebase-tools@12 deploy --only functions:createPaperclipIssueFromFeedback --project pattle-6edea --non-interactive --debug 2>&1 | grep -v "^$" | tail -60
