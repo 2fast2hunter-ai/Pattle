@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datenschutzerklärung / Privacy Policy – Pattle</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #6366f1;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      padding: 2rem 1rem;
+    }
+    .container { max-width: 800px; margin: 0 auto; }
+    .lang-switcher {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+    .lang-btn {
+      padding: 0.4rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .lang-section { display: none; }
+    .lang-section.active { display: block; }
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: #fff;
+    }
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #fff;
+      margin: 2rem 0 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border);
+    }
+    p { margin-bottom: 0.75rem; color: var(--text); }
+    ul { margin: 0.5rem 0 0.75rem 1.5rem; }
+    li { margin-bottom: 0.35rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin: 1rem 0;
+    }
+    .badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      margin-right: 0.4rem;
+    }
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('de')">🇩🇪 Deutsch</button>
+    <button class="lang-btn" onclick="setLang('en')">🇬🇧 English</button>
+  </div>
+
+  <!-- ===== DEUTSCH ===== -->
+  <div id="de" class="lang-section active">
+    <h1>Datenschutzerklärung</h1>
+    <p class="subtitle">Pattle – Stand: 10. Juni 2026</p>
+
+    <h2>1. Verantwortlicher</h2>
+    <p>Verantwortlich im Sinne der DSGVO:</p>
+    <div class="card">
+      <strong>Pattle</strong><br>
+      E-Mail: <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a>
+    </div>
+
+    <h2>2. Welche Daten wir erheben</h2>
+    <p>Pattle ist ein Spielprogramm. Folgende Daten werden verarbeitet:</p>
+
+    <p><span class="badge">Automatisch</span><strong>Gerätedaten &amp; Nutzungsstatistiken</strong></p>
+    <ul>
+      <li>Anonymisierte Gerätekennung (Firebase Installation ID)</li>
+      <li>App-Version und Betriebssystemversion</li>
+      <li>Anonyme Nutzungsereignisse (z. B. Spielstart, Kampfabschluss)</li>
+      <li>Abstürze und Performance-Metriken</li>
+      <li>Grobe geografische Region (Länderebene, kein genauer Standort)</li>
+    </ul>
+
+    <p><span class="badge">Konto</span><strong>Profildaten (bei Registrierung)</strong></p>
+    <ul>
+      <li>E-Mail-Adresse (für Authentifizierung via Firebase Auth)</li>
+      <li>Selbst gewählter Benutzername / Display-Name</li>
+      <li>Spielfortschritt und Statistiken (Punkte, Gildenzugehörigkeit, Kampfergebnisse)</li>
+    </ul>
+
+    <p>Wir erheben <strong>keine</strong> Klarnamen, Adressen, Zahlungsdaten oder Standortdaten.</p>
+
+    <h2>3. Zweck und Rechtsgrundlage</h2>
+    <ul>
+      <li><strong>Spielbetrieb</strong> – Speichern von Spielstand und Profil (Art. 6 Abs. 1 lit. b DSGVO – Vertragserfüllung)</li>
+      <li><strong>App-Verbesserung</strong> – Analyse anonymer Nutzungsdaten zur Fehlerbehebung und Weiterentwicklung (Art. 6 Abs. 1 lit. f DSGVO – berechtigtes Interesse)</li>
+      <li><strong>Sicherheit</strong> – Erkennung von Missbrauch und Betrug (Art. 6 Abs. 1 lit. f DSGVO)</li>
+    </ul>
+
+    <h2>4. Drittanbieter-Dienste</h2>
+    <div class="card">
+      <strong>Google Firebase / Google Analytics</strong><br>
+      <small>Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA</small>
+      <ul style="margin-top:0.5rem">
+        <li><strong>Firebase Authentication</strong> – Nutzerverwaltung und Login</li>
+        <li><strong>Cloud Firestore</strong> – Speicherung von Spielständen und Profilen</li>
+        <li><strong>Firebase Analytics (Google Analytics)</strong> – Anonyme Nutzungsstatistiken</li>
+      </ul>
+      <p style="margin-top:0.5rem">Datentransfer in die USA erfolgt auf Basis der EU-Standardvertragsklauseln (SCC). Datenschutzerklärung: <a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></p>
+    </div>
+
+    <h2>5. Datenspeicherung und -löschung</h2>
+    <ul>
+      <li><strong>Kontodaten</strong> (E-Mail, Spielstand): solange das Konto aktiv ist, oder bis zur Löschung auf Anfrage</li>
+      <li><strong>Analytics-Daten</strong>: anonymisiert, 14 Monate (Google-Standard), danach automatisch gelöscht</li>
+      <li><strong>Absturzdaten</strong>: 90 Tage</li>
+    </ul>
+    <p>Nach Kontolöschung werden personenbezogene Daten innerhalb von 30 Tagen gelöscht.</p>
+
+    <h2>6. Deine Rechte (DSGVO)</h2>
+    <p>Du hast folgende Rechte bezüglich deiner personenbezogenen Daten:</p>
+    <ul>
+      <li><strong>Auskunft</strong> (Art. 15 DSGVO) – Welche Daten wir über dich gespeichert haben</li>
+      <li><strong>Berichtigung</strong> (Art. 16) – Korrektur unrichtiger Daten</li>
+      <li><strong>Löschung</strong> (Art. 17) – „Recht auf Vergessenwerden"</li>
+      <li><strong>Einschränkung der Verarbeitung</strong> (Art. 18)</li>
+      <li><strong>Datenübertragbarkeit</strong> (Art. 20) – Daten in maschinenlesbarem Format</li>
+      <li><strong>Widerspruch</strong> (Art. 21) – Gegen Verarbeitung auf Basis berechtigter Interessen</li>
+    </ul>
+    <p>Zur Ausübung deiner Rechte sende eine E-Mail an: <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a></p>
+    <p>Du hast außerdem das Recht, dich bei einer Datenschutzbehörde zu beschweren (in Deutschland: der zuständige Landesbeauftragte für Datenschutz).</p>
+
+    <h2>7. Minderjährigenschutz</h2>
+    <p>Pattle richtet sich nicht gezielt an Kinder unter 13 Jahren. Wir erheben wissentlich keine Daten von Kindern unter 13 Jahren. Wenn du als Elternteil feststellst, dass dein Kind Daten übermittelt hat, wende dich bitte an uns.</p>
+
+    <h2>8. Änderungen dieser Erklärung</h2>
+    <p>Wir behalten uns vor, diese Datenschutzerklärung bei wesentlichen Änderungen zu aktualisieren. Das Datum der letzten Änderung ist oben angegeben.</p>
+
+    <h2>9. Kontakt</h2>
+    <div class="card">
+      E-Mail: <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a>
+    </div>
+  </div>
+
+  <!-- ===== ENGLISH ===== -->
+  <div id="en" class="lang-section">
+    <h1>Privacy Policy</h1>
+    <p class="subtitle">Pattle – Last updated: June 10, 2026</p>
+
+    <h2>1. Data Controller</h2>
+    <p>The data controller responsible under GDPR:</p>
+    <div class="card">
+      <strong>Pattle</strong><br>
+      Email: <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a>
+    </div>
+
+    <h2>2. Data We Collect</h2>
+    <p>Pattle is a game app. The following data is processed:</p>
+
+    <p><span class="badge">Automatic</span><strong>Device &amp; Usage Data</strong></p>
+    <ul>
+      <li>Anonymized device identifier (Firebase Installation ID)</li>
+      <li>App version and operating system version</li>
+      <li>Anonymous usage events (e.g. game start, battle completed)</li>
+      <li>Crash reports and performance metrics</li>
+      <li>Coarse geographic region (country level, no precise location)</li>
+    </ul>
+
+    <p><span class="badge">Account</span><strong>Profile Data (on registration)</strong></p>
+    <ul>
+      <li>Email address (for authentication via Firebase Auth)</li>
+      <li>Self-chosen username / display name</li>
+      <li>Game progress and statistics (scores, guild membership, battle results)</li>
+    </ul>
+
+    <p>We do <strong>not</strong> collect real names, postal addresses, payment data, or precise location data.</p>
+
+    <h2>3. Purpose and Legal Basis</h2>
+    <ul>
+      <li><strong>Game operation</strong> – Storing game progress and profile (Art. 6(1)(b) GDPR – contract performance)</li>
+      <li><strong>App improvement</strong> – Analysing anonymous usage data for bug fixes and development (Art. 6(1)(f) GDPR – legitimate interest)</li>
+      <li><strong>Security</strong> – Detecting abuse and fraud (Art. 6(1)(f) GDPR)</li>
+    </ul>
+
+    <h2>4. Third-Party Services</h2>
+    <div class="card">
+      <strong>Google Firebase / Google Analytics</strong><br>
+      <small>Google LLC, 1600 Amphitheatre Parkway, Mountain View, CA 94043, USA</small>
+      <ul style="margin-top:0.5rem">
+        <li><strong>Firebase Authentication</strong> – User management and login</li>
+        <li><strong>Cloud Firestore</strong> – Storage of game progress and profiles</li>
+        <li><strong>Firebase Analytics (Google Analytics)</strong> – Anonymous usage statistics</li>
+      </ul>
+      <p style="margin-top:0.5rem">Data transfer to the USA is based on EU Standard Contractual Clauses (SCCs). Privacy policy: <a href="https://policies.google.com/privacy" target="_blank">policies.google.com/privacy</a></p>
+    </div>
+
+    <h2>5. Data Retention and Deletion</h2>
+    <ul>
+      <li><strong>Account data</strong> (email, game progress): for as long as the account is active, or until deletion upon request</li>
+      <li><strong>Analytics data</strong>: anonymized, 14 months (Google default), then automatically deleted</li>
+      <li><strong>Crash data</strong>: 90 days</li>
+    </ul>
+    <p>After account deletion, personal data is removed within 30 days.</p>
+
+    <h2>6. Your Rights (GDPR)</h2>
+    <p>You have the following rights regarding your personal data:</p>
+    <ul>
+      <li><strong>Access</strong> (Art. 15 GDPR) – What data we hold about you</li>
+      <li><strong>Rectification</strong> (Art. 16) – Correction of inaccurate data</li>
+      <li><strong>Erasure</strong> (Art. 17) – "Right to be forgotten"</li>
+      <li><strong>Restriction of processing</strong> (Art. 18)</li>
+      <li><strong>Data portability</strong> (Art. 20) – Data in machine-readable format</li>
+      <li><strong>Objection</strong> (Art. 21) – Against processing based on legitimate interests</li>
+    </ul>
+    <p>To exercise your rights, email: <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a></p>
+    <p>You also have the right to lodge a complaint with a supervisory authority (in the EU, your national or regional data protection authority).</p>
+
+    <h2>7. Children's Privacy</h2>
+    <p>Pattle is not directed at children under 13. We do not knowingly collect data from children under 13. If you are a parent and believe your child has submitted data, please contact us.</p>
+
+    <h2>8. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy for material changes. The date of the last update is shown above.</p>
+
+    <h2>9. Contact</h2>
+    <div class="card">
+      Email: <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a>
+    </div>
+  </div>
+
+  <footer>
+    Pattle &middot; <a href="mailto:2fast2hunter@gmail.com">2fast2hunter@gmail.com</a>
+    &middot; <a href="https://2fast2hunter-ai.github.io/Pattle/docs/privacy-policy.html">pattle-privacy-policy</a>
+  </footer>
+</div>
+
+<script>
+  function setLang(lang) {
+    document.querySelectorAll('.lang-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.lang-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById(lang).classList.add('active');
+    event.target.classList.add('active');
+  }
+</script>
+</body>
+</html>
