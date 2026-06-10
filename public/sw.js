@@ -1,4 +1,5 @@
-const CACHE_NAME = 'pattle-v1';
+// Bump this version with every release to force cache eviction for existing players.
+const CACHE_NAME = 'pattle-v16';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -47,24 +48,21 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin GET requests
   if (request.method !== 'GET' || !request.url.startsWith(self.location.origin)) return;
 
-  // Network-first for HTML navigation, cache-first for assets
-  if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
-    );
-    return;
-  }
-
+  // Network-first for everything: always show the latest version; fall back to
+  // cache only when offline. HTML navigate requests fall back to /index.html.
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-      return fetch(request).then((response) => {
+    fetch(request)
+      .then((response) => {
         if (response.ok && response.type === 'basic') {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return response;
-      });
-    })
+      })
+      .catch(() =>
+        caches.match(request).then(
+          (cached) => cached || (request.mode === 'navigate' ? caches.match('/index.html') : Response.error())
+        )
+      )
   );
 });
