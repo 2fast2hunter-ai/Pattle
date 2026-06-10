@@ -3,10 +3,17 @@
 export const RESOURCES = {
     WOOD: { id: 'wood', label: 'Wood', buildingLabel: 'Sawmill', desc: 'Processes wood from the surrounding forests.', slots: 5, unlockLevel: 5, color: 'text-amber-700', bg: 'bg-amber-700' },
     STONE: { id: 'stone', label: 'Stone', buildingLabel: 'Quarry', desc: 'Mines valuable minerals and stone.', slots: 5, unlockLevel: 5, color: 'text-stone-500', bg: 'bg-stone-500' },
+    HERB_GARDEN: { id: 'herb_garden', label: 'Herbs', buildingLabel: 'Kräutergarten', desc: 'Grows rare herbs used in the Alchemy Lab.', slots: 5, unlockLevel: 5, color: 'text-green-500', bg: 'bg-green-600' },
+    MARKET_STALL: { id: 'market_stall', label: 'Market Stall', buildingLabel: 'Marktstand', desc: 'Generates tradeable goods for the marketplace daily.', slots: 5, unlockLevel: 6, color: 'text-yellow-400', bg: 'bg-yellow-600' },
     SEAFOOD: { id: 'seafood', label: 'Seafood', buildingLabel: 'Fishery', desc: 'Catches fresh fish and collects shells.', slots: 5, unlockLevel: 20, color: 'text-blue-400', bg: 'bg-blue-500' },
+    TAVERN: { id: 'tavern', label: 'Tavern', buildingLabel: 'Taverne', desc: 'Brews drinks and generates daily buff items for your pets.', slots: 5, unlockLevel: 8, color: 'text-amber-400', bg: 'bg-amber-600' },
+    BARRACKS: { id: 'barracks', label: 'Barracks', buildingLabel: 'Kaserne', desc: 'Intensive training for up to 2 pets — earns bonus XP per cycle.', slots: 2, unlockLevel: 10, color: 'text-orange-400', bg: 'bg-orange-700' },
     STARDUST: { id: 'stardust', label: 'Stardust', buildingLabel: 'Observatory', desc: 'Collects cosmic energy from the stars.', slots: 5, unlockLevel: 15, color: 'text-purple-400', bg: 'bg-purple-600' },
     COMPUTER_PARTS: { id: 'computer_parts', label: 'Computer Parts', buildingLabel: 'Tech Factory', desc: 'Produces highly complex components.', slots: 5, unlockLevel: 10, color: 'text-cyan-400', bg: 'bg-cyan-700' },
+    ALCHEMY_LAB: { id: 'alchemy_lab', label: 'Alchemy Lab', buildingLabel: 'Alchimistenlabor', desc: 'Converts raw materials into powerful consumables.', slots: 5, unlockLevel: 12, color: 'text-green-400', bg: 'bg-green-700' },
     SPECIAL: { id: 'special', label: 'Special', buildingLabel: 'Alchemy Lab', desc: 'Experiments with rare matter.', slots: 5, unlockLevel: 30, color: 'text-pink-500', bg: 'bg-pink-600' },
+    CRYSTAL_FIELD: { id: 'crystal_field', label: 'Magic Crystals', buildingLabel: 'Kristallfeld', desc: 'Harvests magic crystals used for research upgrades.', slots: 5, unlockLevel: 15, color: 'text-violet-400', bg: 'bg-violet-600' },
+    LIBRARY: { id: 'library', label: 'Library', buildingLabel: 'Bibliothek', desc: 'Unlocks permanent research upgrades for your village.', slots: 5, unlockLevel: 15, color: 'text-indigo-400', bg: 'bg-indigo-700' },
     TRAINING: { id: 'training', label: 'Training', buildingLabel: 'Training Ground', desc: 'Your pets train intensively here for experience points.', slots: 5, unlockLevel: 30, color: 'text-red-500', bg: 'bg-red-600' }
 };
 
@@ -20,7 +27,14 @@ export const ALLOWED_TYPES = {
     training: [
         'NATURE', 'EARTH', 'MAGIC', 'FIGHTING', 'TIME', 'LIGHT', 'ORDER', 'DRAGON', 'FIRE', 'DARK', 'GHOST', 'PSYCHIC', 'METAL', 'ROCK', 'SOUND', 'VOID',
         'WATER', 'ICE', 'POISON', 'FAIRY', 'WIND', 'SPACE', 'ELECTRIC', 'TECH', 'CHAOS'
-    ]
+    ],
+    tavern: ['FAIRY', 'WATER', 'FIRE', 'NATURE', 'EARTH', 'LIGHT', 'WIND', 'ICE'],
+    alchemy_lab: ['PSYCHIC', 'MAGIC', 'GHOST', 'POISON', 'TECH', 'WATER', 'VOID', 'CHAOS'],
+    barracks: ['FIGHTING', 'FIRE', 'METAL', 'DRAGON', 'DARK', 'ROCK', 'ORDER', 'EARTH', 'NATURE', 'WIND'],
+    library: ['PSYCHIC', 'LIGHT', 'MAGIC', 'TIME', 'SPACE', 'WIND', 'VOID', 'ORDER'],
+    market_stall: ['WIND', 'WATER', 'EARTH', 'NATURE', 'FAIRY', 'LIGHT', 'FIRE', 'METAL', 'ELECTRIC', 'TECH'],
+    herb_garden: ['NATURE', 'WIND', 'FAIRY', 'WATER', 'EARTH', 'LIGHT', 'POISON'],
+    crystal_field: ['MAGIC', 'PSYCHIC', 'SPACE', 'VOID', 'LIGHT', 'TIME', 'ORDER'],
 };
 
 export const RARITY_MULTIPLIERS = {
@@ -61,6 +75,36 @@ export const RESOURCE_ITEMS = {
         { id: 'special_area', label: 'Plot m²', rarity: 'RARE', chance: 43.75, color: 'text-green-300' },
         { id: 'special_plutonium', label: 'Plutonium', rarity: 'MYTHIC', chance: 1.0, color: 'text-green-500' },
         { id: 'special_antimatter', label: 'Antimatter', rarity: 'COSMIC', chance: 0.25, color: 'text-purple-600' }
+    ],
+    tavern: [
+        { id: 'tavern_ale', label: 'Ale', rarity: 'COMMON', chance: 70.0, color: 'text-amber-400' },
+        { id: 'tavern_wine', label: 'Wine', rarity: 'RARE', chance: 28.0, color: 'text-red-400' },
+        { id: 'tavern_mead', label: 'Mead', rarity: 'EPIC', chance: 2.0, color: 'text-yellow-300' }
+    ],
+    alchemy_lab: [
+        { id: 'alchemy_herb', label: 'Herb', rarity: 'COMMON', chance: 65.0, color: 'text-green-400' },
+        { id: 'alchemy_essence', label: 'Essence', rarity: 'RARE', chance: 33.0, color: 'text-emerald-300' },
+        { id: 'alchemy_catalyst', label: 'Catalyst', rarity: 'EPIC', chance: 2.0, color: 'text-teal-300' }
+    ],
+    library: [
+        { id: 'library_scroll', label: 'Scroll', rarity: 'COMMON', chance: 70.0, color: 'text-indigo-300' },
+        { id: 'library_tome', label: 'Tome', rarity: 'RARE', chance: 28.0, color: 'text-purple-400' },
+        { id: 'library_codex', label: 'Codex', rarity: 'EPIC', chance: 2.0, color: 'text-violet-300' }
+    ],
+    market_stall: [
+        { id: 'market_goods', label: 'Goods', rarity: 'COMMON', chance: 75.0, color: 'text-yellow-400' },
+        { id: 'market_luxury', label: 'Luxury Item', rarity: 'RARE', chance: 23.0, color: 'text-amber-300' },
+        { id: 'market_artifact', label: 'Artifact', rarity: 'EPIC', chance: 2.0, color: 'text-orange-300' }
+    ],
+    herb_garden: [
+        { id: 'herb_chamomile', label: 'Chamomile', rarity: 'COMMON', chance: 65.0, color: 'text-yellow-200' },
+        { id: 'herb_mandrake', label: 'Mandrake', rarity: 'RARE', chance: 30.0, color: 'text-green-400' },
+        { id: 'herb_moonbloom', label: 'Moonbloom', rarity: 'EPIC', chance: 5.0, color: 'text-blue-300' }
+    ],
+    crystal_field: [
+        { id: 'crystal_shard', label: 'Crystal Shard', rarity: 'COMMON', chance: 70.0, color: 'text-sky-300' },
+        { id: 'crystal_prism', label: 'Crystal Prism', rarity: 'RARE', chance: 28.0, color: 'text-violet-300' },
+        { id: 'crystal_nexus', label: 'Crystal Nexus', rarity: 'COSMIC', chance: 2.0, color: 'text-fuchsia-400' }
     ]
 };
 
@@ -92,6 +136,24 @@ export const UPGRADE_COSTS = Array.from({ length: 15 }, (_, i) => {
 
     return { level, baseCost, specialCost, time };
 });
+
+// Storage cap per resource at level 1; multiplied by building level
+export const STORAGE_BASE_CAPS = {
+    wood: 200, stone: 200, seafood: 150, stardust: 150,
+    computer_parts: 100, special: 100, tavern: 150, alchemy_lab: 150,
+    barracks: 0, library: 150, market_stall: 150,
+    herb_garden: 200, crystal_field: 150
+};
+
+export const getStorageCapacity = (resourceId, buildingLevel) => {
+    const base = STORAGE_BASE_CAPS[resourceId] || 150;
+    return base * Math.max(1, buildingLevel);
+};
+
+export const getStorageTotalForResource = (storage, resourceId) => {
+    const items = RESOURCE_ITEMS[resourceId] || [];
+    return items.reduce((sum, item) => sum + (storage[item.id] || 0), 0);
+};
 
 export const TRADE_RECIPES = [
     { offerId: 'wood_mahogany', wantId: 'wood_oak', cost: 1, receive: 7666 },
@@ -199,5 +261,173 @@ export const SPECIAL_OFFERS = [
         costItem: 'special_antimatter',
         costAmount: 1,
         reward: { type: 'CONSUMABLE', variant: 'SHINY_POTION', amount: 1 }
+    },
+    // Taverne Offers
+    {
+        id: 'OFFER_TAVERN_ALE',
+        label: 'Buff Food',
+        description: 'Grants a small XP potion',
+        costItem: 'tavern_ale',
+        costAmount: 50,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_SMALL', amount: 1 }
+    },
+    {
+        id: 'OFFER_TAVERN_WINE',
+        label: 'Fine Wine',
+        description: 'Grants a medium XP potion',
+        costItem: 'tavern_wine',
+        costAmount: 10,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_MEDIUM', amount: 1 }
+    },
+    {
+        id: 'OFFER_TAVERN_MEAD',
+        label: 'Golden Mead',
+        description: 'Grants a large XP potion',
+        costItem: 'tavern_mead',
+        costAmount: 1,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_LARGE', amount: 1 }
+    },
+    // Alchemy Lab Offers
+    {
+        id: 'OFFER_ALCHEMY_HERB',
+        label: 'Herbal Potion',
+        description: 'Grants a small XP potion',
+        costItem: 'alchemy_herb',
+        costAmount: 30,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_SMALL', amount: 1 }
+    },
+    {
+        id: 'OFFER_ALCHEMY_ESSENCE',
+        label: 'Brew Elixir',
+        description: 'Grants a Breed Ticket',
+        costItem: 'alchemy_essence',
+        costAmount: 15,
+        reward: { type: 'ITEM', itemType: 'TICKET', itemVariant: 'BREED', amount: 1 }
+    },
+    {
+        id: 'OFFER_ALCHEMY_CATALYST',
+        label: 'Shiny Catalyst',
+        description: 'Makes a pet Shiny',
+        costItem: 'alchemy_catalyst',
+        costAmount: 5,
+        reward: { type: 'CONSUMABLE', variant: 'SHINY_POTION', amount: 1 }
+    },
+    // Herb Garden Offers
+    {
+        id: 'OFFER_HERB_CHAMOMILE',
+        label: 'Herbal Remedy',
+        description: 'Grants a small XP potion',
+        costItem: 'herb_chamomile',
+        costAmount: 40,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_SMALL', amount: 1 }
+    },
+    {
+        id: 'OFFER_HERB_MANDRAKE',
+        label: 'Mandrake Brew',
+        description: 'Grants a medium XP potion',
+        costItem: 'herb_mandrake',
+        costAmount: 12,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_MEDIUM', amount: 1 }
+    },
+    {
+        id: 'OFFER_HERB_MOONBLOOM',
+        label: 'Moonbloom Elixir',
+        description: 'Makes a pet Shiny',
+        costItem: 'herb_moonbloom',
+        costAmount: 3,
+        reward: { type: 'CONSUMABLE', variant: 'SHINY_POTION', amount: 1 }
+    },
+    // Market Stall Offers
+    {
+        id: 'OFFER_MARKET_LUXURY',
+        label: 'Luxury Exchange',
+        description: 'Trade for a large XP potion',
+        costItem: 'market_luxury',
+        costAmount: 10,
+        reward: { type: 'CONSUMABLE', variant: 'XP_POTION_LARGE', amount: 1 }
+    },
+    {
+        id: 'OFFER_MARKET_ARTIFACT',
+        label: 'Rare Artifact',
+        description: 'Trade for a Shiny Potion',
+        costItem: 'market_artifact',
+        costAmount: 2,
+        reward: { type: 'CONSUMABLE', variant: 'SHINY_POTION', amount: 1 }
+    }
+];
+
+export const RESEARCH_UPGRADES = [
+    {
+        id: 'research_prod_1',
+        label: '+5% Production Speed',
+        desc: 'All buildings produce 5% faster.',
+        effect: 'PROD_SPEED',
+        value: 0.05,
+        costItem: 'library_scroll',
+        costAmount: 100,
+        requiresLibraryLevel: 3
+    },
+    {
+        id: 'research_xp_1',
+        label: '+10% Village XP Gain',
+        desc: 'Earn 10% more XP from village production.',
+        effect: 'XP_GAIN',
+        value: 0.10,
+        costItem: 'library_scroll',
+        costAmount: 100,
+        requiresLibraryLevel: 3
+    },
+    {
+        id: 'research_prod_2',
+        label: '+10% Production Speed',
+        desc: 'All buildings produce 10% faster (stacks with Tier 1).',
+        effect: 'PROD_SPEED',
+        value: 0.10,
+        costItem: 'library_tome',
+        costAmount: 50,
+        requiresLibraryLevel: 7,
+        requiresResearch: 'research_prod_1'
+    },
+    {
+        id: 'research_xp_2',
+        label: '+20% Village XP Gain',
+        desc: 'Earn 20% more XP from village production (stacks with Tier 1).',
+        effect: 'XP_GAIN',
+        value: 0.20,
+        costItem: 'library_tome',
+        costAmount: 50,
+        requiresLibraryLevel: 7,
+        requiresResearch: 'research_xp_1'
+    },
+    {
+        id: 'research_market_1',
+        label: '+15% Market Earnings',
+        desc: 'Earn 15% more coins from marketplace sales.',
+        effect: 'MARKET_EARN',
+        value: 0.15,
+        costItem: 'library_codex',
+        costAmount: 10,
+        requiresLibraryLevel: 10
+    },
+    {
+        id: 'research_storage_1',
+        label: '+25% Storage Capacity',
+        desc: 'All buildings can store 25% more items before production stops.',
+        effect: 'STORAGE_CAP',
+        value: 0.25,
+        costItem: 'crystal_shard',
+        costAmount: 200,
+        requiresLibraryLevel: 5
+    },
+    {
+        id: 'research_crystal_prod',
+        label: '+10% Herb & Crystal Yield',
+        desc: 'Herb Garden and Crystal Field produce 10% more items.',
+        effect: 'HERB_CRYSTAL_PROD',
+        value: 0.10,
+        costItem: 'crystal_prism',
+        costAmount: 30,
+        requiresLibraryLevel: 8,
+        requiresResearch: 'research_storage_1'
     }
 ];

@@ -60,7 +60,7 @@ export const VILLAGE_EVENT_TYPES = {
         descriptionEn: 'Herbs & Crystals production +50% for 3 hours.',
         icon: '🌿',
         durationMs: 3 * 60 * 60 * 1000,
-        effect: { type: 'RESOURCE_BONUS', resources: ['alchemy_lab', 'stardust'], value: 1.5 },
+        effect: { type: 'RESOURCE_BONUS', resources: ['herb_garden', 'crystal_field'], value: 1.5 },
         canDismissWithAd: false,
         weight: 12,
         negative: false,

@@ -334,20 +334,28 @@ export const initializeUser = async (firebaseUser, username) => {
                 xpToNext: 16000,
                 lastCollectionTime: Date.now(),
                 idleTimeExpiresAt: Date.now(),
-                resources: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
+                resources: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0, tavern: 0, alchemy_lab: 0, barracks: 0, library: 0, market_stall: 0, herb_garden: 0, crystal_field: 0 },
                 storage: {},
-                buildings: { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 },
+                buildings: { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1, tavern: 1, alchemy_lab: 1, barracks: 1, library: 1, market_stall: 1, herb_garden: 1, crystal_field: 1 },
                 workers: {
                     wood: [null, null, null, null, null],
                     stone: [null, null, null, null, null],
                     seafood: [null, null, null, null, null],
                     stardust: [null, null, null, null, null],
                     computer_parts: [null, null, null, null, null],
-                    special: [null, null, null, null, null]
+                    special: [null, null, null, null, null],
+                    tavern: [null, null, null, null, null],
+                    alchemy_lab: [null, null, null, null, null],
+                    barracks: [null, null],
+                    library: [null, null, null, null, null],
+                    market_stall: [null, null, null, null, null],
+                    herb_garden: [null, null, null, null, null],
+                    crystal_field: [null, null, null, null, null]
                 },
+                research: {},
                 milestones: {},
                 stats: {
-                    totalCollected: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 },
+                    totalCollected: { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0, tavern: 0, alchemy_lab: 0, barracks: 0, library: 0, market_stall: 0, herb_garden: 0, crystal_field: 0 },
                     totalItemsCollected: {},
                     totalIdleTime: 0
                 }
@@ -363,10 +371,11 @@ export const listenToUser = (userId, callback) => {
         if (docSnap.exists()) {
             const userData = { id: docSnap.id, ...docSnap.data() };
             checkAndMigrateLevel(userData);
-            checkAndMigrateQuests(userData); // Automatische Korrektur der Quest-Anzeige
+            checkAndMigrateQuests(userData);
             checkAndResetTower(userData);
             checkAndResetLeaderboard(userData);
             checkAndResetGauntletLeaderboard(userData);
+            checkAndInitNewBuildings(userData);
             callback(userData);
         }
     });
@@ -526,7 +535,44 @@ export const createResourceListing = async (user, itemId, amount, price) => { if
 export const deleteMarketListing = async (listingId) => { await deleteDoc(doc(db, "market", listingId)); };
 export const buyMarketItem = async (user, listingId) => { const listingRef = doc(db, "market", listingId); const buyerRef = doc(db, "users", user.id); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Listing no longer available."); const listing = listingSnap.data(); const price = listing.price; const sellerId = listing.sellerId; if (sellerId === user.id) throw new Error("You cannot buy your own listing."); const buyerSnap = await transaction.get(buyerRef); if (!buyerSnap.exists()) throw new Error("Buyer profile error."); const currentCoins = buyerSnap.data().coins || 0; if (currentCoins < price) throw new Error("Not enough coins!"); const fee = Math.floor(price * 0.05); const payout = price - fee; const sellerRef = doc(db, "users", sellerId); transaction.update(buyerRef, { coins: increment(-price), "stats.marketSpent": increment(price) }); transaction.update(sellerRef, { coins: increment(payout), "stats.marketEarned": increment(payout) }); if (listing.type === 'RESOURCE') { transaction.update(buyerRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p, index) => { const newId = `${Date.now()}_${index}_${Math.floor(Math.random() * 1000)}`; const newPet = { ...p, id: newId, ownerId: user.id }; const newPetRef = doc(db, "pets", newId); transaction.set(newPetRef, newPet); }); } else { const newId = `${Date.now()}_${Math.floor(Math.random() * 1000)}`; const newPet = { ...listing.pet, id: newId, ownerId: user.id }; transaction.set(doc(db, "pets", newId), newPet); } } transaction.delete(listingRef); }); return { success: true, message: `Purchase successful!` }; } catch (e) { console.error("Marketplace error:", e); return { success: false, message: e.message }; } };
 export const cancelMarketListing = async (user, listingId) => { const listingRef = doc(db, "market", listingId); try { await runTransaction(db, async (transaction) => { const listingSnap = await transaction.get(listingRef); if (!listingSnap.exists()) throw new Error("Listing no longer exists."); const listing = listingSnap.data(); if (listing.sellerId !== user.id) throw new Error("This is not your listing!"); if (listing.type === 'RESOURCE') { const userRef = doc(db, "users", user.id); transaction.update(userRef, { [`village.storage.${listing.itemId}`]: increment(listing.amount) }); } else { if (listing.pets && Array.isArray(listing.pets)) { listing.pets.forEach((p) => { const petRef = doc(db, "pets", p.id); transaction.set(petRef, { ...p, ownerId: user.id }); }); } else if (listing.pet) { const petRef = doc(db, "pets", listing.pet.id); transaction.set(petRef, { ...listing.pet, ownerId: user.id }); } } transaction.delete(listingRef); }); return { success: true, message: "Listing removed. Items returned!" }; } catch (e) { console.error("Error cancelling listing:", e); return { success: false, message: e.message }; } };
-export const checkAndInitVillage = async (user) => { if (!user || !user.id) return; const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt; if (needsUpdate) { const oldVillage = user.village || {}; const oldStats = oldVillage.stats || {}; const oldWorkers = oldVillage.workers || {}; const fillSlots = (arr) => { const newArr = arr ? [...arr] : []; while (newArr.length < 5) newArr.push(null); return newArr; }; const villageData = { level: oldVillage.level || 1, xp: oldVillage.xp || 0, xpToNext: oldVillage.xpToNext || 16000, lastCollectionTime: oldVillage.lastCollectionTime || Date.now(), idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, storage: oldVillage.storage || {}, buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1 }, workers: { wood: fillSlots(oldWorkers.wood), stone: fillSlots(oldWorkers.stone), seafood: fillSlots(oldWorkers.seafood), stardust: fillSlots(oldWorkers.stardust), computer_parts: fillSlots(oldWorkers.computer_parts), special: fillSlots(oldWorkers.special) }, milestones: oldVillage.milestones || {}, stats: { totalCollected: oldStats.totalCollected || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0 }, totalItemsCollected: oldStats.totalItemsCollected || {}, totalIdleTime: oldStats.totalIdleTime || 0 } }; const userRef = doc(db, "users", user.id); await updateDoc(userRef, { village: villageData }); } };
+export const checkAndInitVillage = async (user) => { if (!user || !user.id) return; const needsUpdate = !user.village || !user.village.storage || !user.village.stats || !user.village.idleTimeExpiresAt; if (needsUpdate) { const oldVillage = user.village || {}; const oldStats = oldVillage.stats || {}; const oldWorkers = oldVillage.workers || {}; const fillSlots = (arr, count = 5) => { const newArr = arr ? [...arr] : []; while (newArr.length < count) newArr.push(null); return newArr; }; const villageData = { level: oldVillage.level || 1, xp: oldVillage.xp || 0, xpToNext: oldVillage.xpToNext || 16000, lastCollectionTime: oldVillage.lastCollectionTime || Date.now(), idleTimeExpiresAt: oldVillage.idleTimeExpiresAt || Date.now(), resources: oldVillage.resources || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0, tavern: 0, alchemy_lab: 0, barracks: 0, library: 0, market_stall: 0 }, storage: oldVillage.storage || {}, buildings: oldVillage.buildings || { wood: 1, stone: 1, seafood: 1, stardust: 1, computer_parts: 1, special: 1, tavern: 1, alchemy_lab: 1, barracks: 1, library: 1, market_stall: 1 }, workers: { wood: fillSlots(oldWorkers.wood), stone: fillSlots(oldWorkers.stone), seafood: fillSlots(oldWorkers.seafood), stardust: fillSlots(oldWorkers.stardust), computer_parts: fillSlots(oldWorkers.computer_parts), special: fillSlots(oldWorkers.special), tavern: fillSlots(oldWorkers.tavern), alchemy_lab: fillSlots(oldWorkers.alchemy_lab), barracks: fillSlots(oldWorkers.barracks, 2), library: fillSlots(oldWorkers.library), market_stall: fillSlots(oldWorkers.market_stall) }, research: oldVillage.research || {}, milestones: oldVillage.milestones || {}, stats: { totalCollected: oldStats.totalCollected || { wood: 0, stone: 0, seafood: 0, stardust: 0, computer_parts: 0, special: 0, tavern: 0, alchemy_lab: 0, barracks: 0, library: 0, market_stall: 0 }, totalItemsCollected: oldStats.totalItemsCollected || {}, totalIdleTime: oldStats.totalIdleTime || 0 } }; const userRef = doc(db, "users", user.id); await updateDoc(userRef, { village: villageData }); } };
+
+export const checkAndInitNewBuildings = async (user) => {
+    if (!user?.id || !user?.village?.buildings) return;
+    const village = user.village;
+    const newBuildingIds = [
+        { id: 'tavern', slots: 5 },
+        { id: 'alchemy_lab', slots: 5 },
+        { id: 'barracks', slots: 2 },
+        { id: 'library', slots: 5 },
+        { id: 'market_stall', slots: 5 },
+        { id: 'herb_garden', slots: 5 },
+        { id: 'crystal_field', slots: 5 }
+    ];
+    let updates = {};
+    let needsUpdate = false;
+    for (const { id: bid, slots } of newBuildingIds) {
+        if (!village.buildings[bid]) {
+            updates[`village.buildings.${bid}`] = 1;
+            needsUpdate = true;
+        }
+        if (!village.workers?.[bid]) {
+            updates[`village.workers.${bid}`] = Array(slots).fill(null);
+            needsUpdate = true;
+        }
+    }
+    if (village.research === undefined) {
+        updates['village.research'] = {};
+        needsUpdate = true;
+    }
+    if (needsUpdate) {
+        try {
+            await updateDoc(doc(db, "users", user.id), updates);
+        } catch (e) {
+            console.error("[DB] checkAndInitNewBuildings error:", e);
+        }
+    }
+};
 export const getLeaderboard = async (type = 'elo') => {
     const orderByField = type === 'gauntlet' ? 'stats.gauntletHighscore' : 'rating';
     const q = query(collection(db, "users"), orderBy(orderByField, "desc"), limit(101));

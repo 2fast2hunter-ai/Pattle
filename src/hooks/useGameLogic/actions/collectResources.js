@@ -1,6 +1,6 @@
 // src/hooks/useGameLogic/actions/collectResources.js
 
-import { RESOURCES, RESOURCE_ITEMS } from '../../../data/gameData';
+import { RESOURCES, RESOURCE_ITEMS, getStorageCapacity, getStorageTotalForResource } from '../../../data/gameData';
 import { TRANSLATIONS } from '../../../data/translations';
 import { updateUser, trackQuestProgress, batchUpdatePetsXp } from '../../../utils/db';
 import { playSound } from '../../../utils/soundManager';
@@ -117,7 +117,9 @@ export const collectResources = async ({
             }
         }
 
-        const ratePerSecond = calculateProductionRate(resKey, buildingLvl, workerIds, myPets, RARITY_MULTIPLIERS, prodMultiplier * resourceEventMultiplier);
+        // Apply herb/crystal research bonus for those specific buildings
+        const herbCrystalBonus = (research.research_crystal_prod && (resKey === 'herb_garden' || resKey === 'crystal_field')) ? 1.10 : 1.0;
+        const ratePerSecond = calculateProductionRate(resKey, buildingLvl, workerIds, myPets, RARITY_MULTIPLIERS, prodMultiplier * resourceEventMultiplier * herbCrystalBonus);
 
         if (ratePerSecond > 0) {
             const produced = ratePerSecond * elapsedSeconds;
@@ -148,7 +150,14 @@ export const collectResources = async ({
 
                 const dropTable = RESOURCE_ITEMS[resKey] || [];
                 if (dropTable.length > 0) {
+                    const storageCap = getStorageCapacity(resKey, buildingLvl);
+                    const capMultiplier = research.research_storage_1 ? 1.25 : 1.0;
+                    const effectiveCap = Math.floor(storageCap * capMultiplier);
+
                     for (let i = 0; i < finishedItems; i++) {
+                        const currentTotal = getStorageTotalForResource(newStorage, resKey);
+                        if (currentTotal >= effectiveCap) break; // Storage full — stop production
+
                         let roll = Math.random() * 100;
                         let dropped = dropTable[0];
 

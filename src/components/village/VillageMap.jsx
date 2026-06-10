@@ -1,5 +1,5 @@
 import React from 'react';
-import { TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Swords, Lock } from 'lucide-react';
+import { TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Swords, Lock, Leaf, Gem } from 'lucide-react';
 import { RESOURCES } from '../../data/gameData';
 import { playSound } from '../../utils/soundManager';
 
@@ -67,6 +67,24 @@ const BUILDING_META = {
         Icon: Swords,
         label: 'Training',
         animType: 'bounce',
+    },
+    herb_garden: {
+        x: 15, y: 76,
+        gradient: 'from-green-900 to-green-700',
+        border: 'border-green-500/40',
+        glow: 'rgba(34,197,94,0.55)',
+        Icon: Leaf,
+        label: 'Kräutergarten',
+        animType: 'sparkle',
+    },
+    crystal_field: {
+        x: 84, y: 30,
+        gradient: 'from-violet-900 to-violet-700',
+        border: 'border-violet-500/40',
+        glow: 'rgba(139,92,246,0.55)',
+        Icon: Gem,
+        label: 'Kristallfeld',
+        animType: 'star',
     },
 };
 
