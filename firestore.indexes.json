@@ -1,6 +1,13 @@
 {
   "indexes": [
     {
+      "collectionGroup": "globalChat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "guilds",
       "queryScope": "COLLECTION",
       "fields": [

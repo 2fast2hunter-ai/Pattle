@@ -24,9 +24,11 @@ export default function ChatScreen({ user, onBack, onViewPlayer, t }) {
     setSendError(null);
     setText('');
     const result = await sendMessage(trimmed);
-    if (!result.success && result.reason !== 'cooldown') {
-      setSendError(result.reason === 'permission' ? 'no_permission' : 'send_failed');
+    if (!result.success) {
       setText(trimmed);
+      if (result.reason !== 'cooldown') {
+        setSendError(result.reason === 'permission' ? 'no_permission' : 'send_failed');
+      }
     }
     inputRef.current?.focus();
   };

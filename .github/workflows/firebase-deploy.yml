@@ -28,6 +28,9 @@ jobs:
       - name: Deploy Firestore Rules
         run: npx -y firebase-tools@12 deploy --only firestore:rules --project pattle-6edea --non-interactive
 
+      - name: Deploy Firestore Indexes
+        run: npx -y firebase-tools@12 deploy --only firestore:indexes --project pattle-6edea --non-interactive
+
       - name: Install function dependencies
         run: npm ci
         working-directory: functions
