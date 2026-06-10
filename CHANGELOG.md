@@ -2,7 +2,15 @@
 
 All notable changes to Pattle are documented here.
 
-## [Unreleased] — 2026-06-11
+## [1.17.0] — 2026-06-11
+
+### Fixes
+- **Global Chat** (PAT-257): Firestore composite index added for the global chat feed — messages now load correctly for all players.
+- **Caching** (PAT-255): Switched to network-first service worker strategy with `pattle-v17` cache; every deploy is immediately visible without a forced refresh.
+
+---
+
+## [1.16.0] — 2026-06-11
 
 ### Features
 - **Store Assets** (PAT-222): 15 App Store / Google Play screenshots across 3 platform sizes (Google Play 1080×1920, iPhone 6.5", iPhone 5.5") covering Main Menu, Battle, Pet Collection, Village, and Profile. Feature graphic generated at 1024×500.

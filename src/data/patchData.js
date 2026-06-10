@@ -1,5 +1,13 @@
 export const PATCHES = [
     {
+        version: 'v1.17.0',
+        date: '2026-06-11',
+        changes: [
+            { type: 'fixed', text: 'Global Chat: messages now load correctly — Firestore composite index added for the chat feed' },
+            { type: 'fixed', text: 'Caching: switched to network-first strategy so every deploy is instantly visible without a forced refresh' },
+        ]
+    },
+    {
         version: 'v1.16.0',
         date: '2026-06-11',
         changes: [
