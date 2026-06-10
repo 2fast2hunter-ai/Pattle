@@ -1,5 +1,17 @@
 export const PATCHES = [
     {
+        version: 'v1.16.0',
+        date: '2026-06-11',
+        changes: [
+            { type: 'new', text: 'Mythic rarity tier: the rarest tier in Pattle — 3 Mythic pets now available to collect' },
+            { type: 'new', text: 'Pet gear system: equip, unequip, and sell gear on your pets; gear drops from battles and boosts stats in combat' },
+            { type: 'new', text: 'Privacy policy added: accessible from the Settings screen' },
+            { type: 'changed', text: 'Feedback panel is now visible to all players, not just admins — let us know how the game can improve!' },
+            { type: 'fixed', text: 'Guild creation: fixed a bug that caused guild creation to fail silently' },
+            { type: 'fixed', text: 'Chat: errors are now shown in the UI instead of failing silently' },
+        ]
+    },
+    {
         version: 'v1.15.0',
         date: '2026-06-05',
         changes: [
