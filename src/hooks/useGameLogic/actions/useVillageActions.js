@@ -12,11 +12,13 @@ import {
     MILESTONES,
     COSMETICS,
     SPECIAL_OFFERS,
-    PROFILE_ICONS
+    PROFILE_ICONS,
+    RESEARCH_UPGRADES
 } from '../../../data/gameData';
 import { playSound } from '../../../utils/soundManager';
 import { TRANSLATIONS } from '../../../data/translations';
 import { collectResources, calculateProductionRate as calcRateHelper } from './collectResources';
+import { useVillageEventActions } from './villageEventActions';
 
 export function useVillageActions(state, showNotification) {
     const { user, myPets, settings } = state;
@@ -31,9 +33,13 @@ export function useVillageActions(state, showNotification) {
         return text;
     };
 
-    // --- PRODUKTIONSRATE BERECHNEN ---
+    // --- PRODUKTIONSRATE BERECHNEN (inkl. Forschungs-Bonus) ---
     const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds) => {
-        return calcRateHelper(resourceId, buildingLevel, assignedPetIds, myPets, RARITY_MULTIPLIERS);
+        const research = user?.village?.research || {};
+        let prodMultiplier = 1.0;
+        if (research.research_prod_1) prodMultiplier *= 1.05;
+        if (research.research_prod_2) prodMultiplier *= 1.10;
+        return calcRateHelper(resourceId, buildingLevel, assignedPetIds, myPets, RARITY_MULTIPLIERS, prodMultiplier);
     };
 
     // --- ARBEITER ZUWEISEN ---
@@ -166,7 +172,7 @@ export function useVillageActions(state, showNotification) {
 
         let baseItem, rareItem;
 
-        if (resourceId === 'training') {
+        if (resourceId === 'training' || resourceId === 'barracks') {
             baseItem = { id: 'wood_oak', label: 'Eiche' };
             rareItem = { id: 'stone_rock', label: 'Stein' };
         } else {
@@ -369,8 +375,54 @@ export function useVillageActions(state, showNotification) {
         playSound('kaching');
     };
 
+    // --- FORSCHUNG KAUFEN (Bibliothek) ---
+    const buyResearch = async (researchId) => {
+        if (!user) return;
+        const upgrade = RESEARCH_UPGRADES.find(r => r.id === researchId);
+        if (!upgrade) return;
+
+        const research = user.village.research || {};
+        if (research[researchId]) {
+            showNotification(t('notif_research_already_unlocked') || 'Research already unlocked', 'error');
+            return;
+        }
+
+        // Prerequisite research check
+        if (upgrade.requiresResearch && !research[upgrade.requiresResearch]) {
+            showNotification(t('notif_research_prereq_missing') || 'Prerequisite research not unlocked', 'error');
+            return;
+        }
+
+        // Library level check
+        const libraryLevel = user.village.buildings?.library || 1;
+        if (libraryLevel < upgrade.requiresLibraryLevel) {
+            showNotification(`Library Level ${upgrade.requiresLibraryLevel} required`, 'error');
+            return;
+        }
+
+        const storage = user.village.storage || {};
+        if ((storage[upgrade.costItem] || 0) < upgrade.costAmount) {
+            showNotification(t('notif_not_enough', { item: upgrade.costItem }), 'error');
+            return;
+        }
+
+        const newStorage = { ...storage };
+        newStorage[upgrade.costItem] -= upgrade.costAmount;
+
+        await updateUser(user.id, {
+            "village.storage": newStorage,
+            [`village.research.${researchId}`]: true
+        });
+
+        showNotification(`Research unlocked: ${upgrade.label}`, 'success');
+        playSound('build');
+    };
+
+    const { dismissStormWithAd, buyFromMerchant, checkVillageEvents } = useVillageEventActions(state, showNotification);
+
     return {
         assignWorker, removeWorker, collectVillageResources, upgradeBuilding, calculateProductionRate,
-        tradeResources, claimMilestone, addIdleTime, addIdleTimeByAd, buyCosmetic, buySpecialOffer
+        tradeResources, claimMilestone, addIdleTime, addIdleTimeByAd, buyCosmetic, buySpecialOffer,
+        buyResearch, dismissStormWithAd, buyFromMerchant, checkVillageEvents
     };
 }

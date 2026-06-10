@@ -664,7 +664,26 @@ export const TRANSLATIONS = {
         leaderboard_title: "BESTENLISTE",
         label_soon: "Bald...",
         friend_profile_title: "FREUND",
-        friendly_battle_btn: "FREUNDSCHAFTSKAMPF"
+        friendly_battle_btn: "FREUNDSCHAFTSKAMPF",
+
+        // Village Events
+        village_event_storm: "Sturm",
+        village_event_storm_desc: "Produktion -30% für 2 Stunden. Schau eine Werbung, um den Sturm abzuwenden.",
+        village_event_merchant: "Händler-Besuch",
+        village_event_merchant_desc: "Seltener Händler im Dorf! Kaufe exklusive Items für 1 Stunde.",
+        village_event_festival: "Dorffest",
+        village_event_festival_desc: "Ressourcenproduktion ×2 für 4 Stunden!",
+        village_event_harvest_bonus: "Ernte-Bonus",
+        village_event_harvest_bonus_desc: "Kräuter & Kristalle +50% für 3 Stunden.",
+        village_event_dismiss: "Abwenden",
+        village_event_buy: "Kaufen",
+        village_merchant_title: "HÄNDLER",
+        village_merchant_info: "Ein seltener Händler ist in deinem Dorf! Nutze diese Gelegenheit für exklusive Items.",
+        village_merchant_cost: "Kosten",
+        village_merchant_available: "Verfügbar",
+        village_merchant_buy: "Kaufen",
+        notif_storm_averted: "⛅ Sturm abgewendet! Produktion läuft wieder normal.",
+        notif_no_merchant: "Kein Händler im Dorf!"
     },
     en: {
         settings_title: "SETTINGS",
@@ -1307,7 +1326,26 @@ export const TRANSLATIONS = {
         leaderboard_title: "LEADERBOARD",
         label_soon: "Soon...",
         friend_profile_title: "FRIEND",
-        friendly_battle_btn: "FRIENDLY BATTLE"
+        friendly_battle_btn: "FRIENDLY BATTLE",
+
+        // Village Events
+        village_event_storm: "Storm",
+        village_event_storm_desc: "Production -30% for 2 hours. Watch an ad to avert the storm.",
+        village_event_merchant: "Merchant Visit",
+        village_event_merchant_desc: "Rare merchant in the village! Buy exclusive items for 1 hour.",
+        village_event_festival: "Village Festival",
+        village_event_festival_desc: "Resource production ×2 for 4 hours!",
+        village_event_harvest_bonus: "Harvest Bonus",
+        village_event_harvest_bonus_desc: "Herbs & Crystals +50% for 3 hours.",
+        village_event_dismiss: "Dismiss",
+        village_event_buy: "Buy",
+        village_merchant_title: "MERCHANT",
+        village_merchant_info: "A rare merchant has arrived in your village! Use this opportunity for exclusive items.",
+        village_merchant_cost: "Cost",
+        village_merchant_available: "Available",
+        village_merchant_buy: "Buy",
+        notif_storm_averted: "⛅ Storm averted! Production back to normal.",
+        notif_no_merchant: "No merchant in the village!"
     },
     zh: {
         settings_title: "设置",

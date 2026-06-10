@@ -19,3 +19,4 @@ export * from './consumableData';
 export * from './cosmeticData';
 export { PROFILE_ICONS } from './cosmeticData';
 export * from './towerData';
+export * from './villageEvents';

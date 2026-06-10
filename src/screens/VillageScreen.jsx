@@ -6,12 +6,18 @@ import IdleTimerBanner from '../components/village/IdleTimerBanner';
 import VillageMap from '../components/village/VillageMap';
 import VillageActionButtons from '../components/village/VillageActionButtons';
 import ResourceStorageBars from '../components/village/ResourceStorageBars';
-export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onAddIdleTimeByAd, onOpenCosmetics, onOpenTraining, onToggleTrainingPet }) {
+import VillageEventBanner from '../components/village/VillageEventBanner';
+export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onAddIdleTimeByAd, onOpenCosmetics, onOpenTraining, onToggleTrainingPet, onDismissStorm, onOpenMerchant, onCheckEvents, settings }) {
 
     const [timeLeftStr, setTimeLeftStr] = React.useState("00:00:00");
     const [isActive, setIsActive] = React.useState(false);
     const [showTraining, setShowTraining] = React.useState(false);
     const [cycleProgress, setCycleProgress] = React.useState(0);
+
+    // Check for new events when village is opened
+    React.useEffect(() => {
+        if (onCheckEvents) onCheckEvents();
+    }, []);
 
     React.useEffect(() => {
         if (!user?.village) return;
@@ -89,6 +95,15 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
                     onAddIdleTimeByAd={onAddIdleTimeByAd}
                     ticketCount={ticketCount}
                     t={t}
+                />
+
+                {/* VILLAGE EVENT BANNERS */}
+                <VillageEventBanner
+                    user={user}
+                    onDismissStorm={onDismissStorm}
+                    onOpenMerchant={onOpenMerchant}
+                    t={t}
+                    lang={settings?.language || 'de'}
                 />
 
                 {/* Cycle progress bar */}

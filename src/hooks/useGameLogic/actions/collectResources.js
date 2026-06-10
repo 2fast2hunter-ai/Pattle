@@ -4,25 +4,20 @@ import { RESOURCES, RESOURCE_ITEMS } from '../../../data/gameData';
 import { TRANSLATIONS } from '../../../data/translations';
 import { updateUser, trackQuestProgress, batchUpdatePetsXp } from '../../../utils/db';
 import { playSound } from '../../../utils/soundManager';
+import { VILLAGE_EVENT_TYPES, getActiveVillageEvents } from '../../../data/villageEvents';
 
-const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds, myPets, RARITY_MULTIPLIERS) => {
-    // FIX: Standardisierte Zykluszeit von 10s für alle Gebäude
-    // Statt schneller zu werden, produzieren höhere Level MEHR pro Zyklus.
+const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds, myPets, RARITY_MULTIPLIERS, researchMultiplier = 1) => {
     const FIXED_CYCLE_TIME = 10;
 
-    // Berechne den alten Speed-Faktor um die Balance zu halten
-    // Alter Cycle: 10 - ((Level-1)*0.05)
-    // Yield Multiplier = 10 / AlterCycle
     let originalCycleTime = 10 - ((buildingLevel - 1) * 0.05);
     if (originalCycleTime < 1) originalCycleTime = 1;
 
     const yieldMultiplier = 10 / originalCycleTime;
 
-    if (resourceId === 'training') {
+    if (resourceId === 'training' || resourceId === 'barracks') {
         const hasWorkers = assignedPetIds.some(id => id);
         if (!hasWorkers) return 0;
-        // Basis: 1 Item pro 10s * Yield (Level Bonus)
-        return (1 * yieldMultiplier) / FIXED_CYCLE_TIME;
+        return (1 * yieldMultiplier * researchMultiplier) / FIXED_CYCLE_TIME;
     }
 
     let totalMultiplier = 0;
@@ -36,8 +31,7 @@ const calculateProductionRate = (resourceId, buildingLevel, assignedPetIds, myPe
 
     if (totalMultiplier === 0) return 0;
 
-    // Rate = (Basis * Yield) / 10s
-    return (totalMultiplier * yieldMultiplier) / FIXED_CYCLE_TIME;
+    return (totalMultiplier * yieldMultiplier * researchMultiplier) / FIXED_CYCLE_TIME;
 };
 
 export const collectResources = async ({
@@ -56,6 +50,26 @@ export const collectResources = async ({
             collectionTimes[r.id] = globalLastCollection;
         }
     });
+
+    // Compute research production multiplier
+    const research = user.village.research || {};
+    let prodMultiplier = 1.0;
+    if (research.research_prod_1) prodMultiplier *= 1.05;
+    if (research.research_prod_2) prodMultiplier *= 1.10;
+
+    // Apply global village event multipliers (STORM, FESTIVAL)
+    const activeEvents = getActiveVillageEvents(user);
+    for (const event of activeEvents) {
+        const eventType = VILLAGE_EVENT_TYPES[event.type];
+        if (eventType?.effect?.type === 'GLOBAL_PROD') {
+            prodMultiplier *= eventType.effect.value;
+        }
+    }
+
+    // Compute research XP multiplier
+    let xpMultiplier = 1.0;
+    if (research.research_xp_1) xpMultiplier *= 1.10;
+    if (research.research_xp_2) xpMultiplier *= 1.20;
 
     let totalXpGained = 0;
     let newStorage = { ...(user.village.storage || {}) };
@@ -94,7 +108,16 @@ export const collectResources = async ({
 
         collectionTimes[resKey] = now;
 
-        const ratePerSecond = calculateProductionRate(resKey, buildingLvl, workerIds, myPets, RARITY_MULTIPLIERS);
+        // Per-resource event bonus (e.g. HARVEST_BONUS for alchemy_lab + stardust)
+        let resourceEventMultiplier = 1.0;
+        for (const event of activeEvents) {
+            const eventType = VILLAGE_EVENT_TYPES[event.type];
+            if (eventType?.effect?.type === 'RESOURCE_BONUS' && eventType.effect.resources.includes(resKey)) {
+                resourceEventMultiplier *= eventType.effect.value;
+            }
+        }
+
+        const ratePerSecond = calculateProductionRate(resKey, buildingLvl, workerIds, myPets, RARITY_MULTIPLIERS, prodMultiplier * resourceEventMultiplier);
 
         if (ratePerSecond > 0) {
             const produced = ratePerSecond * elapsedSeconds;
@@ -112,10 +135,13 @@ export const collectResources = async ({
 
                 workerIds.forEach(petId => {
                     if (petId) {
-                        // FIX: XP nur im Training Ground!
                         if (resKey === 'training') {
-                            const xpMult = 10;
-                            petXpUpdates[petId] = (petXpUpdates[petId] || 0) + (finishedItems * xpMult);
+                            const xpAmount = Math.round(finishedItems * 10 * xpMultiplier);
+                            petXpUpdates[petId] = (petXpUpdates[petId] || 0) + xpAmount;
+                        } else if (resKey === 'barracks') {
+                            // Barracks: 25 XP per cycle (higher intensity than Training Ground)
+                            const xpAmount = Math.round(finishedItems * 25 * xpMultiplier);
+                            petXpUpdates[petId] = (petXpUpdates[petId] || 0) + xpAmount;
                         }
                     }
                 });
@@ -138,7 +164,7 @@ export const collectResources = async ({
                         newStorage[itemId] = (newStorage[itemId] || 0) + 1;
                         newStats.totalItemsCollected[itemId] = (newStats.totalItemsCollected[itemId] || 0) + 1;
 
-                        totalXpGained += 10;
+                        totalXpGained += Math.round(10 * xpMultiplier);
                         itemsLog.push(dropped.id);
                     }
                 }

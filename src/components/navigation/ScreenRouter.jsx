@@ -24,6 +24,7 @@ const ResourceDetailScreen = lazy(() => import('../../screens/ResourceDetailScre
 const VillageMilestonesScreen = lazy(() => import('../../screens/VillageMilestonesScreen'));
 const VillageTradingScreen = lazy(() => import('../../screens/VillageTradingScreen'));
 const VillageCosmeticsScreen = lazy(() => import('../../screens/VillageCosmeticsScreen'));
+const VillageMerchantScreen = lazy(() => import('../../screens/VillageMerchantScreen'));
 const TowerScreen = lazy(() => import('../../screens/TowerScreen'));
 const LegalScreen = lazy(() => import('../../screens/LegalScreen'));
 const PatchesScreen = lazy(() => import('../../screens/PatchesScreen'));
@@ -65,7 +66,8 @@ export default function ScreenRouter({
     handleAddFriend, handleAcceptFriendRequest, handleDeclineFriendRequest, handleUpdateProfile, handleLogout,
     settings, setSettings,
     claimMilestone, tradeResources, buyCosmetic, buySpecialOffer, addIdleTime,
-    buyLootbox, buyTickets, claimTimedReward, breedPets
+    buyLootbox, buyTickets, claimTimedReward, breedPets,
+    dismissStormWithAd, buyFromMerchant, checkVillageEvents
 }) {
 
     const marketListings = gameLogic.marketListings;
@@ -80,8 +82,8 @@ export default function ScreenRouter({
         case 'menu': screen = <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} onAchievements={() => setCurrentView('achievements')} onGuild={() => setCurrentView('guild')} onChat={() => setCurrentView('chat')} tutorialHighlight={tutorialHighlight} />; break;
         case 'achievements': screen = <AchievementsScreen user={user} onBack={() => setCurrentView('menu')} t={t} lang={settings?.language || 'de'} />; break;
 
-        case 'village': screen = <VillageScreen user={user} pets={myPets} t={t} onBack={() => setCurrentView('menu')} onCollect={handleCollectVillage} onSelectResource={handleOpenResource} productionRates={productionRates} onOpenMilestones={() => setCurrentView('village-milestones')} onOpenTrading={() => setCurrentView('village-trading')} onAddIdleTime={addIdleTime} onAddIdleTimeByAd={gameLogic.addIdleTimeByAd} onOpenCosmetics={() => setCurrentView('village-cosmetics')} onToggleTrainingPet={handleToggleTrainingPet} />; break;
-        case 'village-detail': screen = selectedResource && <ResourceDetailScreen resourceId={selectedResource} user={user} pets={myPets} onBack={() => setCurrentView('village')} onAssignWorker={handleOpenVillageSelector} onRemoveWorker={gameLogic.removeWorker} onUpgradeBuilding={gameLogic.upgradeBuilding} productionRates={productionRates} onCollect={handleCollectVillage} />; break;
+        case 'village': screen = <VillageScreen user={user} pets={myPets} t={t} onBack={() => setCurrentView('menu')} onCollect={handleCollectVillage} onSelectResource={handleOpenResource} productionRates={productionRates} onOpenMilestones={() => setCurrentView('village-milestones')} onOpenTrading={() => setCurrentView('village-trading')} onAddIdleTime={addIdleTime} onAddIdleTimeByAd={gameLogic.addIdleTimeByAd} onOpenCosmetics={() => setCurrentView('village-cosmetics')} onToggleTrainingPet={handleToggleTrainingPet} onDismissStorm={dismissStormWithAd} onOpenMerchant={() => setCurrentView('village-merchant')} onCheckEvents={checkVillageEvents} settings={settings} />; break;
+        case 'village-detail': screen = selectedResource && <ResourceDetailScreen resourceId={selectedResource} user={user} pets={myPets} onBack={() => setCurrentView('village')} onAssignWorker={handleOpenVillageSelector} onRemoveWorker={gameLogic.removeWorker} onUpgradeBuilding={gameLogic.upgradeBuilding} productionRates={productionRates} onCollect={handleCollectVillage} onBuyResearch={gameLogic.buyResearch} t={t} />; break;
 
         case 'village-select-pet': screen = selectedVillageSlot && (
             <InventoryScreen
@@ -111,6 +113,7 @@ export default function ScreenRouter({
             />
         ); break;
 
+        case 'village-merchant': screen = <VillageMerchantScreen user={user} onBack={() => setCurrentView('village')} onBuy={buyFromMerchant} t={t} lang={settings?.language || 'de'} />; break;
         case 'village-milestones': screen = <VillageMilestonesScreen user={user} onBack={() => setCurrentView('village')} onClaim={claimMilestone} t={t} />; break;
         case 'village-trading': screen = <VillageTradingScreen user={user} onBack={() => setCurrentView('village')} onTrade={tradeResources} t={t} />; break;
         case 'village-cosmetics': screen = <VillageCosmeticsScreen user={user} onBack={() => setCurrentView('village')} onBuy={buyCosmetic} onBuySpecial={buySpecialOffer} t={t} />; break;
