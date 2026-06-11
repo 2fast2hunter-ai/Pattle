@@ -3,6 +3,15 @@ import React from 'react';
 export default function SawmillSprite({ className, style }) {
     return (
         <svg viewBox="0 0 80 80" className={className} style={style} xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="sawmill-woodGrain" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#7a4525" stopOpacity="0.4" />
+                    <stop offset="40%" stopColor="#5a3018" stopOpacity="0" />
+                    <stop offset="60%" stopColor="#7a4525" stopOpacity="0.25" />
+                    <stop offset="100%" stopColor="#5a3018" stopOpacity="0" />
+                </linearGradient>
+            </defs>
+
             {/* Sky/background tint */}
             <rect x="0" y="0" width="80" height="80" fill="rgba(0,0,0,0)" />
 
@@ -17,7 +26,7 @@ export default function SawmillSprite({ className, style }) {
 
             {/* Building body */}
             <rect x="20" y="42" width="52" height="30" rx="2" fill="#5a3018" />
-            <rect x="20" y="42" width="52" height="30" rx="2" fill="url(#woodGrain)" />
+            <rect x="20" y="42" width="52" height="30" rx="2" fill="url(#sawmill-woodGrain)" />
 
             {/* Wood plank lines */}
             <line x1="20" y1="50" x2="72" y2="50" stroke="#4a2510" strokeWidth="0.7" opacity="0.6" />
