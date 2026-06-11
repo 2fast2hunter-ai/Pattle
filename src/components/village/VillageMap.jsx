@@ -1,7 +1,16 @@
 import React from 'react';
-import { TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Swords, Lock, Leaf, Gem } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { RESOURCES } from '../../data/gameData';
 import { playSound } from '../../utils/soundManager';
+import SawmillSprite from './sprites/SawmillSprite';
+import QuarrySprite from './sprites/QuarrySprite';
+import FisherySprite from './sprites/FisherySprite';
+import TechFactorySprite from './sprites/TechFactorySprite';
+import ObservatorySprite from './sprites/ObservatorySprite';
+import AlchemySprite from './sprites/AlchemySprite';
+import TrainingSprite from './sprites/TrainingSprite';
+import HerbGardenSprite from './sprites/HerbGardenSprite';
+import CrystalFieldSprite from './sprites/CrystalFieldSprite';
 
 // Building positions [x%, y%] and visual config
 const BUILDING_META = {
@@ -10,7 +19,7 @@ const BUILDING_META = {
         gradient: 'from-amber-900 to-amber-700',
         border: 'border-amber-600/40',
         glow: 'rgba(180,83,9,0.55)',
-        Icon: TreePine,
+        Sprite: SawmillSprite,
         label: 'Sägewerk',
         animType: 'tree',
     },
@@ -19,7 +28,7 @@ const BUILDING_META = {
         gradient: 'from-stone-800 to-stone-600',
         border: 'border-stone-500/40',
         glow: 'rgba(120,113,108,0.55)',
-        Icon: Pickaxe,
+        Sprite: QuarrySprite,
         label: 'Steinbruch',
         animType: 'smoke',
     },
@@ -28,7 +37,7 @@ const BUILDING_META = {
         gradient: 'from-blue-900 to-blue-700',
         border: 'border-blue-500/40',
         glow: 'rgba(59,130,246,0.55)',
-        Icon: Fish,
+        Sprite: FisherySprite,
         label: 'Fischerei',
         animType: 'wave',
     },
@@ -37,7 +46,7 @@ const BUILDING_META = {
         gradient: 'from-cyan-900 to-cyan-700',
         border: 'border-cyan-500/40',
         glow: 'rgba(6,182,212,0.55)',
-        Icon: Cpu,
+        Sprite: TechFactorySprite,
         label: 'Tech Fabrik',
         animType: 'pulse',
     },
@@ -46,7 +55,7 @@ const BUILDING_META = {
         gradient: 'from-purple-900 to-purple-700',
         border: 'border-purple-500/40',
         glow: 'rgba(147,51,234,0.55)',
-        Icon: Star,
+        Sprite: ObservatorySprite,
         label: 'Sternwarte',
         animType: 'star',
     },
@@ -55,7 +64,7 @@ const BUILDING_META = {
         gradient: 'from-pink-900 to-pink-700',
         border: 'border-pink-500/40',
         glow: 'rgba(236,72,153,0.55)',
-        Icon: Sparkles,
+        Sprite: AlchemySprite,
         label: 'Alchemie',
         animType: 'sparkle',
     },
@@ -64,7 +73,7 @@ const BUILDING_META = {
         gradient: 'from-red-900 to-red-700',
         border: 'border-red-500/40',
         glow: 'rgba(220,38,38,0.55)',
-        Icon: Swords,
+        Sprite: TrainingSprite,
         label: 'Training',
         animType: 'bounce',
     },
@@ -73,7 +82,7 @@ const BUILDING_META = {
         gradient: 'from-green-900 to-green-700',
         border: 'border-green-500/40',
         glow: 'rgba(34,197,94,0.55)',
-        Icon: Leaf,
+        Sprite: HerbGardenSprite,
         label: 'Kräutergarten',
         animType: 'sparkle',
     },
@@ -82,7 +91,7 @@ const BUILDING_META = {
         gradient: 'from-violet-900 to-violet-700',
         border: 'border-violet-500/40',
         glow: 'rgba(139,92,246,0.55)',
-        Icon: Gem,
+        Sprite: CrystalFieldSprite,
         label: 'Kristallfeld',
         animType: 'star',
     },
@@ -114,20 +123,6 @@ function SmokeParticles() {
     );
 }
 
-function TreeDecor({ active }) {
-    return (
-        <div className="absolute -top-3.5 left-0 right-0 flex justify-center gap-0.5 pointer-events-none">
-            <TreePine
-                className="w-4 h-4 text-green-500"
-                style={{ animation: active ? 'village-sway 2.2s ease-in-out infinite' : 'none' }}
-            />
-            <TreePine
-                className="w-3 h-3 text-green-700"
-                style={{ animation: active ? 'village-sway 2.6s ease-in-out infinite 0.4s' : 'none' }}
-            />
-        </div>
-    );
-}
 
 function SparkleDecor({ active }) {
     if (!active) return null;
@@ -201,7 +196,7 @@ function NPC({ index }) {
 }
 
 function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rate, onSelect, unlockLevel }) {
-    const Icon = meta.Icon;
+    const SpriteComponent = meta.Sprite;
     const workerCount = (workers || []).filter(Boolean).length;
 
     return (
@@ -209,13 +204,13 @@ function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rat
             onClick={() => isUnlocked && onSelect(resId)}
             disabled={!isUnlocked}
             className={`
-                absolute flex flex-col items-center justify-center rounded-2xl border transition-transform duration-200
+                absolute flex flex-col items-center justify-end rounded-2xl border transition-transform duration-200
                 bg-gradient-to-br ${meta.gradient} ${meta.border}
                 ${isUnlocked
                     ? 'hover:scale-110 active:scale-95 hover:z-20 cursor-pointer'
                     : 'opacity-40 cursor-not-allowed grayscale'
                 }
-                overflow-visible
+                overflow-hidden
             `}
             style={{
                 left:   `${meta.x}%`,
@@ -228,36 +223,26 @@ function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rat
             }}
             aria-label={meta.label}
         >
-            {/* Full storage glow */}
-
-            {/* Building-type decorations */}
-            {resId === 'wood' && <TreeDecor active={isUnlocked && isActive} />}
-            {resId === 'stone' && isUnlocked && isActive && <SmokeParticles />}
-            {resId === 'special' && <SparkleDecor active={isUnlocked && isActive} />}
-            {resId === 'stardust' && <StarDecor active={isUnlocked && isActive} />}
-
-            {/* Icon + label */}
-            <div className="relative z-10 flex flex-col items-center gap-0.5 px-0.5">
+            {/* Building sprite fills the whole button */}
+            <div className="absolute inset-0 flex items-center justify-center">
                 {isUnlocked ? (
-                    <Icon
-                        className="w-5 h-5 text-white drop-shadow"
-                        style={
-                            resId === 'training' && isActive
-                                ? { animation: 'village-bounce 0.9s ease-in-out infinite' }
-                                : resId === 'computer_parts' && isActive
-                                    ? { animation: 'village-pulse 1.6s ease-in-out infinite' }
-                                    : resId === 'seafood' && isActive
-                                        ? { animation: 'village-wave 2s ease-in-out infinite' }
-                                        : undefined
-                        }
-                    />
+                    <SpriteComponent className="w-full h-full" />
                 ) : (
                     <Lock className="w-4 h-4 text-slate-400" />
                 )}
-                <span className="text-[7px] font-black text-white/80 leading-tight text-center leading-none" style={{ fontSize: '6px' }}>
+            </div>
+
+            {/* Label bar at bottom */}
+            <div className="relative z-10 w-full bg-black/40 flex items-center justify-center py-0.5">
+                <span className="font-black text-white/90 leading-none text-center" style={{ fontSize: '6px' }}>
                     {meta.label}
                 </span>
             </div>
+
+            {/* Decorative particle effects */}
+            {resId === 'stone' && isUnlocked && isActive && <SmokeParticles />}
+            {resId === 'special' && <SparkleDecor active={isUnlocked && isActive} />}
+            {resId === 'stardust' && <StarDecor active={isUnlocked && isActive} />}
 
             {/* Level badge */}
             {isUnlocked && (
@@ -288,7 +273,7 @@ function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rat
 
             {/* Lock level */}
             {!isUnlocked && unlockLevel && (
-                <div className="absolute bottom-1 left-0 right-0 flex justify-center">
+                <div className="absolute bottom-1 left-0 right-0 flex justify-center z-10">
                     <span className="text-red-400 font-bold" style={{ fontSize: '6px' }}>
                         Lvl {unlockLevel}
                     </span>

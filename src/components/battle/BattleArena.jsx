@@ -1,6 +1,7 @@
 import React from 'react';
 import TeamDots from './TeamDots';
 import BattleUnit from './BattleUnit';
+import BattleFieldFloor from '../arena/art/BattleFieldFloor';
 
 export default function BattleArena({
     enemyTeam,
@@ -16,6 +17,9 @@ export default function BattleArena({
 }) {
     return (
         <div className="flex-1 flex flex-col md:flex-row relative z-10 p-4 md:items-center md:justify-center">
+            {/* Battle field floor art */}
+            <BattleFieldFloor className="absolute bottom-0 left-0 w-full pointer-events-none z-0 opacity-70" />
+
             {/* VS WATERMARK */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-10 pointer-events-none select-none mix-blend-overlay">
                 <span className="text-[12rem] font-black italic text-white">{t ? t('battle_vs') : 'VS'}</span>

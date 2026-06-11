@@ -6,6 +6,7 @@ import HubTile from '../components/arena/HubTile';
 import BattleCard from '../components/arena/BattleCard';
 import AutoBattleCard from '../components/arena/AutoBattleCard';
 import { getRankTier } from '../utils/rankUtils';
+import ColosseumBackground from '../components/arena/art/ColosseumBackground';
 
 export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user, onAutoBattle, onTower, onGauntlet, onDungeon, t, tutorialHighlight }) {
 
@@ -18,6 +19,8 @@ export default function ArenaHub({ onBack, onBattle, onTeam, onLeaderboard, user
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative overflow-hidden">
             <PageBackground />
+            {/* Colosseum silhouette art */}
+            <ColosseumBackground className="absolute bottom-0 left-0 w-full opacity-25 pointer-events-none z-0" />
 
             <div className="relative flex items-center justify-between mb-4 sm:mb-6 pt-2 px-4 shrink-0 z-10">
                 <div className="flex flex-col">
