@@ -716,7 +716,20 @@ export const TRANSLATIONS = {
         village_merchant_available: "Verfügbar",
         village_merchant_buy: "Kaufen",
         notif_storm_averted: "⛅ Sturm abgewendet! Produktion läuft wieder normal.",
-        notif_no_merchant: "Kein Händler im Dorf!"
+        notif_no_merchant: "Kein Händler im Dorf!",
+
+        // Missing keys (PAT-271)
+        village_storage: "Lager",
+        village_storage_full: "Lager voll!",
+        village_storage_full_desc: "Produktion pausiert — Lager leeren um fortzufahren",
+        settings_low_power: "Energiesparmodus",
+        settings_low_power_desc: "Reduziert Kampfanimationen",
+        chat_title: "GLOBALER CHAT",
+        chat_no_messages: "Noch keine Nachrichten. Schreib etwas!",
+        chat_placeholder: "Nachricht eingeben...",
+        notif_needs_village_lvl: "Benötigt Dorf Level",
+        notif_already_friends: "Bereits befreundet.",
+        notif_request_already_sent: "Anfrage bereits gesendet."
     },
     en: {
         settings_title: "SETTINGS",
@@ -1411,7 +1424,20 @@ export const TRANSLATIONS = {
         village_merchant_available: "Available",
         village_merchant_buy: "Buy",
         notif_storm_averted: "⛅ Storm averted! Production back to normal.",
-        notif_no_merchant: "No merchant in the village!"
+        notif_no_merchant: "No merchant in the village!",
+
+        // Missing keys (PAT-271)
+        village_storage: "Storage",
+        village_storage_full: "Storage Full!",
+        village_storage_full_desc: "Production paused — clear storage to continue",
+        settings_low_power: "Low-Power Mode",
+        settings_low_power_desc: "Reduces battle animations",
+        chat_title: "GLOBAL CHAT",
+        chat_no_messages: "No messages yet. Say something!",
+        chat_placeholder: "Type a message...",
+        notif_needs_village_lvl: "Requires Village Level",
+        notif_already_friends: "Already friends.",
+        notif_request_already_sent: "Request already sent."
     },
     zh: {
         settings_title: "设置",
@@ -1621,7 +1647,11 @@ export const TRANSLATIONS = {
         achievement_full_roster_name: "Full Roster", achievement_full_roster_desc: "Own 25 or more pets.",
         achievement_transcendent_name: "Transcendent", achievement_transcendent_desc: "Own a Transcendent rarity pet.",
         achievement_completionist_name: "Completionist", achievement_completionist_desc: "Unlock 15 other achievements.",
-        label_secret_hybrid: "秘密杂交！", label_fusion_detected: "检测到融合！", label_secret_hybrid_egg: "秘密杂交蛋！", label_fusion_egg_received: "✨ 获得融合蛋！", label_season_end: "赛季结束", lootbox_cycling: "正在确定稀有度...", lootbox_found: "找到！", label_collect: "收集", modal_continue: "继续", modal_level_up_msg: "您现在是 {level} 级", label_rewards: "奖励", label_season_rewards: "赛季奖励", leaderboard_title: "排行榜", label_soon: "即将..."
+        label_secret_hybrid: "秘密杂交！", label_fusion_detected: "检测到融合！", label_secret_hybrid_egg: "秘密杂交蛋！", label_fusion_egg_received: "✨ 获得融合蛋！", label_season_end: "赛季结束", lootbox_cycling: "正在确定稀有度...", lootbox_found: "找到！", label_collect: "收集", modal_continue: "继续", modal_level_up_msg: "您现在是 {level} 级", label_rewards: "奖励", label_season_rewards: "赛季奖励", leaderboard_title: "排行榜", label_soon: "即将...",
+        village_storage: "仓库", village_storage_full: "仓库已满！", village_storage_full_desc: "生产暂停 — 清空仓库后继续",
+        settings_low_power: "省电模式", settings_low_power_desc: "减少战斗动画",
+        chat_title: "全球聊天", chat_no_messages: "还没有消息。说点什么！", chat_placeholder: "输入消息...",
+        notif_needs_village_lvl: "需要村庄等级", notif_already_friends: "已经是朋友了。", notif_request_already_sent: "请求已发送。"
     },
     fr: {
         settings_title: "PARAMÈTRES",
@@ -1831,7 +1861,11 @@ export const TRANSLATIONS = {
         achievement_full_roster_name: "Full Roster", achievement_full_roster_desc: "Own 25 or more pets.",
         achievement_transcendent_name: "Transcendent", achievement_transcendent_desc: "Own a Transcendent rarity pet.",
         achievement_completionist_name: "Completionist", achievement_completionist_desc: "Unlock 15 other achievements.",
-        label_secret_hybrid: "Hybride secret !", label_fusion_detected: "Fusion détectée !", label_secret_hybrid_egg: "Œuf hybride secret !", label_fusion_egg_received: "✨ Œuf de fusion reçu !", label_season_end: "Fin de saison", lootbox_cycling: "Détermination de la rareté...", lootbox_found: "TROUVÉ !", label_collect: "RÉCUPÉRER", modal_continue: "CONTINUER", modal_level_up_msg: "Vous êtes maintenant niveau {level}", label_rewards: "Récompenses", label_season_rewards: "Récompenses de saison", leaderboard_title: "CLASSEMENT", label_soon: "Bientôt..."
+        label_secret_hybrid: "Hybride secret !", label_fusion_detected: "Fusion détectée !", label_secret_hybrid_egg: "Œuf hybride secret !", label_fusion_egg_received: "✨ Œuf de fusion reçu !", label_season_end: "Fin de saison", lootbox_cycling: "Détermination de la rareté...", lootbox_found: "TROUVÉ !", label_collect: "RÉCUPÉRER", modal_continue: "CONTINUER", modal_level_up_msg: "Vous êtes maintenant niveau {level}", label_rewards: "Récompenses", label_season_rewards: "Récompenses de saison", leaderboard_title: "CLASSEMENT", label_soon: "Bientôt...",
+        village_storage: "Stockage", village_storage_full: "Stockage plein !", village_storage_full_desc: "Production en pause — videz le stockage pour continuer",
+        settings_low_power: "Mode économie d'énergie", settings_low_power_desc: "Réduit les animations de combat",
+        chat_title: "CHAT GLOBAL", chat_no_messages: "Pas encore de messages. Dites quelque chose !", chat_placeholder: "Tapez un message...",
+        notif_needs_village_lvl: "Requiert niveau village", notif_already_friends: "Déjà amis.", notif_request_already_sent: "Demande déjà envoyée."
     },
     es: {
         settings_title: "AJUSTES",
@@ -2008,7 +2042,11 @@ export const TRANSLATIONS = {
         achievement_full_roster_name: "Full Roster", achievement_full_roster_desc: "Own 25 or more pets.",
         achievement_transcendent_name: "Transcendent", achievement_transcendent_desc: "Own a Transcendent rarity pet.",
         achievement_completionist_name: "Completionist", achievement_completionist_desc: "Unlock 15 other achievements.",
-        label_secret_hybrid: "¡Híbrido secreto!", label_fusion_detected: "¡Fusión detectada!", label_secret_hybrid_egg: "¡Huevo híbrido secreto!", label_fusion_egg_received: "✨ ¡Huevo de fusión recibido!", label_season_end: "Fin de temporada", lootbox_cycling: "Determinando rareza...", lootbox_found: "¡ENCONTRADO!", label_collect: "RECOGER", modal_continue: "CONTINUAR", modal_level_up_msg: "¡Ahora eres Nivel {level}!", label_rewards: "Recompensas", label_season_rewards: "Recompensas de temporada", leaderboard_title: "CLASIFICACIÓN", label_soon: "Pronto..."
+        label_secret_hybrid: "¡Híbrido secreto!", label_fusion_detected: "¡Fusión detectada!", label_secret_hybrid_egg: "¡Huevo híbrido secreto!", label_fusion_egg_received: "✨ ¡Huevo de fusión recibido!", label_season_end: "Fin de temporada", lootbox_cycling: "Determinando rareza...", lootbox_found: "¡ENCONTRADO!", label_collect: "RECOGER", modal_continue: "CONTINUAR", modal_level_up_msg: "¡Ahora eres Nivel {level}!", label_rewards: "Recompensas", label_season_rewards: "Recompensas de temporada", leaderboard_title: "CLASIFICACIÓN", label_soon: "Pronto...",
+        village_storage: "Almacenamiento", village_storage_full: "¡Almacenamiento lleno!", village_storage_full_desc: "Producción pausada — vacía el almacenamiento para continuar",
+        settings_low_power: "Modo de bajo consumo", settings_low_power_desc: "Reduce las animaciones de combate",
+        chat_title: "CHAT GLOBAL", chat_no_messages: "Aún no hay mensajes. ¡Di algo!", chat_placeholder: "Escribe un mensaje...",
+        notif_needs_village_lvl: "Requiere nivel de aldea", notif_already_friends: "Ya son amigos.", notif_request_already_sent: "Solicitud ya enviada."
     }
 };
 

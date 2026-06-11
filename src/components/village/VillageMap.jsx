@@ -195,7 +195,7 @@ function NPC({ index }) {
     );
 }
 
-function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rate, onSelect, unlockLevel }) {
+function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rate, onSelect, unlockLevel, t }) {
     const SpriteComponent = meta.Sprite;
     const workerCount = (workers || []).filter(Boolean).length;
 
@@ -235,7 +235,7 @@ function BuildingSprite({ resId, meta, level, workers, isUnlocked, isActive, rat
             {/* Label bar at bottom */}
             <div className="relative z-10 w-full bg-black/40 flex items-center justify-center py-0.5">
                 <span className="font-black text-white/90 leading-none text-center" style={{ fontSize: '6px' }}>
-                    {meta.label}
+                    {t ? t('res_' + resId) : meta.label}
                 </span>
             </div>
 
@@ -386,6 +386,7 @@ export default function VillageMap({ user, productionRates, isActive, onSelectRe
                         isActive={isActive}
                         rate={rate}
                         unlockLevel={res.unlockLevel}
+                        t={t}
                         onSelect={id => {
                             playSound('click');
                             if (id === 'training') setShowTraining(true);

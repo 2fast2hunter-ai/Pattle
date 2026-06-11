@@ -112,7 +112,7 @@ function TypeSection({ typeKey, animals, ownedSet, seenSet, t }) {
                 <div className="flex-1 h-px bg-white/10" />
                 <div className="flex items-center gap-1">
                     {seenCount > 0 && (
-                        <span className="text-[9px] font-bold text-blue-400">{seenCount} gesehen</span>
+                        <span className="text-[9px] font-bold text-blue-400">{seenCount} {t ? t('dex_status_seen') : 'seen'}</span>
                     )}
                     {seenCount > 0 && <span className="text-[9px] text-slate-600">·</span>}
                     <span className="text-[9px] font-bold text-yellow-400">{ownedCount}/{total}</span>

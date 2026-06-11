@@ -106,7 +106,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                 {/* PROGRESS & PRODUCTION */}
                 <div className="bg-slate-900 rounded-2xl p-4 border border-white/5 shadow-lg relative overflow-hidden">
                     <div className="flex justify-between items-center mb-2 relative z-10">
-                        <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">{rate > 0 && isProductionActive ? <Zap className="w-4 h-4 text-yellow-400 animate-pulse" /> : <Clock className="w-4 h-4 text-slate-600" />}{rate > 0 && isProductionActive ? (t ? t('production_running') : 'Production running') : (t ? t('production_stopped') : 'Production stopped')}</span>
+                        <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">{rate > 0 && isProductionActive ? <Zap className="w-4 h-4 text-yellow-400 animate-pulse" /> : <Clock className="w-4 h-4 text-slate-600" />}{rate > 0 && isProductionActive ? (t ? t('production_running') : 'Production running') : (t ? t('village_production_stopped') : 'Production stopped')}</span>
                         <span className="text-[10px] font-mono text-slate-500">{rate > 0 && isProductionActive ? `${cycleTime.toFixed(2)}s ${t ? t('label_cycle') : 'cycle'}` : ''}</span>
                     </div>
                     <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10 relative">{rate > 0 && isProductionActive && (<div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.6)] transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>)}</div>
@@ -118,7 +118,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
                                 <Package className={`w-4 h-4 ${storageFull ? 'text-yellow-400' : 'text-slate-500'}`} />
-                                {storageFull ? 'Lager voll!' : 'Lager'}
+                                {storageFull ? (t ? t('village_storage_full') : 'Storage Full!') : (t ? t('village_storage') : 'Storage')}
                             </span>
                             <span className={`text-xs font-mono font-bold ${storageFull ? 'text-yellow-400' : 'text-slate-400'}`}>
                                 {storageTotal} / {storageCap}
@@ -132,7 +132,7 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                         </div>
                         {storageFull && (
                             <p className="text-[10px] text-yellow-400/80 font-bold mt-2">
-                                Produktion pausiert — Lager leeren um fortzufahren
+                                {t ? t('village_storage_full_desc') : 'Production paused — clear storage to continue'}
                             </p>
                         )}
                     </div>
