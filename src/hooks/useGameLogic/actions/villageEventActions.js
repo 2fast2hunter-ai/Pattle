@@ -72,7 +72,6 @@ export function useVillageEventActions(state, showNotification) {
 
         showRewardedAd({
             onReward: async () => {
-                const now = Date.now();
                 const updatedEvents = (user.village.activeEvents || []).map(e =>
                     e.id === eventId ? { ...e, dismissed: true } : e
                 );
