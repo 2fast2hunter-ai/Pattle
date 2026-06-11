@@ -1,5 +1,5 @@
 import { generatePet } from '../../../utils/gameMechanics';
-import { setBattleActive } from '../../../utils/db';
+import { setBattleActive, markSpeciesSeen } from '../../../utils/db';
 import { TYPES } from '../../../data/gameData';
 import { trackBattleStarted } from '../../../utils/analytics';
 
@@ -41,6 +41,9 @@ export const startGauntletBattle = async (state, showNotification) => {
         gauntletTeamSnapshot: myTeam.map(p => ({ ...p })), // Complete snapshot of initial team for summary
         gauntletTeamIds: myTeam.map(p => p.id)
     };
+
+    const seenIds = [...new Set(enemyTeam.map(p => p.species).filter(Boolean))];
+    markSpeciesSeen(user.id, seenIds);
 
     trackBattleStarted('gauntlet');
     setActiveBattle(battleState);

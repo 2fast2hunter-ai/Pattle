@@ -1,5 +1,5 @@
 import { generatePet } from '../../../utils/gameMechanics';
-import { setBattleActive } from '../../../utils/db';
+import { setBattleActive, markSpeciesSeen } from '../../../utils/db';
 import { TYPES } from '../../../data/gameData';
 import { trackBattleStarted } from '../../../utils/analytics';
 import { applyGearToPet } from '../../../utils/mechanics/gearUtils';
@@ -37,6 +37,9 @@ export const startBattle = async (state, showNotification, overridePets = null) 
     }
 
     const battleState = { myTeam, enemyTeam, myIndex: 0, enemyIndex: 0, turn: 'PLAYER', log: [state.t ? state.t('battle_log_start') : 'Battle begins!'], isOver: false, round: 1, isFriendly: false };
+
+    const seenIds = [...new Set(enemyTeam.map(p => p.species).filter(Boolean))];
+    markSpeciesSeen(user.id, seenIds);
 
     trackBattleStarted('pvp');
     setActiveBattle(battleState);

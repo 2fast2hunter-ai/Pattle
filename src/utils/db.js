@@ -408,6 +408,15 @@ export const updateUser = async (userId, data) => {
 export const addPetToDB = async (pet, ownerId) => { await setDoc(doc(db, "pets", pet.id), { ...pet, ownerId }); };
 export const updatePetInDB = async (petId, data) => { await updateDoc(doc(db, "pets", petId), data); };
 
+export const markSpeciesSeen = async (userId, speciesIds) => {
+    if (!userId || !speciesIds || speciesIds.length === 0) return;
+    try {
+        await updateDoc(doc(db, "users", userId), { seenSpecies: arrayUnion(...speciesIds) });
+    } catch (e) {
+        console.error("[DB] markSpeciesSeen failed:", e.code, e.message);
+    }
+};
+
 /**
  * Batch Update für Pet XP (Village Optimierung)
  * @param {Array} updatesList - Array von Objekten { pet: Object, xpAmount: number }

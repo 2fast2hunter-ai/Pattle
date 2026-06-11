@@ -1,5 +1,5 @@
 import { generatePet } from '../../../utils/gameMechanics';
-import { setBattleActive } from '../../../utils/db';
+import { setBattleActive, markSpeciesSeen } from '../../../utils/db';
 import { TYPES } from '../../../data/gameData';
 import { trackBattleStarted } from '../../../utils/analytics';
 
@@ -44,6 +44,9 @@ export const startDungeonRoomBattle = async (state, showNotification) => {
         round: 1,
         isFriendly: false,
     };
+
+    const seenIds = [...new Set(enemyTeam.map(p => p.species).filter(Boolean))];
+    markSpeciesSeen(user.id, seenIds);
 
     trackBattleStarted('dungeon');
     setActiveBattle(battleState);

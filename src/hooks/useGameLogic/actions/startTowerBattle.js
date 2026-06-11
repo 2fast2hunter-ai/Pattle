@@ -1,6 +1,6 @@
 import { TOWER_STAGES, TYPES } from '../../../data/gameData';
 import { generatePet } from '../../../utils/gameMechanics';
-import { setBattleActive } from '../../../utils/db';
+import { setBattleActive, markSpeciesSeen } from '../../../utils/db';
 import { trackBattleStarted } from '../../../utils/analytics';
 
 export const startTowerBattle = async (state, showNotification, stageId) => {
@@ -51,6 +51,9 @@ export const startTowerBattle = async (state, showNotification, stageId) => {
         isFriendly: false 
     };
     
+    const seenIds = [...new Set(enemyTeam.map(p => p.species).filter(Boolean))];
+    markSpeciesSeen(user.id, seenIds);
+
     trackBattleStarted('tower');
     setActiveBattle(battleState);
     setCurrentView('battle');
