@@ -26,10 +26,11 @@ jobs:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
       - name: Deploy Firestore Rules
-        run: npx -y firebase-tools@12 deploy --only firestore:rules --project pattle-6edea --non-interactive
+        run: node scripts/deploy-firestore-rules.mjs pattle-6edea firestore.rules
 
       - name: Deploy Firestore Indexes
         run: npx -y firebase-tools@12 deploy --only firestore:indexes --project pattle-6edea --non-interactive
+        continue-on-error: true
 
       - name: Install function dependencies
         run: npm ci
