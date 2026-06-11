@@ -165,6 +165,7 @@ export default function App() {
                         settings={settings} setSettings={gameLogic.setSettings}
                         claimMilestone={gameLogic.claimMilestone} tradeResources={gameLogic.tradeResources} buyCosmetic={gameLogic.buyCosmetic} buySpecialOffer={gameLogic.buySpecialOffer} addIdleTime={gameLogic.addIdleTime}
                         buyLootbox={gameLogic.buyLootbox} buyTickets={gameLogic.buyTickets} claimTimedReward={gameLogic.claimTimedReward} breedPets={gameLogic.breedPets}
+                        dismissStormWithAd={gameLogic.dismissStormWithAd} buyFromMerchant={gameLogic.buyFromMerchant} checkVillageEvents={gameLogic.checkVillageEvents}
                     />
                 </div>
             </main>

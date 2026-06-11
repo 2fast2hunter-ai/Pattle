@@ -173,6 +173,13 @@ export const TRANSLATIONS = {
         res_computer_parts: "Computerteile",
         res_special: "Spezial",
         res_training: "Training",
+        res_tavern: "Taverne",
+        res_alchemy_lab: "Alchimistenlabor",
+        res_barracks: "Kaserne",
+        res_library: "Bibliothek",
+        res_market_stall: "Marktstand",
+        res_herb_garden: "Kräutergarten",
+        res_crystal_field: "Kristallfeld",
 
         // Items
         item_wood_oak: "Eiche", item_wood_beech: "Buche", item_wood_mahogany: "Mahagoni",
@@ -181,6 +188,14 @@ export const TRANSLATIONS = {
         item_stardust_hydrogen: "Wasserstoff", item_stardust_crystal: "Kristall", item_stardust_star: "Stern",
         item_comp_cable: "Kabel", item_comp_ram: "RAM-Modul", item_comp_gpu: "Grafikkarte",
         item_special_watch: "Uhr", item_special_area: "Fläche m²", item_special_plutonium: "Plutonium", item_special_antimatter: "Antimaterie",
+        item_tavern_ale: "Ale", item_tavern_wine: "Wein", item_tavern_mead: "Met",
+        item_alchemy_herb: "Kraut", item_alchemy_essence: "Essenz", item_alchemy_catalyst: "Katalysator",
+        item_library_scroll: "Schriftrolle", item_library_tome: "Foliant", item_library_codex: "Kodex",
+        item_market_goods: "Waren", item_market_luxury: "Luxusgut", item_market_artifact: "Artefakt",
+        item_herb_chamomile: "Kamille", item_herb_mandrake: "Alraune", item_herb_moonbloom: "Mondblüte",
+        item_crystal_shard: "Kristallsplitter", item_crystal_prism: "Kristallprisma", item_crystal_nexus: "Kristallnexus",
+        notif_research_already_unlocked: "Forschung bereits freigeschaltet",
+        notif_research_prereq_missing: "Voraussetzung nicht erfüllt",
 
         // Rarities
         rarity_COMMON: "Gewöhnlich",
@@ -664,7 +679,26 @@ export const TRANSLATIONS = {
         leaderboard_title: "BESTENLISTE",
         label_soon: "Bald...",
         friend_profile_title: "FREUND",
-        friendly_battle_btn: "FREUNDSCHAFTSKAMPF"
+        friendly_battle_btn: "FREUNDSCHAFTSKAMPF",
+
+        // Village Events
+        village_event_storm: "Sturm",
+        village_event_storm_desc: "Produktion -30% für 2 Stunden. Schau eine Werbung, um den Sturm abzuwenden.",
+        village_event_merchant: "Händler-Besuch",
+        village_event_merchant_desc: "Seltener Händler im Dorf! Kaufe exklusive Items für 1 Stunde.",
+        village_event_festival: "Dorffest",
+        village_event_festival_desc: "Ressourcenproduktion ×2 für 4 Stunden!",
+        village_event_harvest_bonus: "Ernte-Bonus",
+        village_event_harvest_bonus_desc: "Kräuter & Kristalle +50% für 3 Stunden.",
+        village_event_dismiss: "Abwenden",
+        village_event_buy: "Kaufen",
+        village_merchant_title: "HÄNDLER",
+        village_merchant_info: "Ein seltener Händler ist in deinem Dorf! Nutze diese Gelegenheit für exklusive Items.",
+        village_merchant_cost: "Kosten",
+        village_merchant_available: "Verfügbar",
+        village_merchant_buy: "Kaufen",
+        notif_storm_averted: "⛅ Sturm abgewendet! Produktion läuft wieder normal.",
+        notif_no_merchant: "Kein Händler im Dorf!"
     },
     en: {
         settings_title: "SETTINGS",
@@ -828,6 +862,19 @@ export const TRANSLATIONS = {
         res_computer_parts: "Computer Parts",
         res_special: "Special",
         res_training: "Training",
+        res_tavern: "Tavern",
+        res_alchemy_lab: "Alchemy Lab",
+        res_barracks: "Barracks",
+        res_library: "Library",
+        res_market_stall: "Market Stall",
+        res_herb_garden: "Herb Garden",
+        res_crystal_field: "Crystal Field",
+        notif_research_already_unlocked: "Research already unlocked",
+        notif_research_prereq_missing: "Prerequisite not met",
+        item_tavern_ale: "Ale", item_tavern_wine: "Wine", item_tavern_mead: "Mead",
+        item_alchemy_herb: "Herb", item_alchemy_essence: "Essence", item_alchemy_catalyst: "Catalyst",
+        item_library_scroll: "Scroll", item_library_tome: "Tome", item_library_codex: "Codex",
+        item_market_goods: "Goods", item_market_luxury: "Luxury Item", item_market_artifact: "Artifact",
 
         item_wood_oak: "Oak", item_wood_beech: "Beech", item_wood_mahogany: "Mahogany",
         item_stone_rock: "Rock", item_stone_coal: "Coal", item_stone_iron: "Iron", item_stone_diamond: "Diamond", item_stone_emerald: "Emerald",
@@ -835,6 +882,8 @@ export const TRANSLATIONS = {
         item_stardust_hydrogen: "Hydrogen", item_stardust_crystal: "Crystal", item_stardust_star: "Star",
         item_comp_cable: "Cable", item_comp_ram: "RAM", item_comp_gpu: "GPU",
         item_special_watch: "Watch", item_special_area: "Area m²", item_special_plutonium: "Plutonium", item_special_antimatter: "Antimatter",
+        item_herb_chamomile: "Chamomile", item_herb_mandrake: "Mandrake", item_herb_moonbloom: "Moonbloom",
+        item_crystal_shard: "Crystal Shard", item_crystal_prism: "Crystal Prism", item_crystal_nexus: "Crystal Nexus",
 
         rarity_COMMON: "Common",
         rarity_UNCOMMON: "Uncommon",
@@ -1307,7 +1356,26 @@ export const TRANSLATIONS = {
         leaderboard_title: "LEADERBOARD",
         label_soon: "Soon...",
         friend_profile_title: "FRIEND",
-        friendly_battle_btn: "FRIENDLY BATTLE"
+        friendly_battle_btn: "FRIENDLY BATTLE",
+
+        // Village Events
+        village_event_storm: "Storm",
+        village_event_storm_desc: "Production -30% for 2 hours. Watch an ad to avert the storm.",
+        village_event_merchant: "Merchant Visit",
+        village_event_merchant_desc: "Rare merchant in the village! Buy exclusive items for 1 hour.",
+        village_event_festival: "Village Festival",
+        village_event_festival_desc: "Resource production ×2 for 4 hours!",
+        village_event_harvest_bonus: "Harvest Bonus",
+        village_event_harvest_bonus_desc: "Herbs & Crystals +50% for 3 hours.",
+        village_event_dismiss: "Dismiss",
+        village_event_buy: "Buy",
+        village_merchant_title: "MERCHANT",
+        village_merchant_info: "A rare merchant has arrived in your village! Use this opportunity for exclusive items.",
+        village_merchant_cost: "Cost",
+        village_merchant_available: "Available",
+        village_merchant_buy: "Buy",
+        notif_storm_averted: "⛅ Storm averted! Production back to normal.",
+        notif_no_merchant: "No merchant in the village!"
     },
     zh: {
         settings_title: "设置",

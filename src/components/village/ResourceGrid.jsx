@@ -1,10 +1,12 @@
 import React from 'react';
-import { TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Swords, Lock } from 'lucide-react';
-import { RESOURCES } from '../../data/gameData';
+import { TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Swords, Lock, Beer, FlaskConical, Shield, BookOpen, ShoppingBag, Leaf, Gem } from 'lucide-react';
+import { RESOURCES, getStorageCapacity, getStorageTotalForResource } from '../../data/gameData';
 import { playSound } from '../../utils/soundManager';
 
 const RESOURCE_ICONS = {
-    wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles, training: Swords
+    wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles, training: Swords,
+    tavern: Beer, alchemy_lab: FlaskConical, barracks: Shield, library: BookOpen, market_stall: ShoppingBag,
+    herb_garden: Leaf, crystal_field: Gem,
 };
 
 export default function ResourceGrid({
@@ -15,15 +17,24 @@ export default function ResourceGrid({
     setShowTraining,
     t
 }) {
+    const storage = user?.village?.storage || {};
+    const buildings = user?.village?.buildings || {};
+
     return (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {Object.keys(RESOURCES).map(key => {
                 const res = RESOURCES[key];
-                const level = user.village.buildings[res.id] || 1;
+                const level = buildings[res.id] || 1;
                 const workers = user.village.workers[res.id] || [];
                 const isUnlocked = user.level >= res.unlockLevel;
 
                 const rate = productionRates ? Math.floor(productionRates(res.id, level, workers) * 3600) : 0;
+
+                const cap = getStorageCapacity(res.id, level);
+                const total = getStorageTotalForResource(storage, res.id);
+                const storagePct = cap > 0 ? Math.min(100, (total / cap) * 100) : 0;
+                const storageFull = storagePct >= 95;
+                const hasStorage = cap > 0 && res.id !== 'training' && res.id !== 'barracks';
 
                 return (
                     <button
@@ -52,15 +63,26 @@ export default function ResourceGrid({
                             <h3 className={`font-black text-sm leading-tight ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{t ? t('res_' + res.id) : res.buildingLabel}</h3>
                         </div>
 
-                        <div className="relative z-10">
+                        <div className="relative z-10 space-y-1.5">
                             {isUnlocked ? (
-                                <div className="space-y-1">
+                                <>
                                     <div className="flex justify-between items-end">
                                         <span className="text-[10px] text-slate-500 font-bold uppercase">{t ? t('village_rate') : 'Rate/h'}</span>
-                                        <span className={`text-xs font-bold ${isActive ? 'text-green-400' : 'text-slate-500'}`}>+{rate}</span>
+                                        <span className={`text-xs font-bold ${isActive && !storageFull ? 'text-green-400' : storageFull ? 'text-yellow-400' : 'text-slate-500'}`}>+{rate}</span>
                                     </div>
-                                    {!isActive && <div className="text-[8px] text-red-400 font-bold uppercase">{t ? t('village_paused') : 'Pausiert'}</div>}
-                                </div>
+                                    {hasStorage && (
+                                        <div>
+                                            <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-500 ${storageFull ? 'bg-yellow-400 animate-pulse' : res.bg}`}
+                                                    style={{ width: `${storagePct}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {storageFull && <div className="text-[8px] text-yellow-400 font-bold uppercase">Lager voll</div>}
+                                    {!isActive && !storageFull && <div className="text-[8px] text-red-400 font-bold uppercase">{t ? t('village_paused') : 'Pausiert'}</div>}
+                                </>
                             ) : (
                                 <span className="text-[9px] font-bold text-red-400 uppercase bg-red-500/10 px-2 py-1 rounded border border-red-500/20">{t ? t('village_lvl') : 'Lvl'} {res.unlockLevel}</span>
                             )}

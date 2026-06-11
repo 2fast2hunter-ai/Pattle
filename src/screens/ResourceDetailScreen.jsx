@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    ArrowLeft, Hammer, Users, Plus, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Clock, Zap, Backpack, X
+import {
+    ArrowLeft, Hammer, Users, Plus, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Clock, Zap, Backpack, X,
+    Beer, FlaskConical, Shield, BookOpen, ShoppingBag, FlaskRound, CheckCircle2, Leaf, Gem, Package
 } from 'lucide-react';
-import { RESOURCES, RESOURCE_ITEMS, RARITIES } from '../data/gameData';
+import { RESOURCES, RESOURCE_ITEMS, RARITIES, RESEARCH_UPGRADES, getStorageCapacity, getStorageTotalForResource } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 import UpgradeModal from '../components/modals/UpgradeModal';
 import FloatingBadge from '../components/ui/FloatingBadge';
 
 const RESOURCE_ICONS = {
-    wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles
+    wood: TreePine, stone: Pickaxe, seafood: Fish, stardust: Star, computer_parts: Cpu, special: Sparkles,
+    tavern: Beer, alchemy_lab: FlaskConical, barracks: Shield, library: BookOpen, market_stall: ShoppingBag,
+    herb_garden: Leaf, crystal_field: Gem,
 };
 
-export default function ResourceDetailScreen({ resourceId, user, pets, onBack, onAssignWorker, onRemoveWorker, onUpgradeBuilding, productionRates, onCollect, t }) {
+export default function ResourceDetailScreen({ resourceId, user, pets, onBack, onAssignWorker, onRemoveWorker, onUpgradeBuilding, productionRates, onCollect, onBuyResearch, t }) {
     const [showUpgrade, setShowUpgrade] = useState(false);
     const [progress, setProgress] = useState(0);
     const [showFloating, setShowFloating] = useState(false);
@@ -25,6 +28,15 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
     const workers = isValid ? (user?.village?.workers?.[resourceId] || []) : [];
     const rate = (isValid && productionRates) ? productionRates(resourceId, level, workers) : 0;
     const cycleTime = Math.max(1, 10 - ((level - 1) * 0.05));
+
+    const research = user?.village?.research || {};
+    const baseCap = isValid ? getStorageCapacity(resourceId, level) : 0;
+    const capMultiplier = research.research_storage_1 ? 1.25 : 1.0;
+    const storageCap = Math.floor(baseCap * capMultiplier);
+    const storageTotal = isValid ? getStorageTotalForResource(storage, resourceId) : 0;
+    const storagePct = storageCap > 0 ? Math.min(100, (storageTotal / storageCap) * 100) : 0;
+    const storageFull = storagePct >= 95;
+    const hasStorageCap = storageCap > 0 && resourceId !== 'training' && resourceId !== 'barracks';
 
     useEffect(() => {
         const checkActive = () => {
@@ -100,6 +112,32 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                     <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10 relative">{rate > 0 && isProductionActive && (<div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.6)] transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>)}</div>
                 </div>
 
+                {/* STORAGE CAPACITY */}
+                {hasStorageCap && (
+                    <div className={`rounded-2xl p-4 border ${storageFull ? 'bg-yellow-900/20 border-yellow-500/30' : 'bg-slate-900 border-white/5'} shadow-lg`}>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
+                                <Package className={`w-4 h-4 ${storageFull ? 'text-yellow-400' : 'text-slate-500'}`} />
+                                {storageFull ? 'Lager voll!' : 'Lager'}
+                            </span>
+                            <span className={`text-xs font-mono font-bold ${storageFull ? 'text-yellow-400' : 'text-slate-400'}`}>
+                                {storageTotal} / {storageCap}
+                            </span>
+                        </div>
+                        <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10">
+                            <div
+                                className={`h-full rounded-full transition-all duration-500 ${storageFull ? 'bg-gradient-to-r from-yellow-500 to-orange-400 animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.5)]' : `bg-gradient-to-r ${resource?.bg || 'bg-slate-500'} opacity-80`}`}
+                                style={{ width: `${storagePct}%` }}
+                            />
+                        </div>
+                        {storageFull && (
+                            <p className="text-[10px] text-yellow-400/80 font-bold mt-2">
+                                Produktion pausiert — Lager leeren um fortzufahren
+                            </p>
+                        )}
+                    </div>
+                )}
+
                 {/* DROPS & STORAGE */}
                 <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4">
                     <div className="flex items-center gap-2 mb-3 text-slate-400 font-bold text-xs uppercase"><Backpack className="w-4 h-4" /> {t ? t('label_drops_storage') : 'Possible Drops & Storage'}</div>
@@ -139,6 +177,59 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                         })}
                     </div>
                 </div>
+
+                {/* LIBRARY: RESEARCH UPGRADES */}
+                {resourceId === 'library' && (
+                    <div>
+                        <div className="flex items-center gap-2 mb-3 px-1">
+                            <BookOpen className="w-4 h-4 text-indigo-400" />
+                            <h3 className="text-xs font-black text-slate-300 uppercase tracking-widest">Research Upgrades</h3>
+                        </div>
+                        <div className="space-y-3">
+                            {RESEARCH_UPGRADES.map(upgrade => {
+                                const unlocked = user?.village?.research?.[upgrade.id] || false;
+                                const prereqMet = !upgrade.requiresResearch || user?.village?.research?.[upgrade.requiresResearch];
+                                const libraryLvl = user?.village?.buildings?.library || 1;
+                                const lvlMet = libraryLvl >= upgrade.requiresLibraryLevel;
+                                const canAfford = (storage[upgrade.costItem] || 0) >= upgrade.costAmount;
+                                const available = !unlocked && prereqMet && lvlMet;
+
+                                return (
+                                    <div
+                                        key={upgrade.id}
+                                        className={`rounded-2xl p-4 border transition-all ${unlocked ? 'bg-indigo-900/30 border-indigo-500/40' : available ? 'bg-slate-800 border-white/10' : 'bg-slate-900/50 border-white/5 opacity-60'}`}
+                                    >
+                                        <div className="flex items-start justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${unlocked ? 'bg-indigo-500' : 'bg-slate-700'}`}>
+                                                    {unlocked ? <CheckCircle2 className="w-4 h-4 text-white" /> : <BookOpen className="w-4 h-4 text-slate-400" />}
+                                                </div>
+                                                <div>
+                                                    <div className={`text-xs font-bold ${unlocked ? 'text-indigo-300' : 'text-white'}`}>{upgrade.label}</div>
+                                                    <div className="text-[10px] text-slate-500">{upgrade.desc}</div>
+                                                </div>
+                                            </div>
+                                            {!unlocked && (
+                                                <button
+                                                    onClick={() => onBuyResearch && onBuyResearch(upgrade.id)}
+                                                    disabled={!available || !canAfford}
+                                                    className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all ${available && canAfford ? 'bg-indigo-600 text-white hover:bg-indigo-500 active:scale-95' : 'bg-slate-800 text-slate-600 cursor-not-allowed'}`}
+                                                >
+                                                    {!lvlMet ? `Lib Lv${upgrade.requiresLibraryLevel}` : !prereqMet ? 'Locked' : `${upgrade.costAmount}x`}
+                                                </button>
+                                            )}
+                                        </div>
+                                        {!unlocked && lvlMet && prereqMet && (
+                                            <div className="mt-2 text-[9px] text-slate-500 font-bold uppercase">
+                                                Cost: {upgrade.costAmount}x {upgrade.costItem.replace('_', ' ')} — Have: {storage[upgrade.costItem] || 0}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

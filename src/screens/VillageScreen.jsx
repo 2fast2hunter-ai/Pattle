@@ -3,18 +3,21 @@ import { Loader2 } from 'lucide-react';
 import { TrainingScreen } from './TrainingScreen';
 import VillageHeader from '../components/village/VillageHeader';
 import IdleTimerBanner from '../components/village/IdleTimerBanner';
-import ResourceGrid from '../components/village/ResourceGrid';
+import VillageMap from '../components/village/VillageMap';
 import VillageActionButtons from '../components/village/VillageActionButtons';
+import ResourceStorageBars from '../components/village/ResourceStorageBars';
+import VillageEventBanner from '../components/village/VillageEventBanner';
+export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onAddIdleTimeByAd, onOpenCosmetics, onOpenTraining, onToggleTrainingPet, onDismissStorm, onOpenMerchant, onCheckEvents, settings }) {
 
-export default function VillageScreen({ user, pets, t, onBack, onCollect, onSelectResource, productionRates, onOpenMilestones, onOpenTrading, onAddIdleTime, onAddIdleTimeByAd, onOpenCosmetics, onOpenTraining, onToggleTrainingPet }) {
-
-    // Timer State für Countdown
     const [timeLeftStr, setTimeLeftStr] = React.useState("00:00:00");
     const [isActive, setIsActive] = React.useState(false);
     const [showTraining, setShowTraining] = React.useState(false);
-
-    // NEW: Cycle Progress Animation
     const [cycleProgress, setCycleProgress] = React.useState(0);
+
+    // Check for new events when village is opened
+    React.useEffect(() => {
+        if (onCheckEvents) onCheckEvents();
+    }, []);
 
     React.useEffect(() => {
         if (!user?.village) return;
@@ -30,13 +33,8 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
                 const m = Math.floor((diff % 3600000) / 60000);
                 const s = Math.floor((diff % 60000) / 1000);
                 setTimeLeftStr(`${h}h ${m}m ${s}s`);
-
-                // Cycle Animation (approx 10s based)
-                // Wir nutzen den Modulo vom Timestamp für Synchronität
-                const cycleDuration = 10000; // 10s
-                const cyclePos = (now % cycleDuration) / cycleDuration;
-                setCycleProgress(cyclePos * 100);
-
+                const cycleDuration = 10000;
+                setCycleProgress(((now % cycleDuration) / cycleDuration) * 100);
             } else {
                 setIsActive(false);
                 setTimeLeftStr(t ? t('village_inactive') : "Inaktiv");
@@ -77,16 +75,17 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
     return (
         <div className="h-full flex flex-col animate-in fade-in slide-in-from-right duration-300 relative bg-slate-950">
 
-            {/* HEADER */}
+            {/* HEADER with prominent level display */}
             <VillageHeader
                 user={user}
                 t={t}
                 onBack={onBack}
                 onCollect={onCollect}
+                isActive={isActive}
             />
 
             {/* CONTENT */}
-            <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 pb-20 scrollbar-hide space-y-3">
 
                 {/* IDLE TIME BANNER */}
                 <IdleTimerBanner
@@ -98,9 +97,18 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
                     t={t}
                 />
 
-                {/* Cycle Bar */}
+                {/* VILLAGE EVENT BANNERS */}
+                <VillageEventBanner
+                    user={user}
+                    onDismissStorm={onDismissStorm}
+                    onOpenMerchant={onOpenMerchant}
+                    t={t}
+                    lang={settings?.language || 'de'}
+                />
+
+                {/* Cycle progress bar */}
                 {isActive && (
-                    <div className="w-full bg-slate-900/50 rounded-lg p-2 border border-white/5 mb-1">
+                    <div className="w-full bg-slate-900/50 rounded-lg p-2 border border-white/5">
                         <div className="flex justify-between items-center mb-1">
                             <span className="text-[10px] uppercase font-bold text-slate-500 flex items-center gap-1">
                                 <Loader2 className="w-3 h-3 animate-spin text-emerald-500" />
@@ -108,15 +116,16 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
                             </span>
                         </div>
                         <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                            <div className="h-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)] transition-all duration-100 ease-linear" style={{ width: `${cycleProgress}%` }}></div>
+                            <div
+                                className="h-full bg-emerald-500 shadow-[0_0_5px_rgba(16,185,129,0.5)] transition-all duration-100 ease-linear"
+                                style={{ width: `${cycleProgress}%` }}
+                            />
                         </div>
                     </div>
                 )}
 
-
-
-                {/* RESSOURCEN GRID */}
-                <ResourceGrid
+                {/* === INTERACTIVE VILLAGE MAP === */}
+                <VillageMap
                     user={user}
                     productionRates={productionRates}
                     isActive={isActive}
@@ -125,7 +134,10 @@ export default function VillageScreen({ user, pets, t, onBack, onCollect, onSele
                     t={t}
                 />
 
-                {/* EXTRA KACHELN (3er Grid) */}
+                {/* STORAGE CAPACITY BARS */}
+                <ResourceStorageBars user={user} t={t} />
+
+                {/* ACTION BUTTONS */}
                 <VillageActionButtons
                     onOpenMilestones={onOpenMilestones}
                     onOpenTrading={onOpenTrading}
