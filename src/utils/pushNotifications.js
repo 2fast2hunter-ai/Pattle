@@ -5,16 +5,12 @@ const NOTIF_STRINGS = {
   de: {
     egg_title: '🥚 Ei ist geschlüpft!',
     egg_body: (name) => `${name} ist bereit zum Schlüpfen!`,
-    storage_title: '📦 Lager ist voll!',
-    storage_body: 'Dein Dorflager ist voll. Sammle deine Ressourcen!',
     quest_title: '🎯 Tägliche Quests zurückgesetzt!',
     quest_body: 'Neue Quests warten auf dich. Spiel jetzt!',
   },
   en: {
     egg_title: '🥚 Egg has hatched!',
     egg_body: (name) => `${name} is ready to hatch!`,
-    storage_title: '📦 Storage is full!',
-    storage_body: 'Your village storage is full. Collect your resources!',
     quest_title: '🎯 Daily quests reset!',
     quest_body: 'New quests are waiting for you. Play now!',
   },
@@ -28,7 +24,6 @@ function getLang() {
   } catch { return 'en'; }
 }
 function ns() { return NOTIF_STRINGS[getLang()]; }
-const STORAGE_FULL_KEY = 'pattle_storage_full_notified';
 const DAILY_RESET_KEY = 'pattle_daily_reset_notified';
 
 export async function requestNotificationPermission() {
@@ -131,18 +126,6 @@ export function restoreEggNotifications(pets) {
   }
 }
 
-export async function notifyStorageFull() {
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
-  const lastNotified = parseInt(localStorage.getItem(STORAGE_FULL_KEY) || '0', 10);
-  // Throttle: max once per hour
-  if (Date.now() - lastNotified < 60 * 60 * 1000) return;
-  localStorage.setItem(STORAGE_FULL_KEY, String(Date.now()));
-  await showNotification(
-    ns().storage_title,
-    ns().storage_body,
-    { screen: 'village', tag: 'storage-full' }
-  );
-}
 
 export function scheduleDailyQuestReset() {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;

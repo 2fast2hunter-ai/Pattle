@@ -6,7 +6,7 @@ import { useGameLogicState } from './useGameLogic/useGameLogicState';
 import { useGameActions } from './useGameLogic/useGameActions';
 import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB, deleteField } from '../utils/db'; // updatePetInDB hinzugefügt
 import { ABILITIES } from '../data/gameData'; // Import ABILITIES
-import { restoreEggNotifications, notifyStorageFull, scheduleDailyQuestReset } from '../utils/pushNotifications';
+import { restoreEggNotifications, scheduleDailyQuestReset } from '../utils/pushNotifications';
 import { checkAchievements as checkAchievementsState } from '../utils/checkAchievements';
 import { ACHIEVEMENT_TRIGGERS } from '../data/achievements';
 
@@ -209,13 +209,6 @@ export function useGameLogic() {
                         // Silent Collect: Sammelt Ressourcen & XP. Level-Ups zeigen Benachrichtigungen (in useVillageActions).
                         await actions.collectVillageResources().catch(e => console.error("[AutoCollect] Fehler:", e));
                         isCollectingRef.current = false;
-
-                        // Check if storage is near full (any item >= 500)
-                        const storage = stateRef.current.user?.village?.storage || {};
-                        const storageFull = Object.values(storage).some(v => v >= 500);
-                        if (storageFull) {
-                            notifyStorageFull();
-                        }
                     }
                 } else {
                     // Idle Zeit abgelaufen -> Benachrichtigen (nur einmal pro Ablaufzeit)
