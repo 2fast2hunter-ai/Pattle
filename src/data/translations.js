@@ -31,6 +31,9 @@ export const TRANSLATIONS = {
         feedback_community_desc: "Community-Feedback – sieh, was andere gemeldet haben und den aktuellen Status.",
         feedback_submit_another: "Weiteres senden",
         feedback_view_all: "Alle ansehen",
+        feedback_status_new: "Neu",
+        feedback_status_reviewed: "In Bearbeitung",
+        feedback_status_done: "Erledigt",
 
         // Hauptmenü (Vorbereitung für den nächsten Schritt)
         menu_play: "KAMPF",
@@ -736,6 +739,9 @@ export const TRANSLATIONS = {
         feedback_community_desc: "Feedback from the community — see what others have reported and its current status.",
         feedback_submit_another: "Send More",
         feedback_view_all: "View All",
+        feedback_status_new: "New",
+        feedback_status_reviewed: "In Review",
+        feedback_status_done: "Done",
 
         menu_play: "BATTLE",
         menu_collection: "COLLECTION",
@@ -1419,6 +1425,9 @@ export const TRANSLATIONS = {
         feedback_community_desc: "社区反馈——查看其他玩家的反馈及其当前状态。",
         feedback_submit_another: "再发送一条",
         feedback_view_all: "查看全部",
+        feedback_status_new: "新建",
+        feedback_status_reviewed: "审核中",
+        feedback_status_done: "已完成",
 
         menu_play: "战斗",
         menu_collection: "收藏",
@@ -1626,6 +1635,9 @@ export const TRANSLATIONS = {
         feedback_community_desc: "Avis de la communauté — découvrez ce que les autres ont signalé et leur état actuel.",
         feedback_submit_another: "Envoyer encore",
         feedback_view_all: "Tout voir",
+        feedback_status_new: "Nouveau",
+        feedback_status_reviewed: "En cours",
+        feedback_status_done: "Traité",
 
         menu_play: "COMBAT",
         menu_collection: "COLLECTION",
@@ -1833,6 +1845,9 @@ export const TRANSLATIONS = {
         feedback_community_desc: "Feedback de la comunidad — ve lo que otros han reportado y su estado actual.",
         feedback_submit_another: "Enviar más",
         feedback_view_all: "Ver todo",
+        feedback_status_new: "Nuevo",
+        feedback_status_reviewed: "En revisión",
+        feedback_status_done: "Hecho",
 
         menu_play: "BATALLA",
         menu_collection: "COLECCIÓN",

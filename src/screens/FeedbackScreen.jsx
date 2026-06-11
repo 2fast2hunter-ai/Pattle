@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, MessageSquare, Send, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle, RefreshCw, List } from 'lucide-react';
+import { ArrowLeft, MessageSquare, Send, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle, RefreshCw, List, Eye } from 'lucide-react';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
@@ -19,16 +19,18 @@ const CATEGORY_ICONS = {
 
 const STATUS_CONFIG = {
     new: { label: 'New', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20', icon: Clock },
-    reviewed: { label: 'Reviewed', color: 'text-green-400 bg-green-500/10 border-green-500/20', icon: CheckCircle },
+    reviewed: { label: 'In Review', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20', icon: Eye },
     done: { label: 'Done', color: 'text-green-400 bg-green-500/10 border-green-500/20', icon: CheckCircle },
 };
 
-function FeedbackListItem({ item }) {
+function FeedbackListItem({ item, t }) {
     const cfg = CATEGORY_ICONS[item.category] || CATEGORY_ICONS.other;
     const Icon = cfg.icon;
-    const statusCfg = STATUS_CONFIG[item.status] || STATUS_CONFIG.new;
+    const statusKey = item.status || 'new';
+    const statusCfg = STATUS_CONFIG[statusKey] || STATUS_CONFIG.new;
     const StatusIcon = statusCfg.icon;
     const date = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt || 0);
+    const statusLabel = t ? t(`feedback_status_${statusKey}`) : statusCfg.label;
     return (
         <div className={`rounded-2xl border p-4 space-y-2 ${cfg.bg}`}>
             <div className="flex items-center justify-between gap-2">
@@ -38,7 +40,7 @@ function FeedbackListItem({ item }) {
                 </div>
                 <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${statusCfg.color}`}>
                     <StatusIcon className="w-3 h-3" />
-                    {statusCfg.label}
+                    {statusLabel}
                 </span>
             </div>
             <p className="text-sm text-slate-200 leading-relaxed">{item.message}</p>
@@ -269,7 +271,7 @@ export default function FeedbackScreen({ onBack, user, t }) {
                             </div>
                         ) : (
                             feedbackList.map(item => (
-                                <FeedbackListItem key={item.id} item={item} />
+                                <FeedbackListItem key={item.id} item={item} t={t} />
                             ))
                         )}
                     </div>
