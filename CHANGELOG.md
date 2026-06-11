@@ -2,6 +2,23 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.18.0] — 2026-06-11
+
+### Features
+- **Village Interactive Map** (PAT-248): Click any building on the village map to manage it — no more hunting through menus.
+- **Village Events System** (PAT-247): Random events now fire in your village, including Harvest Festival and Tax Collection.
+- **5 New Village Buildings** (PAT-245): Sawmill, Quarry, Stable, Library, and Blacksmith available to build and upgrade.
+- **Full Building Artwork** (PAT-264): All 9 village buildings and the arena now render with SVG sprite art.
+
+### Improvements
+- **Village Storage** (PAT-262): Removed the village storage capacity limit — resources accumulate without a ceiling.
+
+### Fixes
+- **Sawmill Sprite** (PAT-265): Resolved broken `url(#woodGrain)` reference that caused a visual glitch on the Sawmill building.
+- **Firestore Rules Deploy** (PAT-257): Fixed a 403 error in CI that occasionally blocked Firestore security rule updates.
+
+---
+
 ## [1.17.0] — 2026-06-11
 
 ### Fixes

@@ -1,5 +1,18 @@
 export const PATCHES = [
     {
+        version: 'v1.18.0',
+        date: '2026-06-11',
+        changes: [
+            { type: 'new', text: 'Village interactive map: tap any building to manage it directly on the map' },
+            { type: 'new', text: 'Village events: random events now fire in your village (Harvest Festival, Tax Collection, and more)' },
+            { type: 'new', text: '5 new village buildings: Sawmill, Quarry, Stable, Library, and Blacksmith' },
+            { type: 'new', text: 'Full building artwork: all 9 village buildings and the arena now use crisp SVG sprite art' },
+            { type: 'changed', text: 'Village storage: capacity limit removed — hoard as many resources as you like' },
+            { type: 'fixed', text: 'Sawmill sprite: fixed a broken wood-grain texture reference that caused a visual glitch' },
+            { type: 'fixed', text: 'Firestore rules deploy: resolved a 403 error in CI that occasionally blocked rule updates' },
+        ]
+    },
+    {
         version: 'v1.17.0',
         date: '2026-06-11',
         changes: [
