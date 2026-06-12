@@ -2,6 +2,14 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.20.1] — 2026-06-12
+
+### Balance
+- **Arena enemy level scaling** (PAT-276): Enemy level now scales with your highest team pet's level, not just your player account level — a level 11 pet will no longer fight level 1 enemies just because the account is low-level.
+- **Arena rarity tier boundary fix** (PAT-276): The medium-difficulty rarity tier now correctly covers levels 26–50 (was incorrectly cutting off at 40).
+
+---
+
 ## [1.20.0] — 2026-06-12
 
 ### Balance
