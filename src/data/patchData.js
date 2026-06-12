@@ -1,5 +1,12 @@
 export const PATCHES = [
     {
+        version: 'v1.20.0',
+        date: '2026-06-12',
+        changes: [
+            { type: 'changed', text: 'Arena balance: enemy rarity now scales with player level — higher-level players face UNCOMMON, RARE, and EPIC enemies instead of all COMMON' },
+        ]
+    },
+    {
         version: 'v1.19.0',
         date: '2026-06-12',
         changes: [
