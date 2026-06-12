@@ -13,7 +13,7 @@ const rollEnemyRarity = (playerLevel) => {
         if (roll < 70) return 'COMMON';
         if (roll < 95) return 'UNCOMMON';
         return 'RARE';
-    } else if (playerLevel <= 40) {
+    } else if (playerLevel <= 50) {
         // ~40% COMMON, ~40% UNCOMMON, ~15% RARE, ~5% EPIC
         if (roll < 40) return 'COMMON';
         if (roll < 80) return 'UNCOMMON';
@@ -48,13 +48,17 @@ export const startBattle = async (state, showNotification, overridePets = null) 
     const enemyCount = Math.min(5, Math.max(1, Math.floor(user.level / 5) + 1));
     const typeKeys = Object.keys(TYPES);
 
+    // Use highest team pet level as a floor so enemy difficulty keeps pace with pet progression
+    const maxTeamPetLevel = myTeam.reduce((max, p) => Math.max(max, p.level || 1), user.level);
+    const effectiveLevel = Math.max(user.level, maxTeamPetLevel);
+
     for (let i = 0; i < enemyCount; i++) {
         const randomType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
 
         // Anfänger-Schutz: Bis Level 5 sind Gegner immer Level 1
-        const enemyLevel = user.level <= 5 ? 1 : Math.max(1, user.level + Math.floor(Math.random() * 3) - 1);
+        const enemyLevel = effectiveLevel <= 5 ? 1 : Math.max(1, effectiveLevel + Math.floor(Math.random() * 3) - 1);
 
-        const enemy = generatePet(enemyLevel, randomType, rollEnemyRarity(user.level), null, 'ENEMY');
+        const enemy = generatePet(enemyLevel, randomType, rollEnemyRarity(effectiveLevel), null, 'ENEMY');
         enemy.currentHp = enemy.maxHp;
         enemy.currentCd = 0;
         enemyTeam.push(enemy);

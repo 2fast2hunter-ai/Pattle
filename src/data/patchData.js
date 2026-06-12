@@ -1,5 +1,13 @@
 export const PATCHES = [
     {
+        version: 'v1.20.1',
+        date: '2026-06-12',
+        changes: [
+            { type: 'fixed', text: 'Arena balance: enemy level now scales with your highest team pet\'s level, not just your player level — a level 11 pet will no longer face level 1 enemies' },
+            { type: 'fixed', text: 'Arena balance: rarity tier boundary corrected — level 26–50 zone now correctly brackets the medium-difficulty rarity table (was cutting off at 40)' },
+        ]
+    },
+    {
         version: 'v1.20.0',
         date: '2026-06-12',
         changes: [
