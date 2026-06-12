@@ -2,6 +2,13 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.20.0] — 2026-06-12
+
+### Balance
+- **Arena enemy rarity scaling** (PAT-276): Enemy rarity in the arena now scales with player level. Players ≤10 face only COMMON enemies; levels 11–25 introduce UNCOMMON and RARE; levels 26–40 add EPIC; level 41+ sees mostly UNCOMMON/RARE/EPIC with only 10% COMMON.
+
+---
+
 ## [1.19.0] — 2026-06-12
 
 ### Features
