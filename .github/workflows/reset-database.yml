@@ -1,0 +1,26 @@
+name: Reset Player Database
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reset-database:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Install function dependencies
+        run: npm ci
+        working-directory: functions
+
+      - name: Reset all player data
+        run: node scripts/reset-player-data.mjs
