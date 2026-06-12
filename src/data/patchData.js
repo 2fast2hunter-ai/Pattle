@@ -1,5 +1,13 @@
 export const PATCHES = [
     {
+        version: 'v1.19.0',
+        date: '2026-06-12',
+        changes: [
+            { type: 'changed', text: 'Arena balance: Common-tier enemies are significantly tankier — fights now last 3+ rounds instead of ending in a single hit' },
+            { type: 'changed', text: 'Arena balance: Enemy HP growth (COMMON rarity) increased ×3; DEF and RES growth increased ×2.5 across all 27 element types' },
+        ]
+    },
+    {
         version: 'v1.18.0',
         date: '2026-06-11',
         changes: [
