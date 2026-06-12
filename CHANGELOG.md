@@ -2,6 +2,22 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.19.0] — 2026-06-12
+
+### Features
+- **Pokédex-style Dex** (PAT-270): The Dex screen is fully reworked into a species catalog — browse every species with stats, lore, and rarity before you catch them.
+
+### Balance
+- **Arena Common enemies** (PAT-274): COMMON-rarity enemy HP growth increased ×3 and DEF/RES growth increased ×2.5 across all 27 element types — fights against common enemies now last multiple rounds instead of ending in one hit.
+
+### Fixes
+- **Community feedback status badge** (PAT-269): Status badge now renders correctly in the Community feedback list, with proper translations in all supported languages.
+- **Feedback list translation keys** (PAT-271): Removed raw translation key strings from labels — all text in the feedback list now renders correctly.
+- **Feedback community list translations** (PAT-237): Added missing i18n keys for the feedback community list tab so no raw keys are shown as labels.
+- **Firestore feedback index** (PAT-268): Added a composite index on `status + createdAt` for the feedback collection — the feedback list loads without index errors.
+
+---
+
 ## [1.18.0] — 2026-06-11
 
 ### Features

@@ -3,8 +3,12 @@ export const PATCHES = [
         version: 'v1.19.0',
         date: '2026-06-12',
         changes: [
+            { type: 'new', text: 'Pokédex-style species catalog: the Dex now shows every species with full stats, lore, and rarity — browse all creatures before you catch them' },
             { type: 'changed', text: 'Arena balance: Common-tier enemies are significantly tankier — fights now last 3+ rounds instead of ending in a single hit' },
             { type: 'changed', text: 'Arena balance: Enemy HP growth (COMMON rarity) increased ×3; DEF and RES growth increased ×2.5 across all 27 element types' },
+            { type: 'fixed', text: 'Community feedback list: status badge now displays correctly with proper translations in all languages' },
+            { type: 'fixed', text: 'Missing translation keys in the Community feedback list tab — no more raw key strings showing as labels' },
+            { type: 'fixed', text: 'Feedback search index: added composite Firestore index for status + createdAt so the feedback list loads without errors' },
         ]
     },
     {
