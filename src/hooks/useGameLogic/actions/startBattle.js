@@ -56,7 +56,8 @@ export const startBattle = async (state, showNotification, overridePets = null) 
         const randomType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
 
         // Anfänger-Schutz: Bis Level 5 sind Gegner immer Level 1
-        const enemyLevel = effectiveLevel <= 5 ? 1 : Math.max(1, effectiveLevel + Math.floor(Math.random() * 3) - 1);
+        // Enemies are 2–0 levels below effectiveLevel (avg −1) so players win ~80–90% of fights
+        const enemyLevel = effectiveLevel <= 5 ? 1 : Math.max(1, effectiveLevel + Math.floor(Math.random() * 3) - 2);
 
         const enemy = generatePet(enemyLevel, randomType, rollEnemyRarity(effectiveLevel), null, 'ENEMY');
         enemy.currentHp = enemy.maxHp;

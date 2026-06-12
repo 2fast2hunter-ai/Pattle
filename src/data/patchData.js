@@ -1,5 +1,12 @@
 export const PATCHES = [
     {
+        version: 'v1.20.2',
+        date: '2026-06-12',
+        changes: [
+            { type: 'changed', text: 'Arena balance: enemy level shifted 1 step lower on average — fights should now be winnable ~80–90% of the time instead of feeling too difficult' },
+        ]
+    },
+    {
         version: 'v1.20.1',
         date: '2026-06-12',
         changes: [
