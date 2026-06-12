@@ -8,7 +8,7 @@ export const startBattle = async (state, showNotification, overridePets = null) 
     const { user, myPets, setActiveBattle, setCurrentView } = state;
     if (!user) return;
 
-    const sourcePets = overridePets || myPets;
+    const sourcePets = Array.isArray(overridePets) ? overridePets : myPets;
     const gearInventory = user.gearInventory || [];
     const myTeam = (user.team || [])
         .map(id => sourcePets.find(p => p.id === id))
