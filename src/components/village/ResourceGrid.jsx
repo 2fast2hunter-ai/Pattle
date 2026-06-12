@@ -1,6 +1,6 @@
 import React from 'react';
 import { TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Swords, Lock, Beer, FlaskConical, Shield, BookOpen, ShoppingBag, Leaf, Gem } from 'lucide-react';
-import { RESOURCES, getStorageCapacity, getStorageTotalForResource } from '../../data/gameData';
+import { RESOURCES } from '../../data/gameData';
 import { playSound } from '../../utils/soundManager';
 
 const RESOURCE_ICONS = {
@@ -29,12 +29,6 @@ export default function ResourceGrid({
                 const isUnlocked = user.level >= res.unlockLevel;
 
                 const rate = productionRates ? Math.floor(productionRates(res.id, level, workers) * 3600) : 0;
-
-                const cap = getStorageCapacity(res.id, level);
-                const total = getStorageTotalForResource(storage, res.id);
-                const storagePct = cap > 0 ? Math.min(100, (total / cap) * 100) : 0;
-                const storageFull = storagePct >= 95;
-                const hasStorage = cap > 0 && res.id !== 'training' && res.id !== 'barracks';
 
                 return (
                     <button
@@ -68,20 +62,9 @@ export default function ResourceGrid({
                                 <>
                                     <div className="flex justify-between items-end">
                                         <span className="text-[10px] text-slate-500 font-bold uppercase">{t ? t('village_rate') : 'Rate/h'}</span>
-                                        <span className={`text-xs font-bold ${isActive && !storageFull ? 'text-green-400' : storageFull ? 'text-yellow-400' : 'text-slate-500'}`}>+{rate}</span>
+                                        <span className={`text-xs font-bold ${isActive ? 'text-green-400' : 'text-slate-500'}`}>+{rate}</span>
                                     </div>
-                                    {hasStorage && (
-                                        <div>
-                                            <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full transition-all duration-500 ${storageFull ? 'bg-yellow-400 animate-pulse' : res.bg}`}
-                                                    style={{ width: `${storagePct}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                    {storageFull && <div className="text-[8px] text-yellow-400 font-bold uppercase">Lager voll</div>}
-                                    {!isActive && !storageFull && <div className="text-[8px] text-red-400 font-bold uppercase">{t ? t('village_paused') : 'Pausiert'}</div>}
+                                    {!isActive && <div className="text-[8px] text-red-400 font-bold uppercase">{t ? t('village_paused') : 'Pausiert'}</div>}
                                 </>
                             ) : (
                                 <span className="text-[9px] font-bold text-red-400 uppercase bg-red-500/10 px-2 py-1 rounded border border-red-500/20">{t ? t('village_lvl') : 'Lvl'} {res.unlockLevel}</span>

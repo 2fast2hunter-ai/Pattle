@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import {
     ArrowLeft, Hammer, Users, Plus, TreePine, Pickaxe, Fish, Star, Cpu, Sparkles, Lock, Clock, Zap, Backpack, X,
-    Beer, FlaskConical, Shield, BookOpen, ShoppingBag, FlaskRound, CheckCircle2, Leaf, Gem, Package
+    Beer, FlaskConical, Shield, BookOpen, ShoppingBag, FlaskRound, CheckCircle2, Leaf, Gem
 } from 'lucide-react';
-import { RESOURCES, RESOURCE_ITEMS, RARITIES, RESEARCH_UPGRADES, getStorageCapacity, getStorageTotalForResource } from '../data/gameData';
+import { RESOURCES, RESOURCE_ITEMS, RARITIES, RESEARCH_UPGRADES } from '../data/gameData';
 import PetAvatar from '../components/PetAvatar';
 import UpgradeModal from '../components/modals/UpgradeModal';
 import FloatingBadge from '../components/ui/FloatingBadge';
@@ -30,13 +30,6 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
     const cycleTime = Math.max(1, 10 - ((level - 1) * 0.05));
 
     const research = user?.village?.research || {};
-    const baseCap = isValid ? getStorageCapacity(resourceId, level) : 0;
-    const capMultiplier = research.research_storage_1 ? 1.25 : 1.0;
-    const storageCap = Math.floor(baseCap * capMultiplier);
-    const storageTotal = isValid ? getStorageTotalForResource(storage, resourceId) : 0;
-    const storagePct = storageCap > 0 ? Math.min(100, (storageTotal / storageCap) * 100) : 0;
-    const storageFull = storagePct >= 95;
-    const hasStorageCap = storageCap > 0 && resourceId !== 'training' && resourceId !== 'barracks';
 
     useEffect(() => {
         const checkActive = () => {
@@ -111,32 +104,6 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
                     </div>
                     <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10 relative">{rate > 0 && isProductionActive && (<div className="h-full bg-gradient-to-r from-green-500 to-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.6)] transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>)}</div>
                 </div>
-
-                {/* STORAGE CAPACITY */}
-                {hasStorageCap && (
-                    <div className={`rounded-2xl p-4 border ${storageFull ? 'bg-yellow-900/20 border-yellow-500/30' : 'bg-slate-900 border-white/5'} shadow-lg`}>
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                                <Package className={`w-4 h-4 ${storageFull ? 'text-yellow-400' : 'text-slate-500'}`} />
-                                {storageFull ? (t ? t('village_storage_full') : 'Storage Full!') : (t ? t('village_storage') : 'Storage')}
-                            </span>
-                            <span className={`text-xs font-mono font-bold ${storageFull ? 'text-yellow-400' : 'text-slate-400'}`}>
-                                {storageTotal} / {storageCap}
-                            </span>
-                        </div>
-                        <div className="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-white/10">
-                            <div
-                                className={`h-full rounded-full transition-all duration-500 ${storageFull ? 'bg-gradient-to-r from-yellow-500 to-orange-400 animate-pulse shadow-[0_0_10px_rgba(234,179,8,0.5)]' : `bg-gradient-to-r ${resource?.bg || 'bg-slate-500'} opacity-80`}`}
-                                style={{ width: `${storagePct}%` }}
-                            />
-                        </div>
-                        {storageFull && (
-                            <p className="text-[10px] text-yellow-400/80 font-bold mt-2">
-                                {t ? t('village_storage_full_desc') : 'Production paused — clear storage to continue'}
-                            </p>
-                        )}
-                    </div>
-                )}
 
                 {/* DROPS & STORAGE */}
                 <div className="bg-slate-800/50 border border-white/5 rounded-2xl p-4">
