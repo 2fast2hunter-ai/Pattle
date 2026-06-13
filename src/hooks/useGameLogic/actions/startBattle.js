@@ -37,7 +37,10 @@ export const startBattle = async (state, showNotification, overridePets = null) 
     const myTeam = (user.team || [])
         .map(id => sourcePets.find(p => p.id === id))
         .filter(Boolean)
-        .map(p => applyGearToPet(p, gearInventory));
+        .map(p => {
+            const pet = applyGearToPet(p, gearInventory);
+            return { ...pet, currentHp: pet.maxHp, currentCd: 0 };
+        });
     if (myTeam.length === 0) {
         showNotification(state.t ? state.t('notif_team_empty') : 'Your team is empty!', "error");
         return;
