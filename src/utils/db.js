@@ -862,23 +862,29 @@ export const getAdminAnalytics = async () => {
     try {
         const usersRef = collection(db, 'users');
         const petsRef = collection(db, 'pets');
+        const marketRef = collection(db, 'market');
+        const guildsRef = collection(db, 'guilds');
 
-        const [dauSnap, mauSnap, totalSnap] = await Promise.all([
+        // Parallel: user counts + retention + marketplace + guilds
+        const [dauSnap, mauSnap, totalSnap, r1, r3, r7, r14, r30, marketSnap, guildsSnap] = await Promise.all([
             getCountFromServer(query(usersRef, where('lastLoginDate', '==', today))),
             getCountFromServer(query(usersRef, where('lastLoginDate', '>=', monthStart), where('lastLoginDate', '<', nextMonth))),
             getCountFromServer(usersRef),
-        ]);
-        const dau = dauSnap.data().count;
-        const mau = mauSnap.data().count;
-        const totalUsers = totalSnap.data().count;
-
-        const [r1, r3, r7, r14, r30] = await Promise.all([
             getCountFromServer(query(usersRef, where('loginStreak', '>=', 1))),
             getCountFromServer(query(usersRef, where('loginStreak', '>=', 3))),
             getCountFromServer(query(usersRef, where('loginStreak', '>=', 7))),
             getCountFromServer(query(usersRef, where('loginStreak', '>=', 14))),
             getCountFromServer(query(usersRef, where('loginStreak', '>=', 30))),
+            getCountFromServer(marketRef),
+            getCountFromServer(guildsRef),
         ]);
+
+        const dau = dauSnap.data().count;
+        const mau = mauSnap.data().count;
+        const totalUsers = totalSnap.data().count;
+        const totalMarketListings = marketSnap.data().count;
+        const totalGuilds = guildsSnap.data().count;
+
         const retention = {
             day1: r1.data().count,
             day3: r3.data().count,
@@ -887,14 +893,33 @@ export const getAdminAnalytics = async () => {
             month1: r30.data().count,
         };
 
+        // Top 200 players: extract battles, rank, level, economy, dungeon, gauntlet, tower
         const leaderboardSnap = await getDocs(query(usersRef, orderBy('rating', 'desc'), limit(200)));
         const rankDist = { Stone: 0, Bronze: 0, Silver: 0, Gold: 0, Platinum: 0, Diamond: 0, Master: 0 };
+        const levelDist = { '1-10': 0, '11-20': 0, '21-30': 0, '31-40': 0, '41-50': 0, '51-75': 0, '76-100': 0 };
+        const towerDist = { '1-10': 0, '11-25': 0, '26-50': 0, '51-75': 0, '76-100': 0, '100+': 0 };
         let totalBattles = 0;
         let totalWins = 0;
+        let totalDungeonRuns = 0;
+        let totalGauntletGames = 0;
+        let totalCoinsAll = 0;
+        let totalGemsAll = 0;
+        let totalBred = 0;
+        let totalHatched = 0;
+        let sampleSize = 0;
+
         leaderboardSnap.forEach(d => {
             const data = d.data();
+            sampleSize++;
             totalBattles += (data.stats?.pvpTotal || 0);
             totalWins += (data.stats?.pvpWins || 0);
+            totalDungeonRuns += (data.stats?.dungeonRuns || 0);
+            totalGauntletGames += (data.stats?.gauntletHighscore > 0 ? 1 : 0);
+            totalCoinsAll += (data.coins || 0);
+            totalGemsAll += (data.gems || 0);
+            totalBred += (data.stats?.bred || 0);
+            totalHatched += (data.stats?.hatched || 0);
+
             const r = data.rating || 1000;
             if (r >= 2300) rankDist.Master++;
             else if (r >= 2000) rankDist.Diamond++;
@@ -903,22 +928,80 @@ export const getAdminAnalytics = async () => {
             else if (r >= 1100) rankDist.Silver++;
             else if (r >= 850) rankDist.Bronze++;
             else rankDist.Stone++;
+
+            const lvl = data.level || 1;
+            if (lvl <= 10) levelDist['1-10']++;
+            else if (lvl <= 20) levelDist['11-20']++;
+            else if (lvl <= 30) levelDist['21-30']++;
+            else if (lvl <= 40) levelDist['31-40']++;
+            else if (lvl <= 50) levelDist['41-50']++;
+            else if (lvl <= 75) levelDist['51-75']++;
+            else levelDist['76-100']++;
+
+            const tower = data.towerProgress || 1;
+            if (tower <= 10) towerDist['1-10']++;
+            else if (tower <= 25) towerDist['11-25']++;
+            else if (tower <= 50) towerDist['26-50']++;
+            else if (tower <= 75) towerDist['51-75']++;
+            else if (tower <= 100) towerDist['76-100']++;
+            else towerDist['100+']++;
         });
 
+        const avgCoins = sampleSize > 0 ? Math.round(totalCoinsAll / sampleSize) : 0;
+        const avgGems = sampleSize > 0 ? Math.round(totalGemsAll / sampleSize) : 0;
+
+        // Pets: species, rarity, type, egg vs hatched counts
         const petsSnap = await getDocs(query(petsRef, limit(500)));
         const speciesCounts = {};
+        const rarityCounts = {};
+        const typeCounts = {};
+        let totalHatchedPets = 0;
+        let totalEggs = 0;
+
         petsSnap.forEach(d => {
             const pet = d.data();
-            if (pet.isEgg) return;
+            if (pet.isEgg) {
+                totalEggs++;
+                return;
+            }
+            totalHatchedPets++;
             const key = pet.species || pet.type || 'Unknown';
             speciesCounts[key] = (speciesCounts[key] || 0) + 1;
+
+            const rarity = pet.rarity || 'COMMON';
+            rarityCounts[rarity] = (rarityCounts[rarity] || 0) + 1;
+
+            const type = pet.type || 'Unknown';
+            typeCounts[type] = (typeCounts[type] || 0) + 1;
         });
+
         const topPets = Object.entries(speciesCounts)
             .sort(([, a], [, b]) => b - a)
             .slice(0, 10)
             .map(([species, count]) => ({ species, count }));
 
-        return { dau, mau, totalUsers, totalBattles, totalWins, topPets, retention, rankDist };
+        const rarityOrder = ['COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC', 'DIVINE', 'ANCIENT', 'COSMIC', 'TRANSCENDENT'];
+        const rarityDist = rarityOrder
+            .filter(r => rarityCounts[r])
+            .map(r => ({ label: r.charAt(0) + r.slice(1).toLowerCase(), value: rarityCounts[r] }));
+
+        const topTypes = Object.entries(typeCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 10)
+            .map(([type, count]) => ({ label: type, value: count }));
+
+        return {
+            dau, mau, totalUsers,
+            totalBattles, totalWins,
+            totalDungeonRuns, totalGauntletGames,
+            totalBred, totalHatched,
+            avgCoins, avgGems,
+            topPets, retention, rankDist,
+            levelDist, towerDist,
+            rarityDist, topTypes,
+            totalHatchedPets, totalEggs,
+            totalMarketListings, totalGuilds,
+        };
     } catch (e) {
         console.error('[Admin] Error fetching analytics:', e);
         throw e;

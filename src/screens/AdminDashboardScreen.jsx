@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, BarChart2, Users, Swords, TrendingUp, Shield, RefreshCw, Lock, MessageSquare, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle } from 'lucide-react';
+import { ArrowLeft, BarChart2, Users, Swords, TrendingUp, Shield, RefreshCw, Lock, MessageSquare, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle, Egg, Store, Layers, Star, Map, Zap, Coins, Gem, Sword, Activity } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, updateDoc, doc, where } from 'firebase/firestore';
 import { getAdminAnalytics } from '../utils/db';
@@ -23,10 +23,14 @@ function StatCard({ icon: Icon, label, value, sub, color = 'indigo' }) {
         green: 'bg-green-600/20 text-green-400 border-green-500/20',
         pink: 'bg-pink-600/20 text-pink-400 border-pink-500/20',
         amber: 'bg-amber-600/20 text-amber-400 border-amber-500/20',
+        cyan: 'bg-cyan-600/20 text-cyan-400 border-cyan-500/20',
+        purple: 'bg-purple-600/20 text-purple-400 border-purple-500/20',
+        rose: 'bg-rose-600/20 text-rose-400 border-rose-500/20',
+        teal: 'bg-teal-600/20 text-teal-400 border-teal-500/20',
     };
     return (
         <div className="bg-slate-900 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${colorMap[color]}`}>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 border ${colorMap[color] || colorMap.indigo}`}>
                 <Icon className="w-6 h-6" />
             </div>
             <div className="min-w-0">
@@ -216,6 +220,15 @@ export default function AdminDashboardScreen({ onBack }) {
     const maxRank = rankData.length ? Math.max(...rankData.map(r => r.value), 1) : 1;
     const maxPetCount = data?.topPets?.length ? Math.max(...data.topPets.map(p => p.count), 1) : 1;
 
+    const levelData = data ? Object.entries(data.levelDist).map(([label, value]) => ({ label, value })) : [];
+    const maxLevel = levelData.length ? Math.max(...levelData.map(d => d.value), 1) : 1;
+
+    const towerData = data ? Object.entries(data.towerDist).map(([label, value]) => ({ label, value })) : [];
+    const maxTower = towerData.length ? Math.max(...towerData.map(d => d.value), 1) : 1;
+
+    const maxRarity = data?.rarityDist?.length ? Math.max(...data.rarityDist.map(r => r.value), 1) : 1;
+    const maxType = data?.topTypes?.length ? Math.max(...data.topTypes.map(t => t.value), 1) : 1;
+
     return (
         <div className="h-full flex flex-col bg-slate-950 animate-in fade-in slide-in-from-right duration-300">
             <div className="relative flex items-center justify-center p-4 shrink-0 border-b border-white/5">
@@ -280,13 +293,61 @@ export default function AdminDashboardScreen({ onBack }) {
                                 <StatCard icon={Swords} label="Total Battles" value={data.totalBattles.toLocaleString()} color="amber" />
                                 <StatCard icon={TrendingUp} label="Total Wins" value={data.totalWins.toLocaleString()} sub={data.totalBattles > 0 ? `${Math.round((data.totalWins / data.totalBattles) * 100)}% win rate` : ''} color="green" />
                             </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <StatCard icon={Map} label="Dungeon Runs" value={data.totalDungeonRuns.toLocaleString()} color="purple" />
+                                <StatCard icon={Activity} label="Gauntlet Players" value={data.totalGauntletGames.toLocaleString()} sub="ever scored" color="rose" />
+                            </div>
+                        </section>
+
+                        {/* Breeding & Hatching */}
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Egg className="w-4 h-4" /> Breeding & Hatching (Top 200)
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <StatCard icon={Layers} label="Total Breeds" value={data.totalBred.toLocaleString()} color="teal" />
+                                <StatCard icon={Egg} label="Total Hatched" value={data.totalHatched.toLocaleString()} color="cyan" />
+                            </div>
+                        </section>
+
+                        {/* Pet Ecosystem */}
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Star className="w-4 h-4" /> Pet Ecosystem (Sample 500)
+                            </h3>
+                            <div className="grid grid-cols-3 gap-3">
+                                <StatCard icon={Star} label="Pets" value={data.totalHatchedPets.toLocaleString()} color="amber" />
+                                <StatCard icon={Egg} label="Eggs" value={data.totalEggs.toLocaleString()} sub="incubating" color="indigo" />
+                                <StatCard icon={Store} label="Listings" value={data.totalMarketListings.toLocaleString()} color="green" />
+                            </div>
+                        </section>
+
+                        {/* Economy Overview */}
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Coins className="w-4 h-4" /> Economy (Top 200 Avg)
+                            </h3>
+                            <div className="grid grid-cols-2 gap-3">
+                                <StatCard icon={Coins} label="Avg Coins" value={data.avgCoins.toLocaleString()} color="amber" />
+                                <StatCard icon={Gem} label="Avg Gems" value={data.avgGems.toLocaleString()} color="purple" />
+                            </div>
+                        </section>
+
+                        {/* Social */}
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Users className="w-4 h-4" /> Social
+                            </h3>
+                            <div className="grid grid-cols-1 gap-3">
+                                <StatCard icon={Shield} label="Total Guilds" value={data.totalGuilds.toLocaleString()} color="teal" />
+                            </div>
                         </section>
 
                         {/* Top Pets */}
                         {data.topPets.length > 0 && (
                             <section className="space-y-3">
                                 <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Top Pets Used
+                                    Top Species Used
                                 </h3>
                                 <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
                                     <BarChart
@@ -297,6 +358,67 @@ export default function AdminDashboardScreen({ onBack }) {
                                 </div>
                             </section>
                         )}
+
+                        {/* Pet Type Distribution */}
+                        {data.topTypes.length > 0 && (
+                            <section className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                    <Zap className="w-4 h-4" /> Pet Type Distribution (Top 10)
+                                </h3>
+                                <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+                                    <BarChart
+                                        data={data.topTypes}
+                                        maxValue={maxType}
+                                        colorClass="bg-teal-500"
+                                    />
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Pet Rarity Distribution */}
+                        {data.rarityDist.length > 0 && (
+                            <section className="space-y-3">
+                                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                    <Star className="w-4 h-4" /> Pet Rarity Distribution
+                                </h3>
+                                <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+                                    <BarChart
+                                        data={data.rarityDist}
+                                        maxValue={maxRarity}
+                                        colorClass="bg-amber-500"
+                                    />
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Player Level Distribution */}
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <TrendingUp className="w-4 h-4" /> Player Level Distribution (Top 200)
+                            </h3>
+                            <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+                                <BarChart
+                                    data={levelData}
+                                    maxValue={maxLevel}
+                                    colorClass="bg-cyan-500"
+                                />
+                            </div>
+                        </section>
+
+                        {/* Tower Progress Distribution */}
+                        <section className="space-y-3">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                                <Sword className="w-4 h-4" /> Tower Progress Distribution (Top 200)
+                            </h3>
+                            <div className="bg-slate-900 border border-white/5 rounded-2xl p-4">
+                                <BarChart
+                                    data={towerData}
+                                    maxValue={maxTower}
+                                    colorClass="bg-rose-500"
+                                />
+                            </div>
+                            <p className="text-xs text-slate-600 px-1">Floor progress across top 200 rated players this season</p>
+                        </section>
 
                         {/* Retention Funnel */}
                         <section className="space-y-3">
