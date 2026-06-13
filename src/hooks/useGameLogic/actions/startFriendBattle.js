@@ -1,10 +1,15 @@
 import { setBattleActive, trackQuestProgress } from '../../../utils/db';
+import { applyGearToPet } from '../../../utils/mechanics/gearUtils';
 
 export const startFriendBattle = async (state, showNotification, friendTeam) => {
     const { user, myPets, setActiveBattle, setCurrentView } = state;
     if (!user) return;
 
-    const myTeam = (user.team || []).map(id => myPets.find(p => p.id === id)).filter(Boolean);
+    const gearInventory = user.gearInventory || [];
+    const myTeam = (user.team || [])
+        .map(id => myPets.find(p => p.id === id))
+        .filter(Boolean)
+        .map(p => ({ ...applyGearToPet(p, gearInventory), currentHp: p.maxHp, currentCd: 0 }));
     if (myTeam.length === 0) {
         showNotification(state.t ? state.t('notif_team_empty') : 'Your team is empty!', "error");
         return;
