@@ -2,6 +2,13 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.22.0] — 2026-06-13
+
+### Features
+- **Feedback Processing Status** (PAT-289): Admin dashboard now supports full feedback lifecycle — admins can mark items as `reviewed` or `done` via Firestore-secured status updates. Status badges (Eye icon for reviewed, CheckCircle for done) are visible on each item. A new "Done" filter tab makes triaging easier. Players now see the correct status badge in the Community feedback list instead of always seeing "new".
+
+---
+
 ## [1.21.0] — 2026-06-13
 
 ### Balance
