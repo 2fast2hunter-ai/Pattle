@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, BarChart2, Users, Swords, TrendingUp, Shield, RefreshCw, Lock, MessageSquare, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle } from 'lucide-react';
+import { ArrowLeft, BarChart2, Users, Swords, TrendingUp, Shield, RefreshCw, Lock, MessageSquare, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle, Eye } from 'lucide-react';
 import { auth, db } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, updateDoc, doc, where } from 'firebase/firestore';
 import { getAdminAnalytics } from '../utils/db';
@@ -100,12 +100,20 @@ const CATEGORY_ICONS = {
     other: { icon: MessageCircle, color: 'text-slate-400', bg: 'bg-slate-500/10 border-slate-500/20' },
 };
 
-function FeedbackItem({ item, onMarkReviewed }) {
+const STATUS_BADGES = {
+    new: { label: 'New', color: 'text-yellow-400', Icon: Clock },
+    reviewed: { label: 'In Review', color: 'text-blue-400', Icon: Eye },
+    done: { label: 'Done', color: 'text-green-400', Icon: CheckCircle },
+};
+
+function FeedbackItem({ item, onSetStatus }) {
     const cfg = CATEGORY_ICONS[item.category] || CATEGORY_ICONS.other;
     const Icon = cfg.icon;
     const date = item.createdAt?.toDate ? item.createdAt.toDate() : new Date(item.createdAt || 0);
+    const status = item.status || 'new';
+    const badge = STATUS_BADGES[status] || STATUS_BADGES.new;
     return (
-        <div className={`rounded-2xl border p-4 space-y-2 ${item.status === 'reviewed' ? 'opacity-50' : ''} ${cfg.bg}`}>
+        <div className={`rounded-2xl border p-4 space-y-2 ${status === 'done' ? 'opacity-50' : ''} ${cfg.bg}`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                     <Icon className={`w-4 h-4 shrink-0 ${cfg.color}`} />
@@ -113,22 +121,33 @@ function FeedbackItem({ item, onMarkReviewed }) {
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-xs text-slate-500">{item.userName}</span>
-                    {item.status === 'reviewed' ? (
-                        <span className="flex items-center gap-1 text-xs text-green-400 font-bold">
-                            <CheckCircle className="w-3 h-3" /> Done
-                        </span>
-                    ) : (
+                    <span className={`flex items-center gap-1 text-xs font-bold ${badge.color}`}>
+                        <badge.Icon className="w-3 h-3" /> {badge.label}
+                    </span>
+                </div>
+            </div>
+            <p className="text-sm text-slate-200 leading-relaxed">{item.message}</p>
+            <div className="flex items-center justify-between">
+                <p className="text-xs text-slate-600">{date.toLocaleString()}</p>
+                <div className="flex items-center gap-2">
+                    {status !== 'reviewed' && status !== 'done' && (
                         <button
-                            onClick={() => onMarkReviewed(item.id)}
-                            className="flex items-center gap-1 text-xs text-indigo-400 hover:text-indigo-300 font-bold transition-colors"
+                            onClick={() => onSetStatus(item.id, 'reviewed')}
+                            className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 font-bold transition-colors"
                         >
-                            <CheckCircle className="w-3 h-3" /> Mark reviewed
+                            <Eye className="w-3 h-3" /> In Review
+                        </button>
+                    )}
+                    {status !== 'done' && (
+                        <button
+                            onClick={() => onSetStatus(item.id, 'done')}
+                            className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300 font-bold transition-colors"
+                        >
+                            <CheckCircle className="w-3 h-3" /> Done
                         </button>
                     )}
                 </div>
             </div>
-            <p className="text-sm text-slate-200 leading-relaxed">{item.message}</p>
-            <p className="text-xs text-slate-600">{date.toLocaleString()}</p>
         </div>
     );
 }
@@ -141,6 +160,7 @@ export default function AdminDashboardScreen({ onBack }) {
     const [feedback, setFeedback] = useState([]);
     const [feedbackLoading, setFeedbackLoading] = useState(false);
     const [feedbackFilter, setFeedbackFilter] = useState('new');
+    const [feedbackError, setFeedbackError] = useState(null);
 
     const checkAdmin = () => {
         const email = auth.currentUser?.email;
@@ -175,12 +195,14 @@ export default function AdminDashboardScreen({ onBack }) {
         }
     };
 
-    const markReviewed = async (id) => {
+    const setFeedbackStatus = async (id, status) => {
+        setFeedbackError(null);
         try {
-            await updateDoc(doc(db, 'feedback', id), { status: 'reviewed' });
-            setFeedback(prev => prev.map(f => f.id === id ? { ...f, status: 'reviewed' } : f));
+            await updateDoc(doc(db, 'feedback', id), { status });
+            setFeedback(prev => prev.map(f => f.id === id ? { ...f, status } : f));
         } catch (e) {
-            console.error('Mark reviewed error:', e);
+            console.error('Feedback status update error:', e);
+            setFeedbackError('Status update failed. Check Firestore rules and admin email.');
         }
     };
 
@@ -331,7 +353,7 @@ export default function AdminDashboardScreen({ onBack }) {
                         <MessageSquare className="w-4 h-4" /> Player Feedback
                     </h3>
                     <div className="flex gap-2">
-                        {['new', 'reviewed', 'all'].map(f => (
+                        {['new', 'reviewed', 'done', 'all'].map(f => (
                             <button
                                 key={f}
                                 onClick={() => setFeedbackFilter(f)}
@@ -347,6 +369,11 @@ export default function AdminDashboardScreen({ onBack }) {
                             <RefreshCw className={`w-4 h-4 ${feedbackLoading ? 'animate-spin' : ''}`} />
                         </button>
                     </div>
+                    {feedbackError && (
+                        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold">
+                            {feedbackError}
+                        </div>
+                    )}
                     {feedbackLoading ? (
                         <div className="flex items-center justify-center h-20 text-slate-500 gap-2 text-xs font-bold">
                             <RefreshCw className="w-4 h-4 animate-spin" /> Loading feedback...
@@ -358,7 +385,7 @@ export default function AdminDashboardScreen({ onBack }) {
                     ) : (
                         <div className="space-y-3">
                             {feedback.map(item => (
-                                <FeedbackItem key={item.id} item={item} onMarkReviewed={markReviewed} />
+                                <FeedbackItem key={item.id} item={item} onSetStatus={setFeedbackStatus} />
                             ))}
                         </div>
                     )}
