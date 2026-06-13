@@ -1,9 +1,10 @@
 export const PATCHES = [
     {
-        version: 'v1.20.2',
-        date: '2026-06-12',
+        version: 'v1.21.0',
+        date: '2026-06-13',
         changes: [
             { type: 'changed', text: 'Arena balance: enemy level shifted 1 step lower on average — fights should now be winnable ~80–90% of the time instead of feeling too difficult' },
+            { type: 'fixed', text: 'Village storage: hard capacity cap fully removed — resources now accumulate without any upper limit' },
         ]
     },
     {

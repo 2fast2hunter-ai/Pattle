@@ -2,6 +2,16 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.21.0] — 2026-06-13
+
+### Balance
+- **Arena enemy level offset** (PAT-276): Enemy level window shifted 1 step lower on average — players should now win ~80–90% of arena fights instead of encountering too-hard matchups.
+
+### Fixes
+- **Village storage hard cap** (PAT-262): Removed the per-building storage cap that stopped resource production once the limit was reached — resources now accumulate without any ceiling.
+
+---
+
 ## [1.20.1] — 2026-06-12
 
 ### Balance

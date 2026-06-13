@@ -29,8 +29,6 @@ export default function ResourceDetailScreen({ resourceId, user, pets, onBack, o
     const rate = (isValid && productionRates) ? productionRates(resourceId, level, workers) : 0;
     const cycleTime = Math.max(1, 10 - ((level - 1) * 0.05));
 
-    const research = user?.village?.research || {};
-
     useEffect(() => {
         const checkActive = () => {
             const now = Date.now();

@@ -17,7 +17,6 @@ export default function ResourceGrid({
     setShowTraining,
     t
 }) {
-    const storage = user?.village?.storage || {};
     const buildings = user?.village?.buildings || {};
 
     return (

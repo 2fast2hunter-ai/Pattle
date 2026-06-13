@@ -1,5 +1,5 @@
 // Bump this version with every release to force cache eviction for existing players.
-const CACHE_NAME = 'pattle-v21';
+const CACHE_NAME = 'pattle-v22';
 const CORE_ASSETS = [
   '/',
   '/index.html',
