@@ -2,6 +2,14 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.23.0] — 2026-06-14
+
+### Fixes
+- **Battle pet state reset** (PAT-294): Player pets now always start arena and friend battles with full HP and zero cooldown. Previously, stale `currentHp`/`currentCd` values carried over from previous fights, preventing abilities from firing on the first turn. Enemy pets were already reset; the same reset now applies to the player's team in both arena and friendly battles.
+- **Gear in friend battles** (PAT-294): Pet gear stats are now correctly applied in friendly battles, matching the existing arena battle behaviour.
+
+---
+
 ## [1.22.0] — 2026-06-13
 
 ### Features
