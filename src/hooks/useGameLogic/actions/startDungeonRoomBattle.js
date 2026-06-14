@@ -31,6 +31,7 @@ export const startDungeonRoomBattle = async (state, showNotification) => {
 
     const battleState = {
         ...activeBattle,
+        myTeam: activeBattle.myTeam.map(p => ({ ...p, currentCd: 0 })),
         enemyTeam,
         myIndex: firstAliveIndex,
         enemyIndex: 0,
