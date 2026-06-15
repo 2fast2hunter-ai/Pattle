@@ -20,7 +20,7 @@ function GuildRow({ guild, rank, isMyGuild }) {
                 {rankText}
             </div>
             <div className="text-xl w-9 h-9 flex items-center justify-center bg-black/20 rounded-xl shrink-0">
-                🛡️
+                {guild.emblem || '🛡️'}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">

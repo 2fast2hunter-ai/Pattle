@@ -80,5 +80,21 @@ service cloud.firestore {
         allow delete: if false; // Messages are permanent
       }
     }
+
+    // GUILD INVITES:
+    match /guildInvites/{inviteId} {
+      // Invitee or inviter can read
+      allow read: if isSignedIn()
+        && (resource.data.inviteeId == request.auth.uid
+            || resource.data.invitedByUserId == request.auth.uid);
+      // Any guild member can create an invite
+      allow create: if isSignedIn() && request.resource.data.invitedByUserId == request.auth.uid;
+      // Only invitee can update (accept/decline changes status)
+      allow update: if isSignedIn() && resource.data.inviteeId == request.auth.uid;
+      // Invitee or inviter can delete
+      allow delete: if isSignedIn()
+        && (resource.data.inviteeId == request.auth.uid
+            || resource.data.invitedByUserId == request.auth.uid);
+    }
   }
 }

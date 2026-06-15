@@ -6,21 +6,25 @@ import {
     deleteField, writeBatch
 } from 'firebase/firestore';
 
-export const MAX_GUILD_MEMBERS = 30;
+export const MAX_GUILD_MEMBERS = 20;
 export const MAX_CHAT_MESSAGES = 100;
 
+const GUILD_EMBLEMS = ['🛡️', '⚔️', '🐉', '🦁', '🐺', '🦅', '🌟', '💎', '🔥', '⚡', '🌙', '☀️', '🌊', '🏔️', '🌹'];
+export { GUILD_EMBLEMS };
+
 // --- CREATE GUILD ---
-export const createGuild = async (user, name, tag, description) => {
+export const createGuild = async (user, name, tag, description, emblem) => {
     if (!user?.id) return { success: false, message: 'Not logged in.' };
     if (user.guildId) return { success: false, message: 'You are already in a guild.' };
 
-    const trimmedTag = tag.trim().toUpperCase().slice(0, 4);
+    const trimmedTag = tag.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 3);
     const trimmedName = name.trim().slice(0, 30);
-    if (trimmedTag.length < 2) return { success: false, message: 'Tag must be 2-4 characters.' };
+    const selectedEmblem = GUILD_EMBLEMS.includes(emblem) ? emblem : '🛡️';
+
+    if (trimmedTag.length !== 3) return { success: false, message: 'Tag must be exactly 3 characters.' };
     if (trimmedName.length < 3) return { success: false, message: 'Name must be at least 3 characters.' };
 
     try {
-        // Check tag uniqueness
         const tagsQ = query(collection(db, 'guilds'), where('tag', '==', trimmedTag));
         const tagSnap = await getDocs(tagsQ);
         if (!tagSnap.empty) return { success: false, message: 'Tag already taken.' };
@@ -44,6 +48,7 @@ export const createGuild = async (user, name, tag, description) => {
             id: guildRef.id,
             name: trimmedName,
             tag: trimmedTag,
+            emblem: selectedEmblem,
             description: (description || '').trim().slice(0, 120),
             leaderId: user.id,
             members: [memberEntry],
@@ -119,7 +124,6 @@ export const leaveGuild = async (user) => {
         return await runTransaction(db, async (transaction) => {
             const guildSnap = await transaction.get(guildRef);
             if (!guildSnap.exists()) {
-                // Guild gone — just clean user
                 transaction.update(userRef, { guildId: deleteField(), guildTag: deleteField(), guildPoints: deleteField() });
                 return { success: true };
             }
@@ -129,10 +133,10 @@ export const leaveGuild = async (user) => {
             const remaining = guildData.members.filter(m => m.userId !== user.id);
 
             if (isLeader && remaining.length > 0) {
-                // Transfer leadership to longest-standing member
-                const newLeader = remaining[0];
-                const updatedMembers = remaining.map((m, i) =>
-                    i === 0 ? { ...m, role: 'leader' } : m
+                // Transfer to an officer first, then oldest member
+                const newLeader = remaining.find(m => m.role === 'officer') || remaining[0];
+                const updatedMembers = remaining.map(m =>
+                    m.userId === newLeader.userId ? { ...m, role: 'leader' } : m
                 );
                 transaction.update(guildRef, {
                     leaderId: newLeader.userId,
@@ -141,8 +145,7 @@ export const leaveGuild = async (user) => {
             } else if (remaining.length === 0) {
                 transaction.delete(guildRef);
             } else {
-                const updatedMembers = guildData.members.filter(m => m.userId !== user.id);
-                transaction.update(guildRef, { members: updatedMembers });
+                transaction.update(guildRef, { members: remaining });
             }
 
             transaction.update(userRef, {
@@ -159,8 +162,9 @@ export const leaveGuild = async (user) => {
     }
 };
 
-// --- KICK MEMBER (leader only) ---
-export const kickMember = async (leaderId, guildId, targetUserId) => {
+// --- KICK MEMBER (leader or officer) ---
+// Officers can kick members; only leader can kick officers
+export const kickMember = async (actorUserId, guildId, targetUserId) => {
     const guildRef = doc(db, 'guilds', guildId);
     const targetRef = doc(db, 'users', targetUserId);
 
@@ -170,8 +174,20 @@ export const kickMember = async (leaderId, guildId, targetUserId) => {
             if (!guildSnap.exists()) return { success: false, message: 'Guild not found.' };
 
             const guildData = guildSnap.data();
-            if (guildData.leaderId !== leaderId) return { success: false, message: 'Not the leader.' };
-            if (targetUserId === leaderId) return { success: false, message: 'Cannot kick yourself.' };
+            const actor = guildData.members.find(m => m.userId === actorUserId);
+            const target = guildData.members.find(m => m.userId === targetUserId);
+
+            if (!actor) return { success: false, message: 'You are not in this guild.' };
+            if (!target) return { success: false, message: 'Target member not found.' };
+            if (targetUserId === actorUserId) return { success: false, message: 'Cannot kick yourself.' };
+            if (target.role === 'leader') return { success: false, message: 'Cannot kick the leader.' };
+
+            const isLeader = guildData.leaderId === actorUserId;
+            const isOfficer = actor.role === 'officer';
+
+            if (!isLeader && !isOfficer) return { success: false, message: 'Insufficient permissions.' };
+            if (isOfficer && !isLeader && target.role === 'officer')
+                return { success: false, message: 'Officers cannot kick other officers.' };
 
             const updatedMembers = guildData.members.filter(m => m.userId !== targetUserId);
             transaction.update(guildRef, { members: updatedMembers });
@@ -187,6 +203,171 @@ export const kickMember = async (leaderId, guildId, targetUserId) => {
         console.error('[Guild] kickMember error:', e);
         return { success: false, message: e.message };
     }
+};
+
+// --- PROMOTE TO OFFICER (leader only) ---
+export const promoteToOfficer = async (leaderId, guildId, targetUserId) => {
+    const guildRef = doc(db, 'guilds', guildId);
+
+    try {
+        return await runTransaction(db, async (transaction) => {
+            const guildSnap = await transaction.get(guildRef);
+            if (!guildSnap.exists()) return { success: false, message: 'Guild not found.' };
+
+            const guildData = guildSnap.data();
+            if (guildData.leaderId !== leaderId) return { success: false, message: 'Only the leader can promote members.' };
+
+            const target = guildData.members.find(m => m.userId === targetUserId);
+            if (!target) return { success: false, message: 'Member not found.' };
+            if (target.role !== 'member') return { success: false, message: 'Member is already an officer or leader.' };
+
+            const updatedMembers = guildData.members.map(m =>
+                m.userId === targetUserId ? { ...m, role: 'officer' } : m
+            );
+            transaction.update(guildRef, { members: updatedMembers });
+
+            return { success: true };
+        });
+    } catch (e) {
+        console.error('[Guild] promoteToOfficer error:', e);
+        return { success: false, message: e.message };
+    }
+};
+
+// --- DEMOTE TO MEMBER (leader only) ---
+export const demoteToMember = async (leaderId, guildId, targetUserId) => {
+    const guildRef = doc(db, 'guilds', guildId);
+
+    try {
+        return await runTransaction(db, async (transaction) => {
+            const guildSnap = await transaction.get(guildRef);
+            if (!guildSnap.exists()) return { success: false, message: 'Guild not found.' };
+
+            const guildData = guildSnap.data();
+            if (guildData.leaderId !== leaderId) return { success: false, message: 'Only the leader can demote officers.' };
+
+            const target = guildData.members.find(m => m.userId === targetUserId);
+            if (!target) return { success: false, message: 'Member not found.' };
+            if (target.role !== 'officer') return { success: false, message: 'Member is not an officer.' };
+
+            const updatedMembers = guildData.members.map(m =>
+                m.userId === targetUserId ? { ...m, role: 'member' } : m
+            );
+            transaction.update(guildRef, { members: updatedMembers });
+
+            return { success: true };
+        });
+    } catch (e) {
+        console.error('[Guild] demoteToMember error:', e);
+        return { success: false, message: e.message };
+    }
+};
+
+// --- SEND GUILD INVITE ---
+export const sendGuildInvite = async (inviterUser, guildId, targetUserId) => {
+    if (!inviterUser?.id || !guildId || !targetUserId) return { success: false, message: 'Invalid parameters.' };
+    if (inviterUser.id === targetUserId) return { success: false, message: 'Cannot invite yourself.' };
+
+    const guildRef = doc(db, 'guilds', guildId);
+
+    try {
+        const guildSnap = await getDoc(guildRef);
+        if (!guildSnap.exists()) return { success: false, message: 'Guild not found.' };
+
+        const guildData = guildSnap.data();
+        const actor = guildData.members.find(m => m.userId === inviterUser.id);
+        if (!actor) return { success: false, message: 'You are not in this guild.' };
+
+        const alreadyMember = guildData.members.some(m => m.userId === targetUserId);
+        if (alreadyMember) return { success: false, message: 'Player is already in this guild.' };
+
+        if (guildData.members.length >= MAX_GUILD_MEMBERS)
+            return { success: false, message: `Guild is full (max ${MAX_GUILD_MEMBERS} members).` };
+
+        // Check if invite already pending
+        const existingQ = query(
+            collection(db, 'guildInvites'),
+            where('guildId', '==', guildId),
+            where('inviteeId', '==', targetUserId),
+            where('status', '==', 'pending')
+        );
+        const existingSnap = await getDocs(existingQ);
+        if (!existingSnap.empty) return { success: false, message: 'Invite already sent.' };
+
+        // Get target user info
+        const targetSnap = await getDoc(doc(db, 'users', targetUserId));
+        if (!targetSnap.exists()) return { success: false, message: 'Player not found.' };
+
+        const targetData = targetSnap.data();
+        if (targetData.guildId) return { success: false, message: 'Player is already in a guild.' };
+
+        await addDoc(collection(db, 'guildInvites'), {
+            guildId,
+            guildName: guildData.name,
+            guildTag: guildData.tag,
+            guildEmblem: guildData.emblem || '🛡️',
+            inviteeId: targetUserId,
+            inviteeUsername: targetData.username || 'Player',
+            invitedByUserId: inviterUser.id,
+            invitedByUsername: inviterUser.username || 'Player',
+            status: 'pending',
+            timestamp: Date.now()
+        });
+
+        return { success: true };
+    } catch (e) {
+        console.error('[Guild] sendGuildInvite error:', e);
+        return { success: false, message: e.message };
+    }
+};
+
+// --- RESPOND TO GUILD INVITE ---
+export const respondToGuildInvite = async (user, inviteId, accept) => {
+    if (!user?.id || !inviteId) return { success: false };
+
+    const inviteRef = doc(db, 'guildInvites', inviteId);
+
+    try {
+        const inviteSnap = await getDoc(inviteRef);
+        if (!inviteSnap.exists()) return { success: false, message: 'Invite not found.' };
+
+        const invite = inviteSnap.data();
+        if (invite.inviteeId !== user.id) return { success: false, message: 'Not your invite.' };
+        if (invite.status !== 'pending') return { success: false, message: 'Invite is no longer pending.' };
+
+        if (!accept) {
+            await writeBatch(db).delete(inviteRef).commit();
+            return { success: true };
+        }
+
+        // Accept: join the guild
+        const joinResult = await joinGuild(user, invite.guildId);
+        if (!joinResult.success) return joinResult;
+
+        // Delete the invite doc
+        const batch = writeBatch(db);
+        batch.delete(inviteRef);
+        await batch.commit();
+
+        return { success: true, tag: joinResult.tag };
+    } catch (e) {
+        console.error('[Guild] respondToGuildInvite error:', e);
+        return { success: false, message: e.message };
+    }
+};
+
+// --- GET PENDING INVITES FOR USER ---
+export const listenToPendingInvites = (userId, callback) => {
+    const q = query(
+        collection(db, 'guildInvites'),
+        where('inviteeId', '==', userId),
+        where('status', '==', 'pending'),
+        orderBy('timestamp', 'desc'),
+        limit(10)
+    );
+    return onSnapshot(q, (snap) => {
+        callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    });
 };
 
 // --- ADD CONTRIBUTION POINTS ---
@@ -322,5 +503,19 @@ export const listGuilds = async () => {
     } catch (e) {
         console.error('[Guild] listGuilds error:', e);
         return [];
+    }
+};
+
+// --- FIND USER BY USERNAME (for invites) ---
+export const findUserForInvite = async (username) => {
+    try {
+        const q = query(collection(db, 'users'), where('username', '==', username.trim()), limit(1));
+        const snap = await getDocs(q);
+        if (snap.empty) return null;
+        const d = snap.docs[0];
+        return { id: d.id, ...d.data() };
+    } catch (e) {
+        console.error('[Guild] findUserForInvite error:', e);
+        return null;
     }
 };
