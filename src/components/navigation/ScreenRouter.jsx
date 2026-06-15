@@ -38,6 +38,7 @@ const ChatScreen = lazy(() => import('../../screens/ChatScreen'));
 const AdminDashboardScreen = lazy(() => import('../../screens/AdminDashboardScreen'));
 const GearInventoryScreen = lazy(() => import('../../screens/GearInventoryScreen'));
 const DexScreen = lazy(() => import('../../screens/DexScreen'));
+const CommunityScreen = lazy(() => import('../../screens/CommunityScreen'));
 
 const ScreenFallback = () => (
     <div className="h-full flex items-center justify-center">
@@ -79,7 +80,7 @@ export default function ScreenRouter({
 
     let screen;
     switch (currentView) {
-        case 'menu': screen = <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} onAchievements={() => setCurrentView('achievements')} onGuild={() => setCurrentView('guild')} onChat={() => setCurrentView('chat')} tutorialHighlight={tutorialHighlight} />; break;
+        case 'menu': screen = <MainMenu user={user} t={t} onQuests={() => setCurrentView('quests')} onArena={() => setCurrentView('arena-hub')} onPetHub={() => setCurrentView('pet-hub')} onShop={() => setCurrentView('shop')} onMarketplace={() => setCurrentView('marketplace')} onLeaderboard={() => setCurrentView('leaderboard')} onProfile={() => setCurrentView('profile')} onSettings={() => setCurrentView('settings')} onVillage={() => setCurrentView('village')} onAchievements={() => setCurrentView('achievements')} onGuild={() => setCurrentView('guild')} onChat={() => setCurrentView('chat')} onCommunity={() => setCurrentView('community')} tutorialHighlight={tutorialHighlight} />; break;
         case 'achievements': screen = <AchievementsScreen user={user} onBack={() => setCurrentView('menu')} t={t} lang={settings?.language || 'de'} />; break;
 
         case 'village': screen = <VillageScreen user={user} pets={myPets} t={t} onBack={() => setCurrentView('menu')} onCollect={handleCollectVillage} onSelectResource={handleOpenResource} productionRates={productionRates} onOpenMilestones={() => setCurrentView('village-milestones')} onOpenTrading={() => setCurrentView('village-trading')} onAddIdleTime={addIdleTime} onAddIdleTimeByAd={gameLogic.addIdleTimeByAd} onOpenCosmetics={() => setCurrentView('village-cosmetics')} onToggleTrainingPet={handleToggleTrainingPet} onDismissStorm={dismissStormWithAd} onOpenMerchant={() => setCurrentView('village-merchant')} onCheckEvents={checkVillageEvents} settings={settings} />; break;
@@ -156,6 +157,8 @@ export default function ScreenRouter({
 
         case 'chat': screen = <ChatScreen user={user} onBack={() => setCurrentView('menu')} onViewPlayer={(player) => { if (!player) { setCurrentView('profile'); } else { setSelectedFriend(player); setCurrentView('chat-player-profile'); } }} t={t} />; break;
         case 'chat-player-profile': screen = selectedFriend && <FriendProfileScreen friend={selectedFriend} onBack={() => setCurrentView('chat')} onStartBattle={startFriendBattle} t={t} />; break;
+
+        case 'community': screen = <CommunityScreen user={user} onBack={() => setCurrentView('menu')} />; break;
 
         case 'guild': screen = <GuildScreen user={user} onBack={() => setCurrentView('menu')} onOpenChat={() => setCurrentView('guild-chat')} onOpenLeaderboard={() => setCurrentView('guild-leaderboard')} showNotification={gameLogic.showNotification} />; break;
         case 'guild-chat': screen = <GuildChatScreen user={user} onBack={() => setCurrentView('guild')} />; break;

@@ -81,6 +81,13 @@ service cloud.firestore {
       }
     }
 
+    // COMMUNITY POSTS:
+    match /communityPosts/{postId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn()
+        && request.auth.token.email == '2fast2hunter@gmail.com';
+    }
+
     // GUILD INVITES:
     match /guildInvites/{inviteId} {
       // Invitee or inviter can read

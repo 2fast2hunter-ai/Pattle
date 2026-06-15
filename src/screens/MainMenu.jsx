@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock, Flame, Medal, Shield, MessageCircle } from 'lucide-react';
+import { Swords, Egg, Store, ShoppingBag, Trophy, ClipboardList, User, Settings, Home, Lock, Flame, Medal, Shield, MessageCircle, Users } from 'lucide-react';
 import { PageBackground } from '../components/GameLayout';
 import DailyLoginModal from '../components/modals/DailyLoginModal';
 import { claimDailyLoginReward } from '../utils/db';
@@ -84,7 +84,7 @@ const MenuTile = ({ item, index, onClick, highlight }) => {
     );
 };
 
-export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, onAchievements, onGuild, onChat, t, tutorialHighlight }) {
+export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplace, onLeaderboard, onQuests, onProfile, onSettings, onVillage, onAchievements, onGuild, onChat, onCommunity, t, tutorialHighlight }) {
   
   const [showDailyLogin, setShowDailyLogin] = useState(false);
   
@@ -168,6 +168,15 @@ export default function MainMenu({ user, onArena, onPetHub, onShop, onMarketplac
           color: 'from-teal-500 to-cyan-600',
           shadow: 'shadow-teal-900/20',
           onClick: onChat
+      },
+      {
+          id: 'community',
+          title: 'Community',
+          subtitle: 'Events & News',
+          icon: Users,
+          color: 'from-purple-600 to-pink-600',
+          shadow: 'shadow-purple-900/20',
+          onClick: onCommunity
       },
       {
           id: 'settings', title: translate('menu_settings'), subtitle: 'System',
