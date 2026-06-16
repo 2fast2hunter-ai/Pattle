@@ -149,13 +149,13 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         const extraTurnTaken = battleState.extraTurnTaken || false;
         let nextExtraTurnState = false;
 
-        if (newHp > 0 && hasDoubleSpeed && !extraTurnTaken) {
+        if (newDefenderHp > 0 && hasDoubleSpeed && !extraTurnTaken) {
             nextTurn = who; // Angreifer bleibt dran
             newLog.push(t ? t('battle_log_extra_turn', { attacker: attacker.name }) : `⚡ ${attacker.name} is so fast! Extra turn!`);
             nextExtraTurnState = true;
         }
 
-        if (newHp === 0) {
+        if (newDefenderHp === 0) {
             newLog.push(t ? t('battle_log_defeated', { defender: updatedDefender.name }) : `💀 ${updatedDefender.name} defeated!`);
             if (who === 'PLAYER') {
                 if (enemyIndex + 1 < enemyTeam.length) {
