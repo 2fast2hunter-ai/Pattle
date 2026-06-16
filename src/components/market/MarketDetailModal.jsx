@@ -1,13 +1,14 @@
 import React from 'react';
 import { X, Swords, Heart, Shield, Zap, Trash2, Coins } from 'lucide-react';
-import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES } from '../../data/gameData';
+import { RARITIES, TYPES, ZODIAC_ANIMALS, ABILITIES, SPECIES_ABILITY_MAP } from '../../data/gameData';
 import PetAvatar from '../PetAvatar';
 
 export default function MarketDetailModal({ pet, onClose, price, onBuy, isOwner, onRemove, t }) {
     if (!pet || pet.isEgg) return null;
     const typeInfo = TYPES[pet.type] || TYPES.FIRE;
     const rarityInfo = RARITIES[pet.rarity] || RARITIES.COMMON;
-    const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
+    const resolvedAbilityId = SPECIES_ABILITY_MAP[pet.species] || pet.abilityId;
+    const ability = ABILITIES[resolvedAbilityId] || ABILITIES.fireball;
     const speciesInfo = ZODIAC_ANIMALS[pet.species] || { label: 'Unknown' };
 
     return (

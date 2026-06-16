@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Swords, Shield, Zap, Heart, Wind, Activity, Star, Edit3, Sparkles, Trash2, Share2, Check, Package } from 'lucide-react';
-import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS } from '../data/gameData';
+import { RARITIES, TYPES, ABILITIES, SPECIES_ABILITY_MAP, ZODIAC_ANIMALS } from '../data/gameData';
 import { getPetLevelProgress } from '../utils/mechanics/petStats'; // IMPORT HINZUGEFÜGT
 import { sharePet } from '../utils/shareUtils';
 import { updateUser } from '../utils/db';
@@ -18,7 +18,8 @@ export default function PetDetailScreen({ pet, onBack, onRenamePet, onReleasePet
 
   const rarity = RARITIES[pet.rarity] || RARITIES.COMMON;
   const type = TYPES[pet.type] || TYPES.FIRE;
-  const ability = ABILITIES[pet.abilityId] || ABILITIES.fireball;
+  const resolvedAbilityId = SPECIES_ABILITY_MAP[pet.species] || pet.abilityId;
+  const ability = ABILITIES[resolvedAbilityId] || ABILITIES.fireball;
   const species = ZODIAC_ANIMALS[pet.species] || { label: 'Unknown' };
   
   // --- NEU: Benutze die Helper-Funktion für korrekten Balken ---
