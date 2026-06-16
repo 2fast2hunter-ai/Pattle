@@ -277,6 +277,8 @@ export const sendGuildInvite = async (inviterUser, guildId, targetUserId) => {
         const guildData = guildSnap.data();
         const actor = guildData.members.find(m => m.userId === inviterUser.id);
         if (!actor) return { success: false, message: 'You are not in this guild.' };
+        if (!['leader', 'officer'].includes(actor.role))
+            return { success: false, message: 'Only leaders and officers can send invites.' };
 
         const alreadyMember = guildData.members.some(m => m.userId === targetUserId);
         if (alreadyMember) return { success: false, message: 'Player is already in this guild.' };

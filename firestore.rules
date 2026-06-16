@@ -94,7 +94,8 @@ service cloud.firestore {
       allow read: if isSignedIn()
         && (resource.data.inviteeId == request.auth.uid
             || resource.data.invitedByUserId == request.auth.uid);
-      // Any guild member can create an invite
+      // Only leaders/officers can create invites; role enforcement is in sendGuildInvite (JS)
+      // because Firestore rules cannot filter array-of-maps by field value.
       allow create: if isSignedIn() && request.resource.data.invitedByUserId == request.auth.uid;
       // Only invitee can update (accept/decline changes status)
       allow update: if isSignedIn() && resource.data.inviteeId == request.auth.uid;
