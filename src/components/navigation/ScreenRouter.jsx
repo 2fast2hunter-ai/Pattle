@@ -39,6 +39,7 @@ const AdminDashboardScreen = lazy(() => import('../../screens/AdminDashboardScre
 const GearInventoryScreen = lazy(() => import('../../screens/GearInventoryScreen'));
 const DexScreen = lazy(() => import('../../screens/DexScreen'));
 const CommunityScreen = lazy(() => import('../../screens/CommunityScreen'));
+const HelpCenterScreen = lazy(() => import('../../screens/HelpCenterScreen'));
 
 const ScreenFallback = () => (
     <div className="h-full flex items-center justify-center">
@@ -153,6 +154,7 @@ export default function ScreenRouter({
         case 'legal-privacy': screen = <LegalScreen type='privacy' onBack={() => setCurrentView('settings')} t={t} />; break;
         case 'patches': screen = <PatchesScreen onBack={() => setCurrentView('settings')} t={t} />; break;
         case 'feedback': screen = <FeedbackScreen onBack={() => setCurrentView('settings')} user={user} t={t} />; break;
+        case 'help-center': screen = <HelpCenterScreen onBack={() => setCurrentView('settings')} t={t} />; break;
         case 'admin': screen = <AdminDashboardScreen onBack={() => setCurrentView('settings')} />; break;
 
         case 'chat': screen = <ChatScreen user={user} onBack={() => setCurrentView('menu')} onViewPlayer={(player) => { if (!player) { setCurrentView('profile'); } else { setSelectedFriend(player); setCurrentView('chat-player-profile'); } }} t={t} />; break;

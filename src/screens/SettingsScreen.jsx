@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Globe, LogOut, Music, Volume2, Scale, ChevronRight, ScrollText, MessageSquare, Zap, BarChart2 } from 'lucide-react';
+import { ArrowLeft, Globe, LogOut, Music, Volume2, Scale, ChevronRight, ScrollText, MessageSquare, Zap, BarChart2, HelpCircle } from 'lucide-react';
 import { playSound } from '../utils/soundManager';
 import { auth } from '../firebase';
 
@@ -159,6 +159,15 @@ export default function SettingsScreen({ settings, setSettings, onLogout, onBack
                                     <MessageSquare className="w-5 h-5" />
                                 </div>
                                 <span className="font-bold text-white text-sm">{t ? t('settings_feedback') : 'Feedback senden'}</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-slate-500" />
+                        </button>
+                        <button onClick={() => { onNavigate('help-center'); playSound('click'); }} className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-white/5 hover:bg-slate-800 transition-all active:scale-[0.98]">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-indigo-600/20 text-indigo-400">
+                                    <HelpCircle className="w-5 h-5" />
+                                </div>
+                                <span className="font-bold text-white text-sm">{t ? t('settings_help_center') : 'Hilfe-Center'}</span>
                             </div>
                             <ChevronRight className="w-4 h-4 text-slate-500" />
                         </button>
