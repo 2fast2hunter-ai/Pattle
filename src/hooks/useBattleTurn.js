@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ABILITIES } from '../data/gameData';
+import { ABILITIES, SPECIES_ABILITY_MAP } from '../data/gameData';
 import { calculateDamage } from '../utils/mechanics/battleLogic';
 
 export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
@@ -13,14 +13,16 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         let newLog = [...log];
 
         // 1. Ability oder Smart Auto Attack wählen
-        const hasAbility = attacker.abilityId && ABILITIES[attacker.abilityId];
+        // Always resolve via SPECIES_ABILITY_MAP first so existing pets with old abilityIds get the right ability
+        const resolvedAbilityId = SPECIES_ABILITY_MAP[attacker.species] || attacker.abilityId;
+        const hasAbility = resolvedAbilityId && ABILITIES[resolvedAbilityId];
         const isAbilityReady = attacker.currentCd <= 0;
         const shouldUseAbility = hasAbility && isAbilityReady;
 
         let abilityToUse;
 
         if (shouldUseAbility) {
-            abilityToUse = ABILITIES[attacker.abilityId];
+            abilityToUse = ABILITIES[resolvedAbilityId];
         } else {
             const useMagicAuto = (attacker.ap || 0) > (attacker.atk || 0);
             abilityToUse = {
@@ -139,6 +141,7 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         // Standard Nächster Zug — skip enemy turn if stunned
         let nextTurn = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
         if (defenderStunTurns > 0 && newDefenderHp > 0) {
+            defenderStunTurns = defenderStunTurns - 1; // consume one stun turn
             nextTurn = who; // attacker gets another turn immediately
             newLog.push(`⚡ ${defender.name} is stunned — skipping their turn!`);
         }
@@ -158,16 +161,36 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         if (newDefenderHp === 0) {
             newLog.push(t ? t('battle_log_defeated', { defender: updatedDefender.name }) : `💀 ${updatedDefender.name} defeated!`);
             if (who === 'PLAYER') {
-                if (enemyIndex + 1 < enemyTeam.length) {
-                    nextEnemyIndex++;
+                // Prefer next sequential enemy; fall back to any revived enemy at an earlier index
+                const nextAliveEnemyIdx = (() => {
+                    for (let i = enemyIndex + 1; i < enemyTeam.length; i++) {
+                        if ((enemyTeam[i].hp || 0) > 0) return i;
+                    }
+                    for (let i = 0; i < enemyIndex; i++) {
+                        if ((enemyTeam[i].hp || 0) > 0) return i;
+                    }
+                    return -1;
+                })();
+                if (nextAliveEnemyIdx !== -1) {
+                    nextEnemyIndex = nextAliveEnemyIdx;
                     nextTurn = 'ENEMY';
                     nextExtraTurnState = false;
                 } else {
                     gameOver = true;
                 }
             } else {
-                if (myIndex + 1 < myTeam.length) {
-                    nextMyIndex++;
+                // Prefer next sequential player pet; fall back to any revived pet at an earlier index
+                const nextAliveMyIdx = (() => {
+                    for (let i = myIndex + 1; i < myTeam.length; i++) {
+                        if ((myTeam[i].hp || 0) > 0) return i;
+                    }
+                    for (let i = 0; i < myIndex; i++) {
+                        if ((myTeam[i].hp || 0) > 0) return i;
+                    }
+                    return -1;
+                })();
+                if (nextAliveMyIdx !== -1) {
+                    nextMyIndex = nextAliveMyIdx;
                     nextTurn = 'PLAYER';
                     nextExtraTurnState = false;
                 } else {

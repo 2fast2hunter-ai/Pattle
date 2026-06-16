@@ -5,7 +5,7 @@ import { auth } from '../firebase.js';
 import { useGameLogicState } from './useGameLogic/useGameLogicState';
 import { useGameActions } from './useGameLogic/useGameActions';
 import { checkAndResetQuests, checkAndInitVillage, listenToUser, listenToPets, listenToMarket, checkAndResolveInterruptedBattle, updateUser, updatePetInDB, deleteField } from '../utils/db'; // updatePetInDB hinzugefügt
-import { ABILITIES } from '../data/gameData'; // Import ABILITIES
+import { ABILITIES, SPECIES_ABILITY_MAP } from '../data/gameData'; // Import ABILITIES
 import { restoreEggNotifications, scheduleDailyQuestReset } from '../utils/pushNotifications';
 import { checkAchievements as checkAchievementsState } from '../utils/checkAchievements';
 import { ACHIEVEMENT_TRIGGERS } from '../data/achievements';
@@ -62,14 +62,14 @@ export function useGameLogic() {
         if (!myPets || myPets.length === 0) return;
 
         myPets.forEach(pet => {
-            // Wenn Pet Tackle hat ODER gar keine AbilityId
-            if (!pet.abilityId || pet.abilityId === 'tackle') {
-                // Suche passende Fähigkeit basierend auf dem Typ
-                const matchingAbilityKey = Object.keys(ABILITIES).find(key => ABILITIES[key].element === pet.type);
-                
-                // Wenn wir eine bessere Fähigkeit finden, updaten wir das Pet in der DB
-                if (matchingAbilityKey && matchingAbilityKey !== 'tackle') {
-                    console.log(`[AutoFix] Updating ability for ${pet.name} (${pet.type}): Tackle -> ${ABILITIES[matchingAbilityKey].name}`);
+            const correctAbilityId = SPECIES_ABILITY_MAP[pet.species];
+            if (correctAbilityId && pet.abilityId !== correctAbilityId) {
+                // Migrate to species-specific ability
+                updatePetInDB(pet.id, { abilityId: correctAbilityId });
+            } else if (!pet.abilityId || pet.abilityId === 'tackle') {
+                // Fallback: assign type-matching ability for pets without a species map entry
+                const matchingAbilityKey = Object.keys(ABILITIES).find(key => ABILITIES[key].element === pet.type && key !== 'tackle');
+                if (matchingAbilityKey) {
                     updatePetInDB(pet.id, { abilityId: matchingAbilityKey });
                 }
             }
