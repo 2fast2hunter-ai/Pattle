@@ -1,6 +1,6 @@
 // src/utils/mechanics/petLogic.js
 import { recalculatePetStats } from './petStats';
-import { RARITIES, TYPES, ABILITIES, ZODIAC_ANIMALS, SPECIES_BY_TYPE, FUSION_RECIPES } from '../../data/gameData';
+import { RARITIES, TYPES, ABILITIES, SPECIES_ABILITY_MAP, ZODIAC_ANIMALS, SPECIES_BY_TYPE, FUSION_RECIPES } from '../../data/gameData';
 
 export const calculateBreedRarity = (rarity1Key, rarity2Key) => {
     const rarityKeys = Object.keys(RARITIES);
@@ -38,15 +38,8 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   
   let rarity = rarityKey || 'COMMON';
   
-  // Ability wählen
-  let abilityKey;
-  if (source === 'BREEDING' && !speciesKeyOverride) {
-      const abilityKeys = Object.keys(ABILITIES);
-      abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)];
-  } else {
-      const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === type);
-      abilityKey = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : Object.keys(ABILITIES)[0];
-  }
+  // Ability resolved after species is determined
+  let abilityKey = null;
 
   // Spezies wählen
   if (!speciesKey) {
@@ -65,8 +58,18 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   }
 
   const speciesData = ZODIAC_ANIMALS[speciesKey];
-  const suffixes = ['mon', 'zor', 'tros', 'nix', 'a', 'os', 'king', 'lord', 'god', 'soul', 'heart', 'claw'];
-  const baseName = speciesData.label + (Math.random() > 0.5 ? '' : ' ' + suffixes[Math.floor(Math.random() * suffixes.length)]);
+
+  // Assign species-unique ability; fall back to type-match for custom pets
+  if (SPECIES_ABILITY_MAP[speciesKey]) {
+      abilityKey = SPECIES_ABILITY_MAP[speciesKey];
+  } else {
+      const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === type);
+      abilityKey = matchingAbilities.length > 0
+          ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)]
+          : Object.keys(ABILITIES)[0];
+  }
+
+  const baseName = speciesData.label;
 
   // Initiales Pet Objekt
   let newPet = {

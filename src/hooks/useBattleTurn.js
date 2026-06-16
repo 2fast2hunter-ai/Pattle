@@ -45,10 +45,54 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         if (effectiveness > 1) newLog.push(t ? t('battle_log_effective') : "⚡ Super effective!");
         else if (effectiveness < 1) newLog.push(t ? t('battle_log_not_effective') : "🛡️ Not very effective...");
 
+        const effect = shouldUseAbility ? abilityToUse.effect : null;
+
+        // --- DOT tick: apply existing burn/poison on attacker before new action ---
+        let attackerHpAfterDot = attacker.hp;
+        if (attacker.dotDamage > 0 && attacker.dotTurns > 0) {
+            const dotDmg = Math.max(1, Math.floor(attacker.dotDamage));
+            attackerHpAfterDot = Math.max(0, attacker.hp - dotDmg);
+            newLog.push(`🔥 ${attacker.name} takes ${dotDmg} DoT damage!`);
+        }
+
         const effectiveDamage = Math.min(damage, defender.hp);
         setDamageDealt(prev => ({ ...prev, [attacker.id]: (prev[attacker.id] || 0) + effectiveDamage }));
 
-        const newHp = Math.max(0, defender.hp - damage);
+        let newDefenderHp = Math.max(0, defender.hp - damage);
+        let newAttackerHp = attackerHpAfterDot;
+
+        // --- Effect handling ---
+        let defenderStunTurns = defender.stunTurns || 0;
+        let defenderDotDamage = defender.dotDamage || 0;
+        let defenderDotTurns = defender.dotTurns || 0;
+        let attackerHealAmount = 0;
+        let revivedAllyIndex = -1;
+
+        if (effect === 'STUN') {
+            defenderStunTurns = (abilityToUse.effectDuration || 1);
+            newLog.push(`😵 ${defender.name} is stunned for ${defenderStunTurns} turn(s)!`);
+        } else if (effect === 'DOT') {
+            const dotPerTurn = Math.max(1, Math.floor((attacker.maxHp || attacker.hp) * (abilityToUse.effectValue || 0.10)));
+            defenderDotDamage = dotPerTurn;
+            defenderDotTurns = (abilityToUse.effectDuration || 2);
+            newLog.push(`🔥 ${defender.name} is burning! (${dotPerTurn}/turn for ${defenderDotTurns} turns)`);
+        } else if (effect === 'HEAL') {
+            attackerHealAmount = Math.floor((attacker.maxHp || attacker.hp) * (abilityToUse.effectValue || 0.15));
+            newAttackerHp = Math.min(attacker.maxHp || attacker.hp, newAttackerHp + attackerHealAmount);
+            newLog.push(`💚 ${attacker.name} heals for ${attackerHealAmount} HP!`);
+        } else if (effect === 'REVIVE') {
+            // Find first fainted ally on attacker's side
+            const myTeamRef = who === 'PLAYER' ? battleState.myTeam : battleState.enemyTeam;
+            const faintedIdx = myTeamRef.findIndex((p, i) => {
+                const activeIdx = who === 'PLAYER' ? battleState.myIndex : battleState.enemyIndex;
+                return i !== activeIdx && (p.hp <= 0 || p.currentHp <= 0);
+            });
+            if (faintedIdx !== -1) {
+                revivedAllyIndex = faintedIdx;
+                const reviveHp = Math.floor((myTeamRef[faintedIdx].maxHp || 1) * (abilityToUse.effectValue || 0.25));
+                newLog.push(`✨ ${attacker.name} revives ${myTeamRef[faintedIdx].name} with ${reviveHp} HP!`);
+            }
+        }
 
         // --- HIT ANIMATION ---
         const targetSide = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
@@ -58,6 +102,8 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         if (isCrit) floatCol = 'text-yellow-400';
         else if (effectiveness > 1) floatCol = 'text-red-400';
         else if (effectiveness < 1) floatCol = 'text-slate-400';
+        else if (effect === 'HEAL') floatCol = 'text-green-400';
+        else if (effect === 'REVIVE') floatCol = 'text-purple-400';
         else if (abilityToUse.type === 'SPECIAL' && !shouldUseAbility) floatCol = 'text-purple-300';
 
         const displayVal = isCrit ? (t ? t('battle_log_crit', { damage }) : `CRIT! ${damage}`) : `${damage}`;
@@ -71,14 +117,31 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         setFloatingDamage(null);
 
         const nextCd = shouldUseAbility ? abilityToUse.cd : Math.max(0, attacker.currentCd - 1);
+        const nextAttackerDotTurns = Math.max(0, (attacker.dotTurns || 0) - 1);
 
-        const updatedAttacker = { ...attacker, currentCd: nextCd };
-        const updatedDefender = { ...defender, hp: newHp };
+        const updatedAttacker = {
+            ...attacker,
+            currentCd: nextCd,
+            hp: newAttackerHp,
+            dotTurns: nextAttackerDotTurns,
+            dotDamage: nextAttackerDotTurns > 0 ? (attacker.dotDamage || 0) : 0,
+        };
+        const updatedDefender = {
+            ...defender,
+            hp: newDefenderHp,
+            stunTurns: defenderStunTurns,
+            dotDamage: defenderDotDamage,
+            dotTurns: defenderDotTurns,
+        };
 
         let nextMyIndex = myIndex, nextEnemyIndex = enemyIndex, gameOver = false;
 
-        // Standard Nächster Zug
+        // Standard Nächster Zug — skip enemy turn if stunned
         let nextTurn = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
+        if (defenderStunTurns > 0 && newDefenderHp > 0) {
+            nextTurn = who; // attacker gets another turn immediately
+            newLog.push(`⚡ ${defender.name} is stunned — skipping their turn!`);
+        }
         let nextRound = who === 'ENEMY' ? round + 1 : round;
 
         // --- DOPPEL-ANGRIFF LOGIK (SPEED) ---
@@ -116,6 +179,13 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         const newMyTeam = [...myTeam]; const newEnemyTeam = [...enemyTeam];
         if (who === 'PLAYER') { newMyTeam[myIndex] = updatedAttacker; newEnemyTeam[enemyIndex] = updatedDefender; }
         else { newEnemyTeam[enemyIndex] = updatedAttacker; newMyTeam[myIndex] = updatedDefender; }
+
+        // Apply REVIVE
+        if (revivedAllyIndex !== -1) {
+            const reviveTeam = who === 'PLAYER' ? newMyTeam : newEnemyTeam;
+            const reviveHp = Math.floor((reviveTeam[revivedAllyIndex].maxHp || 1) * (abilityToUse.effectValue || 0.25));
+            reviveTeam[revivedAllyIndex] = { ...reviveTeam[revivedAllyIndex], hp: reviveHp, currentHp: reviveHp };
+        }
 
         setBattleState({
             ...battleState,

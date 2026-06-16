@@ -1,6 +1,6 @@
 import { RARITIES } from '../../data/rarities';
 import { TYPES } from '../../data/types';
-import { ABILITIES } from '../../data/abilities';
+import { ABILITIES, SPECIES_ABILITY_MAP } from '../../data/abilities';
 import { ZODIAC_ANIMALS, SPECIES_BY_TYPE, FUSION_RECIPES } from '../../data/pets';
 import { calculateMaxXp, recalculatePetStats } from './petStats'; 
 
@@ -40,14 +40,8 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   
   let rarity = rarityKey || 'COMMON';
   
-  let abilityKey;
-  if (source === 'BREEDING' && !speciesKeyOverride) { 
-      const abilityKeys = Object.keys(ABILITIES); 
-      abilityKey = abilityKeys[Math.floor(Math.random() * abilityKeys.length)]; 
-  } else { 
-      const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === type); 
-      abilityKey = matchingAbilities.length > 0 ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)] : Object.keys(ABILITIES)[0]; 
-  }
+  // Ability will be resolved after species is determined; placeholder for now
+  let abilityKey = null;
 
   if (!speciesKey) {
       const validSpeciesKeys = SPECIES_BY_TYPE[type] || [];
@@ -75,7 +69,17 @@ export const generatePet = (level = 1, fixedType = null, rarityKey = null, inher
   }
 
   const speciesData = ZODIAC_ANIMALS[speciesKey];
-  
+
+  // Use species-unique ability; fall back to a type-matching one for custom/hybrid pets
+  if (SPECIES_ABILITY_MAP[speciesKey]) {
+      abilityKey = SPECIES_ABILITY_MAP[speciesKey];
+  } else {
+      const matchingAbilities = Object.keys(ABILITIES).filter(key => ABILITIES[key].element === type);
+      abilityKey = matchingAbilities.length > 0
+          ? matchingAbilities[Math.floor(Math.random() * matchingAbilities.length)]
+          : Object.keys(ABILITIES)[0];
+  }
+
   // ÄNDERUNG: Keine zufälligen Suffixe mehr, nur der Name der Art
   const baseName = speciesData.label;
 
