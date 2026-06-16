@@ -9,8 +9,8 @@ export const FAQ_CATEGORIES = [
                 question: 'Wie starte ich meine erste Gilde?',
                 steps: [
                     { title: 'Gilde erstellen', desc: 'Hauptmenü → Gilde → Neue Gilde gründen → Name eingeben → Gründen' },
-                    { title: 'Emblem gestalten', desc: 'Gildenprofil → Emblem bearbeiten → Symbol & Farben wählen → Speichern' },
-                    { title: 'Mitglieder einladen', desc: 'Mitglieder → Einladen → per Name suchen oder Einladungslink teilen' },
+                    { title: 'Emblem gestalten', desc: 'Beim Erstellen der Gilde Symbol & Farben auswählen – das Emblem wird einmalig beim Gründen festgelegt.' },
+                    { title: 'Mitglieder einladen', desc: 'Mitglieder → Einladen → Spielernamen eingeben und bestätigen' },
                     { title: 'Officers ernennen', desc: 'Mitglied antippen → Zum Officer ernennen' },
                     { title: 'Gemeinsam kämpfen', desc: 'Gilde → Dungeon starten, Wochenbeute sammeln, in der Rangliste aufsteigen' },
                 ],
