@@ -1,7 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, MessageSquare, Send, CheckCircle, Clock, Bug, Lightbulb, Scale, MessageCircle, RefreshCw, List, Eye } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from 'firebase/firestore';
+
+const WEBHOOK_URL = 'http://paperclip-afsc.srv1732766.hstgr.cloud/api/routine-triggers/public/d9fc457e876a4e9e10e58669/fire';
+const WEBHOOK_TOKEN = '3713487365075ac01dacecf4bf11e51067280bdc958081ff';
+const APP_VERSION = '1.0.0';
+
+async function fireWebhook({ category, message, userId }) {
+    const platform = Capacitor.getPlatform() === 'android' ? 'android' : 'web';
+    const title = message.length > 60 ? message.slice(0, 57) + '...' : message;
+    await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${WEBHOOK_TOKEN}`,
+        },
+        body: JSON.stringify({
+            type: category,
+            title,
+            body: message,
+            player_id: userId,
+            platform,
+            version: APP_VERSION,
+        }),
+    });
+}
 
 const CATEGORIES = [
     { id: 'bug', key: 'feedback_cat_bug', fallback: '🐛 Bug Report' },
@@ -83,6 +108,9 @@ export default function FeedbackScreen({ onBack, user, t }) {
                 status: 'new',
                 createdAt: serverTimestamp(),
             });
+            fireWebhook({ category, message: trimmedMessage, userId }).catch(err =>
+                console.error('Feedback webhook error:', err)
+            );
             setSubmitted(true);
         } catch (err) {
             console.error('Feedback error:', err);
