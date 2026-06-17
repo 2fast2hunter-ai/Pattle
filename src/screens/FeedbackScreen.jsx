@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core';
 import { db } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } from 'firebase/firestore';
 
-const WEBHOOK_URL = 'http://paperclip-afsc.srv1732766.hstgr.cloud/api/routine-triggers/public/d9fc457e876a4e9e10e58669/fire';
+const WEBHOOK_URL = 'https://paperclip-afsc.srv1732766.hstgr.cloud/api/routine-triggers/public/d9fc457e876a4e9e10e58669/fire';
 const WEBHOOK_TOKEN = '3713487365075ac01dacecf4bf11e51067280bdc958081ff';
 const APP_VERSION = '1.0.0';
 
