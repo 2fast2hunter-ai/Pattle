@@ -108,8 +108,13 @@ export function usePetActions(state, showNotification) {
         startIncubation,
         breedPets: (p1, p2) => breedPets(state, showNotification, p1, p2),
         renamePet: (petId, newName) => renamePet(state, showNotification, petId, newName),
-        applyXpItem: (petId, itemId, quantity) => applyItem(state, showNotification, petId, itemId, quantity), 
+        applyXpItem: (petId, itemId, quantity) => applyItem(state, showNotification, petId, itemId, quantity),
         releasePet: (petId) => releasePet(state, showNotification, petId),
-        applyItem: (petId, itemId, quantity) => applyItem(state, showNotification, petId, itemId, quantity)
+        applyItem: (petId, itemId, quantity) => applyItem(state, showNotification, petId, itemId, quantity),
+        handleRedeemTicket: () => {
+            // Breed tickets are consumed automatically during the breeding flow.
+            // Navigate the user there instead of providing a separate redemption path.
+            showNotification(state.t ? state.t('notif_ticket_use_in_breeding') : 'Use breed tickets in the Breeding Lab!', 'info');
+        }
     };
 }
