@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, getDocs } f
 
 const WEBHOOK_URL = 'https://paperclip-afsc.srv1732766.hstgr.cloud/api/routine-triggers/public/d9fc457e876a4e9e10e58669/fire';
 const WEBHOOK_TOKEN = '3713487365075ac01dacecf4bf11e51067280bdc958081ff';
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.25.1';
 
 async function fireWebhook({ category, message, userId }) {
     const platform = Capacitor.getPlatform() === 'android' ? 'android' : 'web';

@@ -2,6 +2,43 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.25.1] — 2026-06-20
+
+### Fixes
+- **Feedback-Webhook HTTPS** (PAT-383): Die Webhook-URL wurde auf HTTPS umgestellt. Auf Android (API 28+) wird HTTP-Cleartext-Traffic standardmäßig blockiert — die HTTP-URL führte zu einem 301-Redirect, den Android nie gefolgt ist. Mit der direkten HTTPS-URL werden Feedback-Einsendungen jetzt auf Android zuverlässig übermittelt.
+
+---
+
+## [1.25.0] — 2026-06-17
+
+### Neue Features
+- **Unique Pet-Fähigkeiten** (PAT-317): Jede Pet-Spezies hat jetzt eine eigene, einzigartige Fähigkeit (143 Spezies abgedeckt). Fähigkeits-Typen: DOT (Schaden über Zeit), STUN (Runde überspringen), HEAL (HP regenerieren), REVIVE (gefallenen Verbündeten wiederbeleben). Bestehende Pets werden beim nächsten App-Start automatisch auf die korrekte Spezies-Fähigkeit migriert.
+- **Feedback-Webhook** (PAT-381): Das Feedback-Formular übermittelt erfolgreiche Einsendungen jetzt automatisch an den Paperclip Player-Feedback-Processor. Webhook-Fehler blockieren nicht die Nutzer-Ansicht.
+
+### Bugfixes
+- **Battle: Spezies-Fähigkeit korrekt anwenden** (PAT-317): `useBattleTurn` löst Fähigkeiten jetzt über `SPECIES_ABILITY_MAP` auf — bestehende Pets mit alten abilityIds nutzen die richtige Spezies-Fähigkeit im Kampf. Stun-Turns werden korrekt verbraucht; wiederbelebte Pets werden beim Zug-Wechsel berücksichtigt.
+- **Market: Fähigkeits-Anzeige** (PAT-367): `MarketDetailModal` zeigte bisher `pet.abilityId` direkt an, ohne die spezies-basierte Fähigkeit zu berücksichtigen. Wird jetzt wie in `PetDetailScreen` über `SPECIES_ABILITY_MAP` aufgelöst.
+- **Items-Bildschirm: Crash beim Einlösen** (PAT-368): `handleRedeemTicket` war in `ScreenRouter` referenziert, aber nie implementiert — ein Klick auf REDEEM bei Breed-Tickets warf einen `TypeError` und brachte den Items-Screen zum Absturz. Die Funktion zeigt jetzt eine lokalisierte Info-Benachrichtigung, die Spieler ans Breeding Lab weiterleitet.
+- **Doppelte Übersetzungsschlüssel** (PAT-368): Doppelte `notif_ticket_use_in_breeding`-Einträge in DE- und EN-Lokalisierungsdateien entfernt, die zu einem Lint-Fehler geführt hatten.
+
+---
+
+## [1.24.0] — 2026-06-16
+
+### Neue Features
+- **Guild System Phase 1** (PAT-302): Officer-Rollen, Einladesystem und Emblem-Picker eingeführt. Leader und Officers können Mitglieder einladen; Embleme werden beim Gründen der Gilde festgelegt.
+- **Community Tab** (PAT-329): Neuer Community-Bereich mit angeheftetem „Guild Emblem Showcase"-Beitrag — Gilden können ihre Embleme präsentieren.
+- **In-App Help Center** (PAT-333): Hilfecenter mit ausführlichem Guild-FAQ-Guide direkt in der App, erreichbar über die Einstellungen.
+- **Admin-Dashboard: Spielstatistiken** (PAT-288): Das Admin-Dashboard wurde um umfangreiche Spielstatistiken erweitert.
+
+### Bugfixes
+- **Guild-Einladung: Rollenprüfung** (PAT-348): `sendGuildInvite` prüft jetzt korrekt, ob der Aufrufer Leader oder Officer ist, bevor eine Einladung gesendet wird.
+- **Battle-Start: Pet-Zustand zurücksetzen** (PAT-290): `currentCd` und `currentHp` des Spieler-Pets werden jetzt beim Kampfstart korrekt zurückgesetzt.
+- **Dungeon-Raumwechsel: Pet-CD zurücksetzen** (PAT-299): `currentCd` des Spieler-Pets wird beim Wechsel in einen neuen Dungeon-Raum zurückgesetzt.
+- **FAQ-Text korrigiert** (PAT-333): Emblem-Erstellung und Mitglieder-Einladeflow im FAQ präzisiert.
+
+---
+
 ## [1.23.0] — 2026-06-14
 
 ### Fixes
