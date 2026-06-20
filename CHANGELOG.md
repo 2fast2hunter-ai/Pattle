@@ -2,6 +2,13 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.25.2] — 2026-06-20
+
+### Bugfixes
+- **Battle: Gegner-Level an Team-Durchschnitt anpassen** ([PAT-391](/PAT/issues/PAT-391)): Gegner-Pets wurden bisher am stärksten Pet im Team des Spielers ausgerichtet — kämpfte man mit einem Team aus einem Level-30-Pet und vier Level-5-Pets, kämpfte man gegen Level-30-Gegner. Jetzt wird der Durchschnittslevel aller Team-Pets verwendet, sodass die Kampfschwierigkeit die tatsächliche Teamstärke widerspiegelt und die angestrebte ~80–90 % Gewinnrate unabhängig von der Team-Zusammensetzung erreicht wird.
+
+---
+
 ## [1.25.1] — 2026-06-20
 
 ### Fixes
