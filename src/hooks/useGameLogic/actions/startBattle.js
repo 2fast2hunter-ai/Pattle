@@ -51,9 +51,9 @@ export const startBattle = async (state, showNotification, overridePets = null) 
     const enemyCount = Math.min(5, Math.max(1, Math.floor(user.level / 5) + 1));
     const typeKeys = Object.keys(TYPES);
 
-    // Use highest team pet level as a floor so enemy difficulty keeps pace with pet progression
-    const maxTeamPetLevel = myTeam.reduce((max, p) => Math.max(max, p.level || 1), user.level);
-    const effectiveLevel = Math.max(user.level, maxTeamPetLevel);
+    // Use average team pet level so enemy difficulty scales to overall team power, not the strongest pet
+    const avgTeamPetLevel = Math.round(myTeam.reduce((sum, p) => sum + (p.level || 1), 0) / myTeam.length);
+    const effectiveLevel = Math.max(user.level, avgTeamPetLevel);
 
     for (let i = 0; i < enemyCount; i++) {
         const randomType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
