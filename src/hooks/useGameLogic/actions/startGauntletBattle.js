@@ -19,13 +19,14 @@ export const startGauntletBattle = async (state, showNotification) => {
     const typeKeys = Object.keys(TYPES);
     const randomType = typeKeys[Math.floor(Math.random() * typeKeys.length)];
     const enemy = generatePet(1, randomType, 'COMMON', null, 'GAUNTLET');
+    enemy.hp = enemy.maxHp;
     enemy.currentHp = enemy.maxHp;
     enemy.currentCd = 0;
     const enemyTeam = [enemy];
 
     // 3. Battle State with Gauntlet Flags
     const battleState = {
-        myTeam: myTeam.map(p => ({ ...p, currentHp: p.hp, currentCd: 0 })), // Fresh start
+        myTeam: myTeam.map(p => ({ ...p, hp: p.maxHp, currentHp: p.maxHp, currentCd: 0 })), // Fresh start
         enemyTeam,
         myIndex: 0,
         enemyIndex: 0,

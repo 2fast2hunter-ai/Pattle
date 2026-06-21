@@ -53,6 +53,7 @@ export default function BattleScreen({ battleState, setBattleState, user, onWin,
         if (isOver) return;
         const timer = setTimeout(() => {
             if (animatingUnit || hitUnit) return;
+            if (!myPet || !enemyPet) return;
             if (turn === 'PLAYER') executeTurn(myPet, enemyPet, 'PLAYER');
             else executeTurn(enemyPet, myPet, 'ENEMY');
         }, Math.round(800 / battleSpeed));
