@@ -2,6 +2,13 @@
 
 All notable changes to Pattle are documented here.
 
+## [1.25.3] — 2026-06-22
+
+### Bugfixes
+- **Battle: Einseitige Angriffe behoben** ([PAT-369](/PAT/issues/PAT-369)): In manchen Kämpfen griff nur eine Seite an, während die andere stecken blieb. Drei Ursachen wurden behoben: (1) `executeTurn` wurde bei jedem Render neu erstellt (kein `useCallback`), wodurch der Turn-Timer bei jeder Animations-Zustandsänderung zurückgesetzt wurde; (2) `startBattle`/`startFriendBattle`/`startGauntletBattle` setzten nur `currentHp`, nicht `hp` — Pets mit veraltetem `hp=0` aus dem Speicher starteten lautlos mit 0 HP; (3) `BattleScreen` prüfte nicht, ob `myPet`/`enemyPet` definiert sind, bevor `executeTurn` aufgerufen wurde — ein `undefined`-Pet führte zu einem stillen Fehler, der den Turn einfrieren ließ. Alle drei Ursachen sind behoben.
+
+---
+
 ## [1.25.2] — 2026-06-20
 
 ### Bugfixes
