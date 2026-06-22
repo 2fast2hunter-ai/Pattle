@@ -27,17 +27,17 @@ export function useGameLogic() {
     const minTimePassed = useRef(false);
     const authCheckComplete = useRef(false);
 
-    // 5 Sekunden Timer beim Start
+    // 2 Sekunden Mindest-Anzeigezeit für den Splash Screen
     useEffect(() => {
         const timer = setTimeout(() => {
             minTimePassed.current = true;
             attemptFinishLoading();
-        }, 5000);
+        }, 2000);
         return () => clearTimeout(timer);
     }, []);
 
     const attemptFinishLoading = () => {
-        // Nur fortfahren, wenn 5s um sind UND Auth-Check durch ist
+        // Nur fortfahren, wenn Mindestzeit um ist UND Auth-Check durch ist
         if (!minTimePassed.current || !authCheckComplete.current) return;
 
         // Wenn wir noch im Loading-Status sind, jetzt beenden
