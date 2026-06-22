@@ -1,5 +1,11 @@
 {
   "appId": "com.pattle.app",
   "appName": "Pattle",
-  "webDir": "dist"
+  "webDir": "dist",
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#0f172a",
+    "preferredContentMode": "mobile",
+    "scrollEnabled": false
+  }
 }
