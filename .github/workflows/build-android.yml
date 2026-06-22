@@ -42,27 +42,69 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android/gradlew
 
-      - name: Build release APK
+      - name: Decode keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/pattle-upload.p12
+            echo "KEYSTORE_AVAILABLE=true" >> $GITHUB_ENV
+            echo "ANDROID_KEYSTORE_PATH=/tmp/pattle-upload.p12" >> $GITHUB_ENV
+          else
+            echo "KEYSTORE_AVAILABLE=false" >> $GITHUB_ENV
+          fi
+
+      - name: Build release AAB (signed)
+        if: env.KEYSTORE_AVAILABLE == 'true'
+        run: cd android && ./gradlew bundleRelease
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ env.ANDROID_KEYSTORE_PATH }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Build release APK (unsigned fallback)
+        if: env.KEYSTORE_AVAILABLE != 'true'
         run: cd android && ./gradlew assembleRelease
 
-      - name: Upload APK artifact
+      - name: Upload AAB artifact
+        if: env.KEYSTORE_AVAILABLE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: pattle-release-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+
+      - name: Upload APK artifact (unsigned fallback)
+        if: env.KEYSTORE_AVAILABLE != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: pattle-release-apk
           path: android/app/build/outputs/apk/release/app-release-unsigned.apk
           if-no-files-found: error
 
+      - name: Upload to Google Play internal track
+        if: env.KEYSTORE_AVAILABLE == 'true'
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.pattle.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: internal
+          status: completed
+
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: android/app/build/outputs/apk/release/app-release-unsigned.apk
+          files: android/app/build/outputs/bundle/release/app-release.aab
           name: Pattle ${{ github.ref_name }}
           body: |
             ## Pattle ${{ github.ref_name }}
 
+            ### Google Play
+            This release is available on the [internal test track](https://play.google.com/console) on Google Play.
+
             ### How to install on Android (sideloading)
-            1. Download `app-release-unsigned.apk` below
-            2. On your Android phone, go to **Settings → Security** (or Privacy) and enable **Install unknown apps** for your browser or file manager
-            3. Open the downloaded APK file and tap **Install**
-            4. Launch Pattle from your app drawer
+            Download and install the AAB directly if you have the tools, or wait for the Google Play release to propagate.
+        continue-on-error: true
