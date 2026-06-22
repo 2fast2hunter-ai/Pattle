@@ -29,7 +29,7 @@ push to main / version tag
 | `ANDROID_STORE_PASSWORD` | Keystore store password |
 | `ANDROID_KEY_ALIAS` | Key alias within the keystore (`upload`) |
 | `ANDROID_KEY_PASSWORD` | Key password |
-| `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` | Google Play service account JSON for API access |
+| `GOOGLE_PLAY_SERVICE_ACCOUNT_KEY` | Google Play service account JSON for API access |
 
 All secrets are stored in GitHub Actions and never committed to the repo.
 
@@ -98,7 +98,7 @@ git push origin v1.1.0
 
 **Build fails with "Signing not configured"**: Verify `ANDROID_KEYSTORE_BASE64` secret is set and the base64 value decodes cleanly (`echo $SECRET | base64 --decode | file -`).
 
-**Play upload fails with 401**: The service account JSON is invalid or the account lost Play Console access. Re-check at Google Play Console → Setup → API access.
+**Play upload fails with 401**: The `GOOGLE_PLAY_SERVICE_ACCOUNT_KEY` secret is invalid or the account lost Play Console access. Re-check at Google Play Console → Setup → API access.
 
 **Play upload fails with "APK not valid"**: The `versionCode` must be higher than the last uploaded build. Bump it in `android/app/build.gradle`.
 
