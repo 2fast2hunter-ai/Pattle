@@ -123,14 +123,24 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
-      - name: Upload to Google Play internal track (production)
-        if: env.BUILD_PROFILE == 'production' && env.KEYSTORE_AVAILABLE == 'true'
+      - name: Upload to Google Play internal track (branch push)
+        if: env.BUILD_PROFILE == 'production' && env.KEYSTORE_AVAILABLE == 'true' && !startsWith(github.ref, 'refs/tags/v')
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
           packageName: com.pattle.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           tracks: internal
+          status: completed
+
+      - name: Upload to Google Play production track (version tag)
+        if: env.BUILD_PROFILE == 'production' && env.KEYSTORE_AVAILABLE == 'true' && startsWith(github.ref, 'refs/tags/v')
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
+          packageName: com.pattle.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          tracks: production
           status: completed
 
       - name: Create GitHub Release
@@ -143,7 +153,7 @@ jobs:
             ## Pattle ${{ github.ref_name }}
 
             ### Google Play
-            This release is available on the [internal test track](https://play.google.com/console) on Google Play.
+            This release has been submitted to the [production track](https://play.google.com/console) on Google Play and is pending review.
 
             ### How to install on Android (sideloading)
             Download and install the AAB directly if you have the tools, or wait for the Google Play release to propagate.
