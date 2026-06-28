@@ -154,25 +154,14 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
 
             let nextMyIndex = myIndex, nextEnemyIndex = enemyIndex, gameOver = false;
 
-            // Standard Nächster Zug — skip enemy turn if stunned
+            // Strict turn alternation: PLAYER → ENEMY → PLAYER → ENEMY → …
+            // Stun is recorded on the defender but no longer grants the attacker an extra turn.
             let nextTurn = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
             if (defenderStunTurns > 0 && newDefenderHp > 0) {
-                defenderStunTurns = defenderStunTurns - 1; // consume one stun turn
-                nextTurn = who; // attacker gets another turn immediately
-                newLog.push(`⚡ ${defender.name} is stunned — skipping their turn!`);
+                defenderStunTurns = defenderStunTurns - 1; // consume one stun turn (visual only)
+                newLog.push(`😵 ${defender.name} is stunned!`);
             }
             let nextRound = who === 'ENEMY' ? round + 1 : round;
-
-            // --- DOPPEL-ANGRIFF LOGIK (SPEED) ---
-            const hasDoubleSpeed = (attacker.speed || 0) >= (defender.speed || 0) * 2;
-            const extraTurnTaken = battleStateRef.current.extraTurnTaken || false;
-            let nextExtraTurnState = false;
-
-            if (newDefenderHp > 0 && hasDoubleSpeed && !extraTurnTaken) {
-                nextTurn = who; // Angreifer bleibt dran
-                newLog.push(t ? t('battle_log_extra_turn', { attacker: attacker.name }) : `⚡ ${attacker.name} is so fast! Extra turn!`);
-                nextExtraTurnState = true;
-            }
 
             if (newDefenderHp === 0) {
                 newLog.push(t ? t('battle_log_defeated', { defender: updatedDefender.name }) : `💀 ${updatedDefender.name} defeated!`);
@@ -189,8 +178,8 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
                     })();
                     if (nextAliveEnemyIdx !== -1) {
                         nextEnemyIndex = nextAliveEnemyIdx;
-                        nextTurn = 'ENEMY';
-                        nextExtraTurnState = false;
+                        // Player killed the enemy → player continues to attack the new enemy first
+                        nextTurn = 'PLAYER';
                     } else {
                         gameOver = true;
                     }
@@ -208,7 +197,6 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
                     if (nextAliveMyIdx !== -1) {
                         nextMyIndex = nextAliveMyIdx;
                         nextTurn = 'PLAYER';
-                        nextExtraTurnState = false;
                     } else {
                         gameOver = true;
                     }
@@ -236,7 +224,6 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
                 turn: nextTurn,
                 round: nextRound,
                 isOver: gameOver,
-                extraTurnTaken: nextExtraTurnState
             }));
         } finally {
             isExecutingRef.current = false;
