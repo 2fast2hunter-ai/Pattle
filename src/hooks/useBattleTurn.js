@@ -8,10 +8,13 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
     const [floatingDamage, setFloatingDamage] = useState(null);
     const [damageDealt, setDamageDealt] = useState({});
 
-    // Always-fresh ref so executeTurn doesn't need battleState as a useCallback dep,
-    // preventing the BattleScreen effect timer from resetting on every animation render.
+    // Always-fresh refs so executeTurn doesn't need battleState or t as useCallback deps.
+    // t is an inline function recreated every render in the parent; putting it in deps
+    // would cause executeTurn to change every render, defeating the memoization entirely.
     const battleStateRef = useRef(battleState);
+    const tRef = useRef(t);
     useEffect(() => { battleStateRef.current = battleState; });
+    useEffect(() => { tRef.current = t; });
 
     // Prevent concurrent turn executions (guards against React StrictMode double-invoke
     // and any edge case where the timer fires before the previous turn fully settles).
@@ -24,6 +27,7 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
 
         try {
             const { myTeam, enemyTeam, myIndex, enemyIndex, log, round } = battleStateRef.current;
+            const t = tRef.current;
             let newLog = [...log];
 
             // 1. Ability oder Smart Auto Attack wählen
@@ -237,7 +241,7 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
         } finally {
             isExecutingRef.current = false;
         }
-    }, [t, speed]); // stable: only changes when speed or locale changes, not on every battle render
+    }, [speed]); // stable: only recreated when speed changes (1x↔2x), never on locale or battle state renders
 
     return {
         executeTurn,
