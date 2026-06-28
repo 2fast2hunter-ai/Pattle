@@ -154,12 +154,14 @@ export function useBattleTurn(battleState, setBattleState, t, speed = 1) {
 
             let nextMyIndex = myIndex, nextEnemyIndex = enemyIndex, gameOver = false;
 
-            // Strict turn alternation: PLAYER → ENEMY → PLAYER → ENEMY → …
-            // Stun is recorded on the defender but no longer grants the attacker an extra turn.
+            // Strict turn alternation by default. Stun is the only exception:
+            // a stunned defender loses their next turn (max +1 consecutive attack for the attacker).
+            // Double speed and "new enemy attacks first" have been removed to prevent 3-4 attack chains.
             let nextTurn = who === 'PLAYER' ? 'ENEMY' : 'PLAYER';
             if (defenderStunTurns > 0 && newDefenderHp > 0) {
-                defenderStunTurns = defenderStunTurns - 1; // consume one stun turn (visual only)
-                newLog.push(`😵 ${defender.name} is stunned!`);
+                defenderStunTurns = defenderStunTurns - 1; // consume one stun turn
+                nextTurn = who; // stunned defender skips their turn — attacker gets one bonus attack
+                newLog.push(`😵 ${defender.name} is stunned and loses their turn!`);
             }
             let nextRound = who === 'ENEMY' ? round + 1 : round;
 
