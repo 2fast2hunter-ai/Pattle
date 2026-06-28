@@ -1,0 +1,97 @@
+name: Promote Android Release to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionCode:
+        description: 'Android version code to promote from internal → production'
+        required: true
+        default: '4'
+      fromTrack:
+        description: 'Source track'
+        required: true
+        default: 'internal'
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install googleapis
+        run: npm install googleapis
+
+      - name: Promote to Google Play production track
+        env:
+          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
+          TARGET_VERSION_CODE: ${{ github.event.inputs.versionCode }}
+          FROM_TRACK: ${{ github.event.inputs.fromTrack }}
+        run: |
+          node -e "
+          const { google } = require('./node_modules/googleapis');
+
+          async function main() {
+            const credentials = JSON.parse(process.env.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON);
+            const auth = new google.auth.GoogleAuth({
+              credentials,
+              scopes: ['https://www.googleapis.com/auth/androidpublisher']
+            });
+            const play = google.androidpublisher({ version: 'v3', auth });
+            const packageName = 'com.pattle.app';
+            const targetVersionCode = parseInt(process.env.TARGET_VERSION_CODE, 10);
+            const fromTrack = process.env.FROM_TRACK;
+
+            console.log('Promoting versionCode', targetVersionCode, 'from', fromTrack, 'to production');
+
+            // Create a new edit
+            const editRes = await play.edits.insert({ packageName });
+            const editId = editRes.data.id;
+            console.log('Created edit:', editId);
+
+            // Get the source track releases
+            const sourceRes = await play.edits.tracks.get({ packageName, editId, track: fromTrack });
+            console.log('Source track releases:', JSON.stringify(sourceRes.data.releases, null, 2));
+
+            // Find the release containing our target versionCode
+            const targetRelease = sourceRes.data.releases?.find(r =>
+              r.versionCodes?.map(Number).includes(targetVersionCode)
+            );
+
+            if (!targetRelease) {
+              throw new Error('versionCode ' + targetVersionCode + ' not found in ' + fromTrack + ' track. Available releases: ' + JSON.stringify(sourceRes.data.releases));
+            }
+
+            console.log('Found release to promote:', JSON.stringify(targetRelease, null, 2));
+
+            // Update the production track with this release
+            const updateRes = await play.edits.tracks.update({
+              packageName,
+              editId,
+              track: 'production',
+              requestBody: {
+                track: 'production',
+                releases: [{
+                  versionCodes: targetRelease.versionCodes,
+                  name: targetRelease.name,
+                  releaseNotes: targetRelease.releaseNotes,
+                  status: 'completed'
+                }]
+              }
+            });
+            console.log('Updated production track:', JSON.stringify(updateRes.data, null, 2));
+
+            // Commit the edit
+            const commitRes = await play.edits.commit({ packageName, editId });
+            console.log('Committed edit:', commitRes.data.id);
+            console.log('SUCCESS: versionCode', targetVersionCode, 'is now in the production track!');
+          }
+
+          main().catch(e => {
+            console.error('FAILED:', e.message);
+            if (e.response) console.error('API response:', JSON.stringify(e.response.data));
+            process.exit(1);
+          });
+          "

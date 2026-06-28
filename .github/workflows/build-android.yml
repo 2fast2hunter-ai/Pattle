@@ -125,22 +125,34 @@ jobs:
 
       - name: Upload to Google Play internal track (branch push)
         if: env.BUILD_PROFILE == 'production' && env.KEYSTORE_AVAILABLE == 'true' && !startsWith(github.ref, 'refs/tags/v')
-        uses: r0adkll/upload-google-play@v1
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
           packageName: com.pattle.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          tracks: internal
+          track: internal
           status: completed
 
-      - name: Upload to Google Play production track (version tag)
+      - name: Upload to Google Play production track (version tag, attempt 1)
+        id: play_upload_1
         if: env.BUILD_PROFILE == 'production' && env.KEYSTORE_AVAILABLE == 'true' && startsWith(github.ref, 'refs/tags/v')
-        uses: r0adkll/upload-google-play@v1
+        continue-on-error: true
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1.1.5
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
           packageName: com.pattle.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-          tracks: production
+          track: production
+          status: completed
+
+      - name: Upload to Google Play production track (version tag, attempt 2)
+        if: env.BUILD_PROFILE == 'production' && env.KEYSTORE_AVAILABLE == 'true' && startsWith(github.ref, 'refs/tags/v') && steps.play_upload_1.outcome == 'failure'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5  # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_KEY }}
+          packageName: com.pattle.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: production
           status: completed
 
       - name: Create GitHub Release
